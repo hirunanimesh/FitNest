@@ -3,8 +3,10 @@ const router = express.Router();
 const { supabase, testConnection } = require('../superbaseClient');
 
 // Health check endpoint to test database connection
+
 router.get('/health', async (req, res) => {
   // Ensure we don't try to parse any body for this GET request
+  
   
   try {
     const isConnected = await testConnection();
