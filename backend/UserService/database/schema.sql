@@ -8,8 +8,6 @@ CREATE TABLE customer(
   contact_number VARCHAR(15),
   date_of_birth DATE,
   gender VARCHAR(10) CHECK (gender IN ('male', 'female', 'other')),
-  weight DECIMAL(5,2),
-  height DECIMAL(5,2),
   profile_image_url TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
@@ -37,21 +35,13 @@ CREATE TABLE calendar (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+--feedback
+CREATE TABLE feedback (
+feedback_id INT PRIMARY KEY,
+user_id UUID UNIQUE REFERENCES auth.users(id), -- links to Supabase auth.users
+feedback TEXT NOT NULL,
+date TIMESTAMP DEFAULT NOW()
+);
 
--- Enable RLS
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE weight_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
-CREATE POLICY "Users can view own profile" ON user_profiles
-  FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users can update own profile" ON user_profiles
-  FOR UPDATE USING (auth.uid() = id);
-
-CREATE POLICY "Users can view own weight logs" ON weight_logs
-  FOR ALL USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can view own subscriptions" ON user_subscriptions
-  FOR SELECT USING (auth.uid() = user_id);
