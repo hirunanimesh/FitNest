@@ -94,36 +94,6 @@ class DashboardController {
   }
 
   /**
-   * Get weight progress data
-   * GET /api/dashboard/weight-progress
-   */
-  async getWeightProgress(req, res) {
-    try {
-      const userId = req.user?.id;
-      
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: 'Unauthorized - User ID not found'
-        });
-      }
-
-      const weightData = await dashboardService.getWeightProgress(userId);
-      
-      res.status(200).json({
-        success: true,
-        data: weightData
-      });
-    } catch (error) {
-      console.error('Weight progress controller error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch weight progress data'
-      });
-    }
-  }
-
-  /**
    * Get BMI variation data
    * GET /api/dashboard/bmi-variation
    */
@@ -265,7 +235,6 @@ class DashboardController {
       // Get basic stats without full data
       const [motivationData, weightProgress, bmiData, calendarData] = await Promise.all([
         dashboardService.getMotivationPhase(userId),
-        dashboardService.getWeightProgress(userId),
         dashboardService.getBMIVariation(userId),
         dashboardService.getCalendarTasks(userId)
       ]);
@@ -274,8 +243,6 @@ class DashboardController {
         workoutStreak: motivationData.workoutStreak,
         totalWorkouts: motivationData.totalWorkouts,
         weeklyProgress: motivationData.weeklyProgress,
-        currentWeight: weightProgress.stats.currentWeight,
-        weightChange: weightProgress.stats.weightChange,
         currentBMI: bmiData.stats.currentBMI,
         bmiCategory: bmiData.stats.currentCategory,
         todaysTasksCount: calendarData.todaysTasks.length,

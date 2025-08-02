@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
-import { getProfile, updateProfile, uploadProfileImage } from './controllers/profile.controller.js'
+import { authenticateUser } from './middleware/auth.middleware.js'
+import { getProfile, createProfile, updateProfile, uploadProfileImage, deleteProfileImage, getProfileStats } from './controllers/profile.controller.js'
 import { addProgress, getProgressHistory, getLatestProgress, updateProgress, deleteProgress, getBMITrends } from './controllers/progress.controller.js'
 import { getCalendar, addCalendarTask, updateCalendarTask, deleteCalendarTask, getTasksByDate, syncGoogleCalendar } from './controllers/calendar.controller.js'
 import dashboardController from './controllers/dashboard.controller.js'
@@ -11,10 +12,16 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 
+// Apply authentication middleware to all routes
+app.use('/api/users', authenticateUser)
+
 // Profile routes
 app.get('/api/users/profile', getProfile)
+app.post('/api/users/profile', createProfile)
 app.put('/api/users/profile', updateProfile)
 app.post('/api/users/profile/image', uploadProfileImage)
+app.delete('/api/users/profile/image', deleteProfileImage)
+app.get('/api/users/profile/stats', getProfileStats)
 
 // Progress routes
 app.post('/api/users/progress', addProgress)
