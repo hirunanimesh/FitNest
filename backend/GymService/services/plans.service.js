@@ -78,3 +78,16 @@ export async function addgymplan(gymPlanData) {
   
     return data[0];
   }
+
+  export async function getplanmembercount(plan_id){
+    const {data , error} = await supabase.rpc('member_count_per_plan', { plan_id_param: plan_id });
+    console.log("Data:", data);
+    if(data === null || data === 0){
+      return 0;
+    }
+
+    if (error) {
+      throw new Error(error.message);
+    }
+    return data[0].total_members;
+  }

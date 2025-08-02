@@ -1,4 +1,4 @@
-import { addgymplan, deletegymplan, getallgymplans, getgymplanbygymid, updategymplan } from "../services/plans.service.js";
+import { addgymplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, updategymplan } from "../services/plans.service.js";
 
 
 export const addGymPlan = async (req, res) => {
@@ -69,6 +69,21 @@ export const deleteGymPlan = async (req, res) => {
 
     } catch (error) {
         console.error("Error deleting gym plan:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+export const getMemberCountPerPlan = async (req, res) => {
+    const {plan_id} = req.params;
+    try{
+        const count = await getplanmembercount(plan_id)
+        if(count){
+            res.status(200).json({ message: "Member count retrieved successfully", count });
+        }else{
+            res.status(404).json({ message: "Plan not found or no members" });
+        }
+    }catch(error){
+        console.error("Error retrieving member count per plan:", error);
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }

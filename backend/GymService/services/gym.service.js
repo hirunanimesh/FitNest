@@ -59,3 +59,13 @@ export async function updategymdetails(gymId, gymData) {
 }     
 
 
+export async function gettotalmembercount(gymId){
+  const {data,error} = await supabase.rpc('get_gym_member_count', { gym_id_param: gymId });
+  if(data === null | data === 0){
+    return 0;
+  }
+  if(error){
+    throw new Error(error.message);
+  }
+  return data;
+}
