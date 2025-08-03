@@ -11,7 +11,6 @@ class AuthModel {
         },
       });
       if (error) throw error;
-      console.log(data);
       return data;
     } catch (error) {
       console.error("Error creating user:", error);
@@ -45,37 +44,64 @@ class AuthModel {
     gender,
     birthday
   ) {
-    console.log('in model');
+    
     try {
-      const { user, session } = await AuthModel.createUser(
-        email,
-        password,
-        role
-      );
-      if (!user) throw new Error("User not returned from signUp");
-      const userId = user.id;
+      // Create user and get the data object
+      const userData = await AuthModel.createUser(email, password, role);
+      
+      
+      if (!userData || !userData.user) {
+        throw new Error("User not returned from signUp");
+      }
+      
+      const userId = userData.user.id;
 
+
+      // Prepare the insert data
+      const insertData = {
+        user_id: userId,
+        first_name: firstName,
+        last_name: LastName,
+        address: address,
+        phone_no: phoneNo,
+        profile_img: profileImg,
+        gender: gender,
+        birthday: birthday,
+      };
+      console.log('Data to insert:', JSON.stringify(insertData, null, 2));
+
+      // Insert customer data into customers table
       const { data: customerdata, error: insertError } = await supabase
-        .from("customers")
-        .insert([
-          {
-            user_id: userId,
-            first_name: firstName,
-            last_name: LastName,
-            address: address,
-            phone_no: phoneNo,
-            profile_img: profileImg,
-            gender: gender,
-            birthday: birthday,
-          },
-        ]);
+        .from("customer")
+        .insert([insertData])
+        .select(); // Add .select() to return the inserted data
 
-      if (insertError) throw insertError;
-      return customerdata;
+      if (insertError) {
+        console.error("Database insertion error details:");
+        console.error("Error message:", insertError.message);
+        console.error("Error code:", insertError.code);
+        console.error("Error details:", insertError.details);
+        console.error("Error hint:", insertError.hint);
+        console.error("Full error object:", JSON.stringify(insertError, null, 2));
+        throw insertError;
+      }
+      
+      console.log("Customer data inserted successfully:", customerdata);
+      
+      // Return both user and customer data
+      return {
+        user: userData.user,
+        session: userData.session,
+        customer: customerdata[0] // Return the first (and only) inserted record
+      };
     } catch (error) {
       console.error("Error registering customer:", error);
       throw error;
     }
   }
+
+ 
+
+
 }
 module.exports = AuthModel;
