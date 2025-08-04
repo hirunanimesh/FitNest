@@ -67,9 +67,29 @@ const gymProxy = createProxyMiddleware({
   }
 });
 
+const paymentProxy = createProxyMiddleware({
+  target: process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/payment': '' 
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`[Proxy] ${req.method} ${req.originalUrl} -> ${proxyReq.getHeader('host')}${req.url}`);
+  },
+  onError: (err, req, res) => {
+    console.error(`[Proxy Error] ${err.message}`);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error occurred while trying to proxy',
+      error: err.message
+    });
+  }
+});
+
 // Use the proxy for auth routes (express.json() will be applied by the target service)
 app.use('/api/auth', authProxy);
 app.use('/api/gym',gymProxy)
+app.use('/api/payment', paymentProxy);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
