@@ -10,6 +10,15 @@ app.use(express.json())
 
 app.use(cookieParser());
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Auth Service is running',
+    timestamp: new Date().toISOString(),
+    service: 'AuthService'
+  });
+});
 
 app.use('/api/auth', authRoutes);
 
