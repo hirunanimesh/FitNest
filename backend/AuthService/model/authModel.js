@@ -44,18 +44,15 @@ class AuthModel {
     gender,
     birthday
   ) {
-    
     try {
       // Create user and get the data object
       const userData = await AuthModel.createUser(email, password, role);
-      
-      
+
       if (!userData || !userData.user) {
         throw new Error("User not returned from signUp");
       }
-      
-      const userId = userData.user.id;
 
+      const userId = userData.user.id;
 
       // Prepare the insert data
       const insertData = {
@@ -68,7 +65,7 @@ class AuthModel {
         gender: gender,
         birthday: birthday,
       };
-      console.log('Data to insert:', JSON.stringify(insertData, null, 2));
+      console.log("Data to insert:", JSON.stringify(insertData, null, 2));
 
       // Insert customer data into customers table
       const { data: customerdata, error: insertError } = await supabase
@@ -82,17 +79,20 @@ class AuthModel {
         console.error("Error code:", insertError.code);
         console.error("Error details:", insertError.details);
         console.error("Error hint:", insertError.hint);
-        console.error("Full error object:", JSON.stringify(insertError, null, 2));
+        console.error(
+          "Full error object:",
+          JSON.stringify(insertError, null, 2)
+        );
         throw insertError;
       }
-      
+
       console.log("Customer data inserted successfully:", customerdata);
-      
+
       // Return both user and customer data
       return {
         user: userData.user,
         session: userData.session,
-        customer: customerdata[0] // Return the first (and only) inserted record
+        customer: customerdata[0], // Return the first (and only) inserted record
       };
     } catch (error) {
       console.error("Error registering customer:", error);
@@ -100,8 +100,125 @@ class AuthModel {
     }
   }
 
- 
+  static async GymRegister(
+    email,
+    password,
+    gym_name,
+    address,
+    location,
+    phone_no,
+    profile_img,
+    description,
+    verified,
+    documents
+  ) {
+    const role = "gym";
+    try {
+      const userData = await AuthModel.createUser(email, password, role);
+      if (!userData || !userData.user) {
+        throw new Error("User not returned from signUp");
+      }
+      const insertData = {
+        user_id: userData.user.id,
+        address: address,
+        contact_no: phone_no,
+        gym_name: gym_name,
+        profile_img: profile_img,
+        location: location,
+        verified: verified,
+        documents: documents,
+        description: description,
+      };
 
+      console.log("Data to insert:", JSON.stringify(insertData, null, 2));
 
+      const { data: gym_data, error: insertError } = await supabase
+        .from("gym")
+        .insert([insertData])
+        .select();
+      if (insertError) {
+        console.error("Database insertion error details:");
+        console.error("Error message:", insertError.message);
+        console.error("Error code:", insertError.code);
+        console.error("Error details:", insertError.details);
+        console.error("Error hint:", insertError.hint);
+        console.error(
+          "Full error object:",
+          JSON.stringify(insertError, null, 2)
+        );
+        throw insertError;
+      }
+      console.log("Gym data inserted successfully:", gym_data);
+      return {
+        user: userData.user,
+        session: userData.session,
+        gym: gym_data[0], // Return the first (and only) inserted record
+      };
+    } catch (error) {
+      console.error("Error registering gym:", error);
+      throw error;
+    }
+  }
+
+  static async TrainerRegister(
+    email,
+    password,
+    bio,
+    contact_no,
+    trainer_name,
+    profile_img,
+    years_of_experience,
+    skills,
+    documents
+  ){
+    try{
+      const role = "trainer";
+      const userData = await AuthModel.createUser(email, password, role);
+      if (!userData || !userData.user) {
+        throw new Error("User not returned from signUp");
+      }
+      const insertData = {
+        user_id: userData.user.id,
+        bio: bio,
+        contact_no: contact_no,
+        trainer_name: trainer_name,
+        profile_img: profile_img,
+        years_of_experience: years_of_experience,
+        skills: skills,
+        verified: false, 
+        documents: documents
+      };
+
+      console.log("Data to insert:", JSON.stringify(insertData, null, 2));
+
+      const { data: trainer_data, error: insertError } = await supabase
+        .from("trainer")
+        .insert([insertData])
+        .select();
+      if (insertError) {
+        console.error("Database insertion error details:");
+        console.error("Error message:", insertError.message);
+        console.error("Error code:", insertError.code);
+        console.error("Error details:", insertError.details);
+        console.error("Error hint:", insertError.hint);
+        console.error(
+          "Full error object:",
+          JSON.stringify(insertError, null, 2)
+        );
+        throw insertError;
+      }
+      console.log("Trainer data inserted successfully:", trainer_data);
+      return {
+        user: userData.user,
+        session: userData.session,
+        trainer: trainer_data[0], // Return the first (and only) inserted record
+      };
+    }
+    catch (error) {
+      console.error("Error registering trainer:", error);
+      throw error;
+  }
 }
+}
+
 module.exports = AuthModel;

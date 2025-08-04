@@ -9,11 +9,11 @@ class AuthController {
       console.log("token:", data.session.access_token);
 
       // Store token in httpOnly cookie (or return as JSON)
-      res.cookie("token", data.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 60 * 1000, // 1 hour
-      });
+      // res.cookie("token", data.session.access_token, {
+      //   httpOnly: true,
+      //   secure: process.env.NODE_ENV === "production",
+      //   maxAge: 60 * 60 * 1000, // 1 hour
+      // });
 
       return res.status(200).json({
         success: true,
@@ -100,6 +100,86 @@ class AuthController {
       res.status(500).json({
         success: false,
         message: "Failed to register customer",
+        error: error.message,
+      });
+    }
+  }
+
+  static async GymRegister(req, res) {
+    const {
+      email,
+      password,
+      gym_name,
+      address,
+      location,
+      phone_no,
+      profile_img,
+      description,
+      verified,
+      documents,
+    } = req.body;
+    try {
+      const result = await authmodel.GymRegister(
+        email,
+        password,
+        gym_name,
+        address,
+        location,
+        phone_no,
+        profile_img,
+        description,
+        verified,
+        documents
+      );
+      res.status(201).json({
+        success: true,
+        message: "Gym registered successfully",
+        gym: result,
+      });
+    } catch (error) {
+      console.error("[Auth Service] Error during gym registration:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to register gym",
+        error: error.message,
+      });
+    }
+  }
+
+  static async TrainerRegister(req, res) {
+    const {
+      email,
+      password,
+      bio,
+      contact_no,
+      trainer_name,
+      profile_img,
+      years_of_experience,
+      skills,
+      documents,
+    } = req.body;
+    try {
+      const result = await authmodel.TrainerRegister(
+        email,
+        password,
+        bio,
+        contact_no,
+        trainer_name,
+        profile_img,
+        years_of_experience,
+        skills,
+        documents
+      );
+      res.status(201).json({
+        success: true,
+        message: "Trainer registered successfully",
+        trainer: result,
+      });
+    } catch (error) {
+      console.error("[Auth Service] Error during trainer registration:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to register trainer",
         error: error.message,
       });
     }
