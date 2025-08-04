@@ -1,0 +1,38 @@
+services:
+  # API Gateway Service - Development Overrides
+  api-gateway:
+    volumes:
+      - ./backend/apigateway:/app
+      - /app/node_modules  # Anonymous volume to preserve node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  # Auth Service - Development Overrides
+  auth-service:
+    volumes:
+      - ./backend/AuthService:/app
+      - /app/node_modules  # Anonymous volume to preserve node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  # Gym Service - Development Overrides
+  gym-service:
+    volumes:
+      - ./backend/GymService:/app
+      - /app/node_modules  # Anonymous volume to preserve node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run start  # Using start since it uses nodemon
+
+  # Frontend Service - Development Overrides
+  frontend:
+    volumes:
+      - ./frontend/app:/app
+      - /app/node_modules  # Anonymous volume to preserve node_modules
+      - /app/.next        # Anonymous volume to preserve .next build cache
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+    command: npm run dev -- -p 3010
