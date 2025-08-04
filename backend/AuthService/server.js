@@ -6,9 +6,10 @@ const { testConnection } = require('./superbaseClient');
 require('dotenv').config();
 
 // JSON parsing middleware - simplified
-app.use(express.json());
+app.use(express.json())
 
 app.use(cookieParser());
+
 
 app.use('/api/auth', authRoutes);
 

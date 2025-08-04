@@ -21,3 +21,13 @@ CREATE TABLE "Gym_plans" (
   product_id_stripe TEXT,
   price_id_stripe TEXT
 );
+
+-----------------------------------------------------------------------------
+
+CREATE TABLE "Subscription" (
+  subscription_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id INTEGER NOT NULL,
+  plan_id UUID NOT NULL,
+  subscription_date DATE NOT NULL,
+  status VARCHAR(10) CHECK (status IN ('active', 'deact')) NOT NULL
+);

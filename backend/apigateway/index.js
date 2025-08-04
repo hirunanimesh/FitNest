@@ -48,8 +48,29 @@ const authProxy = createProxyMiddleware({
   }
 });
 
+const gymProxy = createProxyMiddleware({
+  target: process.env.GYM_SERVICE_URL || 'http://localhost:3002',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/gym': '' 
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`[Proxy] ${req.method} ${req.originalUrl} -> ${proxyReq.getHeader('host')}${req.url}`);
+  },
+  onError: (err, req, res) => {
+    console.error(`[Proxy Error] ${err.message}`);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error occurred while trying to proxy',
+      error: err.message
+    });
+  }
+});
+
 // Use the proxy for auth routes (express.json() will be applied by the target service)
 app.use('/api/auth', authProxy);
+app.use('/api/gym',gymProxy)
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
