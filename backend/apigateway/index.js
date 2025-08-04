@@ -60,4 +60,3 @@ app.listen(PORT, () => {
   console.log(`🔗 Proxying to services:`, config.services);
   console.log(`🌐 CORS enabled for: ${config.cors.origin}`);
 });
-
