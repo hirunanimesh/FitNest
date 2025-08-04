@@ -42,5 +42,7 @@ router.post('/signup', AuthController.createUser);
 // Login user
 router.post('/login', AuthController.login);
 router.post('/customer/register', AuthController.customerRegister);
+router.post('/gym/register', AuthController.GymRegister);
+router.post('/trainer/register', AuthController.TrainerRegister);
 
 module.exports = router;
