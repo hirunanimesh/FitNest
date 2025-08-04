@@ -30,7 +30,7 @@ export function HeroVideoSection() {
             their fitness goals
           </h1>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+          <div className="flex flex-col sm:flex-row gap-12 justify-center mb-8">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="default" className="text-base px-6 py-3 bg-primary hover:bg-primary/90">
@@ -40,17 +40,17 @@ export function HeroVideoSection() {
               <DropdownMenuContent align="center" className="bg-white border-border">
                 <DropdownMenuItem asChild>
                   <Link href="/auth/signup?type=user" className="text-black">
-                    Join as User
+                    User
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/auth/signup?type=trainer" className="text-black">
-                    Join as Trainer
+                    Trainer
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/auth/signup?type=gym" className="text-black">
-                    Join as Gym
+                     Gym
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -71,17 +71,17 @@ export function HeroVideoSection() {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-40 max-w-7xl mx-auto">
           <Card className="bg-black/20 backdrop-blur-sm border-white/10 text-white hover:bg-black/30 transition-all duration-300 group">
             <CardContent className="p-5">
               <div className="flex items-start mb-4">
                 <div className="p-3 bg-primary/10 backdrop-blur-sm rounded-lg mr-4 group-hover:bg-primary/20 transition-colors">
-                  <Users className="h-6 w-6 text-primary" />
+                  <Users className="h-6 w-10 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold mb-1">Expert Trainers</h3>
-                  <p className="text-primary font-semibold text-sm mb-2">8,500+ certified professionals</p>
-                  <p className="text-white/80 text-xs leading-relaxed">
+                  <h3 className="text-xl font-bold mb-4">Expert Trainers</h3>
+                  <p className="text-primary font-semibold text-base mb-3">8,500+ certified professionals</p>
+                  <p className="text-white/70 text-lg leading-relaxed ">
                     Connect with certified personal trainers across multiple specializations
                   </p>
                 </div>
@@ -96,9 +96,9 @@ export function HeroVideoSection() {
                   <MapPin className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold mb-1">Global Reach</h3>
-                  <p className="text-primary font-semibold text-sm mb-2">2,500+ partner gyms</p>
-                  <p className="text-white/80 text-xs leading-relaxed">
+                  <h3 className="text-xl font-bold mb-1">Global Reach</h3>
+                  <p className="text-primary font-semibold text-base mb-2">2,500+ partner gyms</p>
+                  <p className="text-white/80 text-lg leading-relaxed">
                     Premium fitness centers across 90+ markets worldwide
                   </p>
                 </div>
@@ -113,9 +113,9 @@ export function HeroVideoSection() {
                   <TrendingUp className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold mb-1">Smart Analytics</h3>
-                  <p className="text-primary font-semibold text-sm mb-2">AI-powered insights</p>
-                  <p className="text-white/80 text-xs leading-relaxed">
+                  <h3 className="text-xl font-bold mb-1">Smart Analytics</h3>
+                  <p className="text-primary font-semibold text-base mb-2">AI-powered insights</p>
+                  <p className="text-white/80 text-lg leading-relaxed">
                     Advanced progress tracking and personalized recommendations
                   </p>
                 </div>

@@ -18,24 +18,24 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4">
-            <Link href="/" className="text-white hover:text-primary px-3 py-2 text-xs font-medium transition-colors">
+            <Link href="/" className="text-white hover:text-primary px-3 py-3 text-sm font-medium transition-colors">
               HOME
             </Link>
             <Link
               href="/about"
-              className="text-white hover:text-primary px-3 py-2 text-xs font-medium transition-colors"
+              className="text-white hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
             >
               ABOUT
             </Link>
             <Link
               href="/search"
-              className="text-white hover:text-primary px-3 py-2 text-xs font-medium transition-colors"
+              className="text-white hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
             >
               LOCATIONS
             </Link>
             <Link
               href="/contact"
-              className="text-white hover:text-primary px-3 py-2 text-xs font-medium transition-colors"
+              className="text-white hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
             >
               CONTACT
             </Link>
@@ -47,13 +47,13 @@ export function Navbar() {
                 asChild
                 variant="ghost"
                 size="sm"
-                className="text-white hover:text-primary hover:bg-white/10 text-xs"
+                className="text-white hover:text-primary hover:bg-white/10 text-sm"
               >
                 <Link href="/auth/login">Login</Link>
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs">
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-sm">
                     Join Now
                   </Button>
                 </DropdownMenuTrigger>
