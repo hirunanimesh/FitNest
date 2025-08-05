@@ -5,7 +5,8 @@ module.exports = {
   },
   services: {
     auth: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
-    gym: process.env.GYM_SERVICE_URL || 'http://localhost:3002'
+    gym: process.env.GYM_SERVICE_URL || 'http://localhost:3002',
+    payment: process.env.PAYMENT_SERVICE_URL || 'http://localhost:3003'
   },
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:3010',
