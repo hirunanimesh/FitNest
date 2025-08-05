@@ -19,7 +19,7 @@ export default function SignUpPage() {
   const [userType, setUserType] = useState("user")
   const [date, setDate] = useState<Date>()
   const [agreedToTerms, setAgreedToTerms] = useState(false)
-
+  const [gender, setGender] = useState("")
   const searchParams = useSearchParams()
   const typeParam = searchParams.get("type")
 
@@ -51,6 +51,48 @@ export default function SignUpPage() {
     }
   }
 
+  const handleSubmit = async () => {
+    const data: any = {
+      userType,
+      agreedToTerms,
+    }
+
+    if (userType === "user") {
+      data.firstName = (document.getElementById("firstName") as HTMLInputElement)?.value
+      data.lastName = (document.getElementById("lastName") as HTMLInputElement)?.value
+      data.email = (document.getElementById("email") as HTMLInputElement)?.value
+      data.password = (document.getElementById("password") as HTMLInputElement)?.value
+      data.weight = (document.getElementById("weight") as HTMLInputElement)?.value
+      data.height = (document.getElementById("height") as HTMLInputElement)?.value
+      data.contact = (document.getElementById("contact") as HTMLInputElement)?.value
+      data.address = (document.getElementById("address") as HTMLInputElement)?.value
+      data.dateOfBirth = date ? format(date, "yyyy-MM-dd") : null
+      data.gender = gender
+    } else if (userType === "trainer") {
+      data.name = (document.getElementById("trainerName") as HTMLInputElement)?.value
+      data.email = (document.getElementById("trainerEmail") as HTMLInputElement)?.value
+      data.password = (document.getElementById("trainerPassword") as HTMLInputElement)?.value
+      data.contact = (document.getElementById("trainerContact") as HTMLInputElement)?.value
+      data.bio = (document.getElementById("bio") as HTMLInputElement)?.value
+    } else if (userType === "gym") {
+      data.gymName = (document.getElementById("gymName") as HTMLInputElement)?.value
+      data.ownerName = (document.getElementById("ownerName") as HTMLInputElement)?.value
+      data.email = (document.getElementById("gymEmail") as HTMLInputElement)?.value
+      data.password = (document.getElementById("gymPassword") as HTMLInputElement)?.value
+      data.phone = (document.getElementById("gymPhone") as HTMLInputElement)?.value
+      data.address = (document.getElementById("gymAddress") as HTMLInputElement)?.value
+    }
+
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+
+    const result = await res.json()
+    alert(result.message)
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
@@ -59,7 +101,6 @@ export default function SignUpPage() {
           <CardDescription>{getFormDescription()}</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* User Registration */}
           {userType === "user" && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -72,17 +113,14 @@ export default function SignUpPage() {
                   <Input id="lastName" placeholder="Doe" required />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" placeholder="john@example.com" required />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input id="password" type="password" required />
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="weight">Weight (kg)</Label>
@@ -93,17 +131,14 @@ export default function SignUpPage() {
                   <Input id="height" type="number" placeholder="175" min="0" />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="contact">Contact Number</Label>
                 <Input id="contact" type="tel" placeholder="+1 (555) 123-4567" />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="address">Address</Label>
-                <Input id="address" placeholder="123 Main St, City, State" />
+                <Input id="address" placeholder="123 Main St" />
               </div>
-
               <div className="space-y-2">
                 <Label>Date of Birth</Label>
                 <Popover>
@@ -121,10 +156,9 @@ export default function SignUpPage() {
                   </PopoverContent>
                 </Popover>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="gender">Gender</Label>
-                <Select>
+                <Select onValueChange={setGender}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
@@ -135,121 +169,38 @@ export default function SignUpPage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="profileImage">Profile Image (Optional)</Label>
-                <div className="flex items-center space-x-2">
-                  <Input id="profileImage" type="file" accept="image/*" className="hidden" />
-                  <Button variant="outline" onClick={() => document.getElementById("profileImage")?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Image
-                  </Button>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* Trainer Registration */}
           {userType === "trainer" && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="trainerName">Name with Initials</Label>
-                <Input id="trainerName" placeholder="John A. Doe" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="trainerEmail">Email</Label>
-                <Input id="trainerEmail" type="email" placeholder="trainer@example.com" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="trainerPassword">Password</Label>
-                <Input id="trainerPassword" type="password" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="trainerContact">Contact Number</Label>
-                <Input id="trainerContact" type="tel" placeholder="+1 (555) 123-4567" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio (Optional)</Label>
-                <Input id="bio" placeholder="Tell us about your experience and specializations" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="trainerImage">Profile Image (Optional)</Label>
-                <div className="flex items-center space-x-2">
-                  <Input id="trainerImage" type="file" accept="image/*" className="hidden" />
-                  <Button variant="outline" onClick={() => document.getElementById("trainerImage")?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Image
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="verification">Verification Documents</Label>
-                <div className="flex items-center space-x-2">
-                  <Input id="verification" type="file" accept=".pdf,.jpg,.png" multiple className="hidden" />
-                  <Button variant="outline" onClick={() => document.getElementById("verification")?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Documents
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Upload certifications, licenses, and other relevant documents
-                </p>
-              </div>
+              <Label htmlFor="trainerName">Name with Initials</Label>
+              <Input id="trainerName" placeholder="John A. Doe" required />
+              <Label htmlFor="trainerEmail">Email</Label>
+              <Input id="trainerEmail" type="email" placeholder="trainer@example.com" required />
+              <Label htmlFor="trainerPassword">Password</Label>
+              <Input id="trainerPassword" type="password" required />
+              <Label htmlFor="trainerContact">Contact Number</Label>
+              <Input id="trainerContact" type="tel" required />
+              <Label htmlFor="bio">Bio (Optional)</Label>
+              <Input id="bio" placeholder="Specialties, experience..." />
             </div>
           )}
 
-          {/* Gym Registration */}
           {userType === "gym" && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="gymName">Gym Name</Label>
-                <Input id="gymName" placeholder="FitZone Gym" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="ownerName">Owner Name</Label>
-                <Input id="ownerName" placeholder="Jane Smith" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gymEmail">Email</Label>
-                <Input id="gymEmail" type="email" placeholder="info@fitzone.com" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gymPassword">Password</Label>
-                <Input id="gymPassword" type="password" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gymPhone">Phone Number</Label>
-                <Input id="gymPhone" type="tel" placeholder="+1 (555) 123-4567" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gymAddress">Location Address</Label>
-                <Input id="gymAddress" placeholder="123 Fitness Ave, Health City, HC 12345" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gymVerification">Verification Documents</Label>
-                <div className="flex items-center space-x-2">
-                  <Input id="gymVerification" type="file" accept=".pdf,.jpg,.png" multiple className="hidden" />
-                  <Button variant="outline" onClick={() => document.getElementById("gymVerification")?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Documents
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Upload business license, insurance, and other relevant documents
-                </p>
-              </div>
+              <Label htmlFor="gymName">Gym Name</Label>
+              <Input id="gymName" placeholder="FitZone Gym" required />
+              <Label htmlFor="ownerName">Owner Name</Label>
+              <Input id="ownerName" placeholder="Jane Smith" required />
+              <Label htmlFor="gymEmail">Email</Label>
+              <Input id="gymEmail" type="email" placeholder="info@fitzone.com" required />
+              <Label htmlFor="gymPassword">Password</Label>
+              <Input id="gymPassword" type="password" required />
+              <Label htmlFor="gymPhone">Phone Number</Label>
+              <Input id="gymPhone" type="tel" required />
+              <Label htmlFor="gymAddress">Location Address</Label>
+              <Input id="gymAddress" required />
             </div>
           )}
 
@@ -267,7 +218,7 @@ export default function SignUpPage() {
             </Label>
           </div>
 
-          <Button className="w-full mt-6" disabled={!agreedToTerms}>
+          <Button className="w-full mt-6" onClick={handleSubmit} disabled={!agreedToTerms}>
             Create Account
           </Button>
 
