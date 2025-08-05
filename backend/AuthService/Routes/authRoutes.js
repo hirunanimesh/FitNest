@@ -8,6 +8,7 @@ const AuthController = require('../controllers/AuthController');
 router.get('/health', async (req, res) => {
   // Ensure we don't try to parse any body for this GET request
   
+  
   try {
     const isConnected = await testConnection();
     
