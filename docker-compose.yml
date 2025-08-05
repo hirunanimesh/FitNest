@@ -15,10 +15,12 @@ services:
       - FRONTEND_URL=http://localhost:3010
       - AUTH_SERVICE_URL=http://auth-service:3001
       - GYM_SERVICE_URL=http://gym-service:3002
+      - PAYMENT_SERVICE_URL=http://payment-service:3003
       - NODE_ENV=production
     depends_on:
       - auth-service
       - gym-service
+      - payment-service
     networks:
       - fitnest-network
     restart: unless-stopped
@@ -77,6 +79,32 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+  
+  # Payment Service
+  payment-service:
+    build:
+      context: ./backend/PaymentService
+      dockerfile: Dockerfile
+    container_name: fitnest-payment-service
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./backend/PaymentService:/app
+      - payment_service_node_modules:/app/node_modules
+    env_file:
+      - .env
+    environment:
+      - PORT=3003
+      - NODE_ENV=production
+    networks:
+      - fitnest-network
+    restart:
+      unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Frontend Service
   frontend:
@@ -115,6 +143,8 @@ volumes:
   auth_service_node_modules:
     driver: local
   gym_service_node_modules:
+    driver: local
+  payment_service_node_modules:
     driver: local
   frontend_node_modules:
     driver: local

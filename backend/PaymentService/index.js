@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv'
 import createPlan from './controllers/stripeController/create-plan.js';
 import createAccount from './controllers/stripeController/create-account.js';
 import subscribe from './controllers/stripeController/subscribe.js';
@@ -9,8 +10,9 @@ import getDashboardLink from './controllers/stripeController/dashboard.js';
 import getPaymentList from './controllers/stripeController/get-payments.js';
 import connectDatabase from './database/mongo.js';
 
-const app = express();
+dotenv.config();
 
+const app = express();
 app.use(express.json());
 app.use(cors());
 
@@ -25,6 +27,6 @@ app.use('/getpayments',getPaymentList)
 app.use('/stripedashboard',getDashboardLink)
 
 
-app.listen(process.env.PORT || 3005, () => {
-    console.log(`Payment Service is running on port ${process.env.PORT || 3005}`);
+app.listen(process.env.PORT || 3003, () => {
+    console.log(`Payment Service is running on port ${process.env.PORT || 3003}`);
 })
