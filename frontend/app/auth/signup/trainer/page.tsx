@@ -11,45 +11,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Upload, FileText } from "lucide-react"
 import Link from "next/link"
-import { Eye, EyeOff } from "lucide-react"
-
 
 export default function TrainerSignup() {
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [verificationDocs, setVerificationDocs] = useState<File[]>([])
-    const [password, setPassword] = useState("")
 
   const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setVerificationDocs(Array.from(e.target.files))
     }
   }
-  function PasswordInput({ value, onChange }: { value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
-  const [showPassword, setShowPassword] = useState(false)
-
-  return (
-    <div className="relative">
-      <input
-        type={showPassword ? "text" : "password"}
-        value={value}
-        onChange={onChange}
-        placeholder="Enter your password"
-        className="w-full p-2 pr-10 border rounded"
-      />
-      <div
-        className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700"
-        onClick={() => setShowPassword(!showPassword)}
-      >
-        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-      </div>
-    </div>
-  )
-}
-
-
-    function setPasswordHandler(value: string): void {
-        throw new Error("Function not implemented.")
-    }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -75,20 +46,15 @@ export default function TrainerSignup() {
                   <Input id="email" type="email" placeholder="Enter your email" required />
                 </div>
 
-                 <Label htmlFor="password">Password *</Label>
-                <PasswordInput
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                  <PasswordInput
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <Input id="confirmPassword" type="password" placeholder="Confirm your password" required />
+                  <Label htmlFor="password">Password *</Label>
+                  <Input id="password" type="password" placeholder="Create a strong password" required />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <Input id="confirmPassword" type="password" placeholder="Confirm your password" required />
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="contactNo">Contact Number *</Label>

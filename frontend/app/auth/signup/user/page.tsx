@@ -13,10 +13,22 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Upload } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function UserSignup() {
+  const router = useRouter()
   const [date, setDate] = useState<Date>()
   const [profileImage, setProfileImage] = useState<File | null>(null)
+
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    // Simulate successful registration logic
+    console.log("User registered successfully")
+
+    // Redirect to the dashboard
+    router.push("/dashboard")
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -30,7 +42,7 @@ export default function UserSignup() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleFormSubmit}>
                 {/* Personal Information */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">

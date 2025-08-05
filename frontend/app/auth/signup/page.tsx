@@ -20,16 +20,5 @@ export default function SignUpPage() {
     }
   }, [searchParams, router]);
 
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Redirecting...</CardTitle>
-          <CardDescription>
-            Please wait while we navigate you to the appropriate signup page.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    </div>
-  );
+  
 }
