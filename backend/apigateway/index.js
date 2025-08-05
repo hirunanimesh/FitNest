@@ -1,80 +1,63 @@
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
+const config = require('./src/config');
+const loggingMiddleware = require('./src/middleware/logging');
+const authProxy = require('./src/proxies/authProxy');
+const gymProxy = require('./src/proxies/gymProxy');
+const { serviceHealth, startHealthChecks } = require('./src/utils/serviceHealth');
 require('dotenv').config();
 
 const app = express();
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
-}));
+// Middleware
+app.use(cors(config.cors));
+app.use(loggingMiddleware);
 
-// Add request logging middleware
-app.use((req, res, next) => {
-  console.log(`[API Gateway] ${req.method} ${req.url}`);
-  next();
-});
+// Start service health monitoring
+startHealthChecks();
 
-// Use JSON parsing for non-proxy routes only
-app.get('/health', express.json(), (req, res) => {
+// Health check endpoint
+app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'API Gateway is running',
     timestamp: new Date().toISOString(),
-    service: 'APIGateway'
+    service: 'APIGateway',
+    version: process.env.npm_package_version || '1.0.0',
+    services: serviceHealth
   });
 });
 
-// Proxy for auth service - proxy all requests starting with /api/auth
-const authProxy = createProxyMiddleware({
-  target: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/': '/api/auth/' // Keep the path as is
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`[Proxy] ${req.method} ${req.originalUrl} -> ${proxyReq.getHeader('host')}${req.url}`);
-  },
-  onError: (err, req, res) => {
-    console.error(`[Proxy Error] ${err.message}`);
-    res.status(500).json({
-      status: 'error',
-      message: 'Error occurred while trying to proxy',
-      error: err.message
-    });
-  }
-});
-
-const gymProxy = createProxyMiddleware({
-  target: process.env.GYM_SERVICE_URL || 'http://localhost:3002',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/gym': '' 
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`[Proxy] ${req.method} ${req.originalUrl} -> ${proxyReq.getHeader('host')}${req.url}`);
-  },
-  onError: (err, req, res) => {
-    console.error(`[Proxy Error] ${err.message}`);
-    res.status(500).json({
-      status: 'error',
-      message: 'Error occurred while trying to proxy',
-      error: err.message
-    });
-  }
-});
-
-// Use the proxy for auth routes (express.json() will be applied by the target service)
+// Service routes
 app.use('/api/auth', authProxy);
-app.use('/api/gym',gymProxy)
+app.use('/api/gym', gymProxy);
 
-// Start the server
-const PORT = process.env.PORT || 3000;
+// 404 handler for unmatched routes
+app.use('*', (req, res) => {
+  res.status(404).json({
+    status: 'error',
+    message: 'Route not found',
+    path: req.originalUrl,
+    availableRoutes: ['/health', '/api/auth/*', '/api/gym/*']
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('[API Gateway Error]', err);
+  res.status(500).json({
+    status: 'error',
+    message: 'Internal server error',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Start server
+const PORT = config.port;
 app.listen(PORT, () => {
   console.log(`🚀 API Gateway is running on port ${PORT}`);
-  console.log(`📡 Health check available at: http://localhost:${PORT}/health`);
+  console.log(`📡 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔗 Proxying to services:`, config.services);
+  console.log(`🌐 CORS enabled for: ${config.cors.origin}`);
 });
 
