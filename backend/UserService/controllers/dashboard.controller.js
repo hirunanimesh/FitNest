@@ -152,6 +152,36 @@ class DashboardController {
       });
     }
   }
+  /**
+ * Get weight progress
+ * GET /api/dashboard/weight-progress
+ */
+async getWeightProgress(req, res) {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized - User ID not found'
+      });
+    }
+
+    const weightProgress = await dashboardService.getWeightProgress(userId);
+
+    res.status(200).json({
+      success: true,
+      data: weightProgress
+    });
+  } catch (error) {
+    console.error('Weight progress controller error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch weight progress'
+    });
+  }
+}
+
 
   /**
    * Add weight entry manually

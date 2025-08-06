@@ -1,4 +1,5 @@
 import { google } from 'googleapis'
+import crypto from 'crypto'
 
 /**
  * Create an authorized Google API client
@@ -63,4 +64,49 @@ export const createEvent = async (accessToken, eventData) => {
     console.error('Error creating event:', error)
     throw new Error('Failed to create event in Google Calendar')
   }
+}
+
+/**
+ * Mock database functions for calendar operations
+ */
+export const insertCalendarTask = async (task) => {
+  const newTask = {
+    ...task,
+    calendar_id: crypto.randomUUID(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+  console.log('Inserting task into calendar table:', newTask)
+  return newTask
+}
+
+export const getCalendarTasks = async (customerId) => {
+  return [
+    {
+      calendar_id: '1',
+      task_date: new Date().toISOString().split('T')[0],
+      task: 'Morning workout',
+      customer_id: customerId,
+      note: 'HIIT session',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ]
+}
+
+export const updateCalendarTask = async (taskId, updates) => {
+  console.log('Updating task:', taskId, updates)
+  return {
+    calendar_id: taskId,
+    task_date: updates.task_date || '',
+    task: updates.task || '',
+    customer_id: updates.customer_id || 1,
+    note: updates.note,
+    updated_at: new Date().toISOString(),
+  }
+}
+
+export const deleteCalendarTask = async (taskId) => {
+  console.log('Deleting task:', taskId)
+  return true
 }
