@@ -7,12 +7,16 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import Link from "next/link"
+import { AppLogo } from "@/components/AppLogo";
 
 export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="absolute top-4 left-4">
+      <AppLogo />
+    </div>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome Back to FitNest</CardTitle>

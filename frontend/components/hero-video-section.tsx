@@ -6,8 +6,13 @@ import { Users, MapPin, TrendingUp, Play } from "lucide-react"
 import Link from "next/link"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import VideoBackground from "@/components/video-background"
-
+import { useState } from "react"
+import VideoModal from "@/components/ui/VideoModal"
 export function HeroVideoSection() {
+   const [isModalOpen, setModalOpen] = useState(false)
+
+  const openModal = () => setModalOpen(true)
+  const closeModal = () => setModalOpen(false)
   return (
     <section className="relative h-screen overflow-hidden">
       {/* YouTube Video Background - Only for this section */}
@@ -57,16 +62,14 @@ export function HeroVideoSection() {
             </DropdownMenu>
 
             <Button
-              asChild
-              variant="outline"
-              size="default"
-              className="text-base px-6 py-3 bg-transparent border-white text-white hover:bg-white hover:text-black"
-            >
-              <Link href="/about">
-                <Play className="mr-2 h-4 w-4" />
-                Watch Motivation
-              </Link>
-            </Button>
+            variant="outline"
+            size="lg"
+            className="text-lg px-8 py-4 bg-transparent border-white text-white hover:bg-white hover:text-black"
+            onClick={openModal}
+          >
+            <Play className="mr-2 h-5 w-5" />
+            Watch Success Stories
+          </Button>
           </div>
         </div>
 
@@ -133,6 +136,12 @@ export function HeroVideoSection() {
           </div>
         </div>
       </div>
+      {/* Video Modal */}
+      <VideoModal
+        videoUrl="https://www.youtube.com/embed/dK4AfPI6GRs"
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </section>
   )
 }

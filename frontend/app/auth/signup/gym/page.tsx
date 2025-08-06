@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Upload, FileText, MapPin } from "lucide-react"
 import Link from "next/link"
-
+import { AppLogo } from "@/components/AppLogo";
 export default function GymSignup() {
   const [gymImages, setGymImages] = useState<File[]>([])
   const [verificationDocs, setVerificationDocs] = useState<File[]>([])
@@ -32,6 +32,7 @@ export default function GymSignup() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4">
+        <AppLogo />
         <div className="max-w-2xl mx-auto">
           <Card className="border-red-200">
             <CardHeader className="text-center">
@@ -321,7 +322,7 @@ export default function GymSignup() {
                 <div className="text-center">
                   <p className="text-gray-600">
                     Already have an account?{" "}
-                    <Link href="/login" className="text-red-600 hover:text-red-500 underline">
+                    <Link href="/auth/login" className="text-red-600 hover:text-red-500 underline">
                       Sign in
                     </Link>
                   </p>
