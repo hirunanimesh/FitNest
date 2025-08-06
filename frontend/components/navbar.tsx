@@ -28,10 +28,10 @@ export function Navbar() {
               ABOUT
             </Link>
             <Link
-              href="/search"
+              href="/gym"
               className="text-white hover:text-primary px-3 py-2 text-lg font-medium transition-colors"
             >
-              LOCATIONS
+              GYM
             </Link>
             <Link
               href="/contact"
