@@ -20,14 +20,43 @@ export default function UserSignup() {
   const [date, setDate] = useState<Date>()
   const [profileImage, setProfileImage] = useState<File | null>(null)
 
-  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    // Simulate successful registration logic
-    console.log("User registered successfully")
+    const formData = new FormData(e.currentTarget)
+    const userData = {
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
+      email: formData.get("email"),
+      password: formData.get("password"),
+      confirmPassword: formData.get("confirmPassword"),
+      contactNo: formData.get("contactNo"),
+      dateOfBirth: date,
+      gender: formData.get("gender"),
+      weight: formData.get("weight"),
+      height: formData.get("height"),
+      address: formData.get("address"),
+    }
 
-    // Redirect to the dashboard
-    router.push("/dashboard")
+    try {
+      const response = await fetch(`${process.env.AUTH_SERVICE_URL}/auth/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      })
+
+      if (response.ok) {
+        console.log("User registered successfully")
+        router.push("/")
+      } else {
+        const errorData = await response.json()
+        console.error("Error registering user:", errorData)
+      }
+    } catch (error) {
+      console.error("Network error:", error)
+    }
   }
 
   return (
@@ -47,32 +76,38 @@ export default function UserSignup() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name *</Label>
-                    <Input id="firstName" placeholder="Enter your first name" required />
+                    <Input id="firstName" name="firstName" placeholder="Enter your first name" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name *</Label>
-                    <Input id="lastName" placeholder="Enter your last name" required />
+                    <Input id="lastName" name="lastName" placeholder="Enter your last name" required />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address *</Label>
-                  <Input id="email" type="email" placeholder="Enter your email" required />
+                  <Input id="email" name="email" type="email" placeholder="Enter your email" required />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="password">Password *</Label>
-                  <Input id="password" type="password" placeholder="Create a strong password" required />
+                  <Input id="password" name="password" type="password" placeholder="Create a strong password" required />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                  <Input id="confirmPassword" type="password" placeholder="Confirm your password" required />
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your password"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="contactNo">Contact Number *</Label>
-                  <Input id="contactNo" type="tel" placeholder="Enter your phone number" required />
+                  <Input id="contactNo" name="contactNo" type="tel" placeholder="Enter your phone number" required />
                 </div>
 
                 {/* Date of Birth */}
@@ -111,18 +146,18 @@ export default function UserSignup() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input id="weight" type="number" placeholder="Enter your weight" />
+                    <Input id="weight" name="weight" type="number" placeholder="Enter your weight" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="height">Height (cm)</Label>
-                    <Input id="height" type="number" placeholder="Enter your height" />
+                    <Input id="height" name="height" type="number" placeholder="Enter your height" />
                   </div>
                 </div>
 
                 {/* Address */}
                 <div className="space-y-2">
                   <Label htmlFor="address">Address *</Label>
-                  <Textarea id="address" placeholder="Enter your full address" className="min-h-[100px]" required />
+                  <Textarea id="address" name="address" placeholder="Enter your full address" className="min-h-[100px]" required />
                 </div>
 
                 {/* Profile Image */}

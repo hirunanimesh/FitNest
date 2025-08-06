@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function SignUpPage() {
   const router = useRouter();
