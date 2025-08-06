@@ -19,6 +19,7 @@ export default function UserSignup() {
   const router = useRouter()
   const [date, setDate] = useState<Date>()
   const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [gender, setGender] = useState("");
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -39,17 +40,14 @@ export default function UserSignup() {
     }
 
     try {
-      const response = await fetch(`${process.env.AUTH_SERVICE_URL}/auth/signup`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/auth/signup`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
+        body: formData
       })
 
       if (response.ok) {
         console.log("User registered successfully")
-        router.push("/")
+        router.push("/dashboard")
       } else {
         const errorData = await response.json()
         console.error("Error registering user:", errorData)
@@ -129,17 +127,16 @@ export default function UserSignup() {
                 {/* Gender */}
                 <div className="space-y-2">
                   <Label>Gender *</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                      <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Select onValueChange={setGender}>
+  <SelectTrigger>
+    <SelectValue placeholder="Select your gender" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="male">Male</SelectItem>
+    <SelectItem value="female">Female</SelectItem>
+    <SelectItem value="other">Other</SelectItem>
+  </SelectContent>
+</Select>
                 </div>
 
                 {/* Physical Information */}

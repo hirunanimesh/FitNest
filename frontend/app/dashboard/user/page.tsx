@@ -1,629 +1,652 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
+import { useState, useEffect } from "react"
+import { format } from "date-fns"
+import { Bell, CalendarIcon, Dumbbell, Home, LogOut, Mail, Moon, Search, Settings, Sun, User, Users, MapPin, Phone, TrendingUp, Weight, Ruler, Activity, Plus } from 'lucide-react'
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
 import {
-  TrendingUp,
-  Target,
-  CalendarIcon,
-  Search,
-  User,
-  Dumbbell,
-  Plus,
-  Trophy,
-  FlameIcon as Fire,
-  CheckCircle,
-  Clock,
-  MapPin,
-  Activity,
-  Heart,
-  Zap,
-  Award,
-  Users,
-} from "lucide-react"
-import { useState } from "react"
-import Link from "next/link"
-import { UserNavbar } from "@/components/user-navbar"
-import { BMIChart } from "@/components/bmi-chart"
-import { WeightChart } from "@/components/weight-chart"
-import { WeightInputModal } from "@/components/weight-input-modal"
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { useTheme } from "next-themes"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter } from "recharts"
+import { Calendar as CalendarUI } from "@/components/ui/calendar"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
-export default function UserDashboard() {
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [showWeightModal, setShowWeightModal] = useState(false)
+// Mock data
+const mockUser = {
+  name: "Alex Johnson",
+  email: "alex@fitnest.com",
+  avatar: "/placeholder.svg?height=40&width=40&text=AJ"
+}
 
-  // Enhanced mock user data
-  const user = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    memberSince: "January 2024",
-    bmi: 24.2,
-    currentWeight: 75,
-    targetWeight: 70,
-    weeklyGoal: 5,
-    completedWorkouts: 4,
-    totalWorkouts: 47,
-    caloriesBurned: 2340,
-    weeklyCalorieGoal: 3000,
-    currentStreak: 7,
-    longestStreak: 21,
-    level: "Intermediate",
-    points: 1250,
-    nextLevelPoints: 1500,
-    subscriptions: [
-      {
-        name: "FitZone Premium",
-        type: "Gym",
-        status: "Active",
-        expiresIn: "15 days",
-        image: "/images/gym-fitzone.png",
-        plan: "Monthly Premium",
-        price: "$49/month",
-      },
-      {
-        name: "Personal Training with Sarah",
-        type: "Trainer",
-        status: "Active",
-        expiresIn: "8 days",
-        image: "/images/trainer-sarah.png",
-        plan: "8 Sessions Package",
-        price: "$600/package",
-      },
-    ],
-    recentActivities: [
-      { date: "Today", activity: "Chest & Triceps", duration: "45 min", calories: 320, gym: "FitZone Premium" },
-      { date: "Yesterday", activity: "Cardio HIIT", duration: "30 min", calories: 280, gym: "FitZone Premium" },
-      { date: "2 days ago", activity: "Back & Biceps", duration: "50 min", calories: 350, gym: "FitZone Premium" },
-      { date: "3 days ago", activity: "Leg Day", duration: "60 min", calories: 420, gym: "FitZone Premium" },
-    ],
-    upcomingSessions: [
-      {
-        date: "Tomorrow",
-        time: "10:00 AM",
-        trainer: "Sarah Johnson",
-        type: "Personal Training",
-        location: "FitZone Premium",
-        focus: "Upper Body Strength",
-      },
-      {
-        date: "Friday",
-        time: "6:00 PM",
-        trainer: "Mike Rodriguez",
-        type: "Powerlifting Session",
-        location: "Iron Paradise",
-        focus: "Deadlift Technique",
-      },
-    ],
-    achievements: [
-      { title: "7-Day Streak", icon: Fire, earned: "Today", description: "Worked out 7 days in a row" },
-      {
-        title: "Weight Loss Milestone",
-        icon: Target,
-        earned: "3 days ago",
-        description: "Lost 5kg from starting weight",
-      },
-      { title: "Strength Gains", icon: Dumbbell, earned: "1 week ago", description: "Increased bench press by 10kg" },
-    ],
-    todaysTasks: [
-      { id: 1, task: "Morning cardio session", completed: true },
-      { id: 2, task: "Log today's weight", completed: false },
-      { id: 3, task: "Drink 8 glasses of water", completed: false },
-      { id: 4, task: "Evening strength training", completed: false },
-      { id: 5, task: "Take progress photos", completed: false },
-    ],
-    nutritionGoals: {
-      calories: { current: 1850, target: 2200 },
-      protein: { current: 120, target: 150 },
-      carbs: { current: 180, target: 220 },
-      fats: { current: 65, target: 80 },
-    },
+const mockSessions = [
+  {
+    id: 1,
+    title: "HIIT Cardio Blast",
+    trainer: "Sarah Wilson",
+    date: "2024-01-08",
+    time: "09:00 AM",
+    amount: "$45",
+    description: "High-intensity interval training for maximum calorie burn",
+    link: "https://zoom.us/j/123456789",
+    image: "/placeholder.svg?height=100&width=150&text=HIIT"
+  },
+  {
+    id: 2,
+    title: "Strength Training",
+    trainer: "Mike Chen",
+    date: "2024-01-08",
+    time: "02:00 PM",
+    amount: "$50",
+    description: "Full body strength workout focusing on compound movements",
+    link: "https://meet.google.com/abc-defg-hij",
+    image: "/placeholder.svg?height=100&width=150&text=Strength"
+  },
+  {
+    id: 3,
+    title: "Yoga Flow",
+    trainer: "Emma Davis",
+    date: "2024-01-09",
+    time: "07:00 AM",
+    amount: "$35",
+    description: "Relaxing yoga session to improve flexibility and mindfulness",
+    link: "https://zoom.us/j/987654321",
+    image: "/placeholder.svg?height=100&width=150&text=Yoga"
   }
+]
 
-  const motivationalQuotes = [
-    "You're stronger than you think! 💪",
-    "Every workout counts towards your goal! 🎯",
-    "Consistency is the key to success! 🔥",
-    "Your body can do it. It's your mind you need to convince! 🧠",
-    "Progress, not perfection! 🌟",
-  ]
+const bmiData = [
+  { day: 'Mon', bmi: 24.2 },
+  { day: 'Tue', bmi: 24.1 },
+  { day: 'Wed', bmi: 24.3 },
+  { day: 'Thu', bmi: 24.0 },
+  { day: 'Fri', bmi: 23.9 },
+  { day: 'Sat', bmi: 24.1 },
+  { day: 'Sun', bmi: 24.0 }
+]
 
-  const [currentQuote] = useState(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)])
+const weightData = [
+  { day: 'Mon', weight: 75.2 },
+  { day: 'Tue', weight: 75.0 },
+  { day: 'Wed', weight: 75.3 },
+  { day: 'Thu', weight: 74.8 },
+  { day: 'Fri', weight: 74.6 },
+  { day: 'Sat', weight: 75.1 },
+  { day: 'Sun', weight: 74.9 }
+]
+
+const motivationQuotes = [
+  "Every workout counts towards your goal!",
+  "Consistency is the key to success!",
+  "Your only limit is your mind!",
+  "Push yourself because no one else will!"
+]
+
+const sidebarItems = [
+  { title: "Home", icon: Home, url: "#", isActive: true },
+  { title: "Profile", icon: User, url: "#" },
+  { title: "Trainers", icon: Users, url: "#" },
+  { title: "Gyms", icon: MapPin, url: "#" },
+  { title: "Contacts", icon: Phone, url: "#" },
+  { title: "Settings", icon: Settings, url: "#" },
+]
+
+function AnimatedQuote({ quote }: { quote: string }) {
+  const [displayedText, setDisplayedText] = useState("")
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  useEffect(() => {
+    if (currentIndex < quote.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText(prev => prev + quote[currentIndex])
+        setCurrentIndex(prev => prev + 1)
+      }, 100)
+      return () => clearTimeout(timeout)
+    }
+  }, [currentIndex, quote])
+
+  useEffect(() => {
+    setDisplayedText("")
+    setCurrentIndex(0)
+  }, [quote])
+
+  return <p className="text-2xl font-bold text-red-800 dark:text-red-400 italic">{displayedText}</p>
+}
+
+function AppSidebar() {
+  const { theme, setTheme } = useTheme()
 
   return (
-    <div className="min-h-screen bg-background">
-      <UserNavbar />
+    <Sidebar className="bg-gradient-to-br from-red-600 via-red-700 to-black dark:from-red-600 dark:via-red-700 dark:to-black">
+      <SidebarHeader className="bg-transparent">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" className="data-[state=open]:bg-white/10 text-white hover:bg-white/10 text-xl">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white/20 text-white-xl">
+                <Dumbbell className="size-9" />
+              </div>
+              <div className="flex flex-col gap-0.5 leading-none">
+                <span className="font-semibold text-white">FitNest</span>
+                <span className="text-xs text-white/80">Fitness Dashboard</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent className="bg-transparent">
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {sidebarItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={item.isActive} className="text-lg">
+                    <a href={item.url} className={`text-white hover:bg-white/10 ${item.isActive ? "bg-white/20 text-white font-semibold" : ""}`}>
+                      <item.icon className="text-white" />
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter className="bg-transparent">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton className="text-white hover:bg-white/10">
+              <LogOut className="text-white" />
+              <span>Logout</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  )
+}
 
-      <div className="container mx-auto p-6">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+export default function UserDashboard() {
+  const { theme, setTheme } = useTheme()
+  const [currentQuote, setCurrentQuote] = useState(0)
+  const [mounted, setMounted] = useState(false)
+  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
+  const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false)
+  const [taskForm, setTaskForm] = useState({
+    task_date: format(new Date(), "yyyy-MM-dd"),
+    task: "",
+    note: "",
+    customer_id: 1 // Mock customer ID
+  })
+  const [weightForm, setWeightForm] = useState({
+    date: format(new Date(), "yyyy-MM-dd"),
+    weight: ""
+  })
+  const [tasks, setTasks] = useState([
+    { id: 1, task_date: format(new Date(), "yyyy-MM-dd"), task: "Morning workout", note: "HIIT session", type: "workout" },
+    { id: 2, task_date: format(new Date(), "yyyy-MM-dd"), task: "Nutrition consultation", note: "Diet planning", type: "appointment" },
+    { id: 3, task_date: format(new Date(), "yyyy-MM-dd"), task: "Rest day", note: "Recovery", type: "rest" }
+  ])
+
+  // Ensure the theme is properly initialized and debug the toggle functionality
+  useEffect(() => {
+    if (!mounted) {
+      setMounted(true);
+    }
+  }, [mounted]);
+
+  useEffect(() => {
+    setMounted(true)
+    const interval = setInterval(() => {
+      setCurrentQuote(prev => (prev + 1) % motivationQuotes.length)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (!mounted) return null // Prevent rendering until the theme is mounted
+
+  const today = format(new Date(), "EEEE, MMMM do, yyyy")
+
+  const handleTaskSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const newTask = {
+      id: Date.now(),
+      ...taskForm,
+      type: "workout" // Default type
+    }
+    setTasks(prev => [...prev, newTask])
+    setTaskForm({
+      task_date: format(new Date(), "yyyy-MM-dd"),
+      task: "",
+      note: "",
+      customer_id: 1
+    })
+    setIsTaskDialogOpen(false)
+  }
+
+  const handleWeightSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Here you would typically update the weight data
+    console.log("Weight added:", weightForm)
+    setWeightForm({
+      date: format(new Date(), "yyyy-MM-dd"),
+      weight: ""
+    })
+    setIsWeightDialogOpen(false)
+  }
+
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="flex">
+        <div className="flex-1">
+          {/* Header */}
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <div className="flex flex-1 items-center justify-between">
+              <div>
+                <h1 className="text-lg font-semibold">Hi, {mockUser.name}</h1>
+                <p className="text-sm text-muted-foreground">{today}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                {/* Ensure the theme toggle functionality works correctly */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                >
+                  <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                  <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                </Button>
+                <Button variant="ghost" size="icon">
+                  <Bell className="h-4 w-4" />
+                </Button>
+                <Avatar>
+                  <AvatarImage src={mockUser.avatar || "/placeholder.svg"} />
+                  <AvatarFallback>AJ</AvatarFallback>
+                </Avatar>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <div className="flex-1 space-y-6 p-6">
+            {/* Motivation Quote */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-800 dark:text-red-400 mb-2">
+                <AnimatedQuote quote={motivationQuotes[currentQuote]} />
+              </div>
+            </div>
+
+            {/* Streak Card */}
+            <Card className="border-red-200 dark:border-red-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-red-500" />
+                  Workout Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-500">7</div>
+                    <div className="text-sm text-muted-foreground">Current Streak</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-500">21</div>
+                    <div className="text-sm text-muted-foreground">Best Streak</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">85%</div>
+                    <div className="text-sm text-muted-foreground">Goal Progress</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Daily Workouts */}
             <div>
-              <h1 className="text-3xl font-bold mb-2 text-white">Welcome back, {user.name}!</h1>
-              <p className="text-muted-foreground">Ready to crush your fitness goals today?</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="bg-primary/20 text-primary">
-                Level {user.level}
-              </Badge>
-              <Badge variant="outline" className="border-primary text-primary">
-                {user.points} / {user.nextLevelPoints} XP
-              </Badge>
-            </div>
-          </div>
-        </div>
-
-        {/* Motivation Phase - Full Width */}
-        <Card className="mb-8 bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/30 overflow-hidden">
-          <div className="relative">
-            <img
-              src="/images/motivation-bg.png"
-              alt="Motivation background"
-              className="absolute inset-0 w-full h-full object-cover opacity-20"
-            />
-            <CardContent className="relative p-8">
-              <div className="flex items-center justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Fire className="h-8 w-8 text-primary" />
-                    <h2 className="text-3xl font-bold text-white">{currentQuote}</h2>
-                  </div>
-                  <p className="text-muted-foreground text-lg">
-                    You've completed {user.completedWorkouts} workouts this week. Keep up the great work!
-                  </p>
-                  <div className="flex items-center space-x-6">
-                    <div className="flex items-center space-x-2">
-                      <Trophy className="h-5 w-5 text-yellow-500" />
-                      <span className="text-white font-semibold">Weekly Goal: {user.weeklyGoal} workouts</span>
-                    </div>
-                    <Progress value={(user.completedWorkouts / user.weeklyGoal) * 100} className="w-40" />
-                    <span className="text-white font-semibold">
-                      {user.completedWorkouts}/{user.weeklyGoal}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-6">
-                    <div className="flex items-center space-x-2">
-                      <Zap className="h-5 w-5 text-orange-500" />
-                      <span className="text-white font-semibold">Current Streak: {user.currentStreak} days</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Award className="h-5 w-5 text-purple-500" />
-                      <span className="text-white font-semibold">Best Streak: {user.longestStreak} days</span>
-                    </div>
-                  </div>
-                  <div className="flex space-x-4">
-                    <Button className="bg-primary hover:bg-primary/90">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Log Workout
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="bg-transparent border-white text-white hover:bg-white hover:text-black"
-                    >
-                      View Achievements
-                    </Button>
-                  </div>
-                </div>
-                <div className="text-8xl opacity-50">🎯</div>
+              <h2 className="text-xl font-semibold mb-4">Today's Sessions</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {mockSessions.slice(0, 2).map((session) => (
+                  <Card key={session.id} className="dark:bg-black dark:border-green-500/20">
+                    <CardHeader className="pb-2">
+                      <img 
+                        src={session.image || "/placeholder.svg"} 
+                        alt={session.title}
+                        className="w-full h-24 object-cover rounded-md mb-2"
+                      />
+                      <CardTitle className="text-lg">{session.title}</CardTitle>
+                      <CardDescription>with {session.trainer}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Date:</span>
+                          <span>{session.date}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Time:</span>
+                          <span>{session.time}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Amount:</span>
+                          <span className="font-semibold text-green-600">{session.amount}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">{session.description}</p>
+                        <Button size="sm" className="w-full mt-2 bg-red-500 hover:bg-red-600">
+                          Join Session
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </CardContent>
-          </div>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="bg-card border-border">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Current BMI</p>
-                      <p className="text-2xl font-bold text-white">{user.bmi}</p>
-                      <Badge variant="secondary" className="mt-1">
-                        Normal
-                      </Badge>
-                    </div>
-                    <TrendingUp className="h-8 w-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-border">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Weight</p>
-                      <p className="text-2xl font-bold text-white">{user.currentWeight}kg</p>
-                      <p className="text-sm text-muted-foreground">Goal: {user.targetWeight}kg</p>
-                    </div>
-                    <Target className="h-8 w-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-border">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Workouts</p>
-                      <p className="text-2xl font-bold text-white">{user.totalWorkouts}</p>
-                      <p className="text-sm text-muted-foreground">Total completed</p>
-                    </div>
-                    <Dumbbell className="h-8 w-8 text-purple-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-border">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Calories</p>
-                      <p className="text-2xl font-bold text-white">{user.caloriesBurned}</p>
-                      <p className="text-sm text-muted-foreground">This week</p>
-                    </div>
-                    <Fire className="h-8 w-8 text-orange-500" />
-                  </div>
-                </CardContent>
-              </Card>
             </div>
-
-            {/* Weight and BMI Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="relative">
-                <WeightChart />
-                <Button
-                  size="sm"
-                  className="absolute top-4 right-4 bg-primary hover:bg-primary/90"
-                  onClick={() => setShowWeightModal(true)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Weight
-                </Button>
-              </div>
-              <BMIChart />
-            </div>
-
-            {/* Recent Activities */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center text-white">
-                  <Activity className="mr-2 h-5 w-5" />
-                  Recent Activities
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">Your latest workout sessions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {user.recentActivities.map((activity, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-2 bg-primary/20 rounded-lg">
-                          <Dumbbell className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white">{activity.activity}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {activity.date} • {activity.gym}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-white">{activity.duration}</p>
-                        <p className="text-sm text-muted-foreground">{activity.calories} cal</p>
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full bg-transparent border-border text-white hover:bg-accent">
-                    View All Activities
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Active Subscriptions */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-white">Active Subscriptions</CardTitle>
-                <CardDescription className="text-muted-foreground">Your current gym and training plans</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {user.subscriptions.map((subscription, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="relative">
-                          <img
-                            src={subscription.image || "/placeholder.svg"}
-                            alt={subscription.name}
-                            className="w-12 h-12 rounded-lg object-cover"
-                          />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white">{subscription.name}</p>
-                          <p className="text-sm text-muted-foreground">{subscription.plan}</p>
-                          <p className="text-sm text-primary">{subscription.price}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="secondary">{subscription.status}</Badge>
-                        <p className="text-sm text-muted-foreground mt-1">Expires in {subscription.expiresIn}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full bg-transparent border-border text-white hover:bg-accent">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Browse More Plans
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Nutrition Tracking */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center text-white">
-                  <Heart className="mr-2 h-5 w-5" />
-                  Nutrition Goals
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">Track your daily nutrition intake</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-white">Calories</span>
-                      <span className="text-sm text-muted-foreground">
-                        {user.nutritionGoals.calories.current}/{user.nutritionGoals.calories.target}
-                      </span>
-                    </div>
-                    <Progress
-                      value={(user.nutritionGoals.calories.current / user.nutritionGoals.calories.target) * 100}
-                      className="h-2"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-white">Protein</span>
-                      <span className="text-sm text-muted-foreground">
-                        {user.nutritionGoals.protein.current}g/{user.nutritionGoals.protein.target}g
-                      </span>
-                    </div>
-                    <Progress
-                      value={(user.nutritionGoals.protein.current / user.nutritionGoals.protein.target) * 100}
-                      className="h-2"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-white">Carbs</span>
-                      <span className="text-sm text-muted-foreground">
-                        {user.nutritionGoals.carbs.current}g/{user.nutritionGoals.carbs.target}g
-                      </span>
-                    </div>
-                    <Progress
-                      value={(user.nutritionGoals.carbs.current / user.nutritionGoals.carbs.target) * 100}
-                      className="h-2"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-white">Fats</span>
-                      <span className="text-sm text-muted-foreground">
-                        {user.nutritionGoals.fats.current}g/{user.nutritionGoals.fats.target}g
-                      </span>
-                    </div>
-                    <Progress
-                      value={(user.nutritionGoals.fats.current / user.nutritionGoals.fats.target) * 100}
-                      className="h-2"
-                    />
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full mt-4 bg-transparent border-border text-white hover:bg-accent"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Log Food
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Calendar for Task Scheduling */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center text-white">
-                  <CalendarIcon className="mr-2 h-5 w-5" />
-                  Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  className="rounded-md border border-border"
-                />
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <div className="w-3 h-3 bg-primary rounded-full"></div>
-                    <span className="text-muted-foreground">Workout Sessions</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <span className="text-muted-foreground">Trainer Appointments</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-muted-foreground">Rest Days</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Upcoming Sessions */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center text-white">
-                  <Clock className="mr-2 h-5 w-5" />
-                  Upcoming Sessions
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">Your scheduled training sessions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {user.upcomingSessions.map((session, index) => (
-                    <div key={index} className="p-4 border border-border rounded-lg">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="font-semibold text-white">{session.date}</p>
-                          <p className="text-sm text-muted-foreground">{session.time}</p>
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {mockSessions.map((session) => (
+                  <Card key={session.id} className="dark:bg-black dark:border-green-500/20">
+                    <CardHeader className="pb-2">
+                      <img 
+                        src={session.image || "/placeholder.svg"} 
+                        alt={session.title}
+                        className="w-full h-24 object-cover rounded-md mb-2"
+                      />
+                      <CardTitle className="text-lg">{session.title}</CardTitle>
+                      <CardDescription>with {session.trainer}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Date:</span>
+                          <span>{session.date}</span>
                         </div>
-                        <Badge variant="outline" className="text-primary border-primary">
-                          {session.type}
-                        </Badge>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-white">with {session.trainer}</p>
-                        <p className="text-sm text-muted-foreground">{session.focus}</p>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          {session.location}
+                        <div className="flex justify-between">
+                          <span>Time:</span>
+                          <span>{session.time}</span>
                         </div>
+                        <div className="flex justify-between">
+                          <span>Amount:</span>
+                          <span className="font-semibold text-green-600">{session.amount}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">{session.description}</p>
+                        <Button size="sm" className="w-full mt-2 bg-red-500 hover:bg-red-600">
+                          Join Session
+                        </Button>
                       </div>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full bg-transparent border-border text-white hover:bg-accent">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Book Session
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
 
-            {/* Today's Tasks */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-white">Today's Tasks</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  {user.todaysTasks.filter((t) => t.completed).length} of {user.todaysTasks.length} completed
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {user.todaysTasks.map((task) => (
-                    <div key={task.id} className="flex items-center space-x-3">
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          task.completed ? "bg-primary border-primary" : "border-muted-foreground"
-                        }`}
-                      >
-                        {task.completed && <CheckCircle className="h-3 w-3 text-white" />}
-                      </div>
-                      <span
-                        className={`text-sm ${task.completed ? "text-muted-foreground line-through" : "text-white"}`}
-                      >
-                        {task.task}
-                      </span>
-                    </div>
-                  ))}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full mt-4 bg-transparent border-border text-white hover:bg-accent"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Task
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* KPI Results */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Today's Results</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Weight</CardTitle>
+                    <Weight className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">74.9 kg</div>
+                    <p className="text-xs text-muted-foreground">-0.3 kg from yesterday</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Height</CardTitle>
+                    <Ruler className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">175 cm</div>
+                    <p className="text-xs text-muted-foreground">No change</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">BMI</CardTitle>
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">24.0</div>
+                    <p className="text-xs text-muted-foreground">Normal range</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
 
-            {/* Recent Achievements */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center text-white">
-                  <Trophy className="mr-2 h-5 w-5" />
-                  Recent Achievements
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">Your latest milestones</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {user.achievements.map((achievement, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div className="p-2 bg-primary/20 rounded-lg">
-                        <achievement.icon className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-white text-sm">{achievement.title}</p>
-                        <p className="text-xs text-muted-foreground">{achievement.description}</p>
-                        <p className="text-xs text-primary mt-1">{achievement.earned}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full bg-transparent border-border text-white hover:bg-accent">
-                    View All Achievements
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>BMI Variation</CardTitle>
+                  <CardDescription>Weekly BMI tracking</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <ScatterChart data={bmiData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="day" />
+                      <YAxis domain={['dataMin - 0.5', 'dataMax + 0.5']} />
+                      <Tooltip />
+                      <Scatter dataKey="bmi" fill="#ef4444" />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-            {/* Quick Actions */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-white">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button asChild className="w-full justify-start bg-primary hover:bg-primary/90">
-                  <Link href="/search">
-                    <Search className="mr-2 h-4 w-4" />
-                    Find Gyms & Trainers
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="w-full justify-start bg-transparent border-border text-white hover:bg-accent"
-                >
-                  <Link href="/profile">
-                    <User className="mr-2 h-4 w-4" />
-                    Update Profile
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start bg-transparent border-border text-white hover:bg-accent"
-                  onClick={() => setShowWeightModal(true)}
-                >
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Log Weight
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="w-full justify-start bg-transparent border-border text-white hover:bg-accent"
-                >
-                  <Link href="/trainers">
-                    <Users className="mr-2 h-4 w-4" />
-                    Browse Trainers
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Weight Variation</CardTitle>
+                    <CardDescription>Weekly weight tracking</CardDescription>
+                  </div>
+                  <Dialog open={isWeightDialogOpen} onOpenChange={setIsWeightDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Weight
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Add Weight Entry</DialogTitle>
+                        <DialogDescription>
+                          Record your current weight for tracking.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleWeightSubmit}>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="weight_date" className="text-right">
+                              Date
+                            </Label>
+                            <Input
+                              id="weight_date"
+                              type="date"
+                              value={weightForm.date}
+                              onChange={(e) => setWeightForm(prev => ({ ...prev, date: e.target.value }))}
+                              className="col-span-3"
+                              required
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="weight" className="text-right">
+                              Weight (kg)
+                            </Label>
+                            <Input
+                              id="weight"
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={weightForm.weight}
+                              onChange={(e) => setWeightForm(prev => ({ ...prev, weight: e.target.value }))}
+                              className="col-span-3"
+                              placeholder="Enter weight"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button type="submit">Add Weight</Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={weightData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="day" />
+                      <YAxis domain={['dataMin - 1', 'dataMax + 1']} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="weight" stroke="#ef4444" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Weight Input Modal */}
-      <WeightInputModal isOpen={showWeightModal} onClose={() => setShowWeightModal(false)} />
-    </div>
+        {/* Right Sidebar */}
+        <div className="w-80 border-l bg-muted/20 p-4 space-y-6">
+          {/* Google Calendar */}
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <CalendarIcon className="mr-2 h-5 w-5" />
+                Schedule
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CalendarUI
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                className="rounded-md border border-border"
+              />
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-muted-foreground">Workout Sessions</span>
+                </div>
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-muted-foreground">Trainer Appointments</span>
+                </div>
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-muted-foreground">Rest Days</span>
+                </div>
+              </div>
+              <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full mt-4">
+                    Add Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Add New Task</DialogTitle>
+                    <DialogDescription>
+                      Create a new task for your fitness schedule.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleTaskSubmit}>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="task_date" className="text-right">
+                          Date
+                        </Label>
+                        <Input
+                          id="task_date"
+                          type="date"
+                          value={taskForm.task_date}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, task_date: e.target.value }))}
+                          className="col-span-3"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="task" className="text-right">
+                          Task
+                        </Label>
+                        <Input
+                          id="task"
+                          value={taskForm.task}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, task: e.target.value }))}
+                          className="col-span-3"
+                          placeholder="Enter task title"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="note" className="text-right">
+                          Note
+                        </Label>
+                        <Textarea
+                          id="note"
+                          value={taskForm.note}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, note: e.target.value }))}
+                          className="col-span-3"
+                          placeholder="Add additional notes"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Add Task</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              <div className="mt-4 space-y-2">
+                <div className="text-sm text-muted-foreground space-y-1">
+                  {tasks.slice(0, 3).map((task) => (
+                    <p key={task.id} className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        task.type === 'workout' ? 'bg-red-500' : 
+                        task.type === 'appointment' ? 'bg-blue-500' : 'bg-green-500'
+                      }`}></div>
+                      {task.task} - {task.note}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
