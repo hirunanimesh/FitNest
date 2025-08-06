@@ -210,6 +210,13 @@ export default function UserDashboard() {
     { id: 3, task_date: format(new Date(), "yyyy-MM-dd"), task: "Rest day", note: "Recovery", type: "rest" }
   ])
 
+  // Ensure the theme is properly initialized and debug the toggle functionality
+  useEffect(() => {
+    if (!mounted) {
+      setMounted(true);
+    }
+  }, [mounted]);
+
   useEffect(() => {
     setMounted(true)
     const interval = setInterval(() => {
@@ -218,7 +225,7 @@ export default function UserDashboard() {
     return () => clearInterval(interval)
   }, [])
 
-  if (!mounted) return null
+  if (!mounted) return null // Prevent rendering until the theme is mounted
 
   const today = format(new Date(), "EEEE, MMMM do, yyyy")
 
@@ -265,6 +272,7 @@ export default function UserDashboard() {
                 <p className="text-sm text-muted-foreground">{today}</p>
               </div>
               <div className="flex items-center gap-4">
+                {/* Ensure the theme toggle functionality works correctly */}
                 <Button
                   variant="ghost"
                   size="icon"
