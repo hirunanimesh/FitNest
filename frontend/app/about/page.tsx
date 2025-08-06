@@ -18,16 +18,18 @@ import {
 import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { AppLogo } from "@/components/AppLogo"
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background ">
       <Navbar />
+      <AppLogo />
 
       {/* Hero Section */}
-      <section className="py-20 px-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+      <section className="py-20 px-4 bg-gradient-to-br from-red-900 via-background to-red-500 ">
         <div className="container mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">How FitNest Works</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-Black ">How FitNest Works</h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Discover how our comprehensive fitness platform connects you with the best gyms, trainers, and tools to
             achieve your fitness goals through both web and mobile applications.

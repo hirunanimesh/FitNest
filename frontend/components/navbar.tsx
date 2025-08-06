@@ -13,29 +13,29 @@ export function Navbar() {
         <div className="container flex h-14 items-center justify-between px-4">
           <Link href="/" className="flex items-center space-x-2">
             <Dumbbell className="h-5 w-5 text-primary" />
-            <span className="font-bold text-lg text-white">FitNest</span>
+            <span className="font-bold text-xl text-white">FitNest</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4">
-            <Link href="/" className="text-white hover:text-primary px-3 py-3 text-sm font-medium transition-colors">
+            <Link href="/" className="text-white hover:text-primary px-3 py-3 text-lg font-medium transition-colors">
               HOME
             </Link>
             <Link
               href="/about"
-              className="text-white hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
+              className="text-white hover:text-primary px-3 py-2 text-lg font-medium transition-colors"
             >
               ABOUT
             </Link>
             <Link
               href="/search"
-              className="text-white hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
+              className="text-white hover:text-primary px-3 py-2 text-lg font-medium transition-colors"
             >
               LOCATIONS
             </Link>
             <Link
               href="/contact"
-              className="text-white hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
+              className="text-white hover:text-primary px-3 py-2 text-lg font-medium transition-colors"
             >
               CONTACT
             </Link>

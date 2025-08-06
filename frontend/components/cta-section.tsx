@@ -1,9 +1,17 @@
+'use client'
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Play } from "lucide-react"
 import Link from "next/link"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useState } from "react"
+import VideoModal from "@/components/ui/VideoModal"
 
 export function CTASection() {
+  const [isModalOpen, setModalOpen] = useState(false)
+
+  const openModal = () => setModalOpen(true)
+  const closeModal = () => setModalOpen(false)
+
   return (
     <section className="py-20 px-4 relative overflow-hidden">
       {/* Background Image */}
@@ -30,13 +38,13 @@ export function CTASection() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="bg-card border-border">
               <DropdownMenuItem asChild>
-                <Link href="/auth/signup?type=user">Join as User</Link>
+                <Link href="/auth/signup?type=user">User</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/auth/signup?type=trainer">Join as Trainer</Link>
+                <Link href="/auth/signup?type=trainer">Trainer</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/auth/signup?type=gym">Join as Gym</Link>
+                <Link href="/auth/signup?type=gym">Gym</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -45,6 +53,7 @@ export function CTASection() {
             variant="outline"
             size="lg"
             className="text-lg px-8 py-4 bg-transparent border-white text-white hover:bg-white hover:text-black"
+            onClick={openModal}
           >
             <Play className="mr-2 h-5 w-5" />
             Watch Success Stories
@@ -71,6 +80,13 @@ export function CTASection() {
           </div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      <VideoModal
+        videoUrl="https://www.youtube.com/embed/dK4AfPI6GRs"
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </section>
   )
 }

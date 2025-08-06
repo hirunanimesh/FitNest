@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Upload, FileText } from "lucide-react"
 import Link from "next/link"
-
+import { AppLogo } from "@/components/AppLogo";
 export default function TrainerSignup() {
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [verificationDocs, setVerificationDocs] = useState<File[]>([])
@@ -24,6 +24,7 @@ export default function TrainerSignup() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4">
+        <AppLogo />
         <div className="max-w-2xl mx-auto">
           <Card className="border-red-200">
             <CardHeader className="text-center">
@@ -252,7 +253,7 @@ export default function TrainerSignup() {
                 <div className="text-center">
                   <p className="text-gray-600">
                     Already have an account?{" "}
-                    <Link href="/login" className="text-red-600 hover:text-red-500 underline">
+                    <Link href="/auth/login" className="text-red-600 hover:text-red-500 underline">
                       Sign in
                     </Link>
                   </p>
