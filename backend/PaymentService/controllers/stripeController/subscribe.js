@@ -3,16 +3,18 @@ import {findStripeCustomerId} from '../../controllers/mongoController/add-plan-d
 import {addStripeCustomer} from '../../controllers/mongoController/add-plan-data.js'
 
 export default async function subscribe(req,res) {
-    const { priceId,customer_id ,account_id} = req.body;
+    const { priceId,customer_id ,account_id,email} = req.body;
 
-    // before create new customer ID we need to check this customer have id or not using DB  ----- need to add this logic
   var customerId;
 
   const stripeCustomer = await findStripeCustomerId({customer_id})
   if(stripeCustomer){
     customerId = stripeCustomer.stripe_customer_id;
   }else{
-    const customer = await stripe.customers.create({ metadata: { customer_id } });
+    const customer = await stripe.customers.create({
+      email:email,
+      metadata: { customer_id }, 
+    });
     customerId = customer.id;
     addStripeCustomer({
       customer_id: customer_id,

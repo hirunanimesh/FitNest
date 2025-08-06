@@ -1,5 +1,6 @@
 import StripePlanData from '../../models/stripe_plan_data.js'
 import StripeCustomer from '../../models/stripe_customer.js'
+import StripeAccount from '../../models/stripe_account.js';
 
 function addPlanData ({plan_id,product_id,price_id}){
 
@@ -37,4 +38,25 @@ function addStripeCustomer ({customer_id,stripe_customer_id}){
     .catch(err => console.error('❌ Save error:', err));
 }
 
-export { addPlanData, findStripeCustomerId, addStripeCustomer };
+
+function addStripeAccount ({user_id, account_id}){
+    const  stripeAccount = new StripeAccount({
+        user_id,
+        account_id
+    })
+
+    stripeAccount.save()
+    .then(savedAccount => {
+      console.log('📦 Stripe Account saved:', savedAccount);
+    })
+    .catch(err => console.error('❌ Save error:', err));
+}
+
+async function findStripeAccount ({user_id}){
+    
+    const stripeAccount = await StripeAccount.findOne({user_id})
+
+    return stripeAccount;
+}
+
+export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount };
