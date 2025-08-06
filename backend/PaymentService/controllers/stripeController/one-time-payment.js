@@ -1,11 +1,27 @@
 import stripe from "../../lib/stripe.js";
+import {findStripeCustomerId} from '../../controllers/mongoController/add-plan-data.js'
+import {addStripeCustomer} from '../../controllers/mongoController/add-plan-data.js'
 
 export default async function handler(req, res) {
-    const { priceId, destinationAccountId, userId } = req.body;
+    const { priceId, destinationAccountId, customer_id } = req.body;
+
+    var customerId;
+
+    const stripeCustomer = await findStripeCustomerId({customer_id})
+    if(stripeCustomer){
+      customerId = stripeCustomer.stripe_customer_id;
+    }else{
+      const customer = await stripe.customers.create({ metadata: { customer_id } });
+      customerId = customer.id;
+      addStripeCustomer({
+        customer_id: customer_id,
+        stripe_customer_id:customerId
+      })
+    }
   
     // need to check database customer id exist or not if not create ( after DB created)
     const customer = await stripe.customers.create({
-      metadata: { userId },
+      metadata: { customer_id },
     });
   
     const session = await stripe.checkout.sessions.create({
