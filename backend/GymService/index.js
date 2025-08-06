@@ -1,5 +1,8 @@
 import express from 'express'
 import cors from 'cors'
+import dotenv from 'dotenv'
+dotenv.config()
+
 import { addGym,getAllGyms, getGymById, getTotalGymMemberCount, updateGymDetails } from './controllers/gym.controller.js'
 import { addGymPlan, deleteGymPlan, getAllGymPlans, getGymPlanByGymId, getMemberCountPerPlan, updateGymPlan } from './controllers/plans.controller.js'
 

@@ -33,12 +33,14 @@ const startHealthChecks = () => {
   setTimeout(() => {
     checkServiceHealth('auth', config.services.auth);
     checkServiceHealth('gym', config.services.gym);
+    checkServiceHealth('payment',config.services.payment)
   }, 2000);
 
   // Periodic health checks
   setInterval(() => {
     checkServiceHealth('auth', config.services.auth);
     checkServiceHealth('gym', config.services.gym);
+    checkServiceHealth('payment',config.services.payment)
   }, 30000);
 };
 

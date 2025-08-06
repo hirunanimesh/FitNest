@@ -26,6 +26,15 @@ services:
       - NODE_ENV=development
     command: npm run start  # Using start since it uses nodemon
 
+  # Payment Service - Development Overrides
+  payment-service:
+    volumes:
+      - ./backend/PaymentService:/app
+      - /app/node_modules  # Anonymous volume to preserve node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run start  # Using start since it uses nodemon
+
   # Frontend Service - Development Overrides
   frontend:
     volumes:
