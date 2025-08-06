@@ -7,13 +7,15 @@ import { getCalendar, addCalendarTask, updateCalendarTask, deleteCalendarTask, g
 import dashboardController from './controllers/dashboard.controller.js'
 import { submitFeedback } from './controllers/feedback.controller.js'
 import { subscriptionAPI } from './utils/apiClient.js'
-
+import {registerCustomer} from './controllers/register.controller.js'
 const app = express()
 app.use(express.json())
 app.use(cors())
 
 // Apply authentication middleware to all routes
 app.use('/api/users', authenticateUser)
+// Customer routes
+app.post('/api/users/customer', registerCustomer)
 
 // Profile routes
 app.get('/api/users/profile', getProfile)
