@@ -30,7 +30,7 @@ export async function gettrainerbyid(trainerId) {
         const { data, error } = await supabase
         .from('trainer')
         .select('*')
-        .eq('trainer_id', trainerId)
+        .eq('id', trainerId)
         .single(); // Fetch single trainer by ID
 
         if(!data){
@@ -48,7 +48,7 @@ export async function updatetrainerdetails(trainerId, trainerData) {
   const { data, error } = await supabase
     .from('trainer')
     .update(trainerData)
-    .eq('trainer_id', trainerId)
+    .eq('id', trainerId)
     .select();
 
   if (error) {

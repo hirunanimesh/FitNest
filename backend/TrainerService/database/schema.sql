@@ -1,5 +1,5 @@
 -- Trainer table (extends Supabase auth.users)
-CREATE TABLE trainer(
+/*CREATE TABLE trainer(
   trainer_id SERIAL PRIMARY KEY, -- app-specific ID
   trainer_name VARCHAR(50) NOT NULL,
   rating INT,
@@ -8,7 +8,7 @@ CREATE TABLE trainer(
   experience INT,
   skills TEXT[], -- array of skills
   verified BOOLEAN DEFAULT FALSE
-);
+);*/
 
 CREATE TABLE "trainer_sessions" (
   session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
