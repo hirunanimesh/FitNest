@@ -1,4 +1,10 @@
-import { addsession,deletesession, getallsessions, getsessionbysessionid, updatesession} from "../services/session.service.js";
+import { 
+    addsession, 
+    deletesession, 
+    getallsessions, 
+    getsessionbysessionid, 
+    updatesession
+} from "../services/session.service.js";
 
 
 export const addSession = async (req, res) => {
@@ -60,8 +66,8 @@ export const updatedSession = async (req, res) => {
 export const deleteSession = async (req, res) => {
     const { sessionId } = req.params;
     try {
-        const deletesession = await deletesession(sessionId);
-        if(deletesession){
+        const deleteSession = await deletesession(sessionId);
+        if(deleteSession){
             res.status(200).json({ message: "Trainer Session deleted successfully" });
         }else{
             res.status(404).json({ message: "Trainer Session not found" });
