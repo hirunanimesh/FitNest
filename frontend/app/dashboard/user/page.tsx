@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { Bell, CalendarIcon, Dumbbell, Home, LogOut, Moon, Sun, User, Users, MapPin, Phone, TrendingUp, Weight, Ruler, Activity, Plus } from 'lucide-react'
 import axios from "axios"
+import { supabase } from "@/lib/supabase"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +17,7 @@ import { Calendar as CalendarUI } from "@/components/ui/calendar"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useRouter } from "next/navigation"
 
 const motivationQuotes = [
   "Every workout counts towards your goal!",
@@ -30,6 +32,7 @@ const sidebarItems = [
   { title: "Trainers", icon: Users, url: "#" },
   { title: "Gyms", icon: MapPin, url: "#" },
   { title: "Contacts", icon: Phone, url: "#" }
+  
 ]
 
 function AnimatedQuote({ quote }: { quote: string }) {
@@ -133,6 +136,7 @@ interface ProgressEntry {
 
 export default function UserDashboard() {
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
   const [currentQuote, setCurrentQuote] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -309,6 +313,12 @@ export default function UserDashboard() {
                   <AvatarImage src={user?.avatar || "/placeholder.svg"} />
                   <AvatarFallback>{user?.name?.[0]}</AvatarFallback>
                 </Avatar>
+                <Button onClick={() => {
+                  supabase.auth.signOut();
+                  router.push('/auth/login');
+                }}>
+                  Logout
+                </Button>
               </div>
             </div>
           </header>
