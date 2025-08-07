@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation"
 import { AddCustomer } from "@/lib/api"
 
 import { AppLogo } from "@/components/AppLogo";
-
+import axios from "axios"
 
 export default function UserSignup() {
   const router = useRouter()
@@ -138,7 +138,7 @@ export default function UserSignup() {
   }
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  e.preventDefault();
 
     const formData = new FormData(e.currentTarget)
     
@@ -191,7 +191,7 @@ export default function UserSignup() {
                 {/* Personal Information */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
+                    <Label htmlFor="firstName">First Name <span className="text-red-600">*</span></Label>
                     <Input id="firstName" name="firstName" placeholder="Enter your first name" required />
                   </div>
                   <div className="space-y-2">
@@ -201,17 +201,17 @@ export default function UserSignup() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address *</Label>
+                  <Label htmlFor="email">Email Address <span className="text-red-600">*</span></Label>
                   <Input id="email" name="email" type="email" placeholder="Enter your email" required />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password *</Label>
+                  <Label htmlFor="password">Password <span className="text-red-600">*</span></Label>
                   <Input id="password" name="password" type="password" placeholder="Create a strong password" required />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <Label htmlFor="confirmPassword">Confirm Password <span className="text-red-600">*</span></Label>
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -228,7 +228,7 @@ export default function UserSignup() {
 
                 {/* Date of Birth */}
                 <div className="space-y-2">
-                  <Label>Date of Birth *</Label>
+                  <Label>Date of Birth <span className="text-red-600">*</span></Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start text-left font-normal bg-transparent">
@@ -320,16 +320,16 @@ export default function UserSignup() {
 
                 {/* Profile Image */}
                 <div className="space-y-2">
-                  <Label htmlFor="profileImage">Profile Image (Optional)</Label>
+                  <Label htmlFor="profileImg">Profile Image (Optional)</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <Upload className="mx-auto h-12 w-12 text-gray-400" />
                     <div className="mt-4">
-                      <Label htmlFor="profileImage" className="cursor-pointer">
+                      <Label htmlFor="profileImg" className="cursor-pointer">
                         <span className="text-red-600 hover:text-red-500">Upload a file</span>
                         <span className="text-gray-500"> or drag and drop</span>
                       </Label>
                       <Input
-                        id="profileImage"
+                        id="profileImg"
                         type="file"
                         accept="image/*"
                         className="hidden"
