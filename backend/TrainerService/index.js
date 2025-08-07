@@ -70,6 +70,8 @@ app.get('/getalltrainers', getallTrainers);
 app.get('/gettrainerbyid/:trainerId', getTrainerById);
 app.put('/updatetrainerdetails/:trainerId', updateTrainerDetails);
 
+//api  for calendar function
+//get subscribe user
 const PORT = process.env.PORT || 3005
 app.listen(PORT, () => {
   console.log(`Trainer Service is running on port ${PORT}`)

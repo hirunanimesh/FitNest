@@ -33,3 +33,4 @@ CREATE TABLE "trainer_booking" (
   status VARCHAR(10) CHECK (status IN ('active', 'deact')) NOT NULL
 );
 
+-- calendar
