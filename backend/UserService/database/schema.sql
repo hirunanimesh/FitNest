@@ -1,5 +1,5 @@
 -- Users table (extends Supabase auth.users)
-CREATE TABLE customer(
+/*CREATE TABLE customer(
   customer_id SERIAL PRIMARY KEY, -- app-specific ID
   user_id UUID UNIQUE REFERENCES auth.users(id), -- links to Supabase auth.users
   first_name VARCHAR(50) NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE customer(
   profile_image_url TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
-);
+);*/
 
 -- Weight tracking table
 CREATE TABLE customer_progress (
