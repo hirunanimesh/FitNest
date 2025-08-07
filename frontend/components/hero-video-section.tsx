@@ -44,7 +44,7 @@ export function HeroVideoSection() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="bg-white border-border">
                 <DropdownMenuItem asChild>
-                  <Link href="/auth/signup?type=user" className="text-black">
+                  <Link href="/auth/signup/user" className="text-black">
                     User
                   </Link>
                 </DropdownMenuItem>

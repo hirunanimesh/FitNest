@@ -1,4 +1,6 @@
 const authmodel = require("../model/authModel");
+const { uploadImage } = require("../config/cloudinary");
+
 class AuthController {
   static async login(req, res) {
     const { email, password } = req.body;
@@ -62,19 +64,54 @@ class AuthController {
   }
 
   static async customerRegister(req, res) {
-    const {
-      email,
-      password,
-      role,
-      firstName,
-      lastName,
-      address,
-      phoneNo,
-      profileImg,
-      gender,
-      birthday,
-    } = req.body;
     try {
+      console.log('Request body:', req.body);
+      console.log('Request file:', req.file);
+
+      // Extract data from req.body (FormData fields)
+      const email = req.body.email;
+      const password = req.body.password;
+      const role = req.body.role || "customer";
+      const firstName = req.body.firstName;
+      const lastName = req.body.lastName;
+      const address = req.body.address;
+      const phoneNo = req.body.phoneNo;
+      const gender = req.body.gender;
+      const birthday = req.body.birthday;
+      const weight = req.body.weight;
+      const height = req.body.height;
+      
+      // Parse location as JSON object for JSONB field
+      let locationObject = null;
+      if (req.body.location && req.body.location !== '') {
+        try {
+          locationObject = JSON.parse(req.body.location);
+        } catch (parseError) {
+          console.error('Error parsing location JSON:', parseError);
+          locationObject = null;
+        }
+      }
+
+      let profileImageUrl = null;
+
+      // Check if a file was uploaded
+      if (req.file) {
+        try {
+          // Upload image to Cloudinary
+          const cloudinaryResult = await uploadImage(
+            req.file.buffer,
+            'fitnest/customers',
+            `customer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          );
+          profileImageUrl = cloudinaryResult.secure_url;
+          console.log('Image uploaded successfully to Cloudinary:', profileImageUrl);
+        } catch (uploadError) {
+          console.error('Error uploading image to Cloudinary:', uploadError);
+          // Continue with registration even if image upload fails
+          // You can choose to return an error here if image is required
+        }
+      }
+
       const result = await authmodel.customerRegister(
         email,
         password,
@@ -83,14 +120,19 @@ class AuthController {
         lastName,
         address,
         phoneNo,
-        profileImg,
+        profileImageUrl, // Store the Cloudinary URL instead of file
         gender,
-        birthday
+        birthday,
+        weight,
+        height,
+        locationObject // Pass as JSON object for JSONB field
       );
+
       res.status(201).json({
         success: true,
         message: "Customer registered successfully",
         customer: result,
+        profileImageUrl: profileImageUrl
       });
     } catch (error) {
       console.error(
