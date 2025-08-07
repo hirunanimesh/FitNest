@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import axios from "axios"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,20 +20,31 @@ import { UserNavbar } from "@/components/user-navbar"
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [date, setDate] = useState<Date>()
-
-  // Mock user data
   const [userData, setUserData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Main St, City, State 12345",
-    weight: "75",
-    height: "175",
-    dateOfBirth: new Date("1990-05-15"),
-    gender: "male",
-    avatar: "/placeholder.svg?height=100&width=100",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    dateOfBirth: null as Date | null,
+    gender: "",
+    avatar: "",
+    weight: "",
+    height: "",
   })
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/api/profile/user")
+        setUserData(response.data)
+      } catch (error) {
+        console.error("Error fetching user data:", error)
+      }
+    }
+
+    fetchUserData()
+  }, [])
 
   const handleSave = () => {
     setIsEditing(false)
@@ -175,7 +187,7 @@ export default function ProfilePage() {
                           <PopoverContent className="w-auto p-0">
                             <Calendar
                               mode="single"
-                              selected={userData.dateOfBirth}
+                              selected={userData.dateOfBirth || undefined}
                               onSelect={(date) => date && setUserData({ ...userData, dateOfBirth: date })}
                               initialFocus
                             />
