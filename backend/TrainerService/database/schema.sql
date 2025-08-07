@@ -1,7 +1,6 @@
 -- Trainer table (extends Supabase auth.users)
 CREATE TABLE trainer(
   trainer_id SERIAL PRIMARY KEY, -- app-specific ID
-  user_id UUID UNIQUE REFERENCES auth.users(id), -- links to Supabase auth.users
   trainer_name VARCHAR(50) NOT NULL,
   rating INT,
   contact_number VARCHAR(15),
@@ -11,28 +10,26 @@ CREATE TABLE trainer(
   verified BOOLEAN DEFAULT FALSE
 );
 
--- Trainer_plans table
-CREATE TABLE trainer_plans (
-  id UUID DEFAULT plan_uuid() PRIMARY KEY,
+CREATE TABLE "trainer_sessions" (
+  session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   trainer_id INT REFERENCES trainer(trainer_id) ON DELETE CASCADE,
-  title TEXT,
-  category TEXT,
+  price NUMERIC(10, 2) NOT NULL,
   description TEXT,
-  image_url TEXT,
-  instruction_pdf TEXT, -- URL to PDF with instructions
-  type TEXT CHECK (type IN ('weight_loss', 'muscle_gain', 'endurance', 'flexibility'))
-);
-
--- session
-CREATE TABLE session (
- id UUID DEFAULT session_uuid() PRIMARY KEY,
-  trainer_id INT REFERENCES trainer(trainer_id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  duration duration_type NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   date DATE NOT NULL,
   time TIME NOT NULL,
-  duration INT -- in hours
+  product_id_stripe TEXT,
+  price_id_stripe TEXT,
   zoom_link TEXT, -- link to Zoom session
-  title TEXT, -- title of the session
-  description TEXT,
   booked BOOLEAN DEFAULT FALSE, -- whether the session is booked
+);
+
+CREATE TABLE "trainer_booking" (
+  booking_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id INTEGER NOT NULL,
+  session_id UUID NOT NULL,
+  status VARCHAR(10) CHECK (status IN ('active', 'deact')) NOT NULL
 );
 

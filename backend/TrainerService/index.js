@@ -1,4 +1,4 @@
-import express from 'express'
+/*import express from 'express'
 import cors from 'cors'
 import { 
   registerTrainer,
@@ -36,4 +36,31 @@ app.get('/api/trainers/:id/calendar', getTrainerCalendar) //add task,update,dele
 
 app.listen(process.env.PORT || 3004, () => {
     console.log(`Trainer Service is running on port ${process.env.PORT || 3004}`)
+})*/
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+dotenv.config()
+
+import {
+  addSession,
+  deleteSession,
+  getAllSession,
+  getSessionBySessionId,
+  updatedSession
+} from "./controllers/session.controller.js";
+
+const app = express()
+app.use(express.json())
+app.use(cors())
+
+app.post('/addsession', addSession);
+app.get('/getallsessions', getAllSession);
+app.get('/getsessionbysessionid/:sessionId', getSessionBySessionId);
+app.put('/updatesession/:sessionId', updatedSession);
+app.delete('/deletesession/:sessionId', deleteSession);
+
+const PORT = process.env.PORT || 3005
+app.listen(PORT, () => {
+  console.log(`Trainer Service is running on port ${PORT}`)
 })

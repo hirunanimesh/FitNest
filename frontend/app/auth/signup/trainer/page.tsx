@@ -11,13 +11,51 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Upload, FileText } from "lucide-react"
 import Link from "next/link"
 import { AppLogo } from "@/components/AppLogo";
+import axios from "axios"
+
 export default function TrainerSignup() {
-  const [profileImage, setProfileImage] = useState<File | null>(null)
-  const [verificationDocs, setVerificationDocs] = useState<File[]>([])
+const [profileImage, setProfileImage] = useState<File | null>(null)
+const [verificationDocs, setVerificationDocs] = useState<File[]>([])
+const [loading, setLoading] = useState(false)
+const [error, setError] = useState<string | null>(null)
+const [success, setSuccess] = useState(false)
 
   const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setVerificationDocs(Array.from(e.target.files))
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setSuccess(false)
+
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    // Append files to FormData
+    if (profileImage) {
+      formData.append("profileImage", profileImage)
+    }
+    verificationDocs.forEach((file, idx) => {
+      formData.append("verificationDocs", file)
+    })
+
+    try {
+      // Replace with your backend endpoint
+      await axios.post("api/auth/trainer/Register", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      setSuccess(true)
+      form.reset()
+      setProfileImage(null)
+      setVerificationDocs([])
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Submission failed. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -34,7 +72,7 @@ export default function TrainerSignup() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 {/* Personal Information */}
                 <div className="space-y-2">
                   <Label htmlFor="nameWithInitials">Name with Initials *</Label>
@@ -165,63 +203,6 @@ export default function TrainerSignup() {
                   </div>
                 </div>
 
-                {/* Hourly Rate */}
-                <div className="space-y-2">
-                  <Label htmlFor="hourlyRate">Hourly Rate (USD) *</Label>
-                  <Input
-                    id="hourlyRate"
-                    type="number"
-                    min="10"
-                    max="500"
-                    placeholder="Enter your hourly rate"
-                    required
-                  />
-                  <p className="text-xs text-gray-500">You can adjust this later in your trainer dashboard</p>
-                </div>
-
-                {/* Availability */}
-                <div className="space-y-2">
-                  <Label>Preferred Training Times</Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-normal">Morning (6AM - 12PM)</Label>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="morning" />
-                        <Label htmlFor="morning" className="text-sm">
-                          Available
-                        </Label>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-normal">Afternoon (12PM - 6PM)</Label>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="afternoon" />
-                        <Label htmlFor="afternoon" className="text-sm">
-                          Available
-                        </Label>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-normal">Evening (6PM - 10PM)</Label>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="evening" />
-                        <Label htmlFor="evening" className="text-sm">
-                          Available
-                        </Label>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-normal">Weekends</Label>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="weekends" />
-                        <Label htmlFor="weekends" className="text-sm">
-                          Available
-                        </Label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Terms and Conditions */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2">
@@ -245,9 +226,10 @@ export default function TrainerSignup() {
                     </Label>
                   </div>
                 </div>
-
-                <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
-                  Submit Application
+                {error && <div className="text-red-600 text-center">{error}</div>}
+                {success && <div className="text-green-600 text-center">Application submitted successfully!</div>}
+                <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white" disabled={loading}>
+                  {loading ? "Submitting..." : "Submit Application"}
                 </Button>
 
                 <div className="text-center">
