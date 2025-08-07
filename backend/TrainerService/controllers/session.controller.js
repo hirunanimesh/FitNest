@@ -20,18 +20,20 @@ export const addSession = async (req, res) => {
 }
 
 export const getAllSession = async (req, res) => {
-    try {
-        const sessions = await getallsessions()
-        if (sessions) {
-            res.status(200).json({ message: "Trainer session retrieved successfully", sessions });
-        } else {
-            res.status(404).json({ message: "No session  found" });
-        }
-    } catch (error) {
-        console.error("Error retrieving trainer session:", error);
-        res.status(500).json({ message: "Internal server error", error: error.message });
+  try {
+    const sessions = await getallsessions();
+
+    if (sessions && sessions.length > 0) {
+      res.status(200).json({ message: "Trainer session retrieved successfully", sessions });
+    } else {
+      res.status(404).json({ message: "No sessions found" });
     }
-}
+
+  } catch (error) {
+    console.error("Error retrieving trainer sessions:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
 
 export const getSessionBySessionId = async (req, res) => {
     const { sessionId } = req.params;

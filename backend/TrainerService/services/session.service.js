@@ -16,14 +16,13 @@ export async function addsession(sessionData) {
   export async function getallsessions() {
     const { data, error } = await supabase
       .from('trainer_sessions')
-      .select(`
-        *,
+      .select(`*
+      
         trainer (
           trainer_name,
-          rating,
-          contact_no,
+          contact_no
         )
-      `);
+      `);  //foreign key ekak danna ona trainer ge name , contact_no ennna
         
       if(!data){
         return null;
@@ -31,7 +30,7 @@ export async function addsession(sessionData) {
     if (error) {
       throw new Error(error.message);
     }
-  
+
     return data;
   }
   
