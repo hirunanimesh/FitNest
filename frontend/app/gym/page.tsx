@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { UserNavbar } from "@/components/user-navbar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin } from "lucide-react"
@@ -31,7 +30,8 @@ export default function SearchPage() {
 
   useEffect(() => {
     // Fetch gym data from the backend
-    axios.get("http://localhost:5000/api/gyms").then((response) => {
+    axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/gym/getallgyms`)
+    .then((response) => {
       setGyms(response.data);
     }).catch((error) => {
       console.error("Error fetching gyms:", error);
@@ -98,9 +98,20 @@ export default function SearchPage() {
 
         {/* Display Gym Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {gyms.map((gym) => (
-            <GymCard key={gym.gym_id} gym={gym} />
-          ))}
+          {gyms
+            .filter((gym) => {
+              // Filter by name
+              const matchesName = gym.gym_name.toLowerCase().includes(searchQuery.toLowerCase());
+              // Filter by location
+              const matchesLocation =
+                !selectedLocation || gym.location.toLowerCase() === selectedLocation;
+              // Show all if no filters, else filter
+              if (!searchQuery && !selectedLocation) return true;
+              return matchesName && matchesLocation;
+            })
+            .map((gym) => (
+              <GymCard key={gym.gym_id} gym={gym} />
+            ))}
         </div>
       </div>
     </div>
