@@ -49,7 +49,12 @@ import {
   getSessionBySessionId,
   updatedSession
 } from "./controllers/session.controller.js";
-
+import { 
+  addTrainer,
+  getallTrainers, 
+  getTrainerById, 
+  updateTrainerDetails
+ } from './controllers/trainer.controller.js'
 const app = express()
 app.use(express.json())
 app.use(cors())
@@ -59,6 +64,11 @@ app.get('/getallsessions', getAllSession);
 app.get('/getsessionbysessionid/:sessionId', getSessionBySessionId);
 app.put('/updatesession/:sessionId', updatedSession);
 app.delete('/deletesession/:sessionId', deleteSession);
+
+app.post('/addTrainer', addTrainer);
+app.get('/getalltrainers', getallTrainers);
+app.get('/gettrainerbyid/:trainerId', getTrainerById);
+app.put('/updatetrainerdetails/:trainerId', updateTrainerDetails);
 
 const PORT = process.env.PORT || 3005
 app.listen(PORT, () => {

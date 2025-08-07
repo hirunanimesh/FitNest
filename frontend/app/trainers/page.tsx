@@ -1,3 +1,5 @@
+//show all trainers details
+
 "use client"
 
 import { useState } from "react"
@@ -15,99 +17,7 @@ export default function TrainersPage() {
   const [selectedSpecialization, setSelectedSpecialization] = useState("All Specializations")
   const [selectedLocation, setSelectedLocation] = useState("All Locations")
 
-  // Mock trainers data
-  const trainers = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      specialization: "Weight Loss & Strength Training",
-      rating: 4.9,
-      reviews: 127,
-      hourlyRate: 75,
-      experience: "5 years",
-      location: "Downtown, 2.1 km away",
-      image: "/images/trainer-sarah.png",
-      certifications: ["NASM-CPT", "Nutrition Specialist"],
-      availability: "Available Today",
-      registeredGyms: ["FitZone Premium", "Iron Paradise"],
-      bio: "Passionate about helping clients achieve sustainable weight loss and build strength.",
-    },
-    {
-      id: 2,
-      name: "Mike Rodriguez",
-      specialization: "Bodybuilding & Powerlifting",
-      rating: 4.7,
-      reviews: 89,
-      hourlyRate: 85,
-      experience: "8 years",
-      location: "Midtown, 1.8 km away",
-      image: "/images/trainer-mike.png",
-      certifications: ["ACSM-CPT", "Powerlifting Coach"],
-      availability: "Available Tomorrow",
-      registeredGyms: ["Muscle Factory", "Power Gym"],
-      bio: "Former competitive powerlifter specializing in strength and muscle building.",
-    },
-    {
-      id: 3,
-      name: "Emily Chen",
-      specialization: "Yoga & Flexibility",
-      rating: 4.8,
-      reviews: 156,
-      hourlyRate: 65,
-      experience: "6 years",
-      location: "Uptown, 3.2 km away",
-      image: "/images/trainer-emily.png",
-      certifications: ["RYT-500", "Pilates Instructor"],
-      availability: "Available Today",
-      registeredGyms: ["Zen Fitness", "Harmony Studio"],
-      bio: "Certified yoga instructor focused on mindfulness and body alignment.",
-    },
-    {
-      id: 4,
-      name: "David Thompson",
-      specialization: "HIIT & Cardio",
-      rating: 4.6,
-      reviews: 98,
-      hourlyRate: 70,
-      experience: "4 years",
-      location: "Downtown, 1.5 km away",
-      image: "/images/trainer-david.png",
-      certifications: ["HIIT Specialist", "Cardio Coach"],
-      availability: "Available This Week",
-      registeredGyms: ["CardioMax", "FitZone Premium"],
-      bio: "High-energy trainer specializing in fat burning and cardiovascular fitness.",
-    },
-    {
-      id: 5,
-      name: "Lisa Martinez",
-      specialization: "Rehabilitation & Recovery",
-      rating: 4.9,
-      reviews: 203,
-      hourlyRate: 90,
-      experience: "10 years",
-      location: "Medical District, 4.1 km away",
-      image: "/images/trainer-lisa.png",
-      certifications: ["Physical Therapy", "Corrective Exercise"],
-      availability: "Booking Required",
-      registeredGyms: ["Recovery Center", "Wellness Hub"],
-      bio: "Licensed physical therapist specializing in injury recovery and prevention.",
-    },
-    {
-      id: 6,
-      name: "Alex Kim",
-      specialization: "CrossFit & Functional Training",
-      rating: 4.7,
-      reviews: 134,
-      hourlyRate: 80,
-      experience: "7 years",
-      location: "Sports Complex, 2.8 km away",
-      image: "/images/trainer-alex.png",
-      certifications: ["CrossFit Level 2", "Functional Movement"],
-      availability: "Available Today",
-      registeredGyms: ["CrossFit Box", "Functional Fitness"],
-      bio: "CrossFit athlete and coach focused on functional movement patterns.",
-    },
-  ]
+  
 
   const filteredTrainers = trainers.filter((trainer) => {
     const matchesSearch =
