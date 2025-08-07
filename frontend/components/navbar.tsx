@@ -51,30 +51,13 @@ export function Navbar() {
               >
                 <Link href="/auth/login">Login</Link>
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-sm">
-                    Join Now
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-white border-border">
-                  <DropdownMenuItem asChild>
-                    <Link href="/auth/signup/user" className="text-black">
-                      User
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/auth/signup/trainer" className="text-black">
-                      Trainer
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/auth/signup/gym" className="text-black">
-                      Gym
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                asChild
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-sm"
+              >
+                <Link href="/auth/signup">Join Now</Link>
+              </Button>
             </div>
 
             {/* Mobile Navigation */}
@@ -102,28 +85,9 @@ export function Navbar() {
                   <Link href="/auth/login" className="text-base font-medium text-black hover:text-primary">
                     Login
                   </Link>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button className="text-base font-medium bg-primary hover:bg-primary/90">Join Now</Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-white border-border">
-                      <DropdownMenuItem asChild>
-                        <Link href="/auth/signup/user" className="text-black">
-                          User
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/auth/signup/trainer" className="text-black">
-                          Trainer
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/auth/signup/gym" className="text-black">
-                          Gym
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button asChild className="text-base font-medium bg-primary hover:bg-primary/90">
+                    <Link href="/auth/signup">Join Now</Link>
+                  </Button>
                 </div>
               </SheetContent>
             </Sheet>

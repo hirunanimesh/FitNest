@@ -10,6 +10,9 @@ class AuthController {
       console.log("[Auth Service] User logged in successfully:", data.user);
       console.log("token:", data.session.access_token);
 
+      // Get user role from metadata
+      const userRole = data.user.user_metadata?.role || 'customer';
+
       // Store token in httpOnly cookie (or return as JSON)
       // res.cookie("token", data.session.access_token, {
       //   httpOnly: true,
@@ -21,6 +24,8 @@ class AuthController {
         success: true,
         message: "Login successful",
         user: data.user,
+        role: userRole,
+        session: data.session
       });
     } catch (error) {
       console.error("[Auth Service] Error during login:", error);
@@ -39,6 +44,115 @@ class AuthController {
       return res.status(401).json({
         success: false,
         message: "Login failed",
+        error: error.message,
+      });
+    }
+  }
+
+  static async getUserInfo(req, res) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          message: "Authorization token required"
+        });
+      }
+
+      const token = authHeader.split(' ')[1];
+      const userData = await authmodel.getUserFromToken(token);
+
+      return res.status(200).json({
+        success: true,
+        user: userData.user,
+        role: userData.user.user_metadata?.role || 'customer'
+      });
+    } catch (error) {
+      console.error("[Auth Service] Error getting user info:", error);
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token",
+        error: error.message
+      });
+    }
+  }
+
+  static async completeOAuthProfile(req, res) {
+    try {
+      console.log('OAuth profile completion request:', req.body);
+      
+      const { 
+        user_id, 
+        firstName, 
+        lastName, 
+        address, 
+        phoneNo, 
+        gender, 
+        birthday,
+        location, 
+        weight, 
+        height,
+        userRole, 
+        profileImage
+        
+      } = req.body;
+
+      // Parse location as JSON object for JSONB field if it's a string
+      let locationObject = null;
+      if (location && typeof location === 'string') {
+        try {
+          locationObject = JSON.parse(location);
+        } catch (parseError) {
+          console.error('Error parsing location JSON:', parseError);
+          locationObject = null;
+        }
+      } else if (location && typeof location === 'object') {
+        locationObject = location;
+      }
+
+      //let profileImageUrl = null;
+
+      // Check if a file was uploaded
+      // if (req.file) {
+      //   try {
+      //     // Upload image to Cloudinary
+      //     const cloudinaryResult = await uploadImage(
+      //       req.file.buffer,
+      //       'fitnest/customers',
+      //       `customer_oauth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      //     );
+      //     profileImageUrl = cloudinaryResult.secure_url;
+      //     console.log('OAuth profile image uploaded successfully to Cloudinary:', profileImageUrl);
+      //   } catch (uploadError) {
+      //     console.error('Error uploading OAuth profile image to Cloudinary:', uploadError);
+      //   }
+      // }
+
+      const result = await authmodel.completeOAuthCustomerProfile(
+        user_id,
+        firstName,
+        lastName,
+        address,
+        phoneNo,
+        profileImage,
+        gender,
+        birthday,
+        weight,
+        height,
+        locationObject,
+        userRole
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "OAuth profile completed successfully",
+        customer: result
+      });
+    } catch (error) {
+      console.error("[Auth Service] Error completing OAuth profile:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to complete OAuth profile",
         error: error.message,
       });
     }

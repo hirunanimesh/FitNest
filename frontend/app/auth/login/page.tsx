@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,46 +8,145 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import Link from "next/link"
 import { AppLogo } from "@/components/AppLogo";
-import axios from "axios";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { LoginUser, GetUserInfo } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Check if user is coming back from OAuth
+    const checkOAuthSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Check if user has completed their profile
+        await handleOAuthSuccess(session);
+      }
+    };
+
+    checkOAuthSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        await handleOAuthSuccess(session);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleOAuthSuccess = async (session: any) => {
+    try {
+      const userRole = session.user.user_metadata?.role;
+      
+      // If user has a role, redirect based on role
+      if (userRole) {
+        redirectBasedOnRole(userRole);
+        return;
+      }
+
+      // If no role, this is a Google OAuth user - check if they have a customer profile
+      try {
+        const { data, error } = await supabase
+          .from('customer')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (data) {
+          // Profile exists, redirect to user dashboard
+          router.push("/dashboard/user");
+        } else {
+          // No profile exists, redirect to complete profile
+          router.push("/auth/complete-profile");
+        }
+      } catch (error) {
+        console.error("Error checking customer profile:", error);
+        // If error, assume they need to complete profile
+        router.push("/auth/complete-profile");
+      }
+    } catch (error) {
+      console.error("Error handling OAuth success:", error);
+    }
+  };
+
+  const redirectBasedOnRole = (role: string) => {
+    switch (role) {
+      case "admin":
+        router.push("/dashboard/admin");
+        break;
+      case "trainer":
+        router.push("/dashboard/trainer");
+        break;
+      case "gym":
+        router.push("/dashboard/gym");
+        break;
+      default:
+        router.push("/dashboard/user");
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
     try {
-      const response = await axios.post("http://localhost:3000/api/auth/login", {
-        email,
-        password,
-      });
+      const response = await LoginUser(email, password);
 
-      if (response.status === 200) {
+      if (response.success) {
         console.log("Login successful");
-        // Store token or session data if needed
-        const userRole = response.data?.role;
-        if (userRole === "admin") {
-          router.push("/dashboard/admin");
-        } else if (userRole === "trainer") {
-          router.push("/dashboard/trainer");
-        } else {
-          router.push("/dashboard/user");
+        
+        // Store session data if needed
+        if (response.session) {
+          // You can store additional session data in localStorage if needed
+          localStorage.setItem('fitnes_session', JSON.stringify(response.session));
         }
+
+        // Redirect based on user role
+        const userRole = response.role || response.user?.user_metadata?.role || "customer";
+        redirectBasedOnRole(userRole);
       } else {
-        console.error("Unexpected response:", response.data);
+        console.error("Login failed:", response.message);
+        // Handle login failure (show error message)
       }
     } catch (error: any) {
-      if (error.response) {
-        console.error("Server error:", error.response.data);
-      } else {
-        console.error("Network error:", error.message);
+      console.error("Login error:", error);
+      // Handle error (show error message)
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/login`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        }
+      });
+
+      if (error) {
+        console.error("Google sign-in error:", error);
+        // Handle error
       }
+    } catch (error) {
+      console.error("Error initiating Google sign-in:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -65,12 +164,12 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="your@email.com" required />
+              <Input id="email" name="email" type="email" placeholder="your@email.com" required disabled={isLoading} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
+              <Input id="password" name="password" type="password" required disabled={isLoading} />
             </div>
 
             <div className="flex items-center justify-between">
@@ -79,6 +178,7 @@ export default function LoginPage() {
                   id="remember"
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  disabled={isLoading}
                 />
                 <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
                   Remember me
@@ -89,15 +189,20 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full">
-              Sign In
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
 
           <Separator />
 
           <div className="space-y-2">
-            <Button variant="outline" className="w-full bg-transparent flex items-center justify-center gap-3">
+            <Button 
+              variant="outline" 
+              className="w-full bg-transparent flex items-center justify-center gap-3"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+            >
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -116,9 +221,9 @@ export default function LoginPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Continue with Google
+              {isLoading ? "Connecting..." : "Continue with Google"}
             </Button>
-            <Button variant="outline" className="w-full bg-transparent flex items-center justify-center gap-3">
+            <Button variant="outline" className="w-full bg-transparent flex items-center justify-center gap-3" disabled={isLoading}>
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path
                   fill="#1877F2"
