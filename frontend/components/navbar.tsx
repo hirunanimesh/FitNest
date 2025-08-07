@@ -59,17 +59,17 @@ export function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-white border-border">
                   <DropdownMenuItem asChild>
-                    <Link href="/auth/signup?type=user" className="text-black">
+                    <Link href="/auth/signup/user" className="text-black">
                       User
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/auth/signup?type=trainer" className="text-black">
+                    <Link href="/auth/signup/trainer" className="text-black">
                       Trainer
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/auth/signup?type=gym" className="text-black">
+                    <Link href="/auth/signup/gym" className="text-black">
                       Gym
                     </Link>
                   </DropdownMenuItem>
@@ -108,17 +108,17 @@ export function Navbar() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-white border-border">
                       <DropdownMenuItem asChild>
-                        <Link href="/auth/signup?type=user" className="text-black">
+                        <Link href="/auth/signup/user" className="text-black">
                           User
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/auth/signup?type=trainer" className="text-black">
+                        <Link href="/auth/signup/trainer" className="text-black">
                           Trainer
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/auth/signup?type=gym" className="text-black">
+                        <Link href="/auth/signup/gym" className="text-black">
                           Gym
                         </Link>
                       </DropdownMenuItem>

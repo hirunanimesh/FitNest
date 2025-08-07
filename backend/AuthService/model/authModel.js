@@ -42,7 +42,10 @@ class AuthModel {
     phoneNo,
     profileImg,
     gender,
-    birthday
+    birthday,
+    weight,
+    height,
+    location
   ) {
     try {
       // Create user and get the data object
@@ -61,9 +64,12 @@ class AuthModel {
         last_name: LastName,
         address: address,
         phone_no: phoneNo,
-        profile_img: profileImg,
+        profile_img: profileImg, // This will now be the Cloudinary URL
         gender: gender,
         birthday: birthday,
+        // weight: weight ? parseInt(weight) : null,
+        // height: height ? parseInt(height) : null,
+        location: location, // This is now a JSON object for JSONB field
       };
       console.log("Data to insert:", JSON.stringify(insertData, null, 2));
 
@@ -87,6 +93,22 @@ class AuthModel {
       }
 
       console.log("Customer data inserted successfully:", customerdata);
+      const customer_id = customerdata[0].customer_id; // Get the ID of the inserted customer
+      console.log("Inserted customer ID:", customer_id);
+
+      const {data: physicalData, error: physicalError} = await supabase
+      .from("customer_progress")
+      .insert([{
+        customer_id: customer_id,
+        height: height ? parseFloat(height) : null,
+        weight: weight ? parseFloat(weight) : null,
+        // Map other physical data fields here
+      }]);
+
+      if (physicalError) {
+        console.error("Physical data insertion error:", physicalError);
+      }
+      console.log("Physical data inserted successfully:", physicalData);
 
       // Return both user and customer data
       return {

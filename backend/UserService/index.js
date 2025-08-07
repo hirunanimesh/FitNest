@@ -71,3 +71,4 @@ app.get('/api/users/subscriptions', async (req, res) => {
 app.listen(process.env.PORT || 3003, () => {
   console.log(`User Service is running on port ${process.env.PORT || 3003}`)
 })
+

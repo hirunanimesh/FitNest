@@ -38,13 +38,13 @@ export function CTASection() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="bg-card border-border">
               <DropdownMenuItem asChild>
-                <Link href="/auth/signup?type=user">User</Link>
+                <Link href="/auth/signup/user">User</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/auth/signup?type=trainer">Trainer</Link>
+                <Link href="/auth/signup/trainer">Trainer</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/auth/signup?type=gym">Gym</Link>
+                <Link href="/auth/signup/gym">Gym</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

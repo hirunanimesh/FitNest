@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { supabase, testConnection } = require('../superbaseClient');
 const AuthController = require('../controllers/AuthController');
+const upload = require('../config/multer');
 
 // Health check endpoint to test database connection
 
@@ -41,8 +42,8 @@ router.post('/signup', AuthController.createUser);
 
 // Login user
 router.post('/login', AuthController.login);
-router.post('/customer/register', AuthController.customerRegister);
-router.post('/gym/register', AuthController.GymRegister);
-router.post('/trainer/register', AuthController.TrainerRegister);
+router.post('/customer/register', upload.single('profileImage'), AuthController.customerRegister);
+router.post('/gym/register', upload.single('profileImage'), AuthController.GymRegister);
+router.post('/trainer/register', upload.single('profileImage'), AuthController.TrainerRegister);
 
 module.exports = router;
