@@ -27,7 +27,7 @@ class ProfileController {
 
   /**
    * Get user profile
-   * GET /api/users/profile
+   * GET /api/profile/user
    */
   async getProfile(req, res) {
     try {
