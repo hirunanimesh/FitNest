@@ -14,37 +14,51 @@ import { CalendarIcon, Upload } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+
 import { AppLogo } from "@/components/AppLogo";
-import axios from "axios"
+
 
 export default function UserSignup() {
   const router = useRouter()
   const [date, setDate] = useState<Date>()
-  const [profileImg, setProfileImg] = useState<File | null>(null)
+  const [profileImage, setProfileImage] = useState<File | null>(null)
   const [gender, setGender] = useState("");
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+    e.preventDefault()
 
-  const formData = new FormData(e.currentTarget);
-
-  if (date) formData.append("birthday", date.toISOString());
-  formData.append("gender", gender);
-  if (profileImg) formData.append("profileImg", profileImg);
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/signup/user`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-      }}
-    );
-    if (response.status === 200 || response.status === 201) {
-      router.push("/dashboard/user");
-    } else {
-      console.error("Unexpected response:", response.data);
+    const formData = new FormData(e.currentTarget)
+    const userData = {
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
+      email: formData.get("email"),
+      password: formData.get("password"),
+      confirmPassword: formData.get("confirmPassword"),
+      contactNo: formData.get("contactNo"),
+      dateOfBirth: date,
+      gender: formData.get("gender"),
+      weight: formData.get("weight"),
+      height: formData.get("height"),
+      address: formData.get("address"),
     }
-};
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/auth/signup`, {
+        method: "POST",
+        body: formData
+      })
+
+      if (response.ok) {
+        console.log("User registered successfully")
+        router.push("/dashboard")
+      } else {
+        const errorData = await response.json()
+        console.error("Error registering user:", errorData)
+      }
+    } catch (error) {
+      console.error("Network error:", error)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -63,27 +77,27 @@ export default function UserSignup() {
                 {/* Personal Information */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name <span className="text-red-600">*</span></Label>
+                    <Label htmlFor="firstName">First Name *</Label>
                     <Input id="firstName" name="firstName" placeholder="Enter your first name" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="LastName">Last Name <span className="text-red-600">*</span></Label>
-                    <Input id="LastName" name="LastName" placeholder="Enter your last name" required />
+                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Input id="lastName" name="lastName" placeholder="Enter your last name" required />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address <span className="text-red-600">*</span></Label>
+                  <Label htmlFor="email">Email Address *</Label>
                   <Input id="email" name="email" type="email" placeholder="Enter your email" required />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password <span className="text-red-600">*</span></Label>
+                  <Label htmlFor="password">Password *</Label>
                   <Input id="password" name="password" type="password" placeholder="Create a strong password" required />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password <span className="text-red-600">*</span></Label>
+                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -94,13 +108,13 @@ export default function UserSignup() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNo">Contact Number <span className="text-red-600">*</span></Label>
-                  <Input id="phonetNo" name="phoneNo" type="tel" placeholder="Enter your phone number" required />
+                  <Label htmlFor="contactNo">Contact Number *</Label>
+                  <Input id="contactNo" name="contactNo" type="tel" placeholder="Enter your phone number" required />
                 </div>
 
                 {/* Date of Birth */}
                 <div className="space-y-2">
-                  <Label>Date of Birth <span className="text-red-600">*</span></Label>
+                  <Label>Date of Birth *</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start text-left font-normal bg-transparent">
@@ -116,17 +130,17 @@ export default function UserSignup() {
 
                 {/* Gender */}
                 <div className="space-y-2">
-                  <Label>Gender <span className="text-red-600">*</span></Label>
+                  <Label>Gender *</Label>
                   <Select onValueChange={setGender}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+  <SelectTrigger>
+    <SelectValue placeholder="Select your gender" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="male">Male</SelectItem>
+    <SelectItem value="female">Female</SelectItem>
+    <SelectItem value="other">Other</SelectItem>
+  </SelectContent>
+</Select>
                 </div>
 
                 {/* Physical Information */}
@@ -143,30 +157,30 @@ export default function UserSignup() {
 
                 {/* Address */}
                 <div className="space-y-2">
-                  <Label htmlFor="address">Address <span className="text-red-600">*</span></Label>
+                  <Label htmlFor="address">Address *</Label>
                   <Textarea id="address" name="address" placeholder="Enter your full address" className="min-h-[100px]" required />
                 </div>
 
                 {/* Profile Image */}
                 <div className="space-y-2">
-                  <Label htmlFor="profileImg">Profile Image (Optional)</Label>
+                  <Label htmlFor="profileImage">Profile Image (Optional)</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <Upload className="mx-auto h-12 w-12 text-gray-400" />
                     <div className="mt-4">
-                      <Label htmlFor="profileImg" className="cursor-pointer">
+                      <Label htmlFor="profileImage" className="cursor-pointer">
                         <span className="text-red-600 hover:text-red-500">Upload a file</span>
                         <span className="text-gray-500"> or drag and drop</span>
                       </Label>
                       <Input
-                        id="profileImg"
+                        id="profileImage"
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => setProfileImg(e.target.files?.[0] || null)}
+                        onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-2">PNG, JPG, GIF up to 10MB</p>
-                    {profileImg && <p className="text-sm text-green-600 mt-2">Selected: {profileImg.name}</p>}
+                    {profileImage && <p className="text-sm text-green-600 mt-2">Selected: {profileImage.name}</p>}
                   </div>
                 </div>
 

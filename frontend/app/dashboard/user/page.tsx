@@ -2,20 +2,99 @@
 
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
-import { Bell, CalendarIcon, Dumbbell, Home, LogOut, Moon, Sun, User, Users, MapPin, Phone, TrendingUp, Weight, Ruler, Activity, Plus } from 'lucide-react'
-import axios from "axios"
+import { Bell, CalendarIcon, Dumbbell, Home, LogOut, Mail, Moon, Search, Settings, Sun, User, Users, MapPin, Phone, TrendingUp, Weight, Ruler, Activity, Plus } from 'lucide-react'
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import {Sidebar,SidebarContent,SidebarFooter,SidebarGroup,SidebarGroupContent,SidebarHeader,SidebarInset,SidebarMenu,SidebarMenuButton,SidebarMenuItem,SidebarProvider,SidebarRail,SidebarTrigger,} from "@/components/ui/sidebar"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 import { useTheme } from "next-themes"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter } from "recharts"
 import { Calendar as CalendarUI } from "@/components/ui/calendar"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+
+// Mock data
+const mockUser = {
+  name: "Alex Johnson",
+  email: "alex@fitnest.com",
+  avatar: "/placeholder.svg?height=40&width=40&text=AJ"
+}
+
+const mockSessions = [
+  {
+    id: 1,
+    title: "HIIT Cardio Blast",
+    trainer: "Sarah Wilson",
+    date: "2024-01-08",
+    time: "09:00 AM",
+    amount: "$45",
+    description: "High-intensity interval training for maximum calorie burn",
+    link: "https://zoom.us/j/123456789",
+    image: "/placeholder.svg?height=100&width=150&text=HIIT"
+  },
+  {
+    id: 2,
+    title: "Strength Training",
+    trainer: "Mike Chen",
+    date: "2024-01-08",
+    time: "02:00 PM",
+    amount: "$50",
+    description: "Full body strength workout focusing on compound movements",
+    link: "https://meet.google.com/abc-defg-hij",
+    image: "/placeholder.svg?height=100&width=150&text=Strength"
+  },
+  {
+    id: 3,
+    title: "Yoga Flow",
+    trainer: "Emma Davis",
+    date: "2024-01-09",
+    time: "07:00 AM",
+    amount: "$35",
+    description: "Relaxing yoga session to improve flexibility and mindfulness",
+    link: "https://zoom.us/j/987654321",
+    image: "/placeholder.svg?height=100&width=150&text=Yoga"
+  }
+]
+
+const bmiData = [
+  { day: 'Mon', bmi: 24.2 },
+  { day: 'Tue', bmi: 24.1 },
+  { day: 'Wed', bmi: 24.3 },
+  { day: 'Thu', bmi: 24.0 },
+  { day: 'Fri', bmi: 23.9 },
+  { day: 'Sat', bmi: 24.1 },
+  { day: 'Sun', bmi: 24.0 }
+]
+
+const weightData = [
+  { day: 'Mon', weight: 75.2 },
+  { day: 'Tue', weight: 75.0 },
+  { day: 'Wed', weight: 75.3 },
+  { day: 'Thu', weight: 74.8 },
+  { day: 'Fri', weight: 74.6 },
+  { day: 'Sat', weight: 75.1 },
+  { day: 'Sun', weight: 74.9 }
+]
 
 const motivationQuotes = [
   "Every workout counts towards your goal!",
@@ -29,7 +108,8 @@ const sidebarItems = [
   { title: "Profile", icon: User, url: "#" },
   { title: "Trainers", icon: Users, url: "#" },
   { title: "Gyms", icon: MapPin, url: "#" },
-  { title: "Contacts", icon: Phone, url: "#" }
+  { title: "Contacts", icon: Phone, url: "#" },
+  { title: "Settings", icon: Settings, url: "#" },
 ]
 
 function AnimatedQuote({ quote }: { quote: string }) {
@@ -107,128 +187,28 @@ function AppSidebar() {
   )
 }
 
-// Define or import the missing types
-interface User {
-  id: number;
-  name: string;
-  avatar?: string;
-}
-
-interface Session {
-  id: number;
-  title: string;
-  trainer: string;
-  date: string;
-  time: string;
-  amount: string;
-  description: string;
-  image?: string;
-}
-
-interface ProgressEntry {
-  date: string;
-  weight: number;
-  height: number;
-}
-
 export default function UserDashboard() {
-  const { theme, setTheme } = useTheme();
-  const [currentQuote, setCurrentQuote] = useState(0);
-  const [mounted, setMounted] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-  const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
+  const { theme, setTheme } = useTheme()
+  const [currentQuote, setCurrentQuote] = useState(0)
+  const [mounted, setMounted] = useState(false)
+  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
+  const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false)
   const [taskForm, setTaskForm] = useState({
     task_date: format(new Date(), "yyyy-MM-dd"),
     task: "",
     note: "",
-    customer_id: 1 // Use fetched user ID or fallback
-  });
+    customer_id: 1 // Mock customer ID
+  })
   const [weightForm, setWeightForm] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     weight: ""
-  });
+  })
   const [tasks, setTasks] = useState([
     { id: 1, task_date: format(new Date(), "yyyy-MM-dd"), task: "Morning workout", note: "HIIT session", type: "workout" },
     { id: 2, task_date: format(new Date(), "yyyy-MM-dd"), task: "Nutrition consultation", note: "Diet planning", type: "appointment" },
     { id: 3, task_date: format(new Date(), "yyyy-MM-dd"), task: "Rest day", note: "Recovery", type: "rest" }
-  ]);
-  const [user, setUser] = useState<User | null>(null);
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorr] = useState(null);
-  const [bmiData, setBmiData] = useState<{ day: string; bmi: number }[]>([]);
-  const [weightData, setWeightData] = useState<{ day: string; weight: number }[]>([]);
-
-  useEffect(() => {
-    const fetchUserAndSessions = async () => {
-      try {
-        const userResponse = await axios.get<User>(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/customer`);
-        setUser(userResponse.data);
-
-        const sessionsResponse = await axios.get<Session[]>(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/gym/subscribe`, {
-          params: { userId: userResponse.data.id },
-        });
-        setSessions(sessionsResponse.data);
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-       
-        setLoading(false);
-      }
-    };
-
-    fetchUserAndSessions();
-  }, []);
-
-  useEffect(() => {
-    const fetchBmiData = async () => {
-      try {
-        const response = await axios.get<ProgressEntry[]>(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/user/progress`, {
-          params: { userId: user?.id },
-        });
-
-        const bmiValues = response.data.map((entry) => {
-          const heightInMeters = entry.height / 100; // Convert height to meters
-          const bmi = entry.weight / (heightInMeters * heightInMeters);
-          return { day: entry.date, bmi: parseFloat(bmi.toFixed(1)) }; // Round BMI to 1 decimal place
-        });
-
-        setBmiData(bmiValues);
-      } catch (err) {
-        console.error("Error fetching BMI data:", err);
-        
-      }
-    };
-
-    if (user?.id) {
-      fetchBmiData();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    const fetchWeightData = async () => {
-      try {
-        const response = await axios.get<ProgressEntry[]>(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/user/progress`, {
-          params: { userId: user?.id },
-        });
-
-        const weightValues = response.data.map((entry) => ({
-          day: entry.date,
-          weight: entry.weight,
-        }));
-
-        setWeightData(weightValues);
-      } catch (err) {
-        console.error("Error fetching weight data:", err);
-      }
-    };
-
-    if (user?.id) {
-      fetchWeightData();
-    }
-  }, [user]);
+  ])
 
   // Ensure the theme is properly initialized and debug the toggle functionality
   useEffect(() => {
@@ -238,45 +218,44 @@ export default function UserDashboard() {
   }, [mounted]);
 
   useEffect(() => {
-    setMounted(true);
+    setMounted(true)
     const interval = setInterval(() => {
-      setCurrentQuote((prev) => (prev + 1) % motivationQuotes.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+      setCurrentQuote(prev => (prev + 1) % motivationQuotes.length)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
-  if (!mounted || loading) return <p>Loading...</p>;
-  
+  if (!mounted) return null // Prevent rendering until the theme is mounted
 
-  const today = format(new Date(), "EEEE, MMMM do, yyyy");
+  const today = format(new Date(), "EEEE, MMMM do, yyyy")
 
   const handleTaskSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     const newTask = {
       id: Date.now(),
       ...taskForm,
       type: "workout" // Default type
-    };
-    setTasks((prev) => [...prev, newTask]);
+    }
+    setTasks(prev => [...prev, newTask])
     setTaskForm({
       task_date: format(new Date(), "yyyy-MM-dd"),
       task: "",
       note: "",
       customer_id: 1
-    });
-    setIsTaskDialogOpen(false);
-  };
+    })
+    setIsTaskDialogOpen(false)
+  }
 
   const handleWeightSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     // Here you would typically update the weight data
-    console.log("Weight added:", weightForm);
+    console.log("Weight added:", weightForm)
     setWeightForm({
       date: format(new Date(), "yyyy-MM-dd"),
       weight: ""
-    });
-    setIsWeightDialogOpen(false);
-  };
+    })
+    setIsWeightDialogOpen(false)
+  }
 
   return (
     <SidebarProvider>
@@ -289,7 +268,7 @@ export default function UserDashboard() {
             <Separator orientation="vertical" className="mr-2 h-4" />
             <div className="flex flex-1 items-center justify-between">
               <div>
-                <h1 className="text-lg font-semibold">Hi, {user?.name}</h1>
+                <h1 className="text-lg font-semibold">Hi, {mockUser.name}</h1>
                 <p className="text-sm text-muted-foreground">{today}</p>
               </div>
               <div className="flex items-center gap-4">
@@ -306,8 +285,8 @@ export default function UserDashboard() {
                   <Bell className="h-4 w-4" />
                 </Button>
                 <Avatar>
-                  <AvatarImage src={user?.avatar || "/placeholder.svg"} />
-                  <AvatarFallback>{user?.name?.[0]}</AvatarFallback>
+                  <AvatarImage src={mockUser.avatar || "/placeholder.svg"} />
+                  <AvatarFallback>AJ</AvatarFallback>
                 </Avatar>
               </div>
             </div>
@@ -352,7 +331,7 @@ export default function UserDashboard() {
             <div>
               <h2 className="text-xl font-semibold mb-4">Today's Sessions</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sessions.slice(0, 2).map((session) => (
+                {mockSessions.slice(0, 2).map((session) => (
                   <Card key={session.id} className="dark:bg-black dark:border-green-500/20">
                     <CardHeader className="pb-2">
                       <img 
@@ -392,7 +371,7 @@ export default function UserDashboard() {
             <div>
               <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sessions.map((session) => (
+                {mockSessions.map((session) => (
                   <Card key={session.id} className="dark:bg-black dark:border-green-500/20">
                     <CardHeader className="pb-2">
                       <img 
@@ -438,12 +417,8 @@ export default function UserDashboard() {
                     <Weight className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{weightData[weightData.length - 1]?.weight || "-"} kg</div>
-                    <p className="text-xs text-muted-foreground">
-                      {weightData.length > 1
-                        ? `${(weightData[weightData.length - 1]?.weight - weightData[weightData.length - 2]?.weight).toFixed(1)} kg from yesterday`
-                        : "No data available"}
-                    </p>
+                    <div className="text-2xl font-bold">74.9 kg</div>
+                    <p className="text-xs text-muted-foreground">-0.3 kg from yesterday</p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -481,7 +456,7 @@ export default function UserDashboard() {
                     <ScatterChart data={bmiData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="day" />
-                      <YAxis domain={["dataMin - 0.5", "dataMax + 0.5"]} />
+                      <YAxis domain={['dataMin - 0.5', 'dataMax + 0.5']} />
                       <Tooltip />
                       <Scatter dataKey="bmi" fill="#ef4444" />
                     </ScatterChart>
@@ -553,7 +528,7 @@ export default function UserDashboard() {
                     <LineChart data={weightData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="day" />
-                      <YAxis domain={["dataMin - 1", "dataMax + 1"]} />
+                      <YAxis domain={['dataMin - 1', 'dataMax + 1']} />
                       <Tooltip />
                       <Line type="monotone" dataKey="weight" stroke="#ef4444" strokeWidth={2} />
                     </LineChart>
@@ -673,5 +648,5 @@ export default function UserDashboard() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }
