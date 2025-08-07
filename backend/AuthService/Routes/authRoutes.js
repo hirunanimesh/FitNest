@@ -42,6 +42,13 @@ router.post('/signup', AuthController.createUser);
 
 // Login user
 router.post('/login', AuthController.login);
+
+// Get user info from token
+router.get('/user', AuthController.getUserInfo);
+
+// Complete OAuth profile
+router.post('/oauth/complete-profile', upload.single('profileImage'), AuthController.completeOAuthProfile);
+
 router.post('/customer/register', upload.single('profileImage'), AuthController.customerRegister);
 router.post('/gym/register', upload.single('profileImage'), AuthController.GymRegister);
 router.post('/trainer/register', upload.single('profileImage'), AuthController.TrainerRegister);

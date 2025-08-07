@@ -21,4 +21,48 @@ export const AddCustomer = async (customerData) => {
         throw error;
     }
 };
-    
+
+export const LoginUser = async (email, password) => {
+    try {
+        const response = await axios.post(`${Base_URL}/api/auth/login`, {
+            email,
+            password,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error logging in user:", error);
+        throw error;
+    }
+};
+
+export const GetUserInfo = async (token) => {
+    try {
+        const response = await axios.get(`${Base_URL}/api/auth/user`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error getting user info:", error);
+        throw error;
+    }
+};
+
+export const CompleteOAuthProfile = async (profileData) => {
+    try {
+        const config = {};
+        
+        if (profileData instanceof FormData) {
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+        }
+
+        const response = await axios.post(`${Base_URL}/api/auth/oauth/complete-profile`, profileData, config);
+        return response.data;
+    } catch (error) {
+        console.error("Error completing OAuth profile:", error);
+        throw error;
+    }
+};
