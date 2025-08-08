@@ -1,7 +1,7 @@
 
 import { supabase } from '../database/supabase.js';
 
-export async function createTrainer(trainerData) {
+/*export async function createTrainer(trainerData) {
   const { data, error } = await supabase
     .from('trainer')
     .insert([trainerData])
@@ -12,7 +12,7 @@ export async function createTrainer(trainerData) {
   }
 
   return data[0]; // Return first inserted row
-}
+}*/
 
 export async function getalltrainers(){
         const { data, error } = await supabase

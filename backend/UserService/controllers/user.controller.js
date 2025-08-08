@@ -1,9 +1,9 @@
 //calendar
 //add weight
 
-import { createUser, updateUseretails } from '../services/user.service.js';
+import {  updateUseretails } from '../services/user.service.js';
 
-export const addUser = async (req, res) => {
+/*export const addUser = async (req, res) => {
   try {
     const user = await createUser(req.body);
     if (user) {
@@ -13,7 +13,7 @@ export const addUser = async (req, res) => {
     console.error("Error creating user:", error);
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
-};
+};*/
 
 export const updateUserDetails = async (req, res) => {
     const { userId } = req.params;

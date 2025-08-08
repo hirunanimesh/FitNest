@@ -1,6 +1,6 @@
 import { supabase } from '../database/supabase.js';
 
-export async function createUser(userData) {
+/*export async function createUser(userData) {
   const { data, error } = await supabase
     .from('customer')
     .insert([userData])
@@ -11,7 +11,8 @@ export async function createUser(userData) {
   }
 
   return data[0]; // Return first inserted row
-}
+}*/
+
 export async function updateUseretails(userId, userData) {
   const { data, error } = await supabase
     .from('customer')
