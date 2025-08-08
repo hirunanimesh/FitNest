@@ -1,6 +1,6 @@
-import { createTrainer,getalltrainers, gettrainerbyid,  updatetrainerdetails } from '../services/trainer.service.js';
+import { getalltrainers, gettrainerbyid,  updatetrainerdetails } from '../services/trainer.service.js';
 
-export const addTrainer = async (req, res) => {
+/*export const addTrainer = async (req, res) => {
   try {
     const trainer = await createTrainer(req.body);
     if (trainer) {
@@ -10,7 +10,7 @@ export const addTrainer = async (req, res) => {
     console.error("Error creating Trainer:", error);
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
-};
+};*/
 
 export const getallTrainers = async (req,res)=>{
     try{
