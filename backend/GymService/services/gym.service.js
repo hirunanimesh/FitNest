@@ -1,4 +1,3 @@
-
 import { supabase } from '../database/supabase.js';
 
 export async function createGym(gymData) {

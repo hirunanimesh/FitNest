@@ -1,10 +1,10 @@
-CREATE TABLE Gym (
+/*CREATE TABLE Gym (
   gym_id INT,
   address VARCHAR(255),
   location VARCHAR(255),
   contact_no VARCHAR(20),
   gym_name VARCHAR(100)
-);
+);*/
 
 ---------------------------------------------------------------------------
 

@@ -1,0 +1,99 @@
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Menu, Dumbbell } from "lucide-react"
+import Link from "next/link"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+export function Navbar() {
+  return (
+    <>
+      <header className="fixed top-0 z-50 w-full bg-transparent backdrop-blur-md border-b border-white/10">
+        <div className="container flex h-14 items-center justify-between px-4">
+          <Link href="/" className="flex items-center space-x-2">
+            <Dumbbell className="h-5 w-5 text-primary" />
+            <span className="font-bold text-xl text-white">FitNest</span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-4">
+            <Link href="/" className="text-white hover:text-primary px-3 py-3 text-lg font-medium transition-colors">
+              HOME
+            </Link>
+            <Link
+              href="/about"
+              className="text-white hover:text-primary px-3 py-2 text-lg font-medium transition-colors"
+            >
+              ABOUT
+            </Link>
+            <Link
+              href="/gym"
+              className="text-white hover:text-primary px-3 py-2 text-lg font-medium transition-colors"
+            >
+              GYM
+            </Link>
+            <Link
+              href="/contact"
+              className="text-white hover:text-primary px-3 py-2 text-lg font-medium transition-colors"
+            >
+              CONTACT
+            </Link>
+          </nav>
+
+          <div className="flex items-center space-x-3">
+            <div className="hidden md:flex space-x-2">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="text-white hover:text-primary hover:bg-white/10 text-sm"
+              >
+                <Link href="/auth/login">Login</Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-sm"
+              >
+                <Link href="/auth/signup">Join Now</Link>
+              </Button>
+            </div>
+
+            {/* Mobile Navigation */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="md:hidden text-white hover:bg-white/10">
+                  <Menu className="h-4 w-4" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="bg-white border-border">
+                <div className="flex flex-col space-y-4 mt-8">
+                  <Link href="/" className="text-base font-medium text-black hover:text-primary">
+                    HOME
+                  </Link>
+                  <Link href="/about" className="text-base font-medium text-black hover:text-primary">
+                    ABOUT
+                  </Link>
+                  <Link href="/search" className="text-base font-medium text-black hover:text-primary">
+                    LOCATIONS
+                  </Link>
+                  <Link href="/contact" className="text-base font-medium text-black hover:text-primary">
+                    CONTACT
+                  </Link>
+                  <Link href="/auth/login" className="text-base font-medium text-black hover:text-primary">
+                    Login
+                  </Link>
+                  <Button asChild className="text-base font-medium bg-primary hover:bg-primary/90">
+                    <Link href="/auth/signup">Join Now</Link>
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </header>
+    </>
+  )
+}
