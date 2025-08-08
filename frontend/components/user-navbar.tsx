@@ -25,8 +25,8 @@ export function UserNavbar() {
 
         {/* Navigation Menu */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="/dashboard" className="text-sm font-medium hover:text-primary">
-            HOME
+          <Link href="/dashboard/user" className="text-sm font-medium hover:text-primary">
+            DASHBOARD
           </Link>
           <Link href="/about" className="text-sm font-medium hover:text-primary">
             ABOUT

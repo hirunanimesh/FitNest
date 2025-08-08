@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import {Sidebar,SidebarContent,SidebarFooter,SidebarGroup,SidebarGroupContent,SidebarHeader,SidebarInset,SidebarMenu,SidebarMenuButton,SidebarMenuItem,SidebarProvider,SidebarRail,SidebarTrigger,} from "@/components/ui/sidebar"
@@ -27,12 +28,10 @@ const motivationQuotes = [
 ]
 
 const sidebarItems = [
-  { title: "Home", icon: Home, url: "#", isActive: true },
-  { title: "Profile", icon: User, url: "#" },
-  { title: "Trainers", icon: Users, url: "#" },
-  { title: "Gyms", icon: MapPin, url: "#" },
+  { title: "Home", icon: Home, url: "/", isActive: true },
+  { title: "Profile", icon: User, url: "user/profile/1" },
+  { title: "Search", icon: Users, url: "user/search" },
   { title: "Contacts", icon: Phone, url: "#" }
-  
 ]
 
 function AnimatedQuote({ quote }: { quote: string }) {
@@ -54,7 +53,7 @@ function AnimatedQuote({ quote }: { quote: string }) {
     setCurrentIndex(0)
   }, [quote])
 
-  return <p className="text-2xl font-bold text-red-800 dark:text-red-400 italic">{displayedText}</p>
+  return <p className="text-2xl font-bold text-primary italic">{displayedText}</p>
 }
 
 function AppSidebar() {
@@ -178,7 +177,6 @@ export default function UserDashboard() {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching data:", err);
-       
         setLoading(false);
       }
     };
@@ -202,7 +200,6 @@ export default function UserDashboard() {
         setBmiData(bmiValues);
       } catch (err) {
         console.error("Error fetching BMI data:", err);
-        
       }
     };
 
@@ -250,7 +247,6 @@ export default function UserDashboard() {
   }, []);
 
   if (!mounted || loading) return <p>Loading...</p>;
-  
 
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
 
@@ -297,7 +293,6 @@ export default function UserDashboard() {
                 <p className="text-sm text-muted-foreground">{today}</p>
               </div>
               <div className="flex items-center gap-4">
-                {/* Ensure the theme toggle functionality works correctly */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -326,157 +321,184 @@ export default function UserDashboard() {
           {/* Main Content */}
           <div className="flex-1 space-y-6 p-6">
             {/* Motivation Quote */}
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-800 dark:text-red-400 mb-2">
+            <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+              <CardContent className="p-6 text-center">
                 <AnimatedQuote quote={motivationQuotes[currentQuote]} />
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Streak Card */}
-            <Card className="border-red-200 dark:border-red-800">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-red-500" />
+                  <TrendingUp className="h-5 w-5 text-blue-500" />
                   Workout Progress
                 </CardTitle>
+                <CardDescription>Track your fitness journey milestones</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-500">7</div>
-                    <div className="text-sm text-muted-foreground">Current Streak</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Current Streak</p>
+                      <p className="text-2xl font-bold text-blue-500">7 days</p>
+                    </div>
+                    <TrendingUp className="h-8 w-8 text-blue-500" />
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-500">21</div>
-                    <div className="text-sm text-muted-foreground">Best Streak</div>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Best Streak</p>
+                      <p className="text-2xl font-bold text-green-500">21 days</p>
+                    </div>
+                    <Activity className="h-8 w-8 text-green-500" />
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">85%</div>
-                    <div className="text-sm text-muted-foreground">Goal Progress</div>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Goal Progress</p>
+                      <p className="text-2xl font-bold">85%</p>
+                    </div>
+                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <span className="text-sm font-bold text-primary">85</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Daily Workouts */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Today's Sessions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sessions.slice(0, 2).map((session) => (
-                  <Card key={session.id} className="dark:bg-black dark:border-green-500/20">
-                    <CardHeader className="pb-2">
-                      <img 
-                        src={session.image || "/placeholder.svg"} 
-                        alt={session.title}
-                        className="w-full h-24 object-cover rounded-md mb-2"
-                      />
-                      <CardTitle className="text-lg">{session.title}</CardTitle>
-                      <CardDescription>with {session.trainer}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Date:</span>
-                          <span>{session.date}</span>
+            {/* Today's Sessions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Today's Sessions</CardTitle>
+                <CardDescription>Your scheduled workout sessions for today</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {sessions.slice(0, 2).map((session) => (
+                    <Card key={session.id} className="border-l-4 border-l-primary">
+                      <CardHeader className="pb-2">
+                        <img 
+                          src={session.image || "/placeholder.svg"} 
+                          alt={session.title}
+                          className="w-full h-24 object-cover rounded-md mb-2"
+                        />
+                        <CardTitle className="text-lg">{session.title}</CardTitle>
+                        <CardDescription>with {session.trainer}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Date:</span>
+                            <Badge variant="outline">{session.date}</Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Time:</span>
+                            <Badge variant="outline">{session.time}</Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Amount:</span>
+                            <Badge variant="default" className="bg-green-500">{session.amount}</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">{session.description}</p>
+                          <Button size="sm" className="w-full mt-3">
+                            Join Session
+                          </Button>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Time:</span>
-                          <span>{session.time}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Amount:</span>
-                          <span className="font-semibold text-green-600">{session.amount}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">{session.description}</p>
-                        <Button size="sm" className="w-full mt-2 bg-red-500 hover:bg-red-600">
-                          Join Session
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Upcoming Sessions */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sessions.map((session) => (
-                  <Card key={session.id} className="dark:bg-black dark:border-green-500/20">
-                    <CardHeader className="pb-2">
-                      <img 
-                        src={session.image || "/placeholder.svg"} 
-                        alt={session.title}
-                        className="w-full h-24 object-cover rounded-md mb-2"
-                      />
-                      <CardTitle className="text-lg">{session.title}</CardTitle>
-                      <CardDescription>with {session.trainer}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Date:</span>
-                          <span>{session.date}</span>
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming Sessions</CardTitle>
+                <CardDescription>Your scheduled sessions for the coming days</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {sessions.map((session) => (
+                    <Card key={session.id} className="hover:shadow-lg transition-shadow">
+                      <CardHeader className="pb-2">
+                        <img 
+                          src={session.image || "/placeholder.svg"} 
+                          alt={session.title}
+                          className="w-full h-24 object-cover rounded-md mb-2"
+                        />
+                        <CardTitle className="text-lg">{session.title}</CardTitle>
+                        <CardDescription>with {session.trainer}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Date:</span>
+                            <Badge variant="outline">{session.date}</Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Time:</span>
+                            <Badge variant="outline">{session.time}</Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Amount:</span>
+                            <Badge variant="default" className="bg-green-500">{session.amount}</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">{session.description}</p>
+                          <Button size="sm" className="w-full mt-3" variant="outline">
+                            View Details
+                          </Button>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Time:</span>
-                          <span>{session.time}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Amount:</span>
-                          <span className="font-semibold text-green-600">{session.amount}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">{session.description}</p>
-                        <Button size="sm" className="w-full mt-2 bg-red-500 hover:bg-red-600">
-                          Join Session
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* KPI Results */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Today's Results</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Weight</CardTitle>
-                    <Weight className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{weightData[weightData.length - 1]?.weight || "-"} kg</div>
-                    <p className="text-xs text-muted-foreground">
-                      {weightData.length > 1
-                        ? `${(weightData[weightData.length - 1]?.weight - weightData[weightData.length - 2]?.weight).toFixed(1)} kg from yesterday`
-                        : "No data available"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Height</CardTitle>
-                    <Ruler className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">175 cm</div>
-                    <p className="text-xs text-muted-foreground">No change</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">BMI</CardTitle>
-                    <Activity className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">24.0</div>
-                    <p className="text-xs text-muted-foreground">Normal range</p>
-                  </CardContent>
-                </Card>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Weight</p>
+                      <p className="text-2xl font-bold">{weightData[weightData.length - 1]?.weight || "-"} kg</p>
+                      <p className="text-xs text-muted-foreground">
+                        {weightData.length > 1
+                          ? `${(weightData[weightData.length - 1]?.weight - weightData[weightData.length - 2]?.weight).toFixed(1)} kg from yesterday`
+                          : "No data available"}
+                      </p>
+                    </div>
+                    <Weight className="h-8 w-8 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Height</p>
+                      <p className="text-2xl font-bold">175 cm</p>
+                      <p className="text-xs text-muted-foreground">No change</p>
+                    </div>
+                    <Ruler className="h-8 w-8 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">BMI</p>
+                      <p className="text-2xl font-bold">24.0</p>
+                      <p className="text-xs text-muted-foreground">Normal range</p>
+                    </div>
+                    <Activity className="h-8 w-8 text-purple-500" />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Charts */}
@@ -493,7 +515,7 @@ export default function UserDashboard() {
                       <XAxis dataKey="day" />
                       <YAxis domain={["dataMin - 0.5", "dataMax + 0.5"]} />
                       <Tooltip />
-                      <Scatter dataKey="bmi" fill="#ef4444" />
+                      <Scatter dataKey="bmi" fill="#3b82f6" />
                     </ScatterChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -565,7 +587,7 @@ export default function UserDashboard() {
                       <XAxis dataKey="day" />
                       <YAxis domain={["dataMin - 1", "dataMax + 1"]} />
                       <Tooltip />
-                      <Line type="monotone" dataKey="weight" stroke="#ef4444" strokeWidth={2} />
+                      <Line type="monotone" dataKey="weight" stroke="#3b82f6" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -577,19 +599,20 @@ export default function UserDashboard() {
         {/* Right Sidebar */}
         <div className="w-80 border-l bg-muted/20 p-4 space-y-6">
           {/* Google Calendar */}
-          <Card className="bg-card border-border">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
                 <CalendarIcon className="mr-2 h-5 w-5" />
                 Schedule
               </CardTitle>
+              <CardDescription>Manage your workout schedule</CardDescription>
             </CardHeader>
             <CardContent>
               <CalendarUI
                 mode="single"
                 selected={date}
                 onSelect={setDate}
-                className="rounded-md border border-border"
+                className="rounded-md border"
               />
               <div className="mt-4 space-y-2">
                 <div className="flex items-center space-x-2 text-sm">
@@ -608,6 +631,7 @@ export default function UserDashboard() {
               <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full mt-4">
+                    <Plus className="h-4 w-4 mr-1" />
                     Add Task
                   </Button>
                 </DialogTrigger>
@@ -665,16 +689,21 @@ export default function UserDashboard() {
                   </form>
                 </DialogContent>
               </Dialog>
-              <div className="mt-4 space-y-2">
-                <div className="text-sm text-muted-foreground space-y-1">
+              
+              <div className="mt-4 space-y-3">
+                <h4 className="text-sm font-medium">Recent Tasks</h4>
+                <div className="space-y-2">
                   {tasks.slice(0, 3).map((task) => (
-                    <p key={task.id} className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${
+                    <div key={task.id} className="flex items-start gap-2 p-2 rounded border">
+                      <div className={`w-2 h-2 rounded-full mt-2 ${
                         task.type === 'workout' ? 'bg-red-500' : 
                         task.type === 'appointment' ? 'bg-blue-500' : 'bg-green-500'
                       }`}></div>
-                      {task.task} - {task.note}
-                    </p>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{task.task}</p>
+                        <p className="text-xs text-muted-foreground">{task.note}</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
