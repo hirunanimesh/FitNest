@@ -19,6 +19,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
+import SideBar from "./_components/SideBar"
+import TopBar from "./_components/TopBar"
+import Progress from "./_components/Progress"
+import TodaySessions from "./_components/TodaySessions"
+import UpcomingSessions from "./_components/UpcomingSessions"
+import KPI from "./_components/KPI"
 
 const motivationQuotes = [
   "Every workout counts towards your goal!",
@@ -56,58 +62,58 @@ function AnimatedQuote({ quote }: { quote: string }) {
   return <p className="text-2xl font-bold text-primary italic">{displayedText}</p>
 }
 
-function AppSidebar() {
-  const { theme, setTheme } = useTheme()
+// function AppSidebar() {
+//   const { theme, setTheme } = useTheme()
 
-  return (
-    <Sidebar className="bg-gradient-to-br from-red-600 via-red-700 to-black dark:from-red-600 dark:via-red-700 dark:to-black">
-      <SidebarHeader className="bg-transparent">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="data-[state=open]:bg-white/10 text-white hover:bg-white/10 text-xl">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white/20 text-white-xl">
-                <Dumbbell className="size-9" />
-              </div>
-              <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold text-white">FitNest</span>
-                <span className="text-xs text-white/80">Fitness Dashboard</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent className="bg-transparent">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {sidebarItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={item.isActive} className="text-lg">
-                    <a href={item.url} className={`text-white hover:bg-white/10 ${item.isActive ? "bg-white/20 text-white font-semibold" : ""}`}>
-                      <item.icon className="text-white" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter className="bg-transparent">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton className="text-white hover:bg-white/10">
-              <LogOut className="text-white" />
-              <span>Logout</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
-  )
-}
+//   return (
+//     <Sidebar className="bg-gradient-to-br from-red-600 via-red-700 to-black dark:from-red-600 dark:via-red-700 dark:to-black">
+//       <SidebarHeader className="bg-transparent">
+//         <SidebarMenu>
+//           <SidebarMenuItem>
+//             <SidebarMenuButton size="lg" className="data-[state=open]:bg-white/10 text-white hover:bg-white/10 text-xl">
+//               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white/20 text-white-xl">
+//                 <Dumbbell className="size-9" />
+//               </div>
+//               <div className="flex flex-col gap-0.5 leading-none">
+//                 <span className="font-semibold text-white">FitNest</span>
+//                 <span className="text-xs text-white/80">Fitness Dashboard</span>
+//               </div>
+//             </SidebarMenuButton>
+//           </SidebarMenuItem>
+//         </SidebarMenu>
+//       </SidebarHeader>
+//       <SidebarContent className="bg-transparent">
+//         <SidebarGroup>
+//           <SidebarGroupContent>
+//             <SidebarMenu>
+//               {sidebarItems.map((item) => (
+//                 <SidebarMenuItem key={item.title}>
+//                   <SidebarMenuButton asChild isActive={item.isActive} className="text-lg">
+//                     <a href={item.url} className={`text-white hover:bg-white/10 ${item.isActive ? "bg-white/20 text-white font-semibold" : ""}`}>
+//                       <item.icon className="text-white" />
+//                       <span>{item.title}</span>
+//                     </a>
+//                   </SidebarMenuButton>
+//                 </SidebarMenuItem>
+//               ))}
+//             </SidebarMenu>
+//           </SidebarGroupContent>
+//         </SidebarGroup>
+//       </SidebarContent>
+//       <SidebarFooter className="bg-transparent">
+//         <SidebarMenu>
+//           <SidebarMenuItem>
+//             <SidebarMenuButton className="text-white hover:bg-white/10">
+//               <LogOut className="text-white" />
+//               <span>Logout</span>
+//             </SidebarMenuButton>
+//           </SidebarMenuItem>
+//         </SidebarMenu>
+//       </SidebarFooter>
+//       <SidebarRail />
+//     </Sidebar>
+//   )
+// }
 
 // Define or import the missing types
 interface User {
@@ -280,43 +286,11 @@ export default function UserDashboard() {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <SideBar/>
       <SidebarInset className="flex">
         <div className="flex-1">
           {/* Header */}
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <div className="flex flex-1 items-center justify-between">
-              <div>
-                <h1 className="text-lg font-semibold">Hi, {user?.name}</h1>
-                <p className="text-sm text-muted-foreground">{today}</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                >
-                  <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                  <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Bell className="h-4 w-4" />
-                </Button>
-                <Avatar>
-                  <AvatarImage src={user?.avatar || "/placeholder.svg"} />
-                  <AvatarFallback>{user?.name?.[0]}</AvatarFallback>
-                </Avatar>
-                <Button onClick={() => {
-                  supabase.auth.signOut();
-                  router.push('/auth/login');
-                }}>
-                  Logout
-                </Button>
-              </div>
-            </div>
-          </header>
+          <TopBar/>
 
           {/* Main Content */}
           <div className="flex-1 space-y-6 p-6">
@@ -328,90 +302,13 @@ export default function UserDashboard() {
             </Card>
 
             {/* Streak Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-blue-500" />
-                  Workout Progress
-                </CardTitle>
-                <CardDescription>Track your fitness journey milestones</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Current Streak</p>
-                      <p className="text-2xl font-bold text-blue-500">7 days</p>
-                    </div>
-                    <TrendingUp className="h-8 w-8 text-blue-500" />
-                  </div>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Best Streak</p>
-                      <p className="text-2xl font-bold text-green-500">21 days</p>
-                    </div>
-                    <Activity className="h-8 w-8 text-green-500" />
-                  </div>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Goal Progress</p>
-                      <p className="text-2xl font-bold">85%</p>
-                    </div>
-                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-sm font-bold text-primary">85</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <Progress/>
 
             {/* Today's Sessions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Today's Sessions</CardTitle>
-                <CardDescription>Your scheduled workout sessions for today</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {sessions.slice(0, 2).map((session) => (
-                    <Card key={session.id} className="border-l-4 border-l-primary">
-                      <CardHeader className="pb-2">
-                        <img 
-                          src={session.image || "/placeholder.svg"} 
-                          alt={session.title}
-                          className="w-full h-24 object-cover rounded-md mb-2"
-                        />
-                        <CardTitle className="text-lg">{session.title}</CardTitle>
-                        <CardDescription>with {session.trainer}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Date:</span>
-                            <Badge variant="outline">{session.date}</Badge>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Time:</span>
-                            <Badge variant="outline">{session.time}</Badge>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Amount:</span>
-                            <Badge variant="default" className="bg-green-500">{session.amount}</Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-2">{session.description}</p>
-                          <Button size="sm" className="w-full mt-3">
-                            Join Session
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <TodaySessions/>
 
             {/* Upcoming Sessions */}
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Upcoming Sessions</CardTitle>
                 <CardDescription>Your scheduled sessions for the coming days</CardDescription>
@@ -419,7 +316,7 @@ export default function UserDashboard() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {sessions.map((session) => (
-                    <Card key={session.id} className="hover:shadow-lg transition-shadow">
+                      <Card key={session.id} className="hover:shadow-lg transition-shadow">
                       <CardHeader className="pb-2">
                         <img 
                           src={session.image || "/placeholder.svg"} 
@@ -453,53 +350,11 @@ export default function UserDashboard() {
                   ))}
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
+            <UpcomingSessions/>
 
             {/* KPI Results */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Weight</p>
-                      <p className="text-2xl font-bold">{weightData[weightData.length - 1]?.weight || "-"} kg</p>
-                      <p className="text-xs text-muted-foreground">
-                        {weightData.length > 1
-                          ? `${(weightData[weightData.length - 1]?.weight - weightData[weightData.length - 2]?.weight).toFixed(1)} kg from yesterday`
-                          : "No data available"}
-                      </p>
-                    </div>
-                    <Weight className="h-8 w-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Height</p>
-                      <p className="text-2xl font-bold">175 cm</p>
-                      <p className="text-xs text-muted-foreground">No change</p>
-                    </div>
-                    <Ruler className="h-8 w-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">BMI</p>
-                      <p className="text-2xl font-bold">24.0</p>
-                      <p className="text-xs text-muted-foreground">Normal range</p>
-                    </div>
-                    <Activity className="h-8 w-8 text-purple-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+              <KPI/>
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
