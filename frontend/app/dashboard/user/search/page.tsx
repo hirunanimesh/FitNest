@@ -14,13 +14,11 @@ import GymCard from "@/components/GymCard"
 interface Gym {
   gym_id: number;
   gym_name: string;
-  location: string;
-  rating: number;
-  reviews: number;
-  image: string;
-  dayPassPrice: number;
-  plans: { title: string; price: number; color: string }[];
-  amenities: string[];
+  profile_img?: string | null;
+  description?: string | null;
+  address: string ;
+  location: string ;
+  contact_no?: string | null;
 }
 
 export default function SearchPage() {
@@ -30,11 +28,18 @@ export default function SearchPage() {
 
   useEffect(() => {
     // Fetch gym data from the backend
-    axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/gym/getallgyms`)
+    axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms`)
     .then((response) => {
-      setGyms(response.data);
+      // Extract the gyms array from the response
+      if (response.data && Array.isArray(response.data.gyms)) {
+        setGyms(response.data.gyms)
+      } else {
+        console.error("Unexpected response format:", response.data)
+        setGyms([]) // Fallback to an empty array
+      }
     }).catch((error) => {
-      console.error("Error fetching gyms:", error);
+      console.error("Error fetching gyms:", error)
+      setGyms([]) // Fallback to an empty array in case of error
     });
   }, [])
 
