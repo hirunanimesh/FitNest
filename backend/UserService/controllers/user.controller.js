@@ -1,7 +1,8 @@
 //calendar
 //add weight
 
-import {  updateUseretails } from '../services/user.service.js';
+import { updateUserDetails,getUserById } from '../services/user.service.js';
+
 
 /*export const addUser = async (req, res) => {
   try {
@@ -15,10 +16,10 @@ import {  updateUseretails } from '../services/user.service.js';
   }
 };*/
 
-export const updateUserDetails = async (req, res) => {
+export const updateuserdetails = async (req, res) => {
     const { userId } = req.params;
     try {
-        const updatedUser = await updateUseretails(userId, req.body);
+        const updatedUser = await updateUserDetails(userId, req.body);
         if (updatedUser) {
             res.status(200).json({ message: "User updated successfully", updatedUser });
         } else {
@@ -29,5 +30,19 @@ export const updateUserDetails = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
+export const getuserbyid = async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const user = await getUserById(userId);
+        if (user) {
+        res.status(200).json({ message: "User retrieved successfully", user });
+        } else {
+        res.status(404).json({ message: "User not found" });
+        }
+    } catch (error) {
+        console.error("Error retrieving user:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
 
 
