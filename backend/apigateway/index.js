@@ -5,6 +5,8 @@ const loggingMiddleware = require('./src/middleware/logging');
 const authProxy = require('./src/proxies/authProxy');
 const gymProxy = require('./src/proxies/gymProxy');
 const paymentProxy = require('./src/proxies/paymentProxy');
+const userProxy = require('./src/proxies/userProxy');
+const trainerProxy = require('./src/proxies/trainerProxy');
 const { serviceHealth, startHealthChecks } = require('./src/utils/serviceHealth');
 require('dotenv').config();
 
@@ -33,6 +35,8 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authProxy);
 app.use('/api/gym', gymProxy);
 app.use('/api/payment',paymentProxy);
+app.use('/api/user', userProxy);
+app.use('/api/trainer', trainerProxy);
 
 // 404 handler for unmatched routes
 app.use('*', (req, res) => {
@@ -40,7 +44,7 @@ app.use('*', (req, res) => {
     status: 'error',
     message: 'Route not found',
     path: req.originalUrl,
-    availableRoutes: ['/health', '/api/auth/*', '/api/gym/*', '/api/payment/*'],
+    availableRoutes: ['/health', '/api/auth/*', '/api/gym/*', '/api/payment/*','/api/user/*','/api/trainer/*'],
   });
 });
 

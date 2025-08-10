@@ -34,6 +34,8 @@ const startHealthChecks = () => {
     checkServiceHealth('auth', config.services.auth);
     checkServiceHealth('gym', config.services.gym);
     checkServiceHealth('payment',config.services.payment)
+    checkServiceHealth('user', config.services.user);
+    checkServiceHealth('trainer', config.services.trainer);
   }, 2000);
 
   // Periodic health checks
@@ -41,6 +43,8 @@ const startHealthChecks = () => {
     checkServiceHealth('auth', config.services.auth);
     checkServiceHealth('gym', config.services.gym);
     checkServiceHealth('payment',config.services.payment)
+    checkServiceHealth('user', config.services.user);
+    checkServiceHealth('trainer', config.services.trainer);
   }, 30000);
 };
 

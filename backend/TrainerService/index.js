@@ -50,7 +50,6 @@ import {
   updatedSession
 } from "./controllers/session.controller.js";
 import { 
-  addTrainer,
   getallTrainers, 
   getTrainerById, 
   updateTrainerDetails
@@ -65,7 +64,7 @@ app.get('/getsessionbysessionid/:sessionId', getSessionBySessionId);
 app.put('/updatesession/:sessionId', updatedSession);
 app.delete('/deletesession/:sessionId', deleteSession);
 
-app.post('/addTrainer', addTrainer);
+//app.post('/addTrainer', addTrainer);
 app.get('/getalltrainers', getallTrainers);
 app.get('/gettrainerbyid/:trainerId', getTrainerById);
 app.put('/updatetrainerdetails/:trainerId', updateTrainerDetails);

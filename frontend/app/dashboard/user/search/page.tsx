@@ -9,38 +9,62 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin } from "lucide-react"
 import Link from "next/link"
 import GymCard from "@/components/GymCard"
+import TrainerCard from "@/components/TrainerCard" // Assuming you have a TrainerCard component
 
-// Added a type definition for the gym data
+// Added a type definition for the gym and trainer data
 interface Gym {
   gym_id: number;
   gym_name: string;
   profile_img?: string | null;
   description?: string | null;
-  address: string ;
-  location: string ;
+  address: string;
+  location: string;
+  contact_no?: string | null;
+}
+
+interface Trainer {
+  trainer_id: number;
+  trainer_name: string;
+  profile_img?: string | null;
+  expertise: string;
   contact_no?: string | null;
 }
 
 export default function SearchPage() {
   const [gyms, setGyms] = useState<Gym[]>([])
+  const [trainers, setTrainers] = useState<Trainer[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedLocation, setSelectedLocation] = useState("")
+  const [view, setView] = useState<"gyms" | "trainers">("gyms") // Toggle state
 
   useEffect(() => {
     // Fetch gym data from the backend
     axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms`)
-    .then((response) => {
-      // Extract the gyms array from the response
-      if (response.data && Array.isArray(response.data.gyms)) {
-        setGyms(response.data.gyms)
-      } else {
-        console.error("Unexpected response format:", response.data)
-        setGyms([]) // Fallback to an empty array
-      }
-    }).catch((error) => {
-      console.error("Error fetching gyms:", error)
-      setGyms([]) // Fallback to an empty array in case of error
-    });
+      .then((response) => {
+        if (response.data && Array.isArray(response.data.gyms)) {
+          setGyms(response.data.gyms)
+        } else {
+          console.error("Unexpected response format:", response.data)
+          setGyms([])
+        }
+      }).catch((error) => {
+        console.error("Error fetching gyms:", error)
+        setGyms([])
+      })
+
+    // Fetch trainer data from the backend
+    axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getalltrainers`)
+      .then((response) => {
+        if (response.data && Array.isArray(response.data.trainers)) {
+          setTrainers(response.data.trainers)
+        } else {
+          console.error("Unexpected response format:", response.data)
+          setTrainers([])
+        }
+      }).catch((error) => {
+        console.error("Error fetching trainers:", error)
+        setTrainers([])
+      })
   }, [])
 
   return (
@@ -49,7 +73,23 @@ export default function SearchPage() {
 
       <div className="container mx-auto p-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">Gyms in Sri Lanka</h1>
+          <h1 className="text-3xl font-bold mb-4">Gyms and Trainers in Sri Lanka</h1>
+
+          {/* Toggle Buttons */}
+          <div className="flex gap-4 mb-6">
+            <Button
+              variant={view === "gyms" ? "default" : "outline"}
+              onClick={() => setView("gyms")}
+            >
+              View Gyms
+            </Button>
+            <Button
+              variant={view === "trainers" ? "default" : "outline"}
+              onClick={() => setView("trainers")}
+            >
+              View Trainers
+            </Button>
+          </div>
 
           {/* Search Filters */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -101,22 +141,27 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* Display Gym Cards */}
+        {/* Display Gym or Trainer Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {gyms
-            .filter((gym) => {
-              // Filter by name
-              const matchesName = gym.gym_name.toLowerCase().includes(searchQuery.toLowerCase());
-              // Filter by location
-              const matchesLocation =
-                !selectedLocation || gym.location.toLowerCase() === selectedLocation;
-              // Show all if no filters, else filter
-              if (!searchQuery && !selectedLocation) return true;
-              return matchesName && matchesLocation;
-            })
-            .map((gym) => (
-              <GymCard key={gym.gym_id} gym={gym} />
-            ))}
+          {view === "gyms" &&
+            gyms
+              .filter((gym) => {
+                const matchesName = gym.gym_name.toLowerCase().includes(searchQuery.toLowerCase())
+                const matchesLocation =
+                  !selectedLocation || gym.location.toLowerCase() === selectedLocation
+                return matchesName && matchesLocation
+              })
+              .map((gym) => <GymCard key={gym.gym_id} gym={gym} />)}
+
+          {view === "trainers" &&
+            trainers
+              .filter((trainer) => {
+                const matchesName = trainer.trainer_name.toLowerCase().includes(searchQuery.toLowerCase())
+                const matchesLocation =
+                  !selectedLocation || trainer.expertise.toLowerCase().includes(selectedLocation)
+                return matchesName && matchesLocation
+              })
+              .map((trainer) => <TrainerCard key={trainer.trainer_id} trainer={trainer} />)}
         </div>
       </div>
     </div>
