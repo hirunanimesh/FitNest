@@ -23,11 +23,15 @@ interface Gym {
 }
 
 interface Trainer {
-  trainer_id: number;
+  id: number;
   trainer_name: string;
   profile_img?: string | null;
   expertise: string;
   contact_no?: string | null;
+  experience_years: number; // Added experience years
+  email: string; // Added email
+  skills: string[]; // Added skills as an array
+  bio: string; // Added bio as a paragraph
 }
 
 export default function SearchPage() {
