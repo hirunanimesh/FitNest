@@ -7,6 +7,7 @@ import { CTASection } from "@/components/cta-section"
 import { GallerySection } from "@/components/gallery-section"
 import { ScrollRevealFeaturesSection } from "@/components/scroll-reveal-section"
 import { ScrollRevealStatsSection } from "@/components/scroll-reveal-stats"
+import PWAInstallPrompt from "@/components/pwa-install-prompt"
 
 export default function HomePage() {
   return (
@@ -27,6 +28,9 @@ export default function HomePage() {
       <GallerySection />
       <FAQSection />
       <Footer />
+      
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   )
 }
