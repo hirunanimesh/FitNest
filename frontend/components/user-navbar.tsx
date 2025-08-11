@@ -16,7 +16,7 @@ export function UserNavbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="fixed top-0 z-50 w-full bg-black shadow-lg border-b-2 border-[#FB4141]">
       <div className="container flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2">
           <Dumbbell className="h-6 w-6 text-primary" />
@@ -31,8 +31,8 @@ export function UserNavbar() {
           <Link href="/about" className="text-sm font-medium hover:text-primary">
             ABOUT
           </Link>
-          <Link href="/trainers" className="text-sm font-medium hover:text-primary">
-            TRAINERS
+          <Link href="/search" className="text-sm font-medium hover:text-primary">
+            SEARCH
           </Link>
           <Link href="/contact" className="text-sm font-medium hover:text-primary">
             CONTACT

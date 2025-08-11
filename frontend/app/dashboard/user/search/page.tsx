@@ -68,7 +68,8 @@ export default function SearchPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-black-400 min-h-screen">
+    <div className="min-h-screen bg-black text-white">
       <UserNavbar />
 
       <div className="container mx-auto p-6">
@@ -76,37 +77,40 @@ export default function SearchPage() {
           <h1 className="text-3xl font-bold mb-4">Gyms and Trainers in Sri Lanka</h1>
 
           {/* Toggle Buttons */}
-          <div className="flex gap-4 mb-6">
-            <Button
-              variant={view === "gyms" ? "default" : "outline"}
+          <div className="flex gap-4 mb-6 ">
+            <Button 
+              variant={view === "gyms" ? "default" : "outline" }
               onClick={() => setView("gyms")}
+              className={view === "gyms" ? "" : "bg-[#192024] text-white"}
             >
               View Gyms
             </Button>
             <Button
               variant={view === "trainers" ? "default" : "outline"}
               onClick={() => setView("trainers")}
+              className={view === "trainers" ? "" : "bg-[#192024] text-white"}
             >
               View Trainers
             </Button>
           </div>
 
           {/* Search Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
+          <div className="flex flex-col md:flex-row gap-4 mb-6 ">
+            <div className="flex-1 " >
               <Input
                 placeholder="Search by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
+                className="w-full bg-[#192024] text-white"
               />
             </div>
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Location" />
+              <SelectTrigger className="w-full md:w-48 bg-[#192024]">
+                <SelectValue placeholder="Location  " />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className=" bg-[#192024] text-white">
                 {/* Updated dropdown menu with real district names */}
+                <SelectItem value="default">All Locations</SelectItem>
                 <SelectItem value="ampara">Ampara</SelectItem>
                 <SelectItem value="anuradhapura">Anuradhapura</SelectItem>
                 <SelectItem value="badulla">Badulla</SelectItem>
@@ -148,7 +152,7 @@ export default function SearchPage() {
               .filter((gym) => {
                 const matchesName = gym.gym_name.toLowerCase().includes(searchQuery.toLowerCase())
                 const matchesLocation =
-                  !selectedLocation || gym.location.toLowerCase() === selectedLocation
+                  !selectedLocation || selectedLocation === "default"|| gym.location.toLowerCase() === selectedLocation
                 return matchesName && matchesLocation
               })
               .map((gym) => <GymCard key={gym.gym_id} gym={gym} />)}
@@ -164,6 +168,7 @@ export default function SearchPage() {
               .map((trainer) => <TrainerCard key={trainer.trainer_id} trainer={trainer} />)}
         </div>
       </div>
+    </div>
     </div>
   )
 }
