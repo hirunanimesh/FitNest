@@ -53,16 +53,18 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-black-400 min-h-screen">
+    <div className="min-h-screen bg-black text-white">
       <UserNavbar />
 
-      <div className="container mx-auto p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
+      <div className="container mx-auto p-6 ">
+        <div className="max-w-4xl mx-auto ">
+          <div className="flex justify-between items-center mb-8 ">
             <h1 className="text-3xl font-bold">Profile Settings</h1>
             <Button
               onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
               variant={isEditing ? "default" : "outline"}
+              style={{ backgroundColor: "red" }}
             >
               {isEditing ? (
                 <>
@@ -78,15 +80,15 @@ export default function ProfilePage() {
             </Button>
           </div>
 
-          <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="personal" className="w-full " >
+            <TabsList className="grid w-full grid-cols-3 bg-[#192024]">
               <TabsTrigger value="personal">Personal Info</TabsTrigger>
               <TabsTrigger value="fitness">Fitness Data</TabsTrigger>
               <TabsTrigger value="preferences">Preferences</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="personal" className="space-y-6">
-              <Card>
+            <TabsContent value="personal" className="space-y-6 bg-[#192024]">
+              <Card className="bg-[#192024] text-white" >
                 <CardHeader>
                   <CardTitle>Personal Information</CardTitle>
                   <CardDescription>Update your personal details and contact information</CardDescription>
@@ -113,7 +115,7 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Name Fields */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4 ">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name</Label>
                       <Input
@@ -223,7 +225,7 @@ export default function ProfilePage() {
             </TabsContent>
 
             <TabsContent value="fitness" className="space-y-6">
-              <Card>
+              <Card className="bg-[#192024] text-white">
                 <CardHeader>
                   <CardTitle>Fitness Metrics</CardTitle>
                   <CardDescription>Track your physical measurements and fitness goals</CardDescription>
@@ -304,7 +306,7 @@ export default function ProfilePage() {
             </TabsContent>
 
             <TabsContent value="preferences" className="space-y-6">
-              <Card>
+              <Card className="bg-[#192024] text-white">
                 <CardHeader>
                   <CardTitle>Account Preferences</CardTitle>
                   <CardDescription>Customize your experience and notification settings</CardDescription>
@@ -362,6 +364,7 @@ export default function ProfilePage() {
           </Tabs>
         </div>
       </div>
+    </div>
     </div>
   )
 }

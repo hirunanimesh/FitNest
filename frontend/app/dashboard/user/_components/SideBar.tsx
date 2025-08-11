@@ -12,7 +12,7 @@ const sidebarItems = [
 const SideBar = () => {
   return (
     <div>
-      <Sidebar className="bg-gradient-to-br from-red-600 via-red-700 to-black dark:from-red-600 dark:via-red-700 dark:to-black">
+      <Sidebar className="bg-black">
       <SidebarHeader className="bg-transparent">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -49,7 +49,7 @@ const SideBar = () => {
       <SidebarFooter className="bg-transparent">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="text-white hover:bg-white/10">
+            <SidebarMenuButton className="text-white hover:bg-white/10 pd-6">
               <LogOut className="text-white" />
               <span>Logout</span>
             </SidebarMenuButton>
