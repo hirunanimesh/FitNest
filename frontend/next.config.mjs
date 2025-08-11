@@ -1,3 +1,5 @@
+import withPWA from 'next-pwa'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -9,12 +11,17 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Development server configuration
-  devIndicators: {
-    buildActivity: true,
-  },
   // Note: For port configuration, it's better to use package.json scripts
   // This config is for other development settings
 }
 
-export default nextConfig
+const pwaConfig = withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development', // Disable in development
+  buildExcludes: [/middleware-manifest\.json$/],
+  publicExcludes: ['!robots.txt', '!sitemap.xml'],
+})
+
+export default pwaConfig(nextConfig)
