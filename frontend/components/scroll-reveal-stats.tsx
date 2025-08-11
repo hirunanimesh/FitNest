@@ -118,17 +118,17 @@ export function ScrollRevealStatsSection() {
           {stats.map((stat, index) => (
             <div
               key={index}
-              className={`transition-all duration-1000 ease-out ${
+              className={`transition-all duration-1000 ease-out h-full ${
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
               }`}
               style={{ transitionDelay: `${index * 200}ms` }}
             >
-              <Card className="text-center bg-white border-border hover:border-primary/50 transition-colors hover:shadow-lg">
-                <CardContent className="pt-6">
-                  <stat.icon className="h-12 w-12 mx-auto text-primary mb-4" />
-                  <div className="text-3xl font-bold mb-2 text-black">{stat.value}</div>
-                  <div className="font-semibold mb-1 text-black">{stat.label}</div>
-                  <div className="text-sm text-gray-600">{stat.description}</div>
+              <Card className="text-center bg-white border-border hover:border-primary/50 transition-colors hover:shadow-lg h-full flex flex-col">
+                <CardContent className="pt-6 flex-grow flex flex-col justify-center">
+                  <stat.icon className="h-12 w-12 mx-auto text-primary mb-4 flex-shrink-0" />
+                  <div className="text-3xl font-bold mb-2 text-black flex-shrink-0">{stat.value}</div>
+                  <div className="font-semibold mb-1 text-black flex-shrink-0">{stat.label}</div>
+                  <div className="text-sm text-gray-600 flex-grow flex items-center justify-center">{stat.description}</div>
                 </CardContent>
               </Card>
             </div>
