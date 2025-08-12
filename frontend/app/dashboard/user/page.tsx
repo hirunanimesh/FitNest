@@ -13,7 +13,7 @@ import UpcomingSessions from "./_components/UpcomingSessions"
 import KPI from "./_components/KPI"
 import Charts from "./_components/Charts"
 import Schedule from "./_components/Schedule"
-
+import { ThemeProvider } from 'next-themes';
 const motivationQuotes = [
   "Every workout counts towards your goal!",
   "Consistency is the key to success!",
@@ -47,7 +47,36 @@ function AnimatedQuote({ quote }: { quote: string }) {
     setCurrentIndex(0)
   }, [quote])
 
-  return <p className="text-2xl font-bold text-primary italic">{displayedText}</p>
+  return (
+    <p
+      className="text-5xl font-bold italic text-red-600 text-center"
+      style={{
+        background: "linear-gradient(90deg, #f87171 25%, #fca5a5 50%, #f87171 75%)",
+        backgroundSize: "200% 100%",
+        backgroundClip: "text",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        animation: "shine 2s linear infinite",
+      }}
+    >
+      {displayedText}
+    </p>
+  );
+}
+
+// Add this style block at the top level of your file, outside any component:
+if (typeof window !== "undefined") {
+  const style = document.createElement("style");
+  style.innerHTML = `
+    @keyframes shine {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+  `;
+  if (!document.head.querySelector('style[data-animated-quote]')) {
+    style.setAttribute('data-animated-quote', 'true');
+    document.head.appendChild(style);
+  }
 }
 
 // Define or import the missing types
@@ -152,12 +181,12 @@ export default function UserDashboard() {
   
 
   return (
-    
+     <ThemeProvider attribute="class" defaultTheme="system">
     <SidebarProvider>
 
       <SideBar/>
 
-      <SidebarInset className="flex">
+      <SidebarInset className="flex text-red">
         <div className="flex-1">
           {/* Header */}
           <TopBar/>
@@ -165,11 +194,9 @@ export default function UserDashboard() {
           {/* Main Content */}
           <div className="flex-1 space-y-6 p-6">
             {/* Motivation Quote */}
-            <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-              <CardContent className="p-6 text-center">
+            
                 <AnimatedQuote quote={motivationQuotes[currentQuote]} />
-              </CardContent>
-            </Card>
+              
 
             {/* Streak Card */}
             <Progress/>
@@ -193,5 +220,6 @@ export default function UserDashboard() {
 
       </SidebarInset>
     </SidebarProvider>
+    </ThemeProvider>
   );
 }
