@@ -1,10 +1,10 @@
 {
-  "name": "my-v0-project",
+  "name": "Fit_Nest",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev -p 3010",
+    "dev": "next dev -p 3010 -H 0.0.0.0",
     "lint": "next lint",
     "start": "next start -p 3010"
   },
@@ -50,6 +50,7 @@
     "lucide-react": "^0.454.0",
     "motion": "^12.23.12",
     "next": "15.2.4",
+    "next-pwa": "^5.6.0",
     "next-themes": "^0.4.4",
     "ogl": "^1.0.11",
     "react": "^18.2.0",
