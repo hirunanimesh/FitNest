@@ -3,7 +3,8 @@ import {
     deletesession, 
     getallsessions, 
     getsessionbysessionid, 
-    updatesession
+    updatesession,
+    getallsessionbytrainerid
 } from "../services/session.service.js";
 
 
@@ -49,7 +50,20 @@ export const getSessionBySessionId = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
-
+export const getallSessionByTrainerId = async (req, res) => {
+    const { trainerId } = req.params;
+    try {
+        const session = await getallsessionbytrainerid(trainerId)
+        if (session) {
+            res.status(200).json({ message: "Trainer Sessions retrieved successfully", session });
+        } else {
+            res.status(404).json({ message: "Trainer Sessions not found" });
+        }
+    } catch (error) {
+        console.error("Error retrieving Trainer Session:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
 export const updatedSession = async (req, res) => {
     const { sessionId } = req.params;
     try {

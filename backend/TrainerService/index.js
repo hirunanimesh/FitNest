@@ -47,7 +47,8 @@ import {
   deleteSession,
   getAllSession,
   getSessionBySessionId,
-  updatedSession
+  updatedSession,
+  getallSessionByTrainerId
 } from "./controllers/session.controller.js";
 import { 
   getallTrainers, 
@@ -61,6 +62,7 @@ app.use(cors())
 app.post('/addsession', addSession);
 app.get('/getallsessions', getAllSession);
 app.get('/getsessionbysessionid/:sessionId', getSessionBySessionId);
+app.get('/getallsessionbytrainerid/:trainerId', getallSessionByTrainerId);
 app.put('/updatesession/:sessionId', updatedSession);
 app.delete('/deletesession/:sessionId', deleteSession);
 

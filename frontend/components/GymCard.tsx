@@ -2,7 +2,8 @@ import { Star } from "lucide-react";
 
 export default function GymCard({ gym }: { gym: any }) {
   return (
-    <div className="bg-[#192024]  rounded-xl shadow-md overflow-hidden w-[300px]">
+    <div className="bg-[#192024]  rounded-xl shadow-md overflow-hidden w-[300px] transform transition-transform duration-300 hover:scale-105 hover:shadow-lg cursor-pointer"
+      >
       <div className="h-36">
         {gym.profile_img ? (
           <img

@@ -49,6 +49,21 @@ export async function addsession(sessionData) {
     return data;
   }
 
+  export async function getallsessionbytrainerid(trainerId) {
+    const { data, error } = await supabase
+      .from('trainer_sessions')
+      .select('*')
+      .eq('trainer_id', trainerId);
+
+      if(!data){
+        return null;
+      }
+    if (error) {
+        throw new Error(error.message);
+    }
+    return data;
+  }
+
   export async function updatesession(sessionId, sessionData) {
     const { data, error } = await supabase
       .from('trainer_sessions')
