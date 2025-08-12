@@ -41,10 +41,10 @@ const MemberTab = () => {
 
   return (
     <div>
-        <Card>
+        <Card className='bg-gray-800 text-white'>
             <CardHeader>
                 <CardTitle>Members Management</CardTitle>
-                <CardDescription>View and manage gym members</CardDescription>
+                <CardDescription className='text-gray-300'>View and manage gym members</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center space-x-2 mb-4">
@@ -58,18 +58,18 @@ const MemberTab = () => {
                 </div>
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Profile</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Status</TableHead>
+                    <TableRow >
+                      <TableHead className='text-gray-300'>Profile</TableHead>
+                      <TableHead className='text-gray-300'>Name</TableHead>
+                      <TableHead className='text-gray-300'>Email</TableHead>
+                      <TableHead className='text-gray-300'>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredProfiles
                       .filter((profile) => profile.role === "Member")
                       .map((profile) => (
-                        <TableRow key={profile.id}>
+                        <TableRow key={profile.id} >
                           <TableCell>
                             <Avatar className="h-8 w-8">
                               <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>

@@ -64,12 +64,12 @@ const PlansTab = () => {
       };
 
   return (
-    <div> <Card>
+    <div> <Card className='bg-gray-800 text-white'>
     <CardHeader>
       <div className="flex items-center justify-between">
         <div>
           <CardTitle>Gym Plans Management</CardTitle>
-          <CardDescription>Manage subscription plans and pricing</CardDescription>
+          <CardDescription className='text-gray-300'> Manage subscription plans and pricing</CardDescription>
         </div>
         <Button
           onClick={() => {
@@ -86,10 +86,10 @@ const PlansTab = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Plan Name</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className='text-gray-300'>Plan Name</TableHead>
+            <TableHead className='text-gray-300'>Price</TableHead>
+            <TableHead className='text-gray-300'>Description</TableHead>
+            <TableHead className='text-gray-300'>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -97,7 +97,7 @@ const PlansTab = () => {
             <TableRow key={plan.id}>
               <TableCell className="font-medium">{plan.name}</TableCell>
               <TableCell>
-                <Badge variant="outline">{plan.price}</Badge>
+                <Badge variant="outline" className='text-white'>{plan.price}</Badge>
               </TableCell>
               <TableCell>{plan.description}</TableCell>
               <TableCell>
@@ -105,6 +105,7 @@ const PlansTab = () => {
                   <Button
                     size="sm"
                     variant="outline"
+                    className='text-black '
                     onClick={() => handleEditPlan(plan)}
                   >
                     <Edit className="mr-1 h-4 w-4" />
@@ -128,7 +129,7 @@ const PlansTab = () => {
   </Card>
 
   <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
-          <DialogContent>
+          <DialogContent className='bg-gray-900 text-white border border-gray-900'>
             <DialogHeader>
               <DialogTitle>
                 {currentPlan.id ? "Edit Plan" : "Add New Plan"}
@@ -138,6 +139,7 @@ const PlansTab = () => {
               <div>
                 <label className="text-sm font-medium mb-2 block">Plan Name</label>
                 <Input
+                  className='text-gray-600'
                   placeholder="Enter plan name"
                   value={currentPlan.name}
                   onChange={(e) =>
@@ -152,6 +154,7 @@ const PlansTab = () => {
               <div>
                 <label className="text-sm font-medium mb-2 block">Price</label>
                 <Input
+                  className='text-gray-600'
                   placeholder="e.g., $20/month"
                   value={currentPlan.price}
                   onChange={(e) =>
@@ -166,6 +169,7 @@ const PlansTab = () => {
               <div>
                 <label className="text-sm font-medium mb-2 block">Description</label>
                 <Input
+                  className='text-gray-600'
                   placeholder="Enter plan description"
                   value={currentPlan.description}
                   onChange={(e) =>
@@ -178,7 +182,7 @@ const PlansTab = () => {
                 />
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsPlanDialogOpen(false)}>
+                <Button type="button" className='text-black' variant="outline" onClick={() => setIsPlanDialogOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit">
