@@ -17,13 +17,20 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge";
 import { Search } from 'lucide-react';
 
 const mockProfiles = [
-    { id: 1, name: "John Doe", role: "Trainer", email: "john@example.com" },
-    { id: 2, name: "Jane Smith", role: "Trainer", email: "jane@example.com" },
-    { id: 3, name: "Alice Johnson", role: "Trainer", email: "alice@example.com" },
+    { id: 1, name: "Vidura", role: "Trainer", email: "john@example.com" ,verified:true },
+    { id: 2, name: "Hiruna", role: "Trainer", email: "jane@example.com",verified:true },
+    { id: 3, name: "Sandali", role: "Trainer", email: "alice@example.com",verified:false },
   ];
 
 const TrainerTab = () => {
@@ -40,20 +47,42 @@ const TrainerTab = () => {
 
   return (
     <div>
-      <Card>
+      <Card className='bg-gray-800 text-white'>
         <CardHeader>
             <CardTitle>Trainers Management</CardTitle>
-            <CardDescription>View and manage gym trainers</CardDescription>
+            <CardDescription className='text-gray-300'>View and manage gym trainers</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className='flex flex-row gap-5'>
+            <div className="flex items-center space-x-2 mb-4">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search members..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            <div>
+            <Select>
+              <SelectTrigger className="w-[180px] text-gray-600">
+                <SelectValue placeholder="Filter Trainers"/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="my">My Trainers</SelectItem>
+                <SelectItem value="other">Applications</SelectItem>
+              </SelectContent>
+            </Select>
+            </div>
+          </div>
             <Table>
                 <TableHeader>
                 <TableRow>
-                    <TableHead>Profile</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Specialization</TableHead>
+                    <TableHead className='text-gray-300'>Profile</TableHead>
+                    <TableHead className='text-gray-300'>Name</TableHead>
+                    <TableHead className='text-gray-300'>Email</TableHead>
+                    <TableHead className='text-gray-300'>Status</TableHead>
+                    <TableHead className='text-gray-300'>Specialization</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -69,10 +98,13 @@ const TrainerTab = () => {
                           <TableCell className="font-medium">{profile.name}</TableCell>
                           <TableCell>{profile.email}</TableCell>
                           <TableCell>
-                            <Badge variant="default">Active</Badge>
+                            {profile.verified ? <Badge variant="default" className='bg-green-600'>Verified</Badge>
+                            : <Badge variant="default">Not Verified</Badge>
+                          }
+                            
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">Personal Training</Badge>
+                            <Badge variant="outline" className='text-white'>Personal Training</Badge>
                           </TableCell>
                         </TableRow>
                       ))}
