@@ -70,7 +70,7 @@ export default function SignupPage() {
   const roleOptions = [
     {
       value: "customer",
-      label: "Customer",
+      label: "Member",
       icon: "🏃‍♂️",
       description: "Join to find trainers and gyms",
     },
