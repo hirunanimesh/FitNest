@@ -1,34 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation"; // To get the trainer ID from the URL
+//import { useSearchParams } from "next/navigation"; // To get the trainer ID from the URL
 import axios from "axios";
 import { Heart } from "lucide-react";
 
 export default function Header() {
-  const [trainerName, setTrainerName] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  const trainerId = searchParams.get("trainerId"); // Get trainerId from the query string
-
-  useEffect(() => {
-    if (!trainerId) return; // Wait until trainerId is available
-
-    const fetchTrainerName = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/gettrainerbyid/${trainerId}`
-        );
-        if (response.data && response.data.trainer) {
-          setTrainerName(response.data.trainer.trainer_name); // Assuming the API returns trainer_name
-        } else {
-          console.error("Unexpected response format:", response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching trainer name:", error);
-      }
-    };
-
-    fetchTrainerName();
-  }, [trainerId]);
+  const trainerName = "Banula Lakvidu Hettiarachchi";
 
   return (
     <header className="bg-gray-800 shadow-sm sticky top-0 z-50">
