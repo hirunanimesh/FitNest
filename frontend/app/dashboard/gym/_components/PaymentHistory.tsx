@@ -27,7 +27,7 @@ const payments: Payment[] = [
     date: '2025-08-09',
     member: 'Jane Smith',
     amount: 75.0,
-    method: 'PayPal',
+    method: 'Master Card',
     status: 'Paid',
   },
   {
@@ -35,7 +35,7 @@ const payments: Payment[] = [
     date: '2025-08-08',
     member: 'Alice Johnson',
     amount: 100.0,
-    method: 'Bank Transfer',
+    method: 'American Express',
     status: 'Pending',
   },
   {

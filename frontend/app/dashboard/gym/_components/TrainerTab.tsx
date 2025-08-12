@@ -60,7 +60,7 @@ const TrainerTab = () => {
                 placeholder="Search members..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
+                className="max-w-sm text-gray-800"
               />
             </div>
             <div>
@@ -98,7 +98,7 @@ const TrainerTab = () => {
                           <TableCell className="font-medium">{profile.name}</TableCell>
                           <TableCell>{profile.email}</TableCell>
                           <TableCell>
-                            {profile.verified ? <Badge variant="default" className='bg-green-600'>Verified</Badge>
+                            {profile.verified ? <Badge variant="default" className='bg-green-400 '>Verified</Badge>
                             : <Badge variant="default">Not Verified</Badge>
                           }
                             
