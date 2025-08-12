@@ -31,13 +31,13 @@ export function Navbar() {
               ABOUT
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FB4141] group-hover:w-full transition-all duration-200"></span>
             </Link>
-            <Link
+            {/* <Link
               href="/gym"
               className="text-white hover:text-[#FB4141] px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group"
             >
               GYM
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FB4141] group-hover:w-full transition-all duration-200"></span>
-            </Link>
+            </Link> */}
             <Link
               href="/contact"
               className="text-white hover:text-[#FB4141] px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group"
@@ -89,9 +89,9 @@ export function Navbar() {
                   <Link href="/about" className="text-lg font-semibold text-white hover:text-[#FB4141] py-3 px-4 rounded-lg hover:bg-white/5 transition-all duration-200">
                     ABOUT
                   </Link>
-                  <Link href="/gym" className="text-lg font-semibold text-white hover:text-[#FB4141] py-3 px-4 rounded-lg hover:bg-white/5 transition-all duration-200">
+                  {/* <Link href="/gym" className="text-lg font-semibold text-white hover:text-[#FB4141] py-3 px-4 rounded-lg hover:bg-white/5 transition-all duration-200">
                     GYM
-                  </Link>
+                  </Link> */}
                   <Link href="/contact" className="text-lg font-semibold text-white hover:text-[#FB4141] py-3 px-4 rounded-lg hover:bg-white/5 transition-all duration-200">
                     CONTACT
                   </Link>
