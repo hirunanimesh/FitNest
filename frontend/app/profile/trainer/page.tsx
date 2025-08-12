@@ -9,6 +9,8 @@ import BlogSection from "./components/BlogSection"
 import ContactSection from "./components/ContactSection"
 
 export default function TrainerPage() {
+  console.log("TrainerPage rendered"); // Debug log
+
   return (
     <main className="bg-gray-900 min-h-screen text-gray-100">
       <Header />
