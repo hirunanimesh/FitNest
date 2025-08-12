@@ -15,15 +15,9 @@ export default function HeroSection() {
           <p className="text-lg text-gray-300 mb-8">
             Helping busy professionals achieve their fitness goals through personalized training, nutrition coaching, and mindset transformation.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" className="bg-red-600 hover:bg-red-700">Start Your Journey</Button>
-            <Button size="lg" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-              Download My App
-            </Button>
-          </div>
         </div>
         <div className="relative">
-          <img src="/placeholder.svg?height=500&width=400" alt="Alex Thompson" className="rounded-2xl shadow-2xl w-full max-w-md mx-auto" />
+          <img src="https://i.ibb.co/0R2WW6tx/1.webp" alt="Alex Thompson" className="rounded-2xl shadow-2xl w-full max-w-md mx-auto" />
           <div className="absolute -bottom-6 -left-6 bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700">
             <div className="flex items-center space-x-2">
               <div className="flex text-yellow-400">

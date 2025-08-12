@@ -8,7 +8,7 @@ export default function AboutSection() {
     <section id="about" className="py-20 bg-gray-900">
       <div className="container mx-auto px-4 max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold text-white mb-4">About Alex</h3>
+          <h3 className="text-3xl font-bold text-white mb-4">About Banula</h3>
           <p className="text-lg text-gray-300">Passionate about helping people discover their strength and potential</p>
         </div>
 

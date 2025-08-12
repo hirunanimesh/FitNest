@@ -1,40 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation"; // To get the trainer ID from the URL
+import { useRouter } from "next/navigation";
+//import { useSearchParams } from "next/navigation"; // To get the trainer ID from the URL
 import axios from "axios";
 import { Heart } from "lucide-react";
 
 export default function Header() {
-  const [trainerName, setTrainerName] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  const trainerId = searchParams.get("trainerId"); // Get trainerId from the query string
-
-  useEffect(() => {
-    if (!trainerId) return; // Wait until trainerId is available
-
-    const fetchTrainerName = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/gettrainerbyid/${trainerId}`
-        );
-        if (response.data && response.data.trainer) {
-          setTrainerName(response.data.trainer.trainer_name); // Assuming the API returns trainer_name
-        } else {
-          console.error("Unexpected response format:", response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching trainer name:", error);
-      }
-    };
-
-    fetchTrainerName();
-  }, [trainerId]);
+  const router = useRouter(); 
+  const trainerName = "Banula Lakvidu Hettiarachchi";
 
   return (
     <header className="bg-gray-800 shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
+         <button
+          onClick={() => router.push("/dashboard/user/search")} // Navigate to the search page
+          className="mb-8 text-red-400 hover:text-red-600 font-semibold flex items-center"
+        >
+          ← Back
+        </button>
         <div className="flex items-center justify-between">
+
           <div className="flex items-center space-x-3">
+           
             <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
               <Heart className="w-5 h-5 text-white" />
             </div>

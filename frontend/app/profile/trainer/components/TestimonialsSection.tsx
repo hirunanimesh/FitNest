@@ -4,23 +4,23 @@ import { Star } from "lucide-react"
 
 const testimonials = [
   {
-    name: "Sarah Johnson",
+    name: "Gatheesh Sathsara",
     role: "Marketing Executive",
-    image: "/placeholder.svg?height=80&width=80",
+    image: "https://i.ibb.co/wrx99bK1/2.jpg?height=100 & width=80",
     rating: 5,
     text: "Working with this trainer completely transformed my relationship with fitness. I've never felt stronger or more confident!",
   },
   {
-    name: "Mike Chen",
+    name: "Shehani Shakya",
     role: "Software Developer",
-    image: "/placeholder.svg?height=80&width=80",
+    image: "https://i.ibb.co/SwkZFGjS/1.jpg?height=80&width=80",
     rating: 5,
     text: "The personalized approach and constant support helped me lose 30 pounds and build muscle I never thought possible.",
   },
   {
-    name: "Emily Rodriguez",
+    name: "Janith Shanaka",
     role: "Teacher",
-    image: "/placeholder.svg?height=80&width=80",
+    image: "https://i.ibb.co/4nxRD516/3.jpg?height=80&width=80",
     rating: 5,
     text: "The nutrition coaching was a game-changer. I finally understand how to fuel my body properly for my goals.",
   },
@@ -42,7 +42,7 @@ export default function TestimonialsSection() {
                 <img
                   src={testimonial.image || "/placeholder.svg"}
                   alt={testimonial.name}
-                  className="w-16 h-16 rounded-full mx-auto mb-4"
+                  className="w-24 h-24 rounded-full mx-auto mb-4"
                 />
                 <div className="flex justify-center mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
