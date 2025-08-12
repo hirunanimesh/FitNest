@@ -30,8 +30,13 @@ interface Trainer {
   contact_no?: string | null;
   experience_years: number; // Added experience years
   email: string; // Added email
-  skills: string[]; // Added skills as an array
+  skills: string| string[]; // Added skills as an array
   bio: string; // Added bio as a paragraph
+  year_of_experience: number; // Added to match TrainerCard's Trainer type
+  rating: number; // Added to match TrainerCard's Trainer type
+}
+interface TrainerCardProps {
+  trainer: Trainer;
 }
 
 export default function SearchPage() {
@@ -169,7 +174,10 @@ export default function SearchPage() {
                   !selectedLocation || trainer.expertise.toLowerCase().includes(selectedLocation)
                 return matchesName && matchesLocation
               })
-              .map((trainer) => <TrainerCard key={trainer.trainer_id} trainer={trainer} />)}
+              .map((trainer) => (
+  <TrainerCard key={trainer.id} trainer={trainer} />
+))}
+
         </div>
       </div>
     </div>

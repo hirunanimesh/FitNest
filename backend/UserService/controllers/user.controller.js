@@ -2,7 +2,7 @@
 //add weight
 
 import { getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
-
+import{addFeedback} from  '../services/feedback.service.js';
 
 /*export const addUser = async (req, res) => {
   try {
@@ -69,7 +69,18 @@ export const getweightbyid = async (req, res) => {
         console.error("Error retrieving weight:", error);
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
-}
+};
+export const addfeedback = async (req, res) => {
+    try {
+        const weight = await addFeedback(req.body);
+        if (weight) {
+            res.status(200).json({ message: "Weight add successfully", weight });
+        }
+    } catch (error) {
+        console.error("Error adding weight:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};;
 
 
 
