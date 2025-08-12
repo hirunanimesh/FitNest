@@ -1,62 +1,43 @@
-"use client"
-import axios from "axios"
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Calendar, Clock, Video } from "lucide-react"
-import { useSearchParams } from "next/navigation"
+"use client";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, Video } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 export default function SessionsSection() {
-  // Dummy session data
-  const dummySessions = [
-    {
-      session_id: 1,
-      title: "Morning Yoga",
-      price: 20,
-      duration: "1 hour",
-      date: "2025-08-15",
-      time: "08:00 AM",
-      description: "A relaxing yoga session to start your day.",
-      features: ["Beginner-friendly", "Online session"],
-      booked: false,
-    },
-    {
-      session_id: 2,
-      title: "Strength Training",
-      price: 30,
-      duration: "1.5 hours",
-      date: "2025-08-16",
-      time: "10:00 AM",
-      description: "Build strength and endurance with this session.",
-      features: ["Intermediate level", "In-person session"],
-      booked: true,
-    },
-    {
-      session_id: 3,
-      title: "Cardio Blast",
-      price: 25,
-      duration: "1 hour",
-      date: "2025-08-17",
-      time: "06:00 PM",
-      description: "High-energy cardio session to burn calories.",
-      features: ["Advanced level", "Online session"],
-      booked: false,
-    },
-    {
-      session_id: 4,
-      title: "Pilates Basics",
-      price: 15,
-      duration: "45 minutes",
-      date: "2025-08-18",
-      time: "07:00 AM",
-      description: "Learn the basics of Pilates in this beginner session.",
-      features: ["Beginner-friendly", "In-person session"],
-      booked: false,
-    },
-  ];
-
-  const [sessions, setSessions] = useState(dummySessions);
+  const [sessions, setSessions] = useState<any[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      const trainerId = searchParams.get("id"); // Updated to fetch "id" from the URL
+      console.log("Fetching sessions for trainerId:", trainerId);
+
+      if (!trainerId) {
+        console.error("Trainer ID is missing in the URL");
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getallsessionbytrainerid/${trainerId}`
+        );
+        console.log("Fetched sessions:", response.data);
+        if (response.data && response.data.session) {
+          setSessions(response.data.session);
+        } else {
+          console.error("Unexpected response format:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching sessions:", error);
+      }
+    };
+
+    fetchSessions();
+  }, [searchParams]);
 
   return (
     <section id="sessions" className="py-20 bg-gray-800">
@@ -100,7 +81,7 @@ export default function SessionsSection() {
               <CardContent>
                 <p className="text-gray-300 text-sm mb-4">{session.description}</p>
                 <ul className="space-y-2 mb-4">
-                  {session.features.map((feature: string, index: number) => (
+                  {session.features?.map((feature: string, index: number) => (
                     <li key={index} className="text-sm text-gray-400 flex items-center">
                       <div className="w-1.5 h-1.5 bg-red-600 rounded-full mr-2"></div>
                       {feature}
@@ -121,5 +102,5 @@ export default function SessionsSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

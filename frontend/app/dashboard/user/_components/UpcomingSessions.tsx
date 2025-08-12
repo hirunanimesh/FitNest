@@ -25,7 +25,7 @@ const UpcomingSessions = () => {
       time: "9:00 AM",
       amount: "$18",
       description: "A low-impact class to improve posture and core strength.",
-      image: "https://i.ibb.co/3hY5z9P/pilates-class.jpg",
+      image: "https://i.ibb.co/cK6cJtzx/34.webp",
     },
     {
       id: 2,
@@ -60,7 +60,7 @@ const UpcomingSessions = () => {
 
   return (
     <div>
-      <Card>
+      <Card className="bg-[#192024] text-white">
         <CardHeader>
           <CardTitle>Upcoming Sessions</CardTitle>
           <CardDescription>Your scheduled sessions for the coming days</CardDescription>
@@ -68,12 +68,12 @@ const UpcomingSessions = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {sessions.map((session) => (
-              <Card key={session.id} className="hover:shadow-lg transition-shadow">
+              <Card key={session.id} className="border-l-4 border-l-primary bg-black text-white">
                 <CardHeader className="pb-2">
                   <img
                     src={session.image || "/placeholder.svg"}
                     alt={session.title}
-                    className="w-full h-24 object-cover rounded-md mb-2"
+                    className="w-full h-48 object-cover rounded-md mb-2"
                   />
                   <CardTitle className="text-lg">{session.title}</CardTitle>
                   <CardDescription>with {session.trainer}</CardDescription>
@@ -95,7 +95,7 @@ const UpcomingSessions = () => {
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">{session.description}</p>
-                    <Button size="sm" className="w-full mt-3" variant="outline">
+                    <Button size="sm" className="w-full mt-3 bg-red" variant="outline">
                       View Details
                     </Button>
                   </div>
