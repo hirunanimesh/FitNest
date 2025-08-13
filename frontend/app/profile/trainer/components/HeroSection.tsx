@@ -17,7 +17,7 @@ export default function HeroSection() {
           `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/gettrainerbyid/${trainerId}`
         );
         if (response.data?.trainer) {
-          setTrainerImgUrl(response.data.trainer.imgurl || null);
+          setTrainerImgUrl(response.data.trainer.profile_img || null);
         } else {
           console.error("Unexpected response format:", response.data);
         }

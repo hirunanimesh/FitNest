@@ -2,13 +2,39 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Users, Calendar, Star } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import axios from "axios";
 
 export default function AboutSection() {
+  const [trainerName, setTrainerName] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const trainerId = searchParams.get("id"); // Get trainerId from the query string
+  const router = useRouter();
+  useEffect(() => {
+
+    const fetchTrainerName = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/gettrainerbyid/${trainerId}`
+        );
+        if (response.data && response.data.trainer) {
+          setTrainerName(response.data.trainer.trainer_name); // Assuming the API returns trainer_name
+        } else {
+          console.error("Unexpected response format:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching trainer name:", error);
+      }
+    };
+
+    fetchTrainerName();
+  }, [trainerId]);
   return (
     <section id="about" className="py-20 bg-gray-900">
       <div className="container mx-auto px-4 max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold text-white mb-4">About Banula</h3>
+          <h3 className="text-3xl font-bold text-white mb-4">About {trainerName} </h3>
           <p className="text-lg text-gray-300">Passionate about helping people discover their strength and potential</p>
         </div>
 

@@ -58,7 +58,13 @@ export default function SessionsSection() {
               }`}
             >
               <CardHeader>
+                 <img
+                    src={session.image || "/placeholder.svg"}
+                    alt={session.title}
+                    className="w-full h-full object-cover rounded-md mb-2"
+                  />
                 <CardTitle className="text-lg text-white">{session.title}</CardTitle>
+                <CardDescription>with {session.trainer}</CardDescription>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-red-400">${session.price}</span>
                   <span className="text-sm text-gray-400">{session.duration}</span>
