@@ -8,7 +8,7 @@ class DashboardService {
       const { data: latestProgress, error: progressError } = await supabase
         .from('progress')
         .select('*')
-        .eq('customer_id', customerId)
+        .eq('id', customerId)
         .order('logged_date', { ascending: false })
         .limit(1);
 

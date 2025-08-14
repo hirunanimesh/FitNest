@@ -17,7 +17,7 @@ export async function updateUserDetails(userId, userData) {
   const { data, error } = await supabase
     .from('customer')
     .update(userData)
-    .eq('customer_id', userId)
+    .eq('id', userId)
     .select();
 
   if (error) {
@@ -46,7 +46,7 @@ export async function addWeight(weightData) {
           const { data, error } = await supabase
           .from('customer')
           .select('*')
-          .eq('customer_id', userId)
+          .eq('id', userId)
           .single(); // Fetch single user by ID
   
           if(!data){
@@ -63,7 +63,7 @@ export async function addWeight(weightData) {
   const { data, error } = await supabase
     .from('customer_progress')
     .select('*')
-    .eq('customer_id', userId);
+    .eq('id', userId);
 
   if (error) {
     throw new Error(error.message);

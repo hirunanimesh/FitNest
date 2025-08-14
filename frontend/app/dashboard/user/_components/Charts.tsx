@@ -160,22 +160,20 @@ const Charts: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900">Health Analytics</h1>
-                    <p className="text-gray-600 mt-2">Track your BMI and weight progress over time</p>
+        <section id="Health Analytics" className="min-h-screen bg-black p-4">
+                <div >
+                    <h1 className="text-3xl font-bold text-white mb-2">Health Analytics</h1>
+                    <p className="text-white mt-2">Track your BMI and weight progress over time</p>
                 </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-black px-8">
                     {/* BMI Chart */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <Card className='bg-[#192024]'>
+                        <CardHeader >
+                            <CardTitle className="flex items-center gap-2 text-white">
+                                <div className="w-3 h-3 bg-red-500 rounded-full "></div>
                                 BMI Variation
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription className='text-white mb-4'>
                                 Body Mass Index tracking over the last 30 days
                                 <br />
                                 <span className="text-xs text-gray-500">
@@ -208,20 +206,20 @@ const Charts: React.FC = () => {
                                 </LineChart>
                             </ResponsiveContainer>
                             <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                                <div className="p-2 bg-red-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Average BMI</p>
+                                <div className="p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-xs text-gray-200">Average BMI</p>
                                     <p className="text-sm font-semibold text-red-600">
                                         {bmiData.length > 0 ? (bmiData.reduce((sum, d) => sum + d.bmi, 0) / bmiData.length).toFixed(1) : '0'}
                                     </p>
                                 </div>
-                                <div className="p-2 bg-green-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Min BMI</p>
+                                <div className="p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-xs text-gray-200">Min BMI</p>
                                     <p className="text-sm font-semibold text-green-600">
                                         {bmiData.length > 0 ? Math.min(...bmiData.map(d => d.bmi)).toFixed(1) : '0'}
                                     </p>
                                 </div>
-                                <div className="p-2 bg-orange-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Max BMI</p>
+                                <div className="p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-xs text-gray-200">Max BMI</p>
                                     <p className="text-sm font-semibold text-orange-600">
                                         {bmiData.length > 0 ? Math.max(...bmiData.map(d => d.bmi)).toFixed(1) : '0'}
                                     </p>
@@ -231,14 +229,14 @@ const Charts: React.FC = () => {
                     </Card>
 
                     {/* Weight Chart */}
-                    <Card>
+                    <Card className='bg-[#192024]'>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <CardTitle className="flex items-center gap-2 text-white">
+                                    <div className="w-3 h-3 bg-blue-500 rounded-full "></div>
                                     Weight Variation
                                 </CardTitle>
-                                <CardDescription>
+                                <CardDescription className='text-white'>
                                     Weight tracking over the last 30 days
                                     <br />
                                     <span className="text-xs text-gray-500">
@@ -248,12 +246,12 @@ const Charts: React.FC = () => {
                             </div>
                             <Dialog open={isWeightDialogOpen} onOpenChange={setIsWeightDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button size="sm" variant="outline" className="shrink-0">
+                                    <Button size="sm"  className="shrink-0 bg-red-500">
                                         <Plus className="h-4 w-4 mr-1" />
                                         Add Weight
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="sm:max-w-[425px]">
+                                <DialogContent className="sm:max-w-[425px] bg-gray-900 text-gray-200">
                                     <DialogHeader>
                                         <DialogTitle>Add Weight Entry</DialogTitle>
                                         <DialogDescription>
@@ -261,10 +259,10 @@ const Charts: React.FC = () => {
                                         </DialogDescription>
                                     </DialogHeader>
                                     {/* Fixed: Removed onSubmit from div, as divs don't have form submission */}
-                                    <div className="grid gap-4 py-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="weight_date">Date</Label>
-                                            <Input
+                                    <div className="grid gap-4 py-4 ">
+                                        <div className="space-y-2 ">
+                                            <Label htmlFor="weight_date ">Date</Label>
+                                            <Input className='bg-gray-800'
                                                 id="weight_date"
                                                 type="date"
                                                 value={weightForm.date}
@@ -275,7 +273,7 @@ const Charts: React.FC = () => {
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="weight">Weight (kg)</Label>
-                                            <Input
+                                            <Input className='bg-gray-800'
                                                 id="weight"
                                                 type="number"
                                                 step="0.1"
@@ -293,6 +291,7 @@ const Charts: React.FC = () => {
                                         <Button 
                                             type="button" 
                                             variant="outline" 
+                                            className='bg-gray-800'
                                             onClick={() => setIsWeightDialogOpen(false)}
                                         >
                                             Cancel
@@ -332,21 +331,21 @@ const Charts: React.FC = () => {
                                 </LineChart>
                             </ResponsiveContainer>
                             <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                                <div className="p-2 bg-blue-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Average Weight</p>
+                                <div className="p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-xs text-gray-200">Average Weight</p>
                                     <p className="text-sm font-semibold text-blue-600">
                                         {weightData.length > 0 ? (weightData.reduce((sum, d) => sum + d.weight, 0) / weightData.length).toFixed(1) : '0'} kg
                                     </p>
                                 </div>
-                                <div className="p-2 bg-green-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Weight Loss</p>
+                                <div className="p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-xs text-gray-200">Weight Loss</p>
                                     <p className="text-sm font-semibold text-green-600">
                                         {weightData.length > 1 ? 
                                             `${(weightData[0].weight - weightData[weightData.length - 1].weight).toFixed(1)} kg` : '0 kg'}
                                     </p>
                                 </div>
-                                <div className="p-2 bg-purple-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Goal Progress</p>
+                                <div className="p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-xs text-gray-200">Goal Progress</p>
                                     <p className="text-sm font-semibold text-purple-600">
                                         {weightData.length > 1 && weightData[0].weight > weightData[weightData.length - 1].weight ? 
                                             '📉 On Track' : '📊 Monitor'}
@@ -357,44 +356,9 @@ const Charts: React.FC = () => {
                     </Card>
                 </div>
 
-                {/* Additional Stats Section */}
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card>
-                        <CardContent className="p-4 text-center">
-                            <div className="text-2xl font-bold text-blue-600">
-                                {weightData.length}
-                            </div>
-                            <div className="text-sm text-gray-600">Total Records</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-4 text-center">
-                            <div className="text-2xl font-bold text-green-600">
-                                {/* Fixed: Properly access BMI data instead of trying to access bmi property on WeightData */}
-                                {bmiData.length > 0 ? bmiData[bmiData.length - 1].bmi.toFixed(1) : '0'}
-                            </div>
-                            <div className="text-sm text-gray-600">Current BMI</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-4 text-center">
-                            <div className="text-2xl font-bold text-orange-600">
-                                {weightData.length > 0 ? `${weightData[weightData.length - 1].weight} kg` : '0 kg'}
-                            </div>
-                            <div className="text-sm text-gray-600">Current Weight</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-4 text-center">
-                            <div className="text-2xl font-bold text-purple-600">
-                                30
-                            </div>
-                            <div className="text-sm text-gray-600">Days Tracked</div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        </div>
+                
+            </section>
+        
     );
 };
 

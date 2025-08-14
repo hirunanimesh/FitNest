@@ -59,16 +59,16 @@ const TodaySessions = () => {
   }, []);
 
   return (
-    <div>
-      <Card className="bg-[#192024] text-white">
+    <section id ="Today's Sessions">
+      <Card className="bg-dark text-white">
         <CardHeader>
           <CardTitle >Today's Sessions</CardTitle>
           <CardDescription className="text-white">Your scheduled workout sessions for today</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {sessions.slice(0, 3).map((session) => (
-              <Card key={session.id} className="border-l-4 border-l-primary bg-black text-white">
+              <Card key={session.id} className="border-l-4 border-l-primary bg-[#192024] text-white">
                 <CardHeader className="pb-2">
                   <img
                     src={session.image || "/placeholder.svg"}
@@ -105,7 +105,7 @@ const TodaySessions = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 };
 

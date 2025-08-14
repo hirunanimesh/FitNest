@@ -14,14 +14,14 @@ const KPI = () => {
     const [weightData, setWeightData] = useState<{ day: string; weight: number }[]>([]);
   return (
     <div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-start">
             <Card>
-                    <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                        <p className="text-sm text-muted-foreground">Weight</p>
-                        <p className="text-2xl font-bold">{weightData[weightData.length - 1]?.weight || "-"} kg</p>
-                        <p className="text-xs text-muted-foreground">
+                    <CardContent className="p-6 bg-black">
+                    <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
+                        <div >
+                        <p className="text-sm text-muted-foreground text-blue-500">Weight</p>
+                        <p className="text-2xl font-bold text-blue-500">{weightData[weightData.length - 1]?.weight || "-"} kg</p>
+                        <p className="text-xs text-muted-foreground text-blue-500">
                             {weightData.length > 1
                             ? `${(weightData[weightData.length - 1]?.weight - weightData[weightData.length - 2]?.weight).toFixed(1)} kg from yesterday`
                             : "No data available"}
@@ -33,11 +33,11 @@ const KPI = () => {
                 </Card>       
 
                 <Card>
-                    <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
+                    <CardContent className="p-6 bg-black">
+                    <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
                         <div>
                         <p className="text-sm text-muted-foreground">Height</p>
-                        <p className="text-2xl font-bold">175 cm</p>
+                        <p className="text-2xl font-bold text-green-500">175 cm</p>
                         <p className="text-xs text-muted-foreground">No change</p>
                         </div>
                         <Ruler className="h-8 w-8 text-green-500" />
@@ -46,18 +46,41 @@ const KPI = () => {
                 </Card>
 
                 <Card>
-                    <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
+                    <CardContent className="p-6 bg-black">
+                    <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
                         <div>
                         <p className="text-sm text-muted-foreground">BMI</p>
-                        <p className="text-2xl font-bold">24.0</p>
+                        <p className="text-2xl font-bold text-purple-500">24.0</p>
                         <p className="text-xs text-muted-foreground">Normal range</p>
                         </div>
                         <Activity className="h-8 w-8 text-purple-500" />
                     </div>
                     </CardContent>
                 </Card>
-        </div>
+                <Card>
+                    <CardContent className="p-6 bg-black">
+                    <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
+                        <div>
+                        <p className="text-sm text-muted-foreground">Days Tracked</p>
+                        <p className="text-2xl font-bold text-purple-500">30</p>
+                        </div>
+                        <Activity className="h-8 w-8 text-purple-500" />
+                    </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6 bg-black">
+                    <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
+                        <div>
+                        <p className="text-sm text-muted-foreground">Total Records</p>
+                        <p className="text-2xl font-bold text-purple-500">30</p>
+                        </div>
+                        <Activity className="h-8 w-8 text-purple-500" />
+                    </div>
+                    </CardContent>
+                </Card>
+    </div>
     </div>
   )
 }
