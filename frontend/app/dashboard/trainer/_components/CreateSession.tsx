@@ -44,7 +44,7 @@ const CreatePlan = () => {
        <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline">
-                  <Plus className="h-4 w-4 mr-1" /> Create New Plan
+                  <Plus className="h-4 w-4 mr-1" /> Create New Session
                 </Button>
               </DialogTrigger>
               <DialogContent>

@@ -48,12 +48,12 @@ const MemberTab = () => {
             </CardHeader>
             <CardContent>
                 <div className="flex items-center space-x-2 mb-4">
-                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Search className="h-4 w-4 " />
                   <Input
                     placeholder="Search members..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="max-w-sm"
+                    className="max-w-sm text-gray-800"
                   />
                 </div>
                 <Table>
