@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { UserNavbar } from "@/components/user-navbar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin } from "lucide-react"
-import Link from "next/link"
+
 import GymCard from "@/components/GymCard"
 import TrainerCard from "@/components/TrainerCard" // Assuming you have a TrainerCard component
 

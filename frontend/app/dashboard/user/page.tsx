@@ -1,6 +1,5 @@
 "use client"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-
 import TopBar from "./_components/TopBar"
 import Progress from "./_components/Progress"
 import TodaySessions from "./_components/TodaySessions"
@@ -10,39 +9,23 @@ import Charts from "./_components/Charts"
 import Schedule from "./_components/Schedule"
 import { ThemeProvider } from 'next-themes';
 import MotivationQuotes from "./_components/MotivationQuote"
-
-
-
-
-// Define or import the missing types
-interface User {
-  id: number;
-  name: string;
-  avatar?: string;
-}
+import { useSearchParams } from "next/navigation";
 
 export default function UserDashboard() {
-  
-  
-
+   const searchParams = useSearchParams();
+   const id = searchParams.get("id");
   return (
-     <ThemeProvider attribute="class" defaultTheme="system">
-    <SidebarProvider>
-
-  
-
-      <SidebarInset className="flex text-red">
-        <div className="flex-1">
+     <div className="bg-black">
+    
           {/* Header */}
-          <TopBar/>
+          <TopBar id={id}/>
 
           {/* Main Content */}
-          <div className="flex-1 space-y-6 p-6">
+          <div className="flex-1 space-y-10 p-20">
             {/* Motivation Quote */}
             
                 <MotivationQuotes />
-              
-
+            
             {/* Streak Card */}
             <Progress/>
 
@@ -58,13 +41,13 @@ export default function UserDashboard() {
             {/* Charts */}
             <Charts/>
           </div>
-        </div>
+        
 
         {/* Right Sidebar */}
         <Schedule/>
 
-      </SidebarInset>
-    </SidebarProvider>
-    </ThemeProvider>
+      
+    </div>
   );
+   
 }

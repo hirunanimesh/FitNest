@@ -75,12 +75,12 @@ const Schedule: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4">
+        <section id = "Fitness Schedule" className="min-h-screen bg-black">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">Fitness Schedule</h1>
+                <h1 className="text-3xl font-bold text-white mb-8">Fitness Schedule</h1>
                 
                 {/* Responsive Grid Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
                     {/* Left Side - Calendar */}
                     <Card className="h-fit">
@@ -229,7 +229,7 @@ const Schedule: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     );
 };
 

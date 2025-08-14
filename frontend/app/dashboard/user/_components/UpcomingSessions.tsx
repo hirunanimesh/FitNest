@@ -59,16 +59,16 @@ const UpcomingSessions = () => {
   }, []);
 
   return (
-    <div>
-      <Card className="bg-[#192024] text-white">
+    <section id ="Upcoming Sessions">
+      <Card className="bg-black text-white">
         <CardHeader>
           <CardTitle>Upcoming Sessions</CardTitle>
           <CardDescription>Your scheduled sessions for the coming days</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {sessions.map((session) => (
-              <Card key={session.id} className="border-l-4 border-l-primary bg-black text-white">
+              <Card key={session.id} className="border-l-4 border-l-primary bg-[#192024] text-white">
                 <CardHeader className="pb-2">
                   <img
                     src={session.image || "/placeholder.svg"}
@@ -105,7 +105,7 @@ const UpcomingSessions = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 };
 

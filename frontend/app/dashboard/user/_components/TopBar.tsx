@@ -1,78 +1,87 @@
 import React, { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Sun, Moon, Bell } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
+import axios from "axios";
+import { useRouter} from "next/navigation";
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Menu, Dumbbell } from "lucide-react"
+import Link from "next/link"
 
-interface User {
-  id: number;
-  name: string;
-  avatar?: string;
-}
-
-interface Session {
-  id: number;
-  title: string;
-  trainer: string;
-  date: string;
-  time: string;
-  amount: string;
-  description: string;
-  image?: string;
-}
-
-const TopBar = () => {
-  const { theme, setTheme } = useTheme();
+export default function  TopBar({ id }: { id: string | null }) {
+  const[userName,setUserName] = useState<string|null>(null);
+  const[imgUrl,setImgUrl] = useState<string|null>(null);
+  const UserId = id;
   const router = useRouter();
-
-  // Mock data for user and sessions
-  const mockUser: User = {
-    id: 1,
-    name: "John Doe",
-    avatar: "/placeholder.svg",
-  };
-
-
-  const [user, setUser] = useState<User | null>(null);
-  
-  const [loading, setLoading] = useState(true);
-
-
-
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
 
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try{
+          const response = await axios.get(
+            `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/getuserbyid/${UserId}`
+          );
+        if (response.data && response.data.customer) {
+          setUserName(response.data.customer.first_name); 
+          setImgUrl(response.data.customer.profile_img)
+        } else {
+          console.error("Unexpected response format:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching responses:", error);
+      }
+    };
+
+    fetchUserName();
+  }, [UserId]);
+
+
   return (
-    <div>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <div className="flex flex-1 items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-white">
-              Hi, {user?.name || "Guest"}
+    <>
+      <header className="fixed top-0 z-50 w-full bg-black shadow-lg border-b-2 border-[#FB4141]">
+        <div className="container flex h-16 items-center justify-between px-6">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="p-2 bg-[#FB4141] rounded-lg group-hover:bg-[#e63636] transition-colors">
+              <Dumbbell className="h-6 w-6 text-white" />
+            </div>
+            <span className="font-bold text-2xl text-white">FitNest</span>
+          </Link>
+          <h1 className="text-lg font-semibold text-black">
+              Hi, {userName}
             </h1>
             <p className="text-sm text-muted-foreground">{today}</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          
+          <nav className="hidden md:flex space-x-8">
+            <a href="#Workout Progress" className="text-white hover:text-red-400">
+              Workout Progress
+            </a>
+            <a href="#Today's Sessions" className="text-white hover:text-red-400">
+              Today's Sessions
+            </a>
+            <a href="#Upcoming Sessions" className="text-white hover:text-red-400">
+              Upcoming Sessions
+            </a>
+            <a href="#Health Analytics" className="text-white hover:text-red-400">
+              Health Analytics
+            </a>
+            <a href="#Fitness Schedule" className="text-white hover:text-red-400">
+              Fitness Schedule
+            </a>
+          
+            <Link
+              href="/dashboard/user/search"
+              className="text-white hover:text-[#FB4141] px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group"
             >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Bell className="h-4 w-4" />
-            </Button>
+              Search
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FB4141] group-hover:w-full transition-all duration-200"></span>
+            </Link>
+        
             <Avatar>
-              <AvatarImage src={user?.avatar || "/placeholder.svg"} />
-              <AvatarFallback>{user?.name?.[0] || "G"}</AvatarFallback>
+              <AvatarImage src={imgUrl ?? undefined} />
+              <AvatarFallback>{userName?.[0] || "G"}</AvatarFallback>
             </Avatar>
             <Button
               onClick={() => {
@@ -82,11 +91,10 @@ const TopBar = () => {
             >
               Logout
             </Button>
+            </nav>
           </div>
-        </div>
       </header>
-    </div>
-  );
+    </>
+  )
 };
 
-export default TopBar;
