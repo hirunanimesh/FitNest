@@ -1,7 +1,7 @@
 "use client";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle,CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Video } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -59,7 +59,7 @@ export default function SessionsSection() {
             >
               <CardHeader>
                  <img
-                    src={session.image || "/placeholder.svg"}
+                    src={session.img_url || "/placeholder.svg"}
                     alt={session.title}
                     className="w-full h-full object-cover rounded-md mb-2"
                   />
