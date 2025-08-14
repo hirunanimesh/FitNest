@@ -143,6 +143,16 @@ class AuthController {
         userRole
       );
 
+      // Check if customer already exists
+      if (result && result.alreadyExists) {
+        return res.status(200).json({
+          success: false,
+          alreadyExists: true,
+          message: "User profile already exists. Please login instead of completing profile again.",
+          customer: result.customer
+        });
+      }
+
       res.status(201).json({
         success: true,
         message: "OAuth profile completed successfully",

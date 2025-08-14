@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from 'next/navigation'
 
 
-type UserRole = "customer" | "trainer" | "gym" | "";
+type UserRole = "user" | "trainer" | "gym" | "";
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +20,7 @@ export default function SignupPage() {
     }
     try{
       setIsLoading(true);
+      console.log("Selected role for Google sign-up:", selectedRole);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -50,9 +51,10 @@ export default function SignupPage() {
       alert("Please select your role first");
       return;
     }
+    console.log("Selected role for email signup:", selectedRole);
     try{
       setIsLoading(true);
-      if (selectedRole === 'customer'){
+      if (selectedRole === 'user'){
         router.push('/auth/signup/user')
       }else if (selectedRole === 'trainer'){
         router.push('/auth/signup/trainer')
@@ -69,7 +71,7 @@ export default function SignupPage() {
 
   const roleOptions = [
     {
-      value: "customer",
+      value: "user",
       label: "Member",
       icon: "🏃‍♂️",
       description: "Join to find trainers and gyms",

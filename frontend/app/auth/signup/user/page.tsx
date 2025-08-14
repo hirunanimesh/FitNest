@@ -3,148 +3,48 @@
 import { useState, useCallback, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-
-// Declare Google Maps types
-declare global {
-  interface Window {
-    google: any;
-  }
-}
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon, Upload, MapPin, ArrowLeft, User, Mail, Lock, Phone, Camera } from "lucide-react"
-import { format } from "date-fns"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { AddCustomer } from "@/lib/api"
-
-import { AppLogo } from "@/components/AppLogo";
+import { AppLogo } from "@/components/AppLogo"
+import GoogleMapPicker from "@/components/GoogleMapPicker"
 
 export default function UserSignup() {
   const router = useRouter()
   const [date, setDate] = useState<Date>()
+  const [dateInput, setDateInput] = useState("")
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [gender, setGender] = useState("")
-  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null)
-  const [address, setAddress] = useState("")
+  const [location, setLocation] = useState<{lat: number, lng: number, address: string} | null>(null)
   const [isMapOpen, setIsMapOpen] = useState(false)
-  const [mapLoaded, setMapLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Load Google Maps script
-  const loadGoogleMapsScript = useCallback(() => {
-    if (window.google || mapLoaded) return Promise.resolve()
-    
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script')
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
-      script.async = true
-      script.defer = true
-      script.onload = () => {
-        setMapLoaded(true)
-        resolve(true)
+  // Handle date input changes
+  const handleDateInputChange = (value: string) => {
+    setDateInput(value)
+    if (value) {
+      const parsedDate = new Date(value)
+      if (!isNaN(parsedDate.getTime())) {
+        setDate(parsedDate)
       }
-      script.onerror = reject
-      document.head.appendChild(script)
-    })
-  }, [mapLoaded])
-
-  const openLocationSelector = async () => {
-    try {
-      await loadGoogleMapsScript()
-      setIsMapOpen(true)
-    } catch (error) {
-      console.error("Error loading Google Maps:", error)
     }
   }
 
-  const handleMapClick = async (lat: number, lng: number) => {
-    setLocation({ lat, lng })
-    
-    // Get address from coordinates using Google Geocoding API
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-      )
-      const data = await response.json()
-      
-      if (data.results && data.results.length > 0) {
-        setAddress(data.results[0].formatted_address)
-      }
-    } catch (error) {
-      console.error("Error getting address:", error)
-    }
-    
+  // Handle location selection from GoogleMapPicker
+  const handleLocationSelect = (selectedLocation: {lat: number, lng: number, address: string}) => {
+    setLocation(selectedLocation)
     setIsMapOpen(false)
   }
 
-  // Google Map Component
-  const MapSelector = () => {
-    const mapRef = useRef<HTMLDivElement | null>(null)
-    
-    useEffect(() => {
-      if (!mapRef.current || !window.google) return
-      
-      // Center on Sri Lanka
-      const sriLankaCenter = { lat: 7.8731, lng: 80.7718 }
-      
-      const map = new window.google.maps.Map(mapRef.current, {
-        zoom: 7,
-        center: sriLankaCenter,
-        mapTypeId: 'roadmap'
-      })
-      
-      // Add click listener
-      map.addListener('click', (event: any) => {
-        const lat = event.latLng.lat()
-        const lng = event.latLng.lng()
-        handleMapClick(lat, lng)
-      })
-      
-      // Add marker for current location if exists
-      if (location) {
-        new window.google.maps.Marker({
-          position: location,
-          map: map,
-          title: 'Selected Location'
-        })
-      }
-    }, [location])
-    
-    return (
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl max-w-4xl w-full mx-4 shadow-2xl">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold text-white">Select Your Location</h3>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsMapOpen(false)}
-              className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
-            >
-              Close
-            </Button>
-          </div>
-          <div 
-            ref={mapRef}
-            className="w-full h-96 rounded-lg border border-gray-700"
-          />
-          <p className="text-sm text-gray-400 mt-4 text-center">
-            Click on the map to select your location
-          </p>
-        </div>
-      </div>
-    )
-  }
-
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsLoading(true);
+    e.preventDefault();
+    setIsLoading(true);
 
     const formData = new FormData(e.currentTarget)
     
@@ -161,8 +61,8 @@ export default function UserSignup() {
     submitData.append("role", "customer")
     submitData.append("gender", gender)
     submitData.append("birthday", date ? date.toISOString() : "")
-    submitData.append("location", location ? JSON.stringify(location) : "")
-    submitData.append("address", address)
+    submitData.append("location", location ? JSON.stringify({lat: location.lat, lng: location.lng}) : "")
+    submitData.append("address", location?.address || "")
     submitData.append("weight", formData.get("weight") as string || "")
     submitData.append("height", formData.get("height") as string || "")
 
@@ -336,26 +236,24 @@ export default function UserSignup() {
                       <Label className="text-gray-300">
                         Date of Birth <span className="text-red-500">*</span>
                       </Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            className="w-full justify-start text-left font-normal bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:text-white"
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {date ? format(date, "PPP") : "Select your date of birth"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700">
-                          <Calendar 
-                            mode="single" 
-                            selected={date} 
-                            onSelect={setDate} 
-                            initialFocus 
-                            className="bg-gray-800 text-white"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <Input
+                        type="date"
+                        value={dateInput}
+                        onChange={(e) => handleDateInputChange(e.target.value)}
+                        className="bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
+                        disabled={isLoading}
+                        required
+                      />
+                      {date && (
+                        <p className="text-sm text-gray-400">
+                          Selected: {date.toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -418,38 +316,22 @@ export default function UserSignup() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="address" className="text-gray-300">
-                      Address <span className="text-red-500">*</span>
-                    </Label>
-                    <div className="space-y-3">
-                      <div className="flex gap-3">
-                        <Textarea 
-                          id="address" 
-                          name="address" 
-                          placeholder="Enter your full address" 
-                          className="min-h-[100px] flex-1 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500" 
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
-                          required 
-                        />
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={openLocationSelector}
-                          className="h-fit mt-0 bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:text-white px-4"
-                        >
-                          <MapPin className="mr-2 h-4 w-4" />
-                          Map
-                        </Button>
-                      </div>
-                      {location && (
-                        <div className="p-3 bg-green-900/20 border border-green-800 rounded-lg">
-                          <p className="text-sm text-green-400">
-                            📍 Location selected: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                    <Label className="text-gray-300">Location</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsMapOpen(true)}
+                      className="w-full justify-start bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
+                      disabled={isLoading}
+                    >
+                      <MapPin className="mr-2 h-4 w-4" />
+                      {location ? "Change Location" : "Select Location"}
+                    </Button>
+                    {location?.address && (
+                      <p className="text-sm text-gray-400 mt-2">
+                        📍 {location.address}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -534,8 +416,29 @@ export default function UserSignup() {
           </Card>
         </div>
         
-        {/* Map Modal */}
-        {isMapOpen && <MapSelector />}
+        {/* Enhanced Map Modal */}
+        {isMapOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-gray-800 border border-gray-700 p-6 rounded-xl max-w-4xl w-full mx-4 shadow-2xl">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-white">Select Your Location</h3>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsMapOpen(false)}
+                  className="bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600 hover:text-white"
+                >
+                  Close
+                </Button>
+              </div>
+              <GoogleMapPicker
+                onLocationSelect={handleLocationSelect}
+                initialLocation={location || undefined}
+                searchPlaceholder="Search for your location..."
+                height="400px"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
