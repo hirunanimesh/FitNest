@@ -49,7 +49,7 @@ export const GetUserInfo = async (token) => {
     }
 };
 
-export const CompleteOAuthProfile = async (profileData) => {
+export const CompleteOAuthProfileMember = async (profileData) => {
     try {
         const config = {};
         
@@ -63,6 +63,10 @@ export const CompleteOAuthProfile = async (profileData) => {
         return response.data;
     } catch (error) {
         console.error("Error completing OAuth profile:", error);
+        // If it's an axios error with response data, preserve the response structure
+        if (error.response && error.response.data) {
+            throw error; // Re-throw the full error so frontend can access error.response.data
+        }
         throw error;
     }
 };

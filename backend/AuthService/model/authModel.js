@@ -97,7 +97,12 @@ class AuthModel {
       }
 
       if (existingCustomer) {
-        throw new Error("Customer profile already exists for this user");
+        return {
+          success: false,
+          alreadyExists: true,
+          message: "Customer profile already exists for this user",
+          customer: existingCustomer
+        };
       }
 
       // Prepare the insert data
@@ -138,18 +143,21 @@ class AuthModel {
       }
 
       console.log("OAuth customer data inserted successfully:", customerdata);
-      const customer_id = customerdata[0].customer_id;
+      const customer_id = customerdata[0].id;
+
+      const insertPhysicalData = {
+        customer_id: customer_id,
+        height: height ? parseFloat(height) : null,
+        weight: weight ? parseFloat(weight) : null,
+      };
+      console.log("physical data", insertPhysicalData);
 
       // Insert physical data if provided
       if (weight || height) {
         const { data: physicalData, error: physicalError } = await supabase
           .from("customer_progress")
           .insert([
-            {
-              customer_id: customer_id,
-              height: height ? parseFloat(height) : null,
-              weight: weight ? parseFloat(weight) : null,
-            },
+            insertPhysicalData,
           ]);
 
         if (physicalError) {
