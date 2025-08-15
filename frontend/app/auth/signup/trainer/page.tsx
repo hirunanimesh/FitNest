@@ -13,6 +13,7 @@ import { Upload, FileText, Plus, X, ArrowLeft, User, Mail, Lock, Phone, Camera, 
 import Link from "next/link"
 import { AppLogo } from "@/components/AppLogo"
 import { useRouter } from "next/navigation"
+import { TrainerRegister } from "@/lib/api"
 
 interface DocumentEntry {
   id: string
@@ -59,22 +60,60 @@ export default function TrainerSignup() {
 
   // Upload file to Cloudinary
   const uploadToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '')
+    // Validate environment variables first
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+    
+    console.log('Cloudinary config:', { cloudName, uploadPreset }) // Debug log
+    console.log('File to upload:', file.name, file.type, file.size) // Debug log
+    
+    if (!cloudName) {
+      throw new Error('Cloudinary cloud name is not configured')
+    }
+    
+    if (!uploadPreset || uploadPreset === 'your_upload_preset_name' || uploadPreset === 'YOUR_ACTUAL_PRESET_NAME') {
+      throw new Error('Cloudinary upload preset is not configured properly. Please check your .env file and Cloudinary dashboard.')
+    }
+    
+    const uploadFormData = new FormData()
+    uploadFormData.append('file', file)
+    uploadFormData.append('upload_preset', uploadPreset)
+    
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`
+    console.log('Upload URL:', uploadUrl) // Debug log
+    console.log('Using upload preset:', uploadPreset) // Debug log
     
     try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`,
-        {
-          method: 'POST',
-          body: formData
-        }
-      )
-      const data = await response.json()
-      return data.secure_url
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: uploadFormData
+      })
+      
+      console.log('Response status:', response.status, response.statusText) // Debug log
+      
+      // Always try to get response text first
+      const responseText = await response.text()
+      console.log('Response text:', responseText) // Debug log
+      
+      let errorData
+      try {
+        errorData = JSON.parse(responseText)
+      } catch (e) {
+        errorData = { message: responseText }
+      }
+      
+      if (!response.ok) {
+        console.error('Cloudinary error details:', errorData)
+        const errorMessage = errorData?.error?.message || errorData?.message || `HTTP ${response.status}: ${response.statusText}`
+        throw new Error(`Upload failed: ${errorMessage}`)
+      }
+      
+      return errorData.secure_url
     } catch (error) {
       console.error('Error uploading to Cloudinary:', error)
+      if (error instanceof Error) {
+        throw error
+      }
       throw new Error('Failed to upload file')
     }
   }
@@ -104,6 +143,20 @@ export default function TrainerSignup() {
     setSuccess(false)
 
     try {
+      // Get form data immediately while e.currentTarget is still valid
+      const form = e.currentTarget as HTMLFormElement
+      const formData = new FormData(form)
+      
+      // Extract form values immediately
+      const nameWithInitials = formData.get("nameWithInitials") as string
+      const email = formData.get("email") as string
+      const password = formData.get("password") as string
+      const confirmPassword = formData.get("confirmPassword") as string
+      const contactNo = formData.get("contactNo") as string
+      const bio = formData.get("bio") as string
+      const skills = formData.get("skills") as string
+      const experience = parseInt(formData.get("experience") as string)
+
       // Validate documents
       const validDocuments = documents.filter(doc => doc.file && doc.type.trim())
       if (validDocuments.length === 0) {
@@ -116,35 +169,26 @@ export default function TrainerSignup() {
       // Upload documents
       const documentsData = await uploadDocuments()
 
-      // Prepare form data
-      const form = e.currentTarget
-      const formData = new FormData(form)
-      
+      // Prepare trainer data
       const trainerData = {
-        nameWithInitials: formData.get("nameWithInitials") as string,
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
-        confirmPassword: formData.get("confirmPassword") as string,
-        contactNo: formData.get("contactNo") as string,
-        bio: formData.get("bio") as string,
-        specializations: formData.get("specializations") as string,
-        experience: parseInt(formData.get("experience") as string),
+        nameWithInitials,
+        email,
+        password,
+        confirmPassword,
+        contactNo,
+        bio,
+        skills,
+        experience,
         profileImage: profileImageUrl,
         documents: documentsData, // Array of {type, url} objects
         role: "trainer"
       }
 
       // Submit to your backend
-      const response = await fetch("api/auth/trainer/Register", {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(trainerData)
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Registration failed')
-      }
+      console.log('Submitting trainer data:', trainerData) // Debug log
+      
+      const response = await TrainerRegister(trainerData)
+      console.log('Success response:', response) // Debug log
 
       setSuccess(true)
       form.reset()
@@ -311,36 +355,36 @@ export default function TrainerSignup() {
                     </p>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="specializations" className="text-gray-300">
-                        Specializations <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="specializations"
-                        name="specializations"
-                        placeholder="e.g., Weight Loss, Strength Training, Yoga"
-                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
-                        required
-                      />
-                      <p className="text-xs text-gray-400">Separate multiple specializations with commas</p>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="skills" className="text-gray-300">
+                      Skills & Specializations <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea
+                      id="skills"
+                      name="skills"
+                      placeholder="e.g., Weight Loss, Strength Training, Yoga, CrossFit, Personal Training, Nutrition Coaching..."
+                      className="min-h-[100px] bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
+                      required
+                    />
+                    <p className="text-xs text-gray-400">
+                      List your training specializations, certifications, and areas of expertise
+                    </p>
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="experience" className="text-gray-300">
-                        Years of Experience <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="experience"
-                        name="experience"
-                        type="number"
-                        min="0"
-                        max="50"
-                        placeholder="Enter years of experience"
-                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
-                        required
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="experience" className="text-gray-300">
+                      Years of Experience <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="experience"
+                      name="experience"
+                      type="number"
+                      min="0"
+                      max="50"
+                      placeholder="Enter years of experience"
+                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
+                      required
+                    />
                   </div>
                 </div>
 

@@ -70,3 +70,22 @@ export const CompleteOAuthProfileMember = async (profileData) => {
         throw error;
     }
 };
+
+export const TrainerRegister = async (trainerData) => {
+    console.log("Trainer data being sent:", trainerData); // Debug log
+    try {
+        const config = {};
+
+        if (trainerData instanceof FormData) {
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+        }
+
+        const response = await axios.post(`${Base_URL}/api/auth/trainer/register`, trainerData, config);
+        return response.data;
+    } catch (error) {
+        console.error("Error registering trainer:", error);
+        throw error;
+    }
+};
