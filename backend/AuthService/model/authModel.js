@@ -179,6 +179,131 @@ class AuthModel {
     }
   }
 
+  // Complete OAuth trainer profile
+  static async completeOAuthTrainerProfile(
+    user_id,
+    nameWithInitials,
+    contactNo,
+    bio,
+    skills,
+    experience,
+    profileImage,
+    documents,
+    userRole
+  ) {
+    try {
+      console.log("=== OAuth Trainer Profile Debug ===");
+      console.log("user_id:", user_id);
+      console.log("user_id type:", typeof user_id);
+      console.log("user_id length:", user_id ? user_id.length : 'N/A');
+      
+      // Validate user_id
+      if (!user_id) {
+        throw new Error("user_id is required but was not provided");
+      }
+
+      // Check if user_id is a valid UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(user_id)) {
+        throw new Error(`Invalid user_id format: ${user_id}. Expected UUID format.`);
+      }
+
+      console.log("user_id validation passed");
+
+      console.log("About to call supabase.auth.admin.updateUserById with:");
+      console.log("- user_id:", user_id);
+      console.log("- user_id type:", typeof user_id);
+      console.log("- userRole:", userRole);
+
+      // Ensure user_id is a string and trim any whitespace
+      const cleanUserId = String(user_id).trim();
+      console.log("- cleanUserId:", cleanUserId);
+      console.log("- cleanUserId length:", cleanUserId.length);
+
+      // Update user metadata with trainer role
+      const { data, error } = await supabase.auth.admin.updateUserById(
+        cleanUserId,
+        {
+          user_metadata: {
+            role: userRole,
+          },
+        }
+      );
+
+      if (error) {
+        console.error("Error updating user metadata:", error);
+        throw error;
+      }
+
+      console.log("User metadata updated:", data);
+
+      // Check if trainer already exists
+      const { data: existingTrainer, error: checkError } = await supabase
+        .from("trainer")
+        .select("*")
+        .eq("user_id", user_id)
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") {
+        // PGRST116 = not found
+        console.error("Error checking existing trainer:", checkError);
+        throw checkError;
+      }
+
+      if (existingTrainer) {
+        return {
+          success: false,
+          alreadyExists: true,
+          message: "Trainer profile already exists for this user",
+          trainer: existingTrainer
+        };
+      }
+
+      // Prepare the insert data
+      const insertData = {
+        user_id: user_id,
+        trainer_name: nameWithInitials,
+        bio: bio,
+        contact_no: contactNo,
+        profile_img: profileImage,
+        skills: skills,
+        years_of_experience: experience ? parseInt(experience) : 0,
+        verified: false,
+        documents: documents,
+      };
+
+      console.log(
+        "OAuth trainer profile data to insert:",
+        JSON.stringify(insertData, null, 2)
+      );
+
+      // Insert trainer data into trainer table
+      const { data: trainerData, error: insertError } = await supabase
+        .from("trainer")
+        .insert([insertData])
+        .select();
+
+      if (insertError) {
+        console.error("Database insertion error details:");
+        console.error("Error message:", insertError.message);
+        console.error("Error code:", insertError.code);
+        console.error("Error details:", insertError.details);
+        console.error("Error hint:", insertError.hint);
+        console.error(
+          "Full error object:",
+          JSON.stringify(insertError, null, 2)
+        );
+        throw insertError;
+      }
+
+      console.log("OAuth trainer data inserted successfully:", trainerData);
+      return trainerData[0];
+    } catch (error) {
+      console.error("Error completing OAuth trainer profile:", error);
+      throw error;
+    }
+  }
+
   static async customerRegister(
     email,
     password,
