@@ -168,6 +168,85 @@ class AuthController {
     }
   }
 
+  static async completeOAuthTrainerProfile(req, res) {
+    console.log("OAuth trainer profile completion request:", req.body);
+    try {
+      console.log("OAuth trainer profile completion request:", req.body);
+
+      const {
+        user_id,
+        nameWithInitials,
+        contactNo,
+        bio,
+        skills,
+        experience,
+        profileImage,
+        documents,
+        userRole,
+      } = req.body;
+
+      // Validate user_id
+      if (!user_id) {
+        console.error("user_id is missing from request");
+        return res.status(400).json({
+          success: false,
+          message: "user_id is required",
+        });
+      }
+
+      console.log("Processing for user_id:", user_id);
+
+      // Parse documents from JSON string if needed
+      let documentsArray = [];
+      if (documents && typeof documents === "string") {
+        try {
+          documentsArray = JSON.parse(documents);
+        } catch (parseError) {
+          console.error("Error parsing documents JSON:", parseError);
+          documentsArray = [];
+        }
+      } else if (documents && Array.isArray(documents)) {
+        documentsArray = documents;
+      }
+
+      const result = await authmodel.completeOAuthTrainerProfile(
+        user_id,
+        nameWithInitials,
+        contactNo,
+        bio,
+        skills,
+        experience,
+        profileImage,
+        documentsArray,
+        userRole
+      );
+
+      // Check if trainer already exists
+      if (result && result.alreadyExists) {
+        return res.status(200).json({
+          success: false,
+          alreadyExists: true,
+          message:
+            "Trainer profile already exists. Please login instead of completing profile again.",
+          trainer: result.trainer,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "OAuth trainer profile completed successfully",
+        trainer: result,
+      });
+    } catch (error) {
+      console.error("[Auth Service] Error completing OAuth trainer profile:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to complete OAuth trainer profile",
+        error: error.message,
+      });
+    }
+  }
+
   static async createUser(req, res) {
     const { email, password, role } = req.body;
     try {
