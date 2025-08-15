@@ -51,6 +51,6 @@ router.post('/oauth/complete-profile', upload.single('profileImage'), AuthContro
 
 router.post('/customer/register', upload.single('profileImage'), AuthController.customerRegister);
 router.post('/gym/register', upload.single('profileImage'), AuthController.GymRegister);
-router.post('/trainer/register', upload.single('profileImage'), AuthController.TrainerRegister);
+router.post('/trainer/register', AuthController.TrainerRegister); // Removed multer middleware
 
 module.exports = router;

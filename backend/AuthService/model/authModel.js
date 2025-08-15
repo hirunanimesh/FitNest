@@ -8,9 +8,14 @@ class AuthModel {
         password,
         options: {
           data: { role },
+          emailRedirectTo: `${process.env.FRONTEND_URL || 'http://localhost:3001'}/auth/confirm`
         },
       });
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase auth error:", error);
+        throw error;
+      }
+      console.log("User signup result:", data);
       return data;
     } catch (error) {
       console.error("Error creating user:", error);
@@ -327,30 +332,44 @@ class AuthModel {
   }
 
   static async TrainerRegister(
-    email,
-    password,
-    bio,
-    contact_no,
-    trainer_name,
-    profile_img,
-    years_of_experience,
-    skills,
-    documents
+    nameWithInitials,
+     email,
+      bio,
+      password,
+      contactNo,
+      profileImage,
+      skills,
+      experience,
+      documents,
+      role
   ) {
     try {
-      const role = "trainer";
-      const userData = await AuthModel.createUser(email, password, role);
+      const userRole = "trainer";
+      const userData = await AuthModel.createUser(email, password, userRole);
+      
       if (!userData || !userData.user) {
         throw new Error("User not returned from signUp");
       }
+
+      // Check if email confirmation is required
+      if (!userData.user.email_confirmed_at && userData.user.confirmation_sent_at) {
+        // Email confirmation is required - return early with confirmation message
+        return {
+          user: userData.user,
+          session: userData.session,
+          requiresConfirmation: true,
+          message: "Please check your email and confirm your account before completing registration"
+        };
+      }
+
       const insertData = {
         user_id: userData.user.id,
         bio: bio,
-        contact_no: contact_no,
-        trainer_name: trainer_name,
-        profile_img: profile_img,
-        years_of_experience: years_of_experience,
+        contact_no: contactNo,
+        trainer_name: nameWithInitials,
+        profile_img: profileImage,
         skills: skills,
+        years_of_experience: experience,
         verified: false,
         documents: documents,
       };
