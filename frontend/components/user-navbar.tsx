@@ -1,98 +1,83 @@
 "use client"
-
+import { supabase } from "@/lib/supabase";
+import React, { useState, useEffect } from "react";
+import { useRouter} from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { LogOut, User, Settings, Dumbbell } from "lucide-react"
+import {  Dumbbell } from "lucide-react"
 import Link from "next/link"
+import {  GetUserInfo } from "@/lib/api"
 
 export function UserNavbar() {
-  // Mock user data
-  const user = {
-    name: "John Doe",
-    email: "john@example.com",
-    bmi: 24.2,
-    avatar: "/placeholder.svg?height=32&width=32",
-  }
-
+  const router = useRouter();
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const[userName,setUserName] = useState<string|null>(null);
+  const[imgUrl,setImgUrl] = useState<string|null>(null);
+  
+  useEffect(() => {
+      async function fetchUserInfo() {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) return;
+  
+        try {
+          const data = await GetUserInfo(token);
+          const userMeta = data?.user?.user_metadata;
+          setUserName(userMeta?.full_name || userMeta?.name || null);
+          setImgUrl(userMeta?.avatar_url || userMeta?.picture || null);
+          setProfileId(data?.user?.id || null);
+        } catch (error) {
+          setUserName(null);
+          setImgUrl(null);
+          setProfileId(null);
+        }
+      }
+      fetchUserInfo();
+    }, []);
+  
   return (
     <header className="fixed top-0 z-50 w-full bg-black shadow-lg border-b-2 border-[#FB4141]">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center space-x-2">
-          <Dumbbell className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">FitNest</span>
-        </Link>
-
+      <div className="container flex h-16 items-center justify-between px-10">
+        <Link href="/" className="flex items-center space-x-3 group">
+            <div className="p-2 bg-[#FB4141] rounded-lg group-hover:bg-[#e63636] transition-colors">
+              <Dumbbell className="h-6 w-6 text-white" />
+            </div>
+            <span className="font-bold text-2xl text-white">FitNest</span>
+          </Link>
+        <div className="flex-1" />
         {/* Navigation Menu */}
-        <nav className="hidden md:flex items-center space-x-6">
+        <nav className="hidden md:flex items-center space-x-8">
           <Link href="/dashboard/user" className="text-sm font-medium hover:text-primary">
             DASHBOARD
           </Link>
           <Link href="/about" className="text-sm font-medium hover:text-primary">
             ABOUT
           </Link>
-          <Link href="/search" className="text-sm font-medium hover:text-primary">
+          <Link href="/dashboard/user/search" className="text-sm font-medium hover:text-primary">
             SEARCH
           </Link>
           <Link href="/contact" className="text-sm font-medium hover:text-primary">
             CONTACT
           </Link>
         </nav>
-
-        <div className="flex items-center space-x-4">
-          {/* BMI Badge */}
-          <Badge variant="secondary" className="hidden md:flex">
-            BMI: {user.bmi}
-          </Badge>
-
-          {/* User Menu */}
-          <div className="relative group">
-            {/* Profile Icon - Click to navigate to profile */}
-            <Link href="/profile">
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                  <AvatarFallback>
-                    {user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </Link>
-
-            {/* Dropdown Menu - Shows on hover */}
-            <div className="absolute right-0 top-full mt-2 w-56 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div className="p-3 border-b border-black">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none text-black">{user.name}</p>
-                </div>
-              </div>
-
-              <div className="py-1">
-                <Link
-                  href="/profile"
-                  className="flex items-center px-3 py-2 text-sm text-black hover:bg-accent transition-colors"
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-                <Link
-                  href="/settings"
-                  className="flex items-center px-3 py-2 text-sm text-black hover:bg-accent transition-colors"
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
-                <div className="border-t border-black my-1"></div>
-                <button className="flex items-center w-full px-3 py-2 text-sm text-black hover:bg-accent transition-colors">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </button>
-              </div>
-            </div>
-          </div>
+<div className="flex-1" />
+          <div className="flex items-center space-x-4 ml-auto">
+           
+                <Avatar className="cursor-pointer">
+                  <AvatarImage src={imgUrl ?? undefined} />
+                  <AvatarFallback>{userName?.[0] || "G"}</AvatarFallback>
+                  </Avatar>
+             
+            <Button
+              onClick={() => {
+                supabase.auth.signOut();
+                router.push("/auth/login");
+              }}
+            >
+              Logout
+            </Button>
         </div>
       </div>
     </header>
