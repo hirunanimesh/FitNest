@@ -9,6 +9,7 @@ import getSubscriptions from './controllers/stripeController/get-subscription.js
 import getDashboardLink from './controllers/stripeController/dashboard.js';
 import getPaymentList from './controllers/stripeController/get-payments.js';
 import connectDatabase from './database/mongo.js';
+import getConnectedAccountPayments from './controllers/stripeController/get-connected-account-payments.js';
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use('/getinvoices',getInvoices)
 app.use('/getsubscription',getSubscriptions)
 app.use('/getpayments',getPaymentList)
 app.use('/stripedashboard',getDashboardLink)
+app.use('/connectedaccountpayments',getConnectedAccountPayments)
 
 
 app.listen(process.env.PORT || 3003, () => {
