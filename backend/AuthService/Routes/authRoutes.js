@@ -49,8 +49,11 @@ router.get('/user', AuthController.getUserInfo);
 // Complete OAuth profile
 router.post('/oauth/complete-profile', upload.single('profileImage'), AuthController.completeOAuthProfile);
 
+// Complete OAuth trainer profile
+router.post('/oauth/complete-profile-trainer', upload.none(), AuthController.completeOAuthTrainerProfile);
+
 router.post('/customer/register', upload.single('profileImage'), AuthController.customerRegister);
 router.post('/gym/register', upload.single('profileImage'), AuthController.GymRegister);
-router.post('/trainer/register', upload.single('profileImage'), AuthController.TrainerRegister);
+router.post('/trainer/register', AuthController.TrainerRegister); // Removed multer middleware
 
 module.exports = router;

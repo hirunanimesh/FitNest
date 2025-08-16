@@ -1,19 +1,28 @@
 "use client"
-
-import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Upload, FileText, Plus, X, ArrowLeft, User, Mail, Lock, Phone, Camera, Award, Briefcase } from "lucide-react"
-import Link from "next/link"
-import { AppLogo } from "@/components/AppLogo"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
-import { TrainerRegister } from "@/lib/api"
+import { 
+  Award, 
+  Briefcase, 
+  User, 
+  Camera, 
+  FileText, 
+  Upload, 
+  Plus, 
+  Trash2,
+  ArrowLeft 
+} from "lucide-react"
+import { AppLogo } from "@/components/AppLogo"
+import { supabase } from "@/lib/supabase"
+import { CompleteOAuthProfileTrainer } from "@/lib/api"
 
 interface DocumentEntry {
   id: string
@@ -23,7 +32,7 @@ interface DocumentEntry {
   url?: string
 }
 
-export default function TrainerSignup() {
+export default function CompleteTrainerProfile() {
   const router = useRouter()
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [documents, setDocuments] = useState<DocumentEntry[]>([
@@ -32,6 +41,46 @@ export default function TrainerSignup() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [prefilledData, setPrefilledData] = useState({
+    fullName: "",
+    email: "",
+    profileImageUrl: ""
+  })
+
+  useEffect(() => {
+    const checkUserSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // No session, redirect to login
+        router.push("/auth/login");
+        return;
+      }
+
+      if (!session.user || !session.user.id) {
+        console.error("Invalid session - missing user or user ID:", session);
+        router.push("/auth/login");
+        return;
+      }
+
+      console.log("Session user:", session.user);
+      console.log("Session user ID:", session.user.id);
+
+      setUser(session.user);
+      
+      // Pre-fill data from Google OAuth
+      const fullName = session.user.user_metadata?.full_name || "";
+      
+      setPrefilledData({
+        fullName: fullName,
+        email: session.user.email || "",
+        profileImageUrl: session.user.user_metadata?.picture || ""
+      });
+    };
+
+    checkUserSession();
+  }, [router]);
 
   // Add new document entry
   const addDocumentEntry = () => {
@@ -120,7 +169,7 @@ export default function TrainerSignup() {
 
   // Upload profile image to Cloudinary
   const uploadProfileImage = async (): Promise<string | null> => {
-    if (!profileImage) return null
+    if (!profileImage) return prefilledData.profileImageUrl || null
     return await uploadToCloudinary(profileImage)
   }
 
@@ -142,6 +191,12 @@ export default function TrainerSignup() {
     setError(null)
     setSuccess(false)
 
+    if (!user) {
+      setError("No user session found");
+      setLoading(false);
+      return;
+    }
+
     try {
       // Get form data immediately while e.currentTarget is still valid
       const form = e.currentTarget as HTMLFormElement
@@ -149,9 +204,6 @@ export default function TrainerSignup() {
       
       // Extract form values immediately
       const nameWithInitials = formData.get("nameWithInitials") as string
-      const email = formData.get("email") as string
-      const password = formData.get("password") as string
-      const confirmPassword = formData.get("confirmPassword") as string
       const contactNo = formData.get("contactNo") as string
       const bio = formData.get("bio") as string
       const skills = formData.get("skills") as string
@@ -169,26 +221,49 @@ export default function TrainerSignup() {
       // Upload documents
       const documentsData = await uploadDocuments()
 
-      // Prepare trainer data
-      const trainerData = {
-        nameWithInitials,
-        email,
-        password,
-        confirmPassword,
-        contactNo,
-        bio,
-        skills,
-        experience,
-        profileImage: profileImageUrl,
-        documents: documentsData, // Array of {type, url} objects
-        role: "trainer"
+      // Prepare trainer data for OAuth completion
+      const submitData = new FormData()
+      
+      // Debug user information
+      console.log("=== Frontend Debug Info ===");
+      console.log("Full user object:", user);
+      console.log("user.id:", user.id);
+      console.log("user.id type:", typeof user.id);
+      console.log("user.id length:", user.id ? user.id.length : 'N/A');
+      
+      if (!user.id) {
+        throw new Error("User ID is missing from session");
+      }
+      
+      submitData.append("user_id", user.id)
+      submitData.append("nameWithInitials", nameWithInitials)
+      submitData.append("email", prefilledData.email)
+      submitData.append("contactNo", contactNo)
+      submitData.append("bio", bio)
+      submitData.append("skills", skills)
+      submitData.append("experience", experience.toString())
+      submitData.append("profileImage", profileImageUrl || "")
+      submitData.append("documents", JSON.stringify(documentsData))
+      submitData.append("userRole", "trainer")
+
+      // Debug FormData
+      console.log("=== FormData Debug ===");
+      for (let [key, value] of submitData.entries()) {
+        console.log(key + ':', value);
       }
 
       // Submit to your backend
-      console.log('Submitting trainer data:', trainerData) // Debug log
+      console.log('Submitting OAuth trainer data') // Debug log
       
-      const response = await TrainerRegister(trainerData)
+      const response = await CompleteOAuthProfileTrainer(submitData)
       console.log('Success response:', response) // Debug log
+
+      // Check if trainer already exists
+      if (response && response.alreadyExists) {
+        setError("Your trainer profile already exists! You are already registered. Please login instead.");
+        setLoading(false);
+        return;
+      }
 
       setSuccess(true)
       form.reset()
@@ -197,14 +272,31 @@ export default function TrainerSignup() {
 
       // Redirect after success
       setTimeout(() => {
-        router.push("/auth/login")
+        router.push("/dashboard/trainer")
       }, 2000)
 
     } catch (err: any) {
-      setError(err.message || "Submission failed. Please try again.")
+      console.error("Error completing trainer profile:", err)
+      // Check if the error response contains the already exists message
+      if (err.response?.data?.alreadyExists) {
+        setError("Your trainer profile already exists! You are already registered. Please login instead.");
+      } else {
+        setError(err.message || "Profile completion failed. Please try again.")
+      }
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <AppLogo />
+          <p className="mt-4 text-gray-300">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -230,14 +322,30 @@ export default function TrainerSignup() {
                 <Award className="h-10 w-10 text-white" />
               </div>
               <CardTitle className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Become a Trainer
+                Complete Trainer Profile
               </CardTitle>
               <CardDescription className="text-gray-400 text-lg">
-                Join FitConnect and start training clients today
+                Finish setting up your trainer profile with FitConnect
               </CardDescription>
             </CardHeader>
             
             <CardContent className="space-y-8">
+              {/* Display OAuth info */}
+              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg">
+                <p className="text-sm text-red-200">
+                  <strong>Connected with Google:</strong> {prefilledData.email}
+                </p>
+                {prefilledData.profileImageUrl && (
+                  <div className="mt-3">
+                    <img 
+                      src={prefilledData.profileImageUrl} 
+                      alt="Profile" 
+                      className="w-12 h-12 rounded-full border-2 border-red-500/30"
+                    />
+                  </div>
+                )}
+              </div>
+
               <form className="space-y-6" onSubmit={handleSubmit}>
                 {/* Personal Information Section */}
                 <div className="space-y-6">
@@ -250,84 +358,46 @@ export default function TrainerSignup() {
 
                   <div className="space-y-2">
                     <Label htmlFor="nameWithInitials" className="text-gray-300">
-                      Name with Initials <span className="text-red-500">*</span>
+                      Name with Initials *
                     </Label>
                     <Input 
                       id="nameWithInitials"
                       name="nameWithInitials"
                       placeholder="e.g., John A. Smith" 
+                      defaultValue={prefilledData.fullName}
                       className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
                       required 
+                      disabled={loading}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-gray-300">
-                      Email Address <span className="text-red-500">*</span>
+                      Email Address (From Google)
                     </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                      <Input 
-                        id="email"
-                        name="email"
-                        type="email" 
-                        placeholder="Enter your email" 
-                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
-                        required 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-gray-300">
-                        Password <span className="text-red-500">*</span>
-                      </Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                        <Input 
-                          id="password"
-                          name="password"
-                          type="password" 
-                          placeholder="Create a strong password" 
-                          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
-                          required 
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-gray-300">
-                        Confirm Password <span className="text-red-500">*</span>
-                      </Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                        <Input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type="password"
-                          placeholder="Confirm your password"
-                          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
+                    <Input 
+                      id="email"
+                      name="email"
+                      type="email" 
+                      value={prefilledData.email}
+                      className="bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed"
+                      disabled
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="contactNo" className="text-gray-300">
-                      Contact Number <span className="text-red-500">*</span>
+                      Contact Number *
                     </Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                      <Input 
-                        id="contactNo"
-                        name="contactNo"
-                        type="tel" 
-                        placeholder="Enter your phone number" 
-                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
-                        required 
-                      />
-                    </div>
+                    <Input 
+                      id="contactNo"
+                      name="contactNo"
+                      type="tel" 
+                      placeholder="Enter your phone number" 
+                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
+                      required 
+                      disabled={loading}
+                    />
                   </div>
                 </div>
 
@@ -349,6 +419,7 @@ export default function TrainerSignup() {
                       name="bio"
                       placeholder="Tell us about your experience, specializations, and training philosophy..."
                       className="min-h-[120px] bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
+                      disabled={loading}
                     />
                     <p className="text-xs text-gray-400">
                       This will be displayed on your trainer profile to help clients understand your expertise.
@@ -357,7 +428,7 @@ export default function TrainerSignup() {
 
                   <div className="space-y-2">
                     <Label htmlFor="skills" className="text-gray-300">
-                      Skills & Specializations <span className="text-red-500">*</span>
+                      Skills & Specializations *
                     </Label>
                     <Textarea
                       id="skills"
@@ -365,6 +436,7 @@ export default function TrainerSignup() {
                       placeholder="e.g., Weight Loss, Strength Training, Yoga, CrossFit, Personal Training, Nutrition Coaching..."
                       className="min-h-[100px] bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
                       required
+                      disabled={loading}
                     />
                     <p className="text-xs text-gray-400">
                       List your training specializations, certifications, and areas of expertise
@@ -373,7 +445,7 @@ export default function TrainerSignup() {
 
                   <div className="space-y-2">
                     <Label htmlFor="experience" className="text-gray-300">
-                      Years of Experience <span className="text-red-500">*</span>
+                      Years of Experience *
                     </Label>
                     <Input
                       id="experience"
@@ -384,6 +456,7 @@ export default function TrainerSignup() {
                       placeholder="Enter years of experience"
                       className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -396,31 +469,53 @@ export default function TrainerSignup() {
                     <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
                       <Camera className="h-4 w-4 text-white" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white">Profile Image (Optional)</h3>
+                    <h3 className="text-lg font-semibold text-white">Profile Image</h3>
                   </div>
 
                   <div className="border-2 border-dashed border-gray-700 rounded-xl p-8 text-center bg-gray-800/30 hover:bg-gray-800/50 transition-colors">
-                    <div className="mx-auto w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                      <Upload className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <div className="mb-2">
-                      <Label htmlFor="profileImage" className="cursor-pointer">
-                        <span className="text-red-500 hover:text-red-400 font-medium">Upload a professional photo</span>
-                        <span className="text-gray-400"> or drag and drop</span>
-                      </Label>
-                      <Input
-                        id="profileImage"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                    {profileImage && (
-                      <div className="mt-3 p-2 bg-green-900/20 border border-green-800 rounded-lg">
-                        <p className="text-sm text-green-400">✓ Selected: {profileImage.name}</p>
+                    {prefilledData.profileImageUrl && !profileImage ? (
+                      <div className="space-y-4">
+                        <img 
+                          src={prefilledData.profileImageUrl} 
+                          alt="Current profile" 
+                          className="w-24 h-24 rounded-full mx-auto border-4 border-red-500/30"
+                        />
+                        <p className="text-sm text-gray-300">Current profile image from Google</p>
+                        <Label 
+                          htmlFor="profileImage" 
+                          className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer transition-colors"
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Change Profile Image
+                        </Label>
                       </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="mx-auto w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
+                          <Upload className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <Label 
+                          htmlFor="profileImage" 
+                          className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer transition-colors"
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Profile Image
+                        </Label>
+                      </div>
+                    )}
+                    <Input
+                      id="profileImage"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
+                      disabled={loading}
+                    />
+                    <p className="text-xs text-gray-500 mt-2">PNG, JPG, GIF up to 10MB</p>
+                    {profileImage && (
+                      <p className="text-sm text-green-400 mt-2">
+                        ✓ New image selected: {profileImage.name}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -433,68 +528,73 @@ export default function TrainerSignup() {
                     <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
                       <FileText className="h-4 w-4 text-white" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white">Verification Documents</h3>
+                    <h3 className="text-lg font-semibold text-white">Verification Documents *</h3>
                   </div>
 
                   <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 mb-4">
                     <p className="text-sm text-blue-300">
-                      <strong>Required Documents:</strong> Fitness certification, CPR certification, professional
+                      Please upload your fitness certification, CPR certification, professional
                       license (if applicable), and any specialized training certificates.
                     </p>
                   </div>
 
                   <div className="space-y-4">
                     {documents.map((doc, index) => (
-                      <div key={doc.id} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
-                        <div className="flex items-start gap-4">
+                      <div key={doc.id} className="border border-gray-700 rounded-lg p-4 bg-gray-800/30">
+                        <div className="flex items-center gap-4">
                           <div className="flex-1 space-y-3">
-                            <div className="space-y-2">
-                              <Label className="text-gray-300">
-                                Document Type <span className="text-red-500">*</span>
+                            <Select 
+                              value={doc.type} 
+                              onValueChange={(value) => updateDocumentType(doc.id, value)}
+                              disabled={loading}
+                            >
+                              <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                                <SelectValue placeholder="Select document type" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-gray-800 border-gray-700">
+                                <SelectItem value="fitness-certification" className="text-white">Fitness Certification</SelectItem>
+                                <SelectItem value="cpr-certification" className="text-white">CPR Certification</SelectItem>
+                                <SelectItem value="professional-license" className="text-white">Professional License</SelectItem>
+                                <SelectItem value="specialized-training" className="text-white">Specialized Training Certificate</SelectItem>
+                                <SelectItem value="degree" className="text-white">Degree/Diploma</SelectItem>
+                                <SelectItem value="other" className="text-white">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            
+                            <div className="flex items-center gap-3">
+                              <Label 
+                                htmlFor={`document-${doc.id}`} 
+                                className="flex-1 cursor-pointer"
+                              >
+                                <div className="border-2 border-dashed border-gray-600 rounded-lg p-3 text-center hover:border-red-500 transition-colors">
+                                  {doc.file ? (
+                                    <span className="text-green-400 text-sm">✓ {doc.file.name}</span>
+                                  ) : (
+                                    <span className="text-gray-400 text-sm">Choose file...</span>
+                                  )}
+                                </div>
                               </Label>
                               <Input
-                                placeholder="e.g., Fitness Certification, CPR Certificate"
-                                value={doc.type}
-                                onChange={(e) => updateDocumentType(doc.id, e.target.value)}
-                                className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-500 focus:border-red-500"
-                                required
+                                id={`document-${doc.id}`}
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                className="hidden"
+                                onChange={(e) => updateDocumentFile(doc.id, e.target.files?.[0] || null)}
+                                disabled={loading}
                               />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label className="text-gray-300">
-                                Document File <span className="text-red-500">*</span>
-                              </Label>
-                              <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center bg-gray-800/30">
-                                <FileText className="mx-auto h-8 w-8 text-gray-500 mb-2" />
-                                <Label htmlFor={`doc-${doc.id}`} className="cursor-pointer">
-                                  <span className="text-red-400 hover:text-red-300">Choose file</span>
-                                  <span className="text-gray-400"> (PDF, JPG, PNG)</span>
-                                </Label>
-                                <Input
-                                  id={`doc-${doc.id}`}
-                                  type="file"
-                                  accept=".pdf,.jpg,.jpeg,.png"
-                                  className="hidden"
-                                  onChange={(e) => updateDocumentFile(doc.id, e.target.files?.[0] || null)}
-                                  required
-                                />
-                                {doc.file && (
-                                  <p className="text-sm text-green-400 mt-2">✓ {doc.file.name}</p>
-                                )}
-                              </div>
                             </div>
                           </div>
                           
                           {documents.length > 1 && (
                             <Button
                               type="button"
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                               onClick={() => removeDocumentEntry(doc.id)}
-                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 mt-6"
+                              className="bg-red-900/20 border-red-700 text-red-400 hover:bg-red-900/40 hover:text-red-300"
+                              disabled={loading}
                             >
-                              <X className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
@@ -506,6 +606,7 @@ export default function TrainerSignup() {
                       variant="outline"
                       onClick={addDocumentEntry}
                       className="w-full bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:text-white"
+                      disabled={loading}
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Another Document
@@ -520,16 +621,13 @@ export default function TrainerSignup() {
                       id="terms" 
                       required 
                       className="mt-0.5 border-gray-600 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                      disabled={loading}
                     />
                     <Label htmlFor="terms" className="text-sm text-gray-300 leading-relaxed">
-                      I agree to the{" "}
-                      <Link href="/terms" className="text-red-400 hover:text-red-300 underline">
-                        Terms and Conditions
-                      </Link>{" "}
-                      and{" "}
-                      <Link href="/privacy" className="text-red-400 hover:text-red-300 underline">
-                        Privacy Policy
-                      </Link>
+                      I agree to the
+                      <a href="/terms" className="text-red-400 hover:text-red-300 underline mx-1">Terms of Service</a>
+                      and
+                      <a href="/privacy" className="text-red-400 hover:text-red-300 underline mx-1">Privacy Policy</a>
                     </Label>
                   </div>
 
@@ -538,9 +636,11 @@ export default function TrainerSignup() {
                       id="verification" 
                       required 
                       className="mt-0.5 border-gray-600 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                      disabled={loading}
                     />
                     <Label htmlFor="verification" className="text-sm text-gray-300 leading-relaxed">
-                      I understand that my account will be reviewed and verified before activation
+                      I confirm that all information provided is accurate and that I have the necessary 
+                      qualifications and certifications to work as a fitness trainer.
                     </Label>
                   </div>
                 </div>
@@ -548,13 +648,15 @@ export default function TrainerSignup() {
                 {/* Error and Success Messages */}
                 {error && (
                   <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
-                    <p className="text-red-300 text-center">{error}</p>
+                    <p className="text-red-300 text-sm">{error}</p>
                   </div>
                 )}
                 
                 {success && (
                   <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
-                    <p className="text-green-300 text-center">Application submitted successfully! Redirecting to login...</p>
+                    <p className="text-green-300 text-sm">
+                      ✓ Profile completed successfully! Redirecting to dashboard...
+                    </p>
                   </div>
                 )}
 
@@ -563,15 +665,13 @@ export default function TrainerSignup() {
                   className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 text-lg shadow-lg hover:shadow-xl transition-all duration-200" 
                   disabled={loading}
                 >
-                  {loading ? "Submitting Application..." : "Submit Application"}
+                  {loading ? "Completing Profile..." : "Complete Trainer Profile"}
                 </Button>
 
                 <div className="text-center pt-4">
                   <p className="text-gray-400">
-                    Already have an account?{" "}
-                    <Link href="/auth/login" className="text-red-400 hover:text-red-300 underline font-medium">
-                      Sign in
-                    </Link>
+                    Already have an account?
+                    <a href="/auth/login" className="text-red-400 hover:text-red-300 underline ml-1">Sign in</a>
                   </p>
                 </div>
               </form>
