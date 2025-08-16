@@ -57,10 +57,10 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-black text-white">
       <UserNavbar />
 
-      <div className="container mx-auto p-6 ">
+      <div className="container mx-auto p-6  ">
         <div className="max-w-4xl mx-auto ">
           <div className="flex justify-between items-center mb-8 ">
-            <h1 className="text-3xl font-bold">Profile Settings</h1>
+            <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
             <Button
               onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
               variant={isEditing ? "default" : "outline"}
