@@ -24,6 +24,7 @@ export default function  TopBar({ id }: { id: string | null }) {
           const response = await axios.get(
             `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/getuserbyid/${UserId}`
           );
+          console.log("Response from API:", response.data);
         if (response.data && response.data.customer) {
           setUserName(response.data.customer.first_name); 
           setImgUrl(response.data.customer.profile_img)
