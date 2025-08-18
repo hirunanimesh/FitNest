@@ -345,6 +345,17 @@ class AuthController {
         "[Auth Service] Error during customer registration:",
         error
       );
+      
+      // Handle specific Supabase auth errors
+      if (error.code === 'user_already_exists' || error.message?.includes('User already registered')) {
+        return res.status(422).json({
+          success: false,
+          message: "User already registered",
+          error: error.message,
+          code: 'user_already_exists'
+        });
+      }
+      
       res.status(500).json({
         success: false,
         message: "Failed to register customer",
@@ -390,6 +401,17 @@ class AuthController {
       });
     } catch (error) {
       console.error("[Auth Service] Error during gym registration:", error);
+      
+      // Handle specific Supabase auth errors
+      if (error.code === 'user_already_exists' || error.message?.includes('User already registered')) {
+        return res.status(422).json({
+          success: false,
+          message: "User already registered",
+          error: error.message,
+          code: 'user_already_exists'
+        });
+      }
+      
       res.status(500).json({
         success: false,
         message: "Failed to register gym",
@@ -443,6 +465,17 @@ class AuthController {
       });
     } catch (error) {
       console.error("[Auth Service] Error during trainer registration:", error);
+      
+      // Handle specific Supabase auth errors
+      if (error.code === 'user_already_exists' || error.message?.includes('User already registered')) {
+        return res.status(422).json({
+          success: false,
+          message: "User already registered",
+          error: error.message,
+          code: 'user_already_exists'
+        });
+      }
+      
       res.status(500).json({
         success: false,
         message: "Failed to register trainer",
