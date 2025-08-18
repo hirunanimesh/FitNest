@@ -18,6 +18,17 @@ export const AddCustomer = async (customerData) => {
         return response.data;
     } catch (error) {
         console.error("Error adding customer:", error);
+        
+        // Extract error message from axios response
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            // Create a new error with the backend message and preserve the code
+            const newError = new Error(backendError.message || backendError.error || "Registration failed");
+            newError.code = backendError.code;
+            newError.status = error.response.status;
+            throw newError;
+        }
+        
         throw error;
     }
 };
@@ -86,6 +97,17 @@ export const TrainerRegister = async (trainerData) => {
         return response.data;
     } catch (error) {
         console.error("Error registering trainer:", error);
+        
+        // Extract error message from axios response
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            // Create a new error with the backend message and preserve the code
+            const newError = new Error(backendError.message || backendError.error || "Registration failed");
+            newError.code = backendError.code;
+            newError.status = error.response.status;
+            throw newError;
+        }
+        
         throw error;
     }
 };
@@ -105,6 +127,17 @@ export const GymRegister = async (gymData) => {
         return response.data;
     } catch (error) {
         console.error("Error registering gym:", error);
+        
+        // Extract error message from axios response
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            // Create a new error with the backend message and preserve the code
+            const newError = new Error(backendError.message || backendError.error || "Registration failed");
+            newError.code = backendError.code;
+            newError.status = error.response.status;
+            throw newError;
+        }
+        
         throw error;
     }
 };

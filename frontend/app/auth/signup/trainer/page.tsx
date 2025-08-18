@@ -14,6 +14,7 @@ import Link from "next/link"
 import { AppLogo } from "@/components/AppLogo"
 import { useRouter } from "next/navigation"
 import { TrainerRegister } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 interface DocumentEntry {
   id: string
@@ -25,13 +26,12 @@ interface DocumentEntry {
 
 export default function TrainerSignup() {
   const router = useRouter()
+  const { toast } = useToast()
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [documents, setDocuments] = useState<DocumentEntry[]>([
     { id: '1', type: '', file: null, uploaded: false }
   ])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
 
   // Add new document entry
   const addDocumentEntry = () => {
@@ -139,8 +139,6 @@ export default function TrainerSignup() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
-    setError(null)
-    setSuccess(false)
 
     try {
       // Get form data immediately while e.currentTarget is still valid
@@ -156,6 +154,11 @@ export default function TrainerSignup() {
       const bio = formData.get("bio") as string
       const skills = formData.get("skills") as string
       const experience = parseInt(formData.get("experience") as string)
+
+      // Password validation
+      if (password !== confirmPassword) {
+        throw new Error("Password and confirm password should be same")
+      }
 
       // Validate documents
       const validDocuments = documents.filter(doc => doc.file && doc.type.trim())
@@ -190,7 +193,11 @@ export default function TrainerSignup() {
       const response = await TrainerRegister(trainerData)
       console.log('Success response:', response) // Debug log
 
-      setSuccess(true)
+      toast({
+        title: "Registration Successful!",
+        description: "Your trainer registration has been submitted successfully. Redirecting to login...",
+      })
+      
       form.reset()
       setProfileImage(null)
       setDocuments([{ id: '1', type: '', file: null, uploaded: false }])
@@ -201,7 +208,27 @@ export default function TrainerSignup() {
       }, 2000)
 
     } catch (err: any) {
-      setError(err.message || "Submission failed. Please try again.")
+      console.error('Error submitting trainer data:', err)
+      
+      // Check if error message indicates user already exists
+      const errorMessage = err.message || "Submission failed. Please try again."
+      if (errorMessage.toLowerCase().includes("already exists") || 
+          errorMessage.toLowerCase().includes("user exists") ||
+          errorMessage.toLowerCase().includes("already registered") ||
+          errorMessage.toLowerCase().includes("duplicate") ||
+          err.code === 'user_already_exists') {
+        toast({
+          variant: "destructive",
+          title: "User Already Exists",
+          description: "An account with this email already exists. Please use a different email or try logging in.",
+        })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Registration Failed",
+          description: errorMessage,
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -544,19 +571,6 @@ export default function TrainerSignup() {
                     </Label>
                   </div>
                 </div>
-
-                {/* Error and Success Messages */}
-                {error && (
-                  <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
-                    <p className="text-red-300 text-center">{error}</p>
-                  </div>
-                )}
-                
-                {success && (
-                  <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
-                    <p className="text-green-300 text-center">Application submitted successfully! Redirecting to login...</p>
-                  </div>
-                )}
 
                 <Button 
                   type="submit" 
