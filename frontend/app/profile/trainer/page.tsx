@@ -7,8 +7,9 @@ import SessionsSection from "./components/SessionsSection"
 import TestimonialsSection from "./components/TestimonialsSection"
 import BlogSection from "./components/BlogSection"
 import ContactSection from "./components/ContactSection"
+import { Suspense } from "react"
 
-export default function TrainerPage() {
+function TrainerPageContent() {
   console.log("TrainerPage rendered"); // Debug log
 
   return (
@@ -21,5 +22,17 @@ export default function TrainerPage() {
       <BlogSection />
       <ContactSection />
     </main>
+  )
+}
+
+export default function TrainerPage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-gray-900 min-h-screen text-gray-100 flex items-center justify-center">
+        <div className="text-white">Loading trainer profile...</div>
+      </div>
+    }>
+      <TrainerPageContent />
+    </Suspense>
   )
 }

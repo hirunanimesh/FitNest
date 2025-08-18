@@ -90,6 +90,25 @@ export const TrainerRegister = async (trainerData) => {
     }
 };
 
+export const GymRegister = async (gymData) => {
+    console.log("Gym data being sent:", gymData); // Debug log
+    try {
+        const config = {};
+
+        if (gymData instanceof FormData) {
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+        }
+
+        const response = await axios.post(`${Base_URL}/api/auth/gym/register`, gymData, config);
+        return response.data;
+    } catch (error) {
+        console.error("Error registering gym:", error);
+        throw error;
+    }
+};
+
 export const CompleteOAuthProfileTrainer = async (profileData) => {
     try {
         const config = {};

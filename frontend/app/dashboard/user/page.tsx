@@ -10,8 +10,9 @@ import Schedule from "./_components/Schedule"
 import { ThemeProvider } from 'next-themes';
 import MotivationQuotes from "./_components/MotivationQuote"
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function UserDashboard() {
+function UserDashboardContent() {
    const searchParams = useSearchParams();
    const id = searchParams.get("id");
   return (
@@ -49,5 +50,14 @@ export default function UserDashboard() {
       
     </div>
   );
-   
+}
+
+export default function UserDashboard() {
+  return (
+    <Suspense fallback={<div className="bg-black min-h-screen flex items-center justify-center">
+      <div className="text-white">Loading...</div>
+    </div>}>
+      <UserDashboardContent />
+    </Suspense>
+  );
 }

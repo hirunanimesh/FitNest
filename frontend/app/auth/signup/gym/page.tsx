@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,9 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
-import { Upload, FileText, Plus, X, ArrowLeft, User, Mail, Lock, Phone, Camera, Building2, MapPin, Clock, FileImage } from "lucide-react"
+import { Upload, FileText, Plus, X, ArrowLeft, User, Mail, Lock, Phone, Camera, Building2, MapPin, Clock } from "lucide-react"
+import Link from "next/link"
+import { AppLogo } from "@/components/AppLogo"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
 import { useRouter } from "next/navigation"
+import { GymRegister } from "@/lib/api"
 
 interface DocumentEntry {
   id: string
@@ -74,11 +77,64 @@ export default function GymOwnerSignup() {
     ))
   }
 
-  // Upload file to Cloudinary (simulated)
+  // Upload file to Cloudinary
   const uploadToCloudinary = async (file: File): Promise<string> => {
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    return `https://example.com/uploads/${file.name}`
+    // Validate environment variables first
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+    
+    console.log('Cloudinary config:', { cloudName, uploadPreset }) // Debug log
+    console.log('File to upload:', file.name, file.type, file.size) // Debug log
+    
+    if (!cloudName) {
+      throw new Error('Cloudinary cloud name is not configured')
+    }
+    
+    if (!uploadPreset || uploadPreset === 'your_upload_preset_name' || uploadPreset === 'YOUR_ACTUAL_PRESET_NAME') {
+      throw new Error('Cloudinary upload preset is not configured properly. Please check your .env file and Cloudinary dashboard.')
+    }
+    
+    const uploadFormData = new FormData()
+    uploadFormData.append('file', file)
+    uploadFormData.append('upload_preset', uploadPreset)
+    
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`
+    console.log('Upload URL:', uploadUrl) // Debug log
+    console.log('Using upload preset:', uploadPreset) // Debug log
+    
+    try {
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: uploadFormData
+      })
+      
+      console.log('Response status:', response.status, response.statusText) // Debug log
+      
+      // Always try to get response text first
+      const responseText = await response.text()
+      console.log('Response text:', responseText) // Debug log
+      
+      let errorData
+      try {
+        errorData = JSON.parse(responseText)
+      } catch (e) {
+        errorData = { message: responseText }
+      }
+      
+      if (!response.ok) {
+        console.error('Cloudinary error details:', errorData)
+        const errorMessage = errorData?.error?.message || errorData?.message || `HTTP ${response.status}: ${response.statusText}`
+        throw new Error(`Upload failed: ${errorMessage}`)
+      }
+      
+      return errorData.secure_url
+    } catch (error) {
+      console.error('Error uploading to Cloudinary:', error)
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error('Failed to upload file')
+    }
   }
 
   // Upload profile image
@@ -106,6 +162,20 @@ export default function GymOwnerSignup() {
     setSuccess(false)
 
     try {
+      // Get form data immediately while e.currentTarget is still valid
+      const form = e.currentTarget as HTMLFormElement
+      const formData = new FormData(form)
+      
+      // Extract form values immediately
+      const gymName = formData.get("gymName") as string
+      const ownerName = formData.get("ownerName") as string
+      const email = formData.get("email") as string
+      const password = formData.get("password") as string
+      const confirmPassword = formData.get("confirmPassword") as string
+      const operatingHours = formData.get("operatingHours") as string
+      const contactNo = formData.get("contactNo") as string
+      const description = formData.get("description") as string
+
       // Validate documents
       const validDocuments = documents.filter(doc => doc.file && doc.type.trim())
       if (validDocuments.length === 0) {
@@ -122,31 +192,31 @@ export default function GymOwnerSignup() {
       // Upload documents
       const documentsData = await uploadDocuments()
 
-      // Prepare form data
-      const form = e.currentTarget
-      const formData = new FormData(form)
-      
-      const gymOwnerData = {
-        gymName: formData.get("gymName") as string,
-        ownerName: formData.get("ownerName") as string,
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
-        confirmPassword: formData.get("confirmPassword") as string,
-        operatingHours: formData.get("operatingHours") as string,
+      // Prepare gym data
+      const gymData = {
+        gymName,
+        ownerName,
+        email,
+        password,
+        confirmPassword,
+        operatingHours,
         address: location.address,
         location: {
           lat: location.lat,
           lng: location.lng
         },
-        contactNo: formData.get("contactNo") as string,
-        description: formData.get("description") as string,
+        contactNo,
+        description,
         profileImage: profileImageUrl,
-        documents: documentsData,
+        documents: documentsData, // Array of {type, url} objects
         role: "gym_owner"
       }
 
-      // Submit to backend (simulated)
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Submit to your backend
+      console.log('Submitting gym data:', gymData) // Debug log
+      
+      const response = await GymRegister(gymData)
+      console.log('Success response:', response) // Debug log
 
       setSuccess(true)
       form.reset()
@@ -156,7 +226,7 @@ export default function GymOwnerSignup() {
 
       // Redirect after success
       setTimeout(() => {
-        console.log("Redirecting to login...")
+        router.push("/auth/login")
       }, 2000)
 
     } catch (err: any) {
@@ -179,6 +249,7 @@ export default function GymOwnerSignup() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
           </Button>
+          <AppLogo />
         </div>
 
         <div className="max-w-2xl mx-auto">
@@ -271,7 +342,7 @@ export default function GymOwnerSignup() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword" className="text-gray-300">
-                        Confirm Password
+                        Confirm Password <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
@@ -281,6 +352,7 @@ export default function GymOwnerSignup() {
                           type="password"
                           placeholder="Confirm your password"
                           className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
+                          required
                         />
                       </div>
                     </div>
@@ -289,7 +361,7 @@ export default function GymOwnerSignup() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="operatingHours" className="text-gray-300">
-                        Operating Hours
+                        Operating Hours <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
                         <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
@@ -298,13 +370,14 @@ export default function GymOwnerSignup() {
                           name="operatingHours"
                           placeholder="e.g., 6:00 AM - 10:00 PM" 
                           className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
+                          required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="contactNo" className="text-gray-300">
-                        Contact Number
+                        Contact Number <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
@@ -314,6 +387,7 @@ export default function GymOwnerSignup() {
                           type="tel" 
                           placeholder="Enter contact number" 
                           className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
+                          required
                         />
                       </div>
                     </div>
@@ -333,10 +407,10 @@ export default function GymOwnerSignup() {
 
                   <div className="space-y-2">
                     <Label className="text-gray-300">
-                      Gym Address
+                      Gym Address <span className="text-red-500">*</span>
                     </Label>
                     <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
-                      {location ? location.address : "Please select location on map (optional)"}
+                      {location ? location.address : "Please select location on map"}
                     </div>
                   </div>
 
@@ -373,13 +447,14 @@ export default function GymOwnerSignup() {
 
                   <div className="space-y-2">
                     <Label htmlFor="description" className="text-gray-300">
-                      Description
+                      Description <span className="text-red-500">*</span>
                     </Label>
                     <Textarea
                       id="description"
                       name="description"
                       placeholder="Describe your gym facilities, equipment, services, and what makes it special..."
                       className="min-h-[120px] bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
+                      required
                     />
                     <p className="text-xs text-gray-400">
                       This will be displayed on your gym profile to attract potential members.
@@ -437,8 +512,8 @@ export default function GymOwnerSignup() {
 
                   <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 mb-4">
                     <p className="text-sm text-blue-300">
-                      <strong>Documents:</strong> Business registration certificate, business license, 
-                      owner ID copy, property lease/ownership documents, and any relevant permits. (Optional - can be uploaded later)
+                      <strong>Required Documents:</strong> Business registration certificate, business license, 
+                      owner ID copy, property lease/ownership documents, and any relevant permits. At least one document is required.
                     </p>
                   </div>
 
@@ -449,19 +524,20 @@ export default function GymOwnerSignup() {
                           <div className="flex-1 space-y-3">
                             <div className="space-y-2">
                               <Label className="text-gray-300">
-                                Document Type
+                                Document Type <span className="text-red-500">*</span>
                               </Label>
                               <Input
                                 placeholder="e.g., Business License, Registration Certificate"
                                 value={doc.type}
                                 onChange={(e) => updateDocumentType(doc.id, e.target.value)}
                                 className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-500 focus:border-red-500"
+                                required
                               />
                             </div>
                             
                             <div className="space-y-2">
                               <Label className="text-gray-300">
-                                Document File
+                                Document File <span className="text-red-500">*</span>
                               </Label>
                               <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center bg-gray-800/30">
                                 <FileText className="mx-auto h-8 w-8 text-gray-500 mb-2" />
@@ -475,6 +551,7 @@ export default function GymOwnerSignup() {
                                   accept=".pdf,.jpg,.jpeg,.png"
                                   className="hidden"
                                   onChange={(e) => updateDocumentFile(doc.id, e.target.files?.[0] || null)}
+                                  required
                                 />
                                 {doc.file && (
                                   <p className="text-sm text-green-400 mt-2">✓ {doc.file.name}</p>
@@ -515,16 +592,25 @@ export default function GymOwnerSignup() {
                   <div className="flex items-start space-x-3">
                     <Checkbox 
                       id="terms" 
+                      required 
                       className="mt-0.5 border-gray-600 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
                     />
                     <Label htmlFor="terms" className="text-sm text-gray-300 leading-relaxed">
-                      I agree to the Terms and Conditions and Privacy Policy
+                      I agree to the{" "}
+                      <Link href="/terms" className="text-red-400 hover:text-red-300 underline">
+                        Terms and Conditions
+                      </Link>{" "}
+                      and{" "}
+                      <Link href="/privacy" className="text-red-400 hover:text-red-300 underline">
+                        Privacy Policy
+                      </Link>
                     </Label>
                   </div>
 
                   <div className="flex items-start space-x-3">
                     <Checkbox 
                       id="verification" 
+                      required 
                       className="mt-0.5 border-gray-600 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
                     />
                     <Label htmlFor="verification" className="text-sm text-gray-300 leading-relaxed">
@@ -557,9 +643,9 @@ export default function GymOwnerSignup() {
                 <div className="text-center pt-4">
                   <p className="text-gray-400">
                     Already have an account?{" "}
-                    <span className="text-red-400 hover:text-red-300 underline font-medium cursor-pointer">
+                    <Link href="/auth/login" className="text-red-400 hover:text-red-300 underline font-medium">
                       Sign in
-                    </span>
+                    </Link>
                   </p>
                 </div>
               </form>

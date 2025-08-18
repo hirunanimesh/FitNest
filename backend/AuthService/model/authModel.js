@@ -398,15 +398,16 @@ class AuthModel {
 
   static async GymRegister(
     email,
-    password,
-    gym_name,
-    address,
-    location,
-    phone_no,
-    profile_img,
-    description,
-    verified,
-    documents
+      password,
+      gymName,
+      address,
+      location,
+      contactNo,
+      profileImage,
+      description,
+      documents,
+      operatingHours,
+      ownerName,
   ) {
     const role = "gym";
     try {
@@ -417,13 +418,15 @@ class AuthModel {
       const insertData = {
         user_id: userData.user.id,
         address: address,
-        contact_no: phone_no,
-        gym_name: gym_name,
-        profile_img: profile_img,
+        contact_no: contactNo,
+        gym_name: gymName,
+        profile_img: profileImage,
         location: location,
-        verified: verified,
         documents: documents,
         description: description,
+        operating_Hours: operatingHours,
+        owner_name: ownerName
+        // Note: gym_id is NOT included here - let the database auto-generate it
       };
 
       console.log("Data to insert:", JSON.stringify(insertData, null, 2));
