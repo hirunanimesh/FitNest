@@ -15,52 +15,104 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CalendarIcon, Upload, Save, Edit } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { useRouter} from "next/navigation";
 import { UserNavbar } from "@/components/user-navbar"
+import {  GetUserInfo } from "@/lib/api"
+import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
-  const [date, setDate] = useState<Date>()
-  const [userData, setUserData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    address: "",
-    dateOfBirth: null as Date | null,
-    gender: "",
-    avatar: "",
-    weight: "",
-    height: "",
-  })
+  //const [date, setDate] = useState<Date>()
+  //const [userData, setUserData] = useState({
+     const router = useRouter();
+    const [profileId, setProfileId] = useState<string | null>(null);
+      const[userName,setUserName] = useState<string|null>(null);
+      const[imgUrl,setImgUrl] = useState<string|null>(null);
+      const [userData, setUserData] = useState<any>({
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  address: "",
+  dateOfBirth: null,
+  gender: "",
+  avatar: "",
+  weight: "",
+  height: "",
+});
+      
+    useEffect(() => {
+  async function fetchUserInfo() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return;
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/profile/user")
-        setUserData(response.data)
-      } catch (error) {
-        console.error("Error fetching user data:", error)
+    try {
+      const data = await GetUserInfo(token);
+      const id = data?.user?.id || null;
+      setProfileId(id);
+
+      if (id) {
+        // Fetch user details from your API
+        const response = await axios.get(`http://localhost:3000/api/user/getuserbyid/${id}`);
+        if (response.data) {
+          setUserData({
+            firstName: response.data.first_name || "",
+            lastName: response.data.last_name || "",
+            email: response.data.email || "",
+            phone: response.data.phone || "",
+            address: response.data.address || "",
+            dateOfBirth: response.data.date_of_birth ? new Date(response.data.date_of_birth) : null,
+            gender: response.data.gender || "",
+            avatar: response.data.avatar || "",
+            weight: response.data.weight || "",
+            height: response.data.height || "",
+          });
+        }
       }
+    } catch (error) {
+      setProfileId(null);
     }
+  }
+  fetchUserInfo();
+}, []);
+// ...existing code...
 
-    fetchUserData()
-  }, [])
-
-  const handleSave = () => {
-    setIsEditing(false)
-    // Here you would typically save to backend
-    console.log("Saving user data:", userData)
+  // Add this function inside ProfilePage
+  async function handleSave() {
+    if (!profileId) return;
+    try {
+      await axios.put(`http://localhost:3000/api/user/updateuser/${profileId}`, {
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        email: userData.email,
+        phone: userData.phone,
+        address: userData.address,
+        date_of_birth: userData.dateOfBirth,
+        gender: userData.gender,
+        avatar: userData.avatar,
+        weight: userData.weight,
+        height: userData.height,
+      });
+      setIsEditing(false);
+    } catch (error) {
+      // Optionally handle error (e.g., show notification)
+      setIsEditing(false);
+    }
   }
 
+// ...existing code...
   return (
     <div className="bg-black-400 min-h-screen">
     <div className="min-h-screen bg-black text-white">
       <UserNavbar />
 
-      <div className="container mx-auto p-6 ">
+      <div className="container mx-auto p-6  ">
         <div className="max-w-4xl mx-auto ">
           <div className="flex justify-between items-center mb-8 ">
-            <h1 className="text-3xl font-bold">Profile Settings</h1>
+            <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
             <Button
               onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
               variant={isEditing ? "default" : "outline"}

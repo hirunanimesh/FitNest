@@ -19,7 +19,7 @@ import {
     SidebarRail,
     SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { ChartNoAxesCombinedIcon, Dumbbell, LayoutDashboard, Tv2, LogOut, Bell } from 'lucide-react';
+import { ChartNoAxesCombinedIcon, Dumbbell, LayoutDashboard, Tv2, LogOut, Bell,User2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const mockTrainer = {
@@ -48,6 +48,11 @@ const SideBar = ({ children }: { children: React.ReactNode }) => {
       icon: ChartNoAxesCombinedIcon,
       href: '/dashboard/trainer/analytics',
     },
+    {
+      title:'Profile',
+      icon:User2,
+      href:'/dashboard/trainer/profile'
+    }
   ];
 
   // Normalize pathname and href by removing trailing slashes
