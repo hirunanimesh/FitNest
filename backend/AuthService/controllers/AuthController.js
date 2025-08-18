@@ -357,27 +357,31 @@ class AuthController {
     const {
       email,
       password,
-      gym_name,
+      gymName,
       address,
       location,
-      phone_no,
-      profile_img,
+      contactNo,
+      profileImage,
       description,
-      verified,
       documents,
+      operatingHours,
+      ownerName,
+
     } = req.body;
     try {
+      console.log("in controller");
       const result = await authmodel.GymRegister(
         email,
-        password,
-        gym_name,
-        address,
-        location,
-        phone_no,
-        profile_img,
-        description,
-        verified,
-        documents
+      password,
+      gymName,
+      address,
+      location,
+      contactNo,
+      profileImage,
+      description,
+      documents,
+      operatingHours,
+      ownerName,
       );
       res.status(201).json({
         success: true,

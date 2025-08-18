@@ -7,10 +7,12 @@ import KPI from "./_components/KPI"
 import Charts from "./_components/Charts"
 import Schedule from "./_components/Schedule"
 import MotivationQuotes from "./_components/MotivationQuote"
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function UserDashboard() {
-  
-  // You can pass userId to other components as needed
+function UserDashboardContent() {
+   const searchParams = useSearchParams();
+   const id = searchParams.get("id");
   return (
     <div className="bg-black">
       {/* Header */}
@@ -40,5 +42,15 @@ export default function UserDashboard() {
       {/* Right Sidebar */}
       <Schedule  />
     </div>
+  );
+}
+
+export default function UserDashboard() {
+  return (
+    <Suspense fallback={<div className="bg-black min-h-screen flex items-center justify-center">
+      <div className="text-white">Loading...</div>
+    </div>}>
+      <UserDashboardContent />
+    </Suspense>
   );
 }
