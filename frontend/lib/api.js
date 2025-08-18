@@ -130,3 +130,25 @@ export const CompleteOAuthProfileTrainer = async (profileData) => {
         throw error;
     }
 };
+
+export const CompleteOAuthProfileGym = async (profileData) => {
+    try {
+        const config = {};
+        
+        if (profileData instanceof FormData) {
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+        }
+
+        const response = await axios.post(`${Base_URL}/api/auth/oauth/complete-profile-gym`, profileData, config);
+        return response.data;
+    } catch (error) {
+        console.error("Error completing OAuth gym profile:", error);
+        // If it's an axios error with response data, preserve the response structure
+        if (error.response && error.response.data) {
+            throw error; // Re-throw the full error so frontend can access error.response.data
+        }
+        throw error;
+    }
+};
