@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
-import { Upload, FileText, Plus, X, ArrowLeft, User, Mail, Lock, Phone, Camera, Building2, MapPin, Clock } from "lucide-react"
+import { Upload, FileText, Plus, X, ArrowLeft, User, Mail, Lock, Phone, Camera, Building2, MapPin, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { AppLogo } from "@/components/AppLogo"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
@@ -264,457 +264,477 @@ export default function GymOwnerSignup() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-red-950 py-1">
-      <div className="container mx-auto px-4">
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/30 py-4">
+      <div className="container mx-auto px-4 max-w-4xl">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between mb-8">
-          <Button 
-            variant="ghost" 
-            className="text-white hover:bg-white/10 hover:text-white"
-            onClick={() => router.push('/')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Button>
-          <AppLogo />
+          <button className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300 border border-slate-700/50 hover:border-slate-600">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="font-medium">Back to Home</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-700 rounded-xl flex items-center justify-center">
+              <Building2 className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-xl font-bold text-white">FitConnect</span>
+          </div>
         </div>
 
-        <div className="max-w-2xl mx-auto">
-          <Card className="border-gray-800 bg-gray-900/50 backdrop-blur-sm shadow-2xl">
-            <CardHeader className="text-center space-y-4 pb-8">
-              <div className="mx-auto w-20 h-20 bg-gradient-to-r from-red-600 to-red-700 rounded-full flex items-center justify-center">
+        {/* Main Card */}
+        <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden">
+          {/* Header Section */}
+          <div className="relative bg-gradient-to-r from-slate-900 via-slate-800 to-red-950/50 p-8 text-center">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-700/10"></div>
+            <div className="relative">
+              <div className="mx-auto w-20 h-20 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
                 <Building2 className="h-10 w-10 text-white" />
               </div>
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent mb-4">
                 Register Your Gym
-              </CardTitle>
-              <CardDescription className="text-gray-400 text-lg">
-                Join FitConnect and connect with fitness enthusiasts
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="space-y-8">
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                {/* Business Information Section */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                      <Building2 className="h-4 w-4 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-white">Business Information</h3>
+              </h1>
+              <p className="text-slate-400 text-lg font-medium">
+                Join FitConnect and connect with fitness enthusiasts worldwide
+              </p>
+            </div>
+          </div>
+          
+          {/* Form Content */}
+          <div className="p-8">
+            <div className="space-y-10">
+              {/* Business Information Section */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                    <Building2 className="h-5 w-5 text-white" />
                   </div>
+                  <h2 className="text-xl font-bold text-white">Business Information</h2>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="gymName" className="text-gray-300">
-                      Gym Name <span className="text-red-500">*</span>
-                    </Label>
-                    <Input 
-                      id="gymName"
+                <div className="grid gap-6">
+                  <div className="space-y-3">
+                    <label className="block text-sm font-semibold text-slate-200">
+                      Gym Name <span className="text-red-400">*</span>
+                    </label>
+                    <input 
                       name="gymName"
                       placeholder="Enter your gym name" 
-                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
+                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 backdrop-blur-sm"
                       required 
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="ownerName" className="text-gray-300">
-                      Owner's Name <span className="text-red-500">*</span>
-                    </Label>
+                  <div className="space-y-3">
+                    <label className="block text-sm font-semibold text-slate-200">
+                      Owner's Name <span className="text-red-400">*</span>
+                    </label>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                      <Input 
-                        id="ownerName"
+                      <User className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
+                      <input 
                         name="ownerName"
                         placeholder="Enter owner's full name" 
-                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
+                        className="w-full px-4 py-3 pl-12 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 backdrop-blur-sm"
                         required 
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-300">
-                      Business Email Address <span className="text-red-500">*</span>
-                    </Label>
+                  <div className="space-y-3">
+                    <label className="block text-sm font-semibold text-slate-200">
+                      Business Email Address <span className="text-red-400">*</span>
+                    </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                      <Input 
-                        id="email"
+                      <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
+                      <input 
                         name="email"
                         type="email" 
                         placeholder="Enter business email" 
-                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
+                        className="w-full px-4 py-3 pl-12 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 backdrop-blur-sm"
                         required 
                       />
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-gray-300">
-                        Password <span className="text-red-500">*</span>
-                      </Label>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold text-slate-200">
+                        Password <span className="text-red-400">*</span>
+                      </label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                        <Input 
-                          id="password"
+                        <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
+                        <input 
                           name="password"
                           type="password" 
                           placeholder="Create a strong password" 
-                          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
+                          className="w-full px-4 py-3 pl-12 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 backdrop-blur-sm"
                           required 
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-gray-300">
-                        Confirm Password <span className="text-red-500">*</span>
-                      </Label>
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold text-slate-200">
+                        Confirm Password <span className="text-red-400">*</span>
+                      </label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                        <Input
-                          id="confirmPassword"
+                        <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
+                        <input
                           name="confirmPassword"
                           type="password"
                           placeholder="Confirm your password"
-                          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
+                          className="w-full px-4 py-3 pl-12 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 backdrop-blur-sm"
                           required
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="operatingHours" className="text-gray-300">
-                        Operating Hours <span className="text-red-500">*</span>
-                      </Label>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold text-slate-200">
+                        Operating Hours <span className="text-red-400">*</span>
+                      </label>
                       <div className="relative">
-                        <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                        <Input 
-                          id="operatingHours"
+                        <Clock className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
+                        <input 
                           name="operatingHours"
                           placeholder="e.g., 6:00 AM - 10:00 PM" 
-                          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
+                          className="w-full px-4 py-3 pl-12 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 backdrop-blur-sm"
                           required
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="contactNo" className="text-gray-300">
-                        Contact Number <span className="text-red-500">*</span>
-                      </Label>
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold text-slate-200">
+                        Contact Number <span className="text-red-400">*</span>
+                      </label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                        <Input 
-                          id="contactNo"
+                        <Phone className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
+                        <input 
                           name="contactNo"
                           type="tel" 
                           placeholder="Enter contact number" 
-                          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500 pl-10"
+                          className="w-full px-4 py-3 pl-12 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 backdrop-blur-sm"
                           required
                         />
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <Separator className="bg-gray-700" />
+              <div className="border-t border-slate-700/50"></div>
 
-                {/* Location Section */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                      <MapPin className="h-4 w-4 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-white">Location Details</h3>
+              {/* Location Section */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                    <MapPin className="h-5 w-5 text-white" />
                   </div>
+                  <h2 className="text-xl font-bold text-white">Location Details</h2>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-gray-300">
-                      Gym Address <span className="text-red-500">*</span>
-                    </Label>
-                    <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
-                      {location ? location.address : "Please select location on map"}
-                    </div>
+                <div className="space-y-3">
+                  <label className="block text-sm font-semibold text-slate-200">
+                    Gym Address <span className="text-red-400">*</span>
+                  </label>
+                  <div className="p-4 bg-slate-800/50 border border-slate-600/50 rounded-xl text-slate-200 backdrop-blur-sm min-h-[50px] flex items-center">
+                    {location ? location.address : "Please select location on map"}
                   </div>
+                </div>
 
-                  <div className="space-y-4">
-                    <Button
-                      type="button"
-                      onClick={openMapSelector}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <MapPin className="mr-2 h-4 w-4" />
-                      {location ? "Change Location" : "Select Location on Map"}
-                    </Button>
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={openMapSelector}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    <MapPin className="h-5 w-5" />
+                    {location ? "Change Location" : "Select Location on Map"}
+                  </button>
 
-                    {location && (
-                      <div className="bg-green-900/20 border border-green-800 rounded-lg p-3">
-                        <p className="text-green-300 text-sm">
-                          ✓ Location selected: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                  {location && (
+                    <div className="p-4 bg-gradient-to-r from-emerald-900/20 to-green-900/20 border border-emerald-700/50 rounded-xl backdrop-blur-sm">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                        <p className="text-emerald-300 font-medium">
+                          Location confirmed: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
                         </p>
                       </div>
-                    )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-slate-700/50"></div>
+
+              {/* Description Section */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                    <FileText className="h-5 w-5 text-white" />
                   </div>
+                  <h2 className="text-xl font-bold text-white">Gym Description</h2>
                 </div>
 
-                <Separator className="bg-gray-700" />
-
-                {/* Description Section */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-white">Gym Description</h3>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description" className="text-gray-300">
-                      Description <span className="text-red-500">*</span>
-                    </Label>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      placeholder="Describe your gym facilities, equipment, services, and what makes it special..."
-                      className="min-h-[120px] bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500"
-                      required
-                    />
-                    <p className="text-xs text-gray-400">
-                      This will be displayed on your gym profile to attract potential members.
-                    </p>
-                  </div>
-                </div>
-
-                <Separator className="bg-gray-700" />
-
-                {/* Profile Image Section */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                      <Camera className="h-4 w-4 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-white">Gym Profile Image (Optional)</h3>
-                  </div>
-
-                  <div className="border-2 border-dashed border-gray-700 rounded-xl p-8 text-center bg-gray-800/30 hover:bg-gray-800/50 transition-colors">
-                    <div className="mx-auto w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                      <Upload className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <div className="mb-2">
-                      <Label htmlFor="profileImage" className="cursor-pointer">
-                        <span className="text-red-500 hover:text-red-400 font-medium">Upload gym photo</span>
-                        <span className="text-gray-400"> or drag and drop</span>
-                      </Label>
-                      <Input
-                        id="profileImage"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                    {profileImage && (
-                      <div className="mt-3 p-2 bg-green-900/20 border border-green-800 rounded-lg">
-                        <p className="text-sm text-green-400">✓ Selected: {profileImage.name}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <Separator className="bg-gray-700" />
-
-                {/* Verification Documents Section */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-white">Verification Documents</h3>
-                  </div>
-
-                  <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 mb-4">
-                    <p className="text-sm text-blue-300">
-                      <strong>Required Documents:</strong> Business registration certificate, business license, 
-                      owner ID copy, property lease/ownership documents, and any relevant permits. At least one document is required.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {documents.map((doc, index) => (
-                      <div key={doc.id} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1 space-y-3">
-                            <div className="space-y-2">
-                              <Label className="text-gray-300">
-                                Document Type <span className="text-red-500">*</span>
-                              </Label>
-                              <Input
-                                placeholder="e.g., Business License, Registration Certificate"
-                                value={doc.type}
-                                onChange={(e) => updateDocumentType(doc.id, e.target.value)}
-                                className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-500 focus:border-red-500"
-                                required
-                              />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label className="text-gray-300">
-                                Document File <span className="text-red-500">*</span>
-                              </Label>
-                              <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center bg-gray-800/30">
-                                <FileText className="mx-auto h-8 w-8 text-gray-500 mb-2" />
-                                <Label htmlFor={`doc-${doc.id}`} className="cursor-pointer">
-                                  <span className="text-red-400 hover:text-red-300">Choose file</span>
-                                  <span className="text-gray-400"> (PDF, JPG, PNG)</span>
-                                </Label>
-                                <Input
-                                  id={`doc-${doc.id}`}
-                                  type="file"
-                                  accept=".pdf,.jpg,.jpeg,.png"
-                                  className="hidden"
-                                  onChange={(e) => updateDocumentFile(doc.id, e.target.files?.[0] || null)}
-                                  required
-                                />
-                                {doc.file && (
-                                  <p className="text-sm text-green-400 mt-2">✓ {doc.file.name}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {documents.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocumentEntry(doc.id)}
-                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 mt-6"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={addDocumentEntry}
-                      className="w-full bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:text-white"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Another Document
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Terms and Conditions */}
-                <div className="space-y-4 p-4 bg-gray-800/30 rounded-lg border border-gray-700">
-                  <div className="flex items-start space-x-3">
-                    <Checkbox 
-                      id="terms" 
-                      required 
-                      className="mt-0.5 border-gray-600 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                    />
-                    <Label htmlFor="terms" className="text-sm text-gray-300 leading-relaxed">
-                      I agree to the{" "}
-                      <Link href="/terms" className="text-red-400 hover:text-red-300 underline">
-                        Terms and Conditions
-                      </Link>{" "}
-                      and{" "}
-                      <Link href="/privacy" className="text-red-400 hover:text-red-300 underline">
-                        Privacy Policy
-                      </Link>
-                    </Label>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <Checkbox 
-                      id="verification" 
-                      required 
-                      className="mt-0.5 border-gray-600 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                    />
-                    <Label htmlFor="verification" className="text-sm text-gray-300 leading-relaxed">
-                      I understand that my gym registration will be reviewed and verified before activation
-                    </Label>
-                  </div>
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 text-lg shadow-lg hover:shadow-xl transition-all duration-200" 
-                  disabled={loading}
-                >
-                  {loading ? "Submitting Application..." : "Submit Application"}
-                </Button>
-
-                <div className="text-center pt-4">
-                  <p className="text-gray-400">
-                    Already have an account?{" "}
-                    <Link href="/auth/login" className="text-red-400 hover:text-red-300 underline font-medium">
-                      Sign in
-                    </Link>
+                <div className="space-y-3">
+                  <label className="block text-sm font-semibold text-slate-200">
+                    Description <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    name="description"
+                    placeholder="Describe your gym facilities, equipment, services, and what makes it special..."
+                    className="w-full px-4 py-3 min-h-[120px] bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 backdrop-blur-sm resize-none"
+                    required
+                  />
+                  <p className="text-sm text-slate-400">
+                    This will be displayed on your gym profile to attract potential members.
                   </p>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+              </div>
+
+              <div className="border-t border-slate-700/50"></div>
+
+              {/* Profile Image Section */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                    <Camera className="h-5 w-5 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-white">Gym Profile Image</h2>
+                  <span className="px-3 py-1 text-xs font-medium text-slate-400 bg-slate-700/50 rounded-full">Optional</span>
+                </div>
+
+                <div className="border-2 border-dashed border-slate-600/50 rounded-2xl p-8 text-center bg-slate-800/30 hover:bg-slate-800/50 transition-all duration-300 cursor-pointer">
+                  <div className="mx-auto w-16 h-16 bg-slate-700/50 rounded-2xl flex items-center justify-center mb-4">
+                    <Upload className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <div className="mb-2">
+                    <label htmlFor="profileImage" className="cursor-pointer">
+                      <span className="text-red-400 hover:text-red-300 font-semibold text-lg">Upload gym photo</span>
+                      <span className="text-slate-400"> or drag and drop</span>
+                    </label>
+                    <input
+                      id="profileImage"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
+                    />
+                  </div>
+                  <p className="text-sm text-slate-500">PNG, JPG, GIF up to 10MB</p>
+                  {profileImage && (
+                    <div className="mt-4 p-3 bg-gradient-to-r from-emerald-900/20 to-green-900/20 border border-emerald-700/50 rounded-xl">
+                      <div className="flex items-center justify-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                        <p className="text-sm text-emerald-300 font-medium">Selected: {profileImage.name}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-slate-700/50"></div>
+
+              {/* Verification Documents Section */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                    <FileText className="h-5 w-5 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-white">Verification Documents</h2>
+                </div>
+
+                <div className="p-4 bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border border-blue-700/50 rounded-xl backdrop-blur-sm">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-blue-300 font-medium mb-1">Required Documents:</p>
+                      <p className="text-sm text-blue-200">
+                        Business registration certificate, business license, owner ID copy, property lease/ownership documents, 
+                        and any relevant permits. At least one document is required.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {documents.map((doc, index) => (
+                    <div key={doc.id} className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-6 backdrop-blur-sm">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1 space-y-4">
+                          <div className="space-y-3">
+                            <label className="block text-sm font-semibold text-slate-200">
+                              Document Type <span className="text-red-400">*</span>
+                            </label>
+                            <input
+                              placeholder="e.g., Business License, Registration Certificate"
+                              value={doc.type}
+                              onChange={(e) => updateDocumentType(doc.id, e.target.value)}
+                              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <label className="block text-sm font-semibold text-slate-200">
+                              Document File <span className="text-red-400">*</span>
+                            </label>
+                            <div className="border-2 border-dashed border-slate-600/50 rounded-xl p-4 text-center bg-slate-800/30 hover:bg-slate-800/50 transition-all duration-300 cursor-pointer">
+                              <FileText className="mx-auto h-8 w-8 text-slate-500 mb-2" />
+                              <label htmlFor={`doc-${doc.id}`} className="cursor-pointer">
+                                <span className="text-red-400 hover:text-red-300 font-medium">Choose file</span>
+                                <span className="text-slate-400"> (PDF, JPG, PNG)</span>
+                              </label>
+                              <input
+                                id={`doc-${doc.id}`}
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                className="hidden"
+                                onChange={(e) => updateDocumentFile(doc.id, e.target.files?.[0] || null)}
+                                required
+                              />
+                              {doc.file && (
+                                <div className="mt-2 flex items-center justify-center gap-2">
+                                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                                  <p className="text-sm text-emerald-300 font-medium">{doc.file.name}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {documents.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeDocumentEntry(doc.id)}
+                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-all duration-300 mt-8"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <button
+                    type="button"
+                    onClick={addDocumentEntry}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-slate-800/50 border border-slate-600/50 hover:bg-slate-700/50 hover:border-slate-500/50 text-slate-200 font-semibold rounded-xl transition-all duration-300"
+                  >
+                    <Plus className="h-5 w-5" />
+                    Add Another Document
+                  </button>
+                </div>
+              </div>
+
+              {/* Terms and Conditions */}
+              <div className="space-y-4 p-6 bg-slate-800/30 rounded-xl border border-slate-700/50 backdrop-blur-sm">
+                <div className="flex items-start space-x-4">
+                  <input 
+                    id="terms" 
+                    type="checkbox"
+                    required 
+                    className="mt-1 w-4 h-4 text-red-600 bg-slate-800 border-slate-600 rounded focus:ring-red-500 focus:ring-2"
+                  />
+                  <label htmlFor="terms" className="text-sm text-slate-300 leading-relaxed">
+                    I agree to the{" "}
+                    <a href="/terms" className="text-red-400 hover:text-red-300 underline font-medium">
+                      Terms and Conditions
+                    </a>{" "}
+                    and{" "}
+                    <a href="/privacy" className="text-red-400 hover:text-red-300 underline font-medium">
+                      Privacy Policy
+                    </a>
+                  </label>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <input 
+                    id="verification" 
+                    type="checkbox"
+                    required 
+                    className="mt-1 w-4 h-4 text-red-600 bg-slate-800 border-slate-600 rounded focus:ring-red-500 focus:ring-2"
+                  />
+                  <label htmlFor="verification" className="text-sm text-slate-300 leading-relaxed">
+                    I understand that my gym registration will be reviewed and verified before activation
+                  </label>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-700 hover:via-red-800 hover:to-red-900 text-white font-bold py-4 text-lg shadow-2xl hover:shadow-red-500/20 transition-all duration-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed" 
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-3">
+                    <div className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full"></div>
+                    Submitting Application...
+                  </span>
+                ) : (
+                  "Submit Application"
+                )}
+              </button>
+
+              <div className="text-center pt-4">
+                <p className="text-slate-400">
+                  Already have an account?{" "}
+                  <a href="/auth/login" className="text-red-400 hover:text-red-300 underline font-semibold transition-colors duration-300">
+                    Sign in
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Map Modal */}
         {showMap && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 rounded-xl border border-gray-700 w-full max-w-4xl max-h-[90vh] overflow-hidden">
-              <div className="p-6 border-b border-gray-700">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold text-white">Select Gym Location</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-slate-700/50 w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-white">Select Gym Location</h3>
+                  <button
                     onClick={() => setShowMap(false)}
-                    className="text-gray-400 hover:text-white"
+                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all duration-300"
                   >
-                    <X className="h-5 w-5" />
-                  </Button>
+                    <X className="h-6 w-6" />
+                  </button>
                 </div>
               </div>
               
               <div className="p-6">
-                <GoogleMapPicker
-                  onLocationSelect={handleLocationSelect}
-                  initialLocation={location || undefined}
-                  searchPlaceholder="Search for your gym's address..."
-                  height="500px"
-                  className="text-white"
-                />
+                <div className="w-full h-[500px] bg-slate-800 rounded-xl border border-slate-700/50 flex items-center justify-center">
+                  <div className="text-center">
+                    <MapPin className="mx-auto h-12 w-12 text-slate-500 mb-4" />
+                    <p className="text-slate-400">Google Map integration would go here</p>
+                    <p className="text-sm text-slate-500 mt-2">Click on the map to select your gym location</p>
+                  </div>
+                </div>
               </div>
               
-              <div className="p-6 border-t border-gray-700 flex gap-3 justify-end">
-                <Button
-                  variant="outline"
+              <div className="p-6 border-t border-slate-700/50 flex gap-3 justify-end">
+                <button
                   onClick={() => setShowMap(false)}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                  className="px-6 py-3 border border-slate-600 text-slate-300 hover:bg-slate-800/50 hover:text-white font-medium rounded-xl transition-all duration-300"
                 >
                   Cancel
-                </Button>
-                <Button
-                  onClick={() => setShowMap(false)}
-                  disabled={!location}
-                  className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                </button>
+                <button
+                  onClick={() => {
+                    setLocation({ lat: 6.7957, lng: 79.9009, address: "Sample Address, Moratuwa, Sri Lanka" });
+                    setShowMap(false);
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg"
                 >
                   Confirm Location
-                </Button>
+                </button>
               </div>
             </div>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }
