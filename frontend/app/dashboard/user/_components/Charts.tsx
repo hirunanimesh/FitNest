@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -6,8 +7,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+
+import { supabase } from "@/lib/supabase";
 import axios from 'axios';
+import {  GetUserInfo } from "@/lib/api"
 
 interface BMIData {
     day: string;
@@ -38,6 +41,46 @@ interface TooltipProps {
 
 const Charts: React.FC = () => {
     const [isWeightDialogOpen, setIsWeightDialogOpen] = useState<boolean>(false);
+    const [profileId, setProfileId] = useState<string | null>(null);
+    const [customerId, setCustomerId] = useState<string | null>(null);
+
+useEffect(() => {
+  async function fetchUserInfo() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return;
+
+    try {
+      const data = await GetUserInfo(token);
+      const profileId = data?.user?.id || null;
+      setProfileId(profileId);
+
+      if (profileId) {
+        // Fetch customer_id from customer table
+        const { data: customerData, error } = await supabase
+          .from("customer")
+          .select("id")
+          .eq("user_id", profileId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching customer id:", error);
+          setCustomerId(null);
+        } else {
+          setCustomerId(customerData?.id);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+      setProfileId(null);
+      setCustomerId(null);
+    }
+  }
+
+  fetchUserInfo();
+}, []);
 
     const formatDate = (date: Date): string => {
         return date.toISOString().split('T')[0];
@@ -117,7 +160,9 @@ const Charts: React.FC = () => {
             await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/addweight`,{
                 height: 1.75, // Example height, adjust as needed
                 weight: newWeight,
-                customer_id: 1,
+                customer_id: customerId,
+                
+                
                 date: weightForm.date,
                 
             });

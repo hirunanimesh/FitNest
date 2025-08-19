@@ -49,6 +49,7 @@ export const GetUserInfo = async (token) => {
     }
 };
 
+
 export const CompleteOAuthProfileMember = async (profileData) => {
     try {
         const config = {};
