@@ -4,10 +4,11 @@ import Header from "./components/Header"
 import HeroSection from "./components/HeroSection"
 import AboutSection from "./components/AboutSection"
 import SessionsSection from "./components/SessionsSection"
-import TestimonialsSection from "./components/TestimonialsSection"
+import TestimonialsSection from "./components/Feedback"
 import BlogSection from "./components/BlogSection"
 import ContactSection from "./components/ContactSection"
 import { Suspense } from "react"
+import Feedback from "./components/Feedback"
 
 function TrainerPageContent() {
   console.log("TrainerPage rendered"); // Debug log
@@ -18,7 +19,7 @@ function TrainerPageContent() {
       <HeroSection />
       <AboutSection />
       <SessionsSection />
-      <TestimonialsSection />
+      <Feedback />
       <BlogSection />
       <ContactSection />
     </main>
