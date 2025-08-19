@@ -57,5 +57,19 @@ export async function updatetrainerdetails(trainerId, trainerData) {
 
   return data[0]; // Return updated trainer
 }     
-
+export async function getfeedbackbytrainerid(TrainerId) {
+          const { data, error } = await supabase
+          .from('feedback')
+          .select('*')
+          .eq('trainerid', TrainerId)
+          if(!data){
+                  return null;
+          }
+          
+          if (error) {
+          throw new Error(error.message);
+          }
+          
+          return data; // Return the feedbacks
+  }
 
