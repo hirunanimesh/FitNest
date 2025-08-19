@@ -50,30 +50,32 @@ export default function ProfilePage() {
     if (!token) return;
 
     try {
-      const data = await GetUserInfo(token);
-      const id = data?.user?.id || null;
-      setProfileId(id);
+      //const data = await GetUserInfo(token);
+      //const id = data?.user?.id || null;
+      //setProfileId(id);
 
-      if (id) {
+      //if (id) {
         // Fetch user details from your API
-        const response = await axios.get(`http://localhost:3000/api/user/getuserbyid/${id}`);
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/getuserbyid/28`);//${id}
+        console.log("User Data:", response.data);
         if (response.data) {
           setUserData({
-            firstName: response.data.first_name || "",
-            lastName: response.data.last_name || "",
+            //location
+            firstName: response.data.user.first_name || "",
+            lastName: response.data.user.last_name || "",
             email: response.data.email || "",
-            phone: response.data.phone || "",
-            address: response.data.address || "",
-            dateOfBirth: response.data.date_of_birth ? new Date(response.data.date_of_birth) : null,
-            gender: response.data.gender || "",
-            avatar: response.data.avatar || "",
+            phone: response.data.user.phone_no || "",
+            address: response.data.user.address || "",
+            dateOfBirth: response.data.user.birthday ? new Date(response.data.birthday) : null,
+            gender: response.data.user.gender || "",
+            avatar: response.data.user.profile_img || "",
             weight: response.data.weight || "",
             height: response.data.height || "",
           });
         }
       }
-    } catch (error) {
-      setProfileId(null);
+    catch (error) {
+      " ";
     }
   }
   fetchUserInfo();
@@ -82,9 +84,10 @@ export default function ProfilePage() {
 
   // Add this function inside ProfilePage
   async function handleSave() {
-    if (!profileId) return;
+   
     try {
-      await axios.put(`http://localhost:3000/api/user/updateuser/${profileId}`, {
+      await axios.put(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/updateuser/28`, // ${profileId}
+        {
         first_name: userData.firstName,
         last_name: userData.lastName,
         email: userData.email,
@@ -172,9 +175,10 @@ export default function ProfilePage() {
                       <Label htmlFor="firstName">First Name</Label>
                       <Input
                         id="firstName"
-                        value={userData.firstName}
+                        value ={userData.firstName}
                         onChange={(e) => setUserData({ ...userData, firstName: e.target.value })}
                         disabled={!isEditing}
+                        className="bg-[#192024] text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -184,6 +188,7 @@ export default function ProfilePage() {
                         value={userData.lastName}
                         onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
                         disabled={!isEditing}
+                        className="bg-[#192024] text-white"
                       />
                     </div>
                   </div>
@@ -198,6 +203,7 @@ export default function ProfilePage() {
                         value={userData.email}
                         onChange={(e) => setUserData({ ...userData, email: e.target.value })}
                         disabled={!isEditing}
+                        className="bg-[#192024] text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -207,6 +213,7 @@ export default function ProfilePage() {
                         value={userData.phone}
                         onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
                         disabled={!isEditing}
+                        className="bg-[#192024] text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -216,6 +223,7 @@ export default function ProfilePage() {
                         value={userData.address}
                         onChange={(e) => setUserData({ ...userData, address: e.target.value })}
                         disabled={!isEditing}
+                        className="bg-[#192024] text-white"
                       />
                     </div>
                   </div>
@@ -248,7 +256,14 @@ export default function ProfilePage() {
                           </PopoverContent>
                         </Popover>
                       ) : (
-                        <Input value={userData.dateOfBirth ? format(userData.dateOfBirth, "PPP") : ""} disabled />
+                        <Input
+  value={
+    userData.dateOfBirth && !isNaN(new Date(userData.dateOfBirth).getTime())
+      ? format(new Date(userData.dateOfBirth), "PPP")
+      : ""
+  }
+  disabled
+/>
                       )}
                     </div>
                     <div className="space-y-2">
