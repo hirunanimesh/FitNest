@@ -63,7 +63,7 @@ export async function addWeight(weightData) {
   const { data, error } = await supabase
     .from('customer_progress')
     .select('*')
-    .eq('id', userId);
+    .eq('customer_id', userId);
 
   if (error) {
     throw new Error(error.message);
@@ -71,3 +71,19 @@ export async function addWeight(weightData) {
 
   return data; // Array of all weight entries
 }
+export async function getLatestWeightById(userId) {
+  const { data, error } = await supabase
+    .from('customer_progress')
+    .select('height,weight')
+    .eq('customer_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1); // Get the latest weight entry
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data[0]; // Array of all weight entries
+}
+
+

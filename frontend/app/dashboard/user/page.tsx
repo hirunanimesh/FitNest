@@ -1,5 +1,5 @@
 "use client"
-import { supabase } from "@/lib/supabase";
+//import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect } from "react";
 import TopBar from "./_components/TopBar"
 import Progress from "./_components/Progress"
@@ -10,11 +10,11 @@ import Charts from "./_components/Charts"
 import Schedule from "./_components/Schedule"
 import MotivationQuotes from "./_components/MotivationQuote"
 import { Suspense } from "react";
-import {  GetUserInfo } from "@/lib/api"
+//import {  GetUserInfo } from "@/lib/api"
 
 function UserDashboardContent() {
   
-   const [profileId, setProfileId] = useState<string | null>(null);
+   /*const [profileId, setProfileId] = useState<string | null>(null);
        const [customerId, setCustomerId] = useState<string | null>(null);
    
    useEffect(() => {
@@ -53,11 +53,11 @@ function UserDashboardContent() {
      }
    
      fetchUserInfo();
-   }, []);
+   }, []);*/
   return (
     <div className="bg-black">
       {/* Header */}
-       <TopBar customerId={customerId} />
+       <TopBar />
 
       {/* Main Content */}
       <div className="flex-1 space-y-10 p-20">

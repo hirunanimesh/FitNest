@@ -1,7 +1,7 @@
 //calendar
 //add weight
 
-import { getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
+import { getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
 import{addFeedback} from  '../services/feedback.service.js';
 
 /*export const addUser = async (req, res) => {
@@ -70,14 +70,28 @@ export const getweightbyid = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
-export const addfeedback = async (req, res) => {
+export const getlatestweightbyid = async (req, res) => {
+    const { userId } = req.params;
     try {
-        const weight = await addFeedback(req.body);
+        const weight = await getLatestWeightById(userId)
         if (weight) {
-            res.status(200).json({ message: "Weight add successfully", weight });
+            res.status(200).json({ message: "Weight retrieved successfully", weight });
+        } else {
+            res.status(404).json({ message: "Weight  not found" });
         }
     } catch (error) {
-        console.error("Error adding weight:", error);
+        console.error("Error retrieving weight:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
+export const addfeedback = async (req, res) => {
+    try {
+        const feedback = await addFeedback(req.body);
+        if (feedback) {
+            res.status(200).json({ message: "feedback add successfully", feedback });
+        }
+    } catch (error) {
+        console.error("Error adding feedback:", error);
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };;

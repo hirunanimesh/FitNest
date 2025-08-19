@@ -3,7 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 
-import { getweightbyid,addweight,getuserbyid, updateuserdetails} from './controllers/user.controller.js'
+import { getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails} from './controllers/user.controller.js'
 
 
 const app = express()
@@ -16,6 +16,7 @@ app.get('/getuserbyid/:userId',getuserbyid)
 app.put('/updateuserdetails/:userId',updateuserdetails)
 app.post('/addweight',addweight)
 app.get('/getweightbyid/:userId',getweightbyid)
+app.get('/getlatestweightbyid/:userId',getlatestweightbyid)
 
 app.listen(process.env.PORT || 3004,()=>{
     console.log(`User Service is running on port ${process.env.PORT || 3004}`)
