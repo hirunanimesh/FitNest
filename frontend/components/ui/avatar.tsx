@@ -1,3 +1,5 @@
+//SRP - Single Responsible Principle
+// does one thing - handle a specific UI element
 "use client"
 
 import * as React from "react"
@@ -7,7 +9,7 @@ import { cn } from "@/lib/utils"
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>//Single Responsibility Principle - only responsible for avatar container.
 >(({ className, ...props }, ref) => (
   <AvatarPrimitive.Root
     ref={ref}
@@ -17,7 +19,7 @@ const Avatar = React.forwardRef<
     )}
     {...props}
   />
-))
+)) 
 Avatar.displayName = AvatarPrimitive.Root.displayName
 
 const AvatarImage = React.forwardRef<
@@ -42,7 +44,7 @@ const AvatarFallback = React.forwardRef<
       "flex h-full w-full items-center justify-center rounded-full bg-muted",
       className
     )}
-    {...props}
+    {...props}//can customized this passing differnt props without changing its internal code'
   />
 ))
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName

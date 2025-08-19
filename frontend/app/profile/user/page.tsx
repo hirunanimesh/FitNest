@@ -20,13 +20,7 @@ export default function GymProfilePage() {
     { label: "Weight Lifted (kg)", value: 2850, max: 3000, color: "bg-red-600" },
   ]
 
-  const friends = [
-    { name: "Sarah M.", avatar: "/fit-woman-outdoors.png" },
-    { name: "Mike R.", avatar: "/man-gym.png" },
-    { name: "Lisa K.", avatar: "/woman-athlete.png" },
-    { name: "Tom B.", avatar: "/fit-man-gym.png" },
-  ]
-
+  
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-6">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -254,39 +248,7 @@ export default function GymProfilePage() {
               </CardContent>
             </Card>
 
-            {/* Friends/Connections */}
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Users className="w-5 h-5 text-red-500" />
-                  Connections ({friends.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  {friends.map((friend, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={friend.avatar || "/placeholder.svg"} alt={friend.name} />
-                        <AvatarFallback className="bg-gray-800 text-white text-xs">
-                          {friend.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm text-gray-300 truncate">{friend.name}</span>
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full mt-4 border-gray-600 text-gray-300 hover:bg-gray-800 bg-transparent"
-                >
-                  View All
-                </Button>
-              </CardContent>
-            </Card>
+            
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import React from 'react';
+"use client";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -6,7 +7,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+
+import { supabase } from "@/lib/supabase";
+import axios from 'axios';
+import {  GetUserInfo } from "@/lib/api"
 
 interface BMIData {
     day: string;
@@ -37,6 +41,46 @@ interface TooltipProps {
 
 const Charts: React.FC = () => {
     const [isWeightDialogOpen, setIsWeightDialogOpen] = useState<boolean>(false);
+    const [profileId, setProfileId] = useState<string | null>(null);
+    const [customerId, setCustomerId] = useState<string | null>(null);
+
+useEffect(() => {
+  async function fetchUserInfo() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return;
+
+    try {
+      const data = await GetUserInfo(token);
+      const profileId = data?.user?.id || null;
+      setProfileId(profileId);
+
+      if (profileId) {
+        // Fetch customer_id from customer table
+        const { data: customerData, error } = await supabase
+          .from("customer")
+          .select("id")
+          .eq("user_id", profileId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching customer id:", error);
+          setCustomerId(null);
+        } else {
+          setCustomerId(customerData?.id);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+      setProfileId(null);
+      setCustomerId(null);
+    }
+  }
+
+  fetchUserInfo();
+}, []);
 
     const formatDate = (date: Date): string => {
         return date.toISOString().split('T')[0];
@@ -103,7 +147,7 @@ const Charts: React.FC = () => {
     const [weightData, setWeightData] = useState<WeightData[]>(generateWeightData());
 
     // Fixed event handler - changed to mouse event for button clicks
-    const handleWeightSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleWeightSubmit = async(e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         
         const newWeight = parseFloat(weightForm.weight);
@@ -113,7 +157,15 @@ const Charts: React.FC = () => {
                 weight: newWeight,
                 date: weightForm.date
             };
-            
+            await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/addweight`,{
+                height: 1.75, // Example height, adjust as needed
+                weight: newWeight,
+                customer_id: customerId,
+                
+                
+                date: weightForm.date,
+                
+            });
             // Add new entry and keep only last 30 entries
             setWeightData(prev => {
                 const updated = [...prev, newEntry].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
