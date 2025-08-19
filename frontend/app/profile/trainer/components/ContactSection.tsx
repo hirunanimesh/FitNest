@@ -14,29 +14,45 @@ export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false)
   const [profileId, setProfileId] = useState<string | null>(null);
   const [trainerId, setTrainerId] = useState<number | null>(null);
-    
-    
+  const [customerId, setCustomerId] = useState<string | null>(null);
   
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    const params = new URLSearchParams(window.location.search)
+    const id = params.get("id")
     setTrainerId(id ? parseInt(id, 10) : null)
-      async function fetchUserInfo() {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        if (!token) return;
-  
-        try {
-          const data = await GetUserInfo(token);
-          setProfileId(data?.user?.id || null);
-        } catch (error) {
-          setProfileId(null);
+
+    async function fetchUserInfo() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) return
+
+      try {
+        const data = await GetUserInfo(token)
+        const profileId = data?.user?.id || null
+        setProfileId(profileId)
+        if (profileId) {
+          const { data: customerData, error } = await supabase
+            .from("customer")
+            .select("id")
+            .eq("user_id", profileId)
+            .single()
+
+          if (error || !customerData) {
+            setCustomerId(null)
+          } else {
+            setCustomerId(customerData.id)
+          }
         }
+      } catch {
+        setProfileId(null)
+        setCustomerId(null)
       }
-      fetchUserInfo();
-    }, []);
+    }
+    fetchUserInfo()
+  }, [])
+
   
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -49,10 +65,10 @@ export default function ContactSection() {
     try {
       // Replace with your contact API or service
       await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/addfeedback`, {
-        user_id: profileId,
+        user_id: customerId,
         feedback: form.message,
-        trainerid: trainerId,
-        date: new Date().toISOString(),
+        trainer_id: trainerId,
+        
       });
       setSubmitted(true)
       setForm({ message: "" })
