@@ -18,6 +18,17 @@ export const AddCustomer = async (customerData) => {
         return response.data;
     } catch (error) {
         console.error("Error adding customer:", error);
+        
+        // Extract error message from axios response
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            // Create a new error with the backend message and preserve the code
+            const newError = new Error(backendError.message || backendError.error || "Registration failed");
+            newError.code = backendError.code;
+            newError.status = error.response.status;
+            throw newError;
+        }
+        
         throw error;
     }
 };
@@ -87,6 +98,17 @@ export const TrainerRegister = async (trainerData) => {
         return response.data;
     } catch (error) {
         console.error("Error registering trainer:", error);
+        
+        // Extract error message from axios response
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            // Create a new error with the backend message and preserve the code
+            const newError = new Error(backendError.message || backendError.error || "Registration failed");
+            newError.code = backendError.code;
+            newError.status = error.response.status;
+            throw newError;
+        }
+        
         throw error;
     }
 };
@@ -106,6 +128,17 @@ export const GymRegister = async (gymData) => {
         return response.data;
     } catch (error) {
         console.error("Error registering gym:", error);
+        
+        // Extract error message from axios response
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            // Create a new error with the backend message and preserve the code
+            const newError = new Error(backendError.message || backendError.error || "Registration failed");
+            newError.code = backendError.code;
+            newError.status = error.response.status;
+            throw newError;
+        }
+        
         throw error;
     }
 };
@@ -124,6 +157,28 @@ export const CompleteOAuthProfileTrainer = async (profileData) => {
         return response.data;
     } catch (error) {
         console.error("Error completing OAuth trainer profile:", error);
+        // If it's an axios error with response data, preserve the response structure
+        if (error.response && error.response.data) {
+            throw error; // Re-throw the full error so frontend can access error.response.data
+        }
+        throw error;
+    }
+};
+
+export const CompleteOAuthProfileGym = async (profileData) => {
+    try {
+        const config = {};
+        
+        if (profileData instanceof FormData) {
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+        }
+
+        const response = await axios.post(`${Base_URL}/api/auth/oauth/complete-profile-gym`, profileData, config);
+        return response.data;
+    } catch (error) {
+        console.error("Error completing OAuth gym profile:", error);
         // If it's an axios error with response data, preserve the response structure
         if (error.response && error.response.data) {
             throw error; // Re-throw the full error so frontend can access error.response.data

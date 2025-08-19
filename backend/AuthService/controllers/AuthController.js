@@ -345,6 +345,17 @@ class AuthController {
         "[Auth Service] Error during customer registration:",
         error
       );
+      
+      // Handle specific Supabase auth errors
+      if (error.code === 'user_already_exists' || error.message?.includes('User already registered')) {
+        return res.status(422).json({
+          success: false,
+          message: "User already registered",
+          error: error.message,
+          code: 'user_already_exists'
+        });
+      }
+      
       res.status(500).json({
         success: false,
         message: "Failed to register customer",
@@ -390,6 +401,17 @@ class AuthController {
       });
     } catch (error) {
       console.error("[Auth Service] Error during gym registration:", error);
+      
+      // Handle specific Supabase auth errors
+      if (error.code === 'user_already_exists' || error.message?.includes('User already registered')) {
+        return res.status(422).json({
+          success: false,
+          message: "User already registered",
+          error: error.message,
+          code: 'user_already_exists'
+        });
+      }
+      
       res.status(500).json({
         success: false,
         message: "Failed to register gym",
@@ -443,9 +465,103 @@ class AuthController {
       });
     } catch (error) {
       console.error("[Auth Service] Error during trainer registration:", error);
+      
+      // Handle specific Supabase auth errors
+      if (error.code === 'user_already_exists' || error.message?.includes('User already registered')) {
+        return res.status(422).json({
+          success: false,
+          message: "User already registered",
+          error: error.message,
+          code: 'user_already_exists'
+        });
+      }
+      
       res.status(500).json({
         success: false,
         message: "Failed to register trainer",
+        error: error.message,
+      });
+    }
+  }
+
+  static async completeOAuthGymProfile(req, res) {
+    console.log("OAuth gym profile completion request controller:", req.body);
+    try {
+      const {
+        user_id,
+        gymName,
+        ownerName,
+        email,
+        contactNo,
+        address,
+        description,
+        location,
+        operatingHours,
+        profileImage,
+        documents,
+        userRole,
+      } = req.body;
+
+      // Validate user_id
+      if (!user_id) {
+        console.error("user_id is missing from request");
+        return res.status(400).json({
+          success: false,
+          message: "user_id is required",
+        });
+      }
+
+      console.log("Processing for user_id:", user_id);
+
+      // Parse documents from JSON string if needed
+      let documentsArray = [];
+      if (documents && typeof documents === "string") {
+        try {
+          documentsArray = JSON.parse(documents);
+        } catch (parseError) {
+          console.error("Error parsing documents JSON:", parseError);
+          documentsArray = [];
+        }
+      } else if (documents && Array.isArray(documents)) {
+        documentsArray = documents;
+      }
+
+      const result = await authmodel.completeOAuthGymProfile(
+        user_id,
+        gymName,
+        ownerName,
+        email,
+        contactNo,
+        address,
+        description,
+        location,
+        operatingHours,
+        profileImage,
+        documentsArray,
+        userRole
+      );
+
+      // Check if gym already exists
+      if (result && result.alreadyExists) {
+        return res.status(200).json({
+          success: false,
+          alreadyExists: true,
+          message:
+            "Gym profile already exists. Please login instead of completing profile again.",
+          gym: result.gym,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "OAuth gym profile completed successfully",
+        gym: result,
+      });
+    } catch (error) {
+      console.error("[Auth Service] Error completing OAuth gym profile:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to complete OAuth gym profile",
         error: error.message,
       });
     }

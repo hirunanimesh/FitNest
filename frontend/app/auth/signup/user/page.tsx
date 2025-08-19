@@ -14,9 +14,11 @@ import { useRouter } from "next/navigation"
 import { AddCustomer } from "@/lib/api"
 import { AppLogo } from "@/components/AppLogo"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
+import { useToast } from "@/hooks/use-toast"
 
 export default function UserSignup() {
   const router = useRouter()
+  const { toast } = useToast()
   const [date, setDate] = useState<Date>()
   const [dateInput, setDateInput] = useState("")
   const [profileImage, setProfileImage] = useState<File | null>(null)
@@ -48,6 +50,20 @@ export default function UserSignup() {
 
     const formData = new FormData(e.currentTarget)
     
+    // Password validation
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+    
+    if (password !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Password Mismatch",
+        description: "Password and confirm password should be same",
+      })
+      setIsLoading(false);
+      return;
+    }
+    
     // Create a new FormData and add only the necessary fields
     const submitData = new FormData()
     
@@ -74,9 +90,38 @@ export default function UserSignup() {
     try {
       await AddCustomer(submitData)
       console.log("User registered successfully")
-      router.push("/dashboard/user")
-    } catch (error) {
+      
+      toast({
+        title: "Registration Successful!",
+        description: "Your account has been created successfully. Redirecting to dashboard...",
+      })
+      
+      // Redirect after showing success message
+      setTimeout(() => {
+        router.push("/dashboard/user")
+      }, 2000)
+    } catch (error: any) {
       console.error("Error registering user:", error)
+      
+      // Check if error message indicates user already exists
+      const errorMessage = error.message || "Registration failed. Please try again."
+      if (errorMessage.toLowerCase().includes("already exists") || 
+          errorMessage.toLowerCase().includes("user exists") ||
+          errorMessage.toLowerCase().includes("already registered") ||
+          errorMessage.toLowerCase().includes("duplicate") ||
+          error.code === 'user_already_exists') {
+        toast({
+          variant: "destructive",
+          title: "User Already Exists",
+          description: "An account with this email already exists. Please use a different email or try logging in.",
+        })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Registration Failed",
+          description: errorMessage,
+        })
+      }
     } finally {
       setIsLoading(false);
     }

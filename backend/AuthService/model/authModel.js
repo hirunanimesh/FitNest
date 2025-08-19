@@ -531,6 +531,147 @@ class AuthModel {
       throw error;
     }
   }
+
+  // Complete OAuth gym profile
+  static async completeOAuthGymProfile(
+    user_id,
+    gymName,
+    ownerName,
+    email,
+    contactNo,
+    address,
+    description,
+    location,
+    operatingHours,
+    profileImage,
+    documents,
+    userRole
+  ) {
+    try {
+      console.log("=== OAuth Gym Profile Debug ===");
+      console.log("user_id:", user_id);
+      console.log("user_id type:", typeof user_id);
+      console.log("user_id length:", user_id ? user_id.length : 'N/A');
+      
+      // Validate user_id
+      if (!user_id) {
+        throw new Error("user_id is required but was not provided");
+      }
+
+      // Check if user_id is a valid UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(user_id)) {
+        throw new Error(`Invalid user_id format: ${user_id}. Expected UUID format.`);
+      }
+
+      console.log("user_id validation passed");
+
+      console.log("About to call supabase.auth.admin.updateUserById with:");
+      console.log("- user_id:", user_id);
+      console.log("- user_id type:", typeof user_id);
+      console.log("- userRole:", userRole);
+
+      // Ensure user_id is a string and trim any whitespace
+      const cleanUserId = String(user_id).trim();
+      console.log("- cleanUserId:", cleanUserId);
+      console.log("- cleanUserId length:", cleanUserId.length);
+
+      // Update user metadata with gym role
+      const { data, error } = await supabase.auth.admin.updateUserById(
+        cleanUserId,
+        {
+          user_metadata: {
+            role: userRole,
+          },
+        }
+      );
+
+      if (error) {
+        console.error("Error updating user metadata:", error);
+        throw error;
+      }
+
+      console.log("User metadata updated:", data);
+
+      // Check if gym already exists
+      const { data: existingGym, error: checkError } = await supabase
+        .from("gym")
+        .select("*")
+        .eq("user_id", user_id)
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") {
+        // PGRST116 = not found
+        console.error("Error checking existing gym:", checkError);
+        throw checkError;
+      }
+
+      if (existingGym) {
+        return {
+          success: false,
+          alreadyExists: true,
+          message: "Gym profile already exists for this user",
+          gym: existingGym
+        };
+      }
+
+      // Parse location if it's a string
+      let locationData = location;
+      if (typeof location === 'string') {
+        try {
+          locationData = JSON.parse(location);
+        } catch (parseError) {
+          console.error("Error parsing location JSON:", parseError);
+          locationData = null;
+        }
+      }
+
+      // Prepare the insert data
+      const insertData = {
+        user_id: user_id,
+        gym_name: gymName,
+        owner_name: ownerName,
+        contact_no: contactNo,
+        address: address,
+        description: description,
+        location: locationData,
+        operating_Hours: operatingHours,
+        profile_img: profileImage,
+        documents: documents,
+        verified: false,
+      };
+
+      console.log(
+        "OAuth gym profile data to insert:",
+        JSON.stringify(insertData, null, 2)
+      );
+
+      // Insert gym data into gym table
+      const { data: gymData, error: insertError } = await supabase
+        .from("gym")
+        .insert([insertData])
+        .select();
+
+      if (insertError) {
+        console.error("Database insertion error details:");
+        console.error("Error message:", insertError.message);
+        console.error("Error code:", insertError.code);
+        console.error("Error details:", insertError.details);
+        console.error("Error hint:", insertError.hint);
+        console.error(
+          "Full error object:",
+          JSON.stringify(insertError, null, 2)
+        );
+        throw insertError;
+      }
+
+      console.log("OAuth gym data inserted successfully:", gymData);
+      return gymData[0];
+    } catch (error) {
+      console.error("Error completing OAuth gym profile:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = AuthModel;

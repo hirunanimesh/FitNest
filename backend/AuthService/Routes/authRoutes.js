@@ -52,6 +52,9 @@ router.post('/oauth/complete-profile', upload.single('profileImage'), AuthContro
 // Complete OAuth trainer profile
 router.post('/oauth/complete-profile-trainer', upload.none(), AuthController.completeOAuthTrainerProfile);
 
+// Complete OAuth gym profile
+router.post('/oauth/complete-profile-gym', upload.none(), AuthController.completeOAuthGymProfile);
+
 router.post('/customer/register', upload.single('profileImage'), AuthController.customerRegister);
 router.post('/gym/register', AuthController.GymRegister);
 router.post('/trainer/register', AuthController.TrainerRegister); // Removed multer middleware
