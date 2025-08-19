@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import axios from 'axios';
 
 interface BMIData {
     day: string;
@@ -103,7 +104,7 @@ const Charts: React.FC = () => {
     const [weightData, setWeightData] = useState<WeightData[]>(generateWeightData());
 
     // Fixed event handler - changed to mouse event for button clicks
-    const handleWeightSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleWeightSubmit = async(e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         
         const newWeight = parseFloat(weightForm.weight);
@@ -113,7 +114,13 @@ const Charts: React.FC = () => {
                 weight: newWeight,
                 date: weightForm.date
             };
-            
+            await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/addweight`,{
+                height: 1.75, // Example height, adjust as needed
+                weight: newWeight,
+                customer_id: 1,
+                date: weightForm.date,
+                
+            });
             // Add new entry and keep only last 30 entries
             setWeightData(prev => {
                 const updated = [...prev, newEntry].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
