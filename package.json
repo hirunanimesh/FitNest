@@ -1,0 +1,19 @@
+{
+  "name": "fitnest-migrations",
+  "version": "1.0.0",
+  "description": "Migration management for FitNest application",
+  "scripts": {
+    "migration:new": "npx supabase migration new",
+    "migration:list": "npx supabase migration list",
+    "migration:link": "npx supabase link",
+    "migration:push": "npx supabase db push",
+    "migration:reset": "npx supabase db reset",
+    "types:generate": "npx supabase gen types typescript --local"
+  },
+  "keywords": ["supabase", "migrations", "database"],
+  "author": "FitNest Team",
+  "license": "MIT",
+  "devDependencies": {
+    "supabase": "^2.34.3"
+  }
+}
