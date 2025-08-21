@@ -41,7 +41,7 @@ export default function MotivationQuotes() {
       style={{
         background: "linear-gradient(90deg, #f87171 25%, #fca5a5 50%, #f87171 75%)",
         backgroundSize: "200% 100%",
-        backgroundClip: "text",
+        backgroundClip: "text",//inline
         WebkitBackgroundClip: "text",
         WebkitTextFillColor: "transparent",
         animation: "shine 2s linear infinite",

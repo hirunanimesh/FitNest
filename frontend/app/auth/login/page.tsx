@@ -17,14 +17,14 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
+  useEffect(() => {  //
     // Check if user is coming back from OAuth
     const checkOAuthSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         // Check if user has completed their profile
         await handleOAuthSuccess(session);
-      }
+      }//DOM - DOCUMENT OBJECT MODEL
     };
 
     checkOAuthSession();
