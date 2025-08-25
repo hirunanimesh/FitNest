@@ -38,10 +38,10 @@ services:
   # Frontend Service - Development Overrides
   frontend:
     volumes:
-      - ./frontend/app:/app
+      - ./frontend:/app
       - /app/node_modules  # Anonymous volume to preserve node_modules
       - /app/.next        # Anonymous volume to preserve .next build cache
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:3000
-    command: npm run dev -- -p 3010
+    command: npm run dev
