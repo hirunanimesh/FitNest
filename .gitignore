@@ -1,0 +1,40 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/node_modules/lucid-react
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# PWA files
+/public/sw.js
+/public/workbox-*.js
+/public/worker-*.js
+/public/sw.js.map
+/public/workbox-*.js.map
+/public/worker-*.js.map
+
+# Icon generation script (optional)
+generate-icons.js
+
