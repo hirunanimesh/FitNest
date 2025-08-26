@@ -120,7 +120,7 @@ export default function CompleteProfile() {
       await refreshUserRole()
       
       // Force a page refresh to ensure the auth context is updated
-      window.location.href = '/dashboard/user'
+      window.location.href = '/auth/login'
       
     } catch (error: any) {
       console.error("Error completing OAuth profile:", error)
