@@ -16,6 +16,7 @@ import GoogleMapPicker from "@/components/GoogleMapPicker"
 import { useRouter } from "next/navigation"
 import { GymRegister } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
+import { PublicRoute } from "@/components/PublicRoute"
 
 interface DocumentEntry {
   id: string
@@ -264,6 +265,7 @@ export default function GymOwnerSignup() {
   }
 
   return (
+    <PublicRoute>
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/30 py-4">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header with Back Button */}
@@ -736,5 +738,6 @@ export default function GymOwnerSignup() {
         )}
       </div>
     </div>
+    </PublicRoute>
   );
 }

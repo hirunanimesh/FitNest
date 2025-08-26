@@ -11,6 +11,7 @@ import CreatePlan from "./_components/CreateSession";
 import UploadContent from "./_components/UploadContent";
 import Calendar from "./_components/Calendar";
 import SideBar from "./_components/SideBar"; // Import your SideBar component
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const mockTrainer = {
   name: "John Doe",
@@ -29,7 +30,7 @@ const TrainerDashboard = () => {
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
 
   return (
-    
+    <ProtectedRoute allowedRoles={['trainer']}>
       <div className="flex-1">
         {/* <header className="flex h-16 items-center gap-2 border-b border-gray-800 px-4 bg-gray-800 text-white">
           <SidebarTrigger className="-ml-1 text-white hover:bg-gray-700 data-[state=open]:bg-gray-700" />
@@ -63,7 +64,7 @@ const TrainerDashboard = () => {
           <UploadContent/>
         </div>
       </div>
-    
+    </ProtectedRoute>
   );
 };
 

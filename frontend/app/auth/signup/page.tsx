@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from 'next/navigation'
+import { PublicRoute } from "@/components/PublicRoute"
 
 
 type UserRole = "user" | "trainer" | "gym" | "";
@@ -91,7 +92,8 @@ export default function SignupPage() {
   ];
 
   return (
-    <div className="h-screen bg-gray-950 relative overflow-hidden pt-16">
+    <PublicRoute>
+      <div className="h-screen bg-gray-950 relative overflow-hidden pt-16">
       {/* Dark overlay to ensure deep black background */}
       <div className="absolute inset-0 bg-black/80" />
       
@@ -307,5 +309,6 @@ export default function SignupPage() {
       {/* Bottom decorative elements */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
     </div>
+    </PublicRoute>
   );
 }

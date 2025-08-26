@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import MonthlyRevenueChart from "./_components/MonthlyRevenueChart";
 import MonthlyMemberCountChart from "./_components/MonthlyMemberCountChart";
 import PaymentHistory from "./_components/PaymentHistory";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function GymDashboard() {
  
   return (
-    <div className="min-h-screen bg-gray-900">
+    <ProtectedRoute allowedRoles={['gym']}>
+      <div className="min-h-screen bg-gray-900">
       
       <div className="container mx-auto p-6">
 
@@ -54,5 +56,6 @@ export default function GymDashboard() {
 
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
