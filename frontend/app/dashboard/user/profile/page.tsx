@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { useRouter} from "next/navigation";
 import { UserNavbar } from "@/components/user-navbar"
 import {  GetUserInfo } from "@/lib/api"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
@@ -108,7 +109,8 @@ export default function ProfilePage() {
 
 // ...existing code...
   return (
-    <div className="bg-black-400 min-h-screen">
+    <ProtectedRoute allowedRoles={['customer']}>
+      <div className="bg-black-400 min-h-screen">
     <div className="min-h-screen bg-black text-white">
       <UserNavbar />
 
@@ -433,5 +435,6 @@ export default function ProfilePage() {
       </div>
     </div>
     </div>
+    </ProtectedRoute>
   )
 }

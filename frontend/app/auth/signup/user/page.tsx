@@ -15,6 +15,7 @@ import { AddCustomer } from "@/lib/api"
 import { AppLogo } from "@/components/AppLogo"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
 import { useToast } from "@/hooks/use-toast"
+import { PublicRoute } from "@/components/PublicRoute"
 
 export default function UserSignup() {
   const router = useRouter()
@@ -128,7 +129,8 @@ export default function UserSignup() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-red-950 py-8">
+    <PublicRoute>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-red-950 py-8">
       <div className="container mx-auto px-4">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between mb-8">
@@ -486,5 +488,6 @@ export default function UserSignup() {
         )}
       </div>
     </div>
+    </PublicRoute>
   )
 }
