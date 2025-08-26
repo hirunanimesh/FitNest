@@ -1,6 +1,7 @@
 import { Users, Dumbbell, Heart, Calendar, Trophy, Star } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import {Navbar} from "@/components/navbar"
+import { PublicRoute } from "@/components/PublicRoute"
 
 export default function AboutPage() {
   const userBenefits = [
@@ -63,8 +64,8 @@ export default function AboutPage() {
   ]
 
   return (
-   
-    <div className="min-h-screen bg-gray-900 text-white pt-16">
+    <PublicRoute>
+      <div className="min-h-screen bg-gray-900 text-white pt-16">
       <Navbar/>
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black pt-11">
@@ -236,5 +237,6 @@ export default function AboutPage() {
         </div>
       </section>
     </div>
+    </PublicRoute>
   )
 }

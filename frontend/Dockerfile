@@ -1,5 +1,5 @@
-# Use the official Node.js 18 runtime as the base image
-FROM node:18-alpine
+# Use the official Node.js 20 runtime as the base image
+FROM node:20-alpine
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -12,6 +12,12 @@ RUN npm install
 
 # Copy the rest of the application code
 COPY . .
+
+# Copy environment file
+COPY .env ./
+
+# Set environment variables for build
+ENV NODE_ENV=production
 
 # Build the Next.js application
 RUN npm run build

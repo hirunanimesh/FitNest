@@ -1,4 +1,4 @@
-import { getalltrainers, gettrainerbyid,  updatetrainerdetails } from '../services/trainer.service.js';
+import { getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails } from '../services/trainer.service.js';
 
 /*export const addTrainer = async (req, res) => {
   try {
@@ -22,17 +22,17 @@ export const getallTrainers = async (req,res)=>{
     }
 }
 
-export const getTrainerById = async (req, res) => {
+export const getFeedbackbyTrainerId = async (req, res) => {
     const { trainerId } = req.params;
     try {
-        const trainer = await gettrainerbyid(trainerId);
+        const trainer = await getfeedbackbytrainerid(trainerId);
         if (trainer) {
-        res.status(200).json({ message: "Trainer retrieved successfully", trainer });
+        res.status(200).json({ message: "Feedbacks retrieved successfully", trainer });
         } else {
-        res.status(404).json({ message: "Trainer not found" });
+        res.status(404).json({ message: "Feedbacks not found" });
         }
     } catch (error) {
-        console.error("Error retrieving trainer:", error);
+        console.error("Error retrieving feedbacks:", error);
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
@@ -51,5 +51,18 @@ export const updateTrainerDetails = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
-
+export const getTrainerById = async (req, res) => {
+    const { trainerId } = req.params;
+    try {
+        const trainer = await gettrainerbyid(trainerId);
+        if (trainer) {
+        res.status(200).json({ message: "Trainer retrieved successfully", trainer });
+        } else {
+        res.status(404).json({ message: "Trainer not found" });
+        }
+    } catch (error) {
+        console.error("Error retrieving trainer:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
 

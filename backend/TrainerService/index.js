@@ -53,7 +53,8 @@ import {
 import { 
   getallTrainers, 
   getTrainerById, 
-  updateTrainerDetails
+  updateTrainerDetails,
+  getFeedbackbyTrainerId
  } from './controllers/trainer.controller.js'
 const app = express()
 app.use(express.json())
@@ -71,6 +72,7 @@ app.get('/getalltrainers', getallTrainers);
 app.get('/gettrainerbyid/:trainerId', getTrainerById);
 app.put('/updatetrainerdetails/:trainerId', updateTrainerDetails);
 
+app.get('/getfeedbackbytrainerid/:trainerId',getFeedbackbyTrainerId);
 //api  for calendar function
 //get subscribe user
 const PORT = process.env.PORT || 3005

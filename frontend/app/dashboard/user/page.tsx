@@ -10,6 +10,7 @@ import Charts from "./_components/Charts"
 import Schedule from "./_components/Schedule"
 import MotivationQuotes from "./_components/MotivationQuote"
 import { Suspense } from "react";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 //import {  GetUserInfo } from "@/lib/api"
 
 function UserDashboardContent() {
@@ -88,10 +89,12 @@ function UserDashboardContent() {
 
 export default function UserDashboard() {
   return (
-    <Suspense fallback={<div className="bg-black min-h-screen flex items-center justify-center">
-      <div className="text-white">Loading...</div>
-    </div>}>
-      <UserDashboardContent />
-    </Suspense>
+    <ProtectedRoute allowedRoles={['customer']}>
+      <Suspense fallback={<div className="bg-black min-h-screen flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>}>
+        <UserDashboardContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Clock, Dumbbell, FlameIcon as Fire, Heart, MapPin, Target, Trophy, Users, Zap } from "lucide-react"
+import { PublicRoute } from "@/components/PublicRoute"
 
 export default function GymProfilePage() {
   const achievements = [
@@ -22,7 +23,8 @@ export default function GymProfilePage() {
 
   
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-6">
+    <PublicRoute>
+      <div className="min-h-screen bg-black text-white p-4 md:p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header Section */}
         <Card className="bg-gray-900 border-gray-800">
@@ -253,5 +255,6 @@ export default function GymProfilePage() {
         </div>
       </div>
     </div>
+    </PublicRoute>
   )
 }

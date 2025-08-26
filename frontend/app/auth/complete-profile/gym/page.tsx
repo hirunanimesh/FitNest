@@ -69,6 +69,7 @@ export default function CompleteGymProfile() {
         router.push("/auth/login");
         return;
       }
+       
 
       if (!session.user || !session.user.id) {
         console.error("Invalid session - missing user or user ID:", session);

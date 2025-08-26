@@ -11,6 +11,7 @@ import { AppLogo } from "@/components/AppLogo"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { LoginUser, GetUserInfo } from "@/lib/api"
+import { PublicRoute } from "@/components/PublicRoute"
 
 export default function LoginPage() {
   const router = useRouter();
@@ -149,7 +150,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+    <PublicRoute>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 via-slate-950 to-red-950/30"></div>
       
@@ -299,5 +301,6 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+    </PublicRoute>
   )
 }
