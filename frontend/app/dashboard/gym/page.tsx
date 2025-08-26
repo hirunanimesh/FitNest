@@ -9,9 +9,45 @@ import { Button } from "@/components/ui/button";
 import MonthlyRevenueChart from "./_components/MonthlyRevenueChart";
 import MonthlyMemberCountChart from "./_components/MonthlyMemberCountChart";
 import PaymentHistory from "./_components/PaymentHistory";
+
+import { useGym } from "./context/GymContext";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { GetGymProfileData } from "@/lib/api";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
+
 export default function GymDashboard() {
+
+  const {setGymId,setUserId} = useGym()
+
+  const getSession = async () => {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) {
+      console.error("Error fetching session:", error);
+      return null;
+    }
+    return data.session?.user.id;
+  };
+
+  useEffect(()=>{
+    const fetchGymId = async() =>{
+      const user_id = await getSession()
+     setUserId(user_id || null)
+      try{
+        const response = await GetGymProfileData(user_id)
+        if(response){
+          console.log(response.gym)
+          setGymId(response.gym.gym_id)
+        }else{
+          console.error("No response fetch")
+        }
+      }catch(error){
+        console.log("Error fetching data",error)
+      }
+    }
+    fetchGymId()
+  },[setGymId,setUserId])
  
   return (
     <ProtectedRoute allowedRoles={['gym']}>
