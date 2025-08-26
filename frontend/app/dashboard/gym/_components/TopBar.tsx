@@ -1,11 +1,14 @@
 "use client";
 import React from 'react'
 import { Building, Sun } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 const TopBar = () => {
   const [user, setUser] = useState<{ name: string; avatar?: string } | null>(null);
+
 
   return (
     <div>
@@ -22,10 +25,12 @@ const TopBar = () => {
                 </div>
                 <div className='flex flex-row gap-5 items-center'>
                 
-                <Avatar>
-                  <AvatarImage src={user?.avatar || "/placeholder.svg"} />
-                  <AvatarFallback>{user ? user.name?.[0] : "?"}</AvatarFallback>
-                </Avatar>
+                <Link href='/dashboard/gym/profile'>
+                  <Avatar>
+                    <AvatarImage src={user?.avatar || "/placeholder.svg"} />
+                    <AvatarFallback>{user ? user.name?.[0] : "?"}</AvatarFallback>
+                  </Avatar>
+                </Link>
                   <Button>Log out</Button>
                 </div>
             </div>

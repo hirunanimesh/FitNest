@@ -4,7 +4,7 @@ import {addStripeAccount} from '../../controllers/mongoController/add-plan-data.
 
 export default async function createAccount(req,res) {
 
-    const {user_id} = req.body;
+    const {user_id} = req.params;
     var accountId;
     const stripeAccount = await findStripeAccount({user_id})
     if(stripeAccount){

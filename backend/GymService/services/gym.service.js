@@ -25,11 +25,11 @@ export async function getallgyms(){
         return data; // Return all gyms
 }
 
-export async function getgymbyid(gymId) {
+export async function getgymbyid(userId) {
         const { data, error } = await supabase
         .from('gym')
         .select('*')
-        .eq('gym_id', gymId)
+        .eq('user_id', userId)
         .single(); // Fetch single gym by ID
 
         if(!data){
@@ -60,6 +60,43 @@ export async function updategymdetails(gymId, gymData) {
 
 export async function gettotalmembercount(gymId){
   const {data,error} = await supabase.rpc('get_gym_member_count', { gym_id_param: gymId });
+  if(data === null | data === 0){
+    return 0;
+  }
+  if(error){
+    throw new Error(error.message);
+  }
+  return data;
+}
+
+export async function getgymtrainers(gymId){
+  const {data,error} = await supabase.from('trainer_requests').select(`
+    *,
+    trainer (*)
+    `).eq("gym_id",gymId)
+  if(data === null | data === 0){
+    return 0
+  }
+  if(error){
+    throw new Error(error.message)
+  }
+  return data;
+}
+
+export async function approvetrainer(request_id){
+  const {data,error} = await supabase.from("trainer_requests")
+  .update({
+    approved:true,
+    approved_at:Date.now
+  })
+  .eq("request_id",request_id)
+  .select();
+
+  return data;
+}
+
+export async function getgymtrainercount(gymId){
+  const {data,error} = await supabase.rpc('get_gym_trainer_count',{gym_id_input:gymId})
   if(data === null | data === 0){
     return 0;
   }

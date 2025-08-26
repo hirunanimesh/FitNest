@@ -2,7 +2,7 @@ import stripe from "../../lib/stripe.js";
 import {findStripeCustomerId} from '../../controllers/mongoController/add-plan-data.js'
 import {addStripeCustomer} from '../../controllers/mongoController/add-plan-data.js'
 
-export default async function handler(req, res) {
+export default async function oneTimePayment(req, res) {
     const { priceId, destinationAccountId, customer_id } = req.body;
 
     var customerId;
@@ -19,14 +19,10 @@ export default async function handler(req, res) {
       })
     }
   
-    // need to check database customer id exist or not if not create ( after DB created)
-    const customer = await stripe.customers.create({
-      metadata: { customer_id },
-    });
   
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      customer: customer.id,
+      customer: customerId,
       payment_method_types: ['card'],
       line_items: [
         {

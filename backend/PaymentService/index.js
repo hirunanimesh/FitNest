@@ -10,6 +10,8 @@ import getDashboardLink from './controllers/stripeController/dashboard.js';
 import getPaymentList from './controllers/stripeController/get-payments.js';
 import connectDatabase from './database/mongo.js';
 import getConnectedAccountPayments from './controllers/stripeController/get-connected-account-payments.js';
+import oneTimePayment from './controllers/stripeController/one-time-payment.js';
+import getCurrentMonthRevenue from './controllers/stripeController/get-monthly-revenue.js';
 
 dotenv.config();
 
@@ -20,13 +22,15 @@ app.use(cors());
 connectDatabase()
 
 app.use('/create-plan',createPlan)
-app.use('/create-account', createAccount);
+app.use('/create-account/:user_id', createAccount);
 app.use('/subscribe',subscribe)
 app.use('/getinvoices',getInvoices)
 app.use('/getsubscription',getSubscriptions)
 app.use('/getpayments',getPaymentList)
-app.use('/stripedashboard',getDashboardLink)
-app.use('/connectedaccountpayments',getConnectedAccountPayments)
+app.get('/stripedashboard/:user_id',getDashboardLink)
+app.use('/connectedaccountpayments/:userId',getConnectedAccountPayments)
+app.use('/onetimepayment',oneTimePayment)
+app.use('/monthlyrevenue/:userId',getCurrentMonthRevenue)
 
 
 app.listen(process.env.PORT || 3003, () => {
