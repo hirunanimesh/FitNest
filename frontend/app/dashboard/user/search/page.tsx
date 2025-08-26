@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin } from "lucide-react"
 import GymCard from "@/components/GymCard"
 import TrainerCard from "@/components/TrainerCard" // Assuming you have a TrainerCard component
+import GymsMapView from "@/components/GymsMapView"
 
 // Added a type definition for the gym and trainer data
 interface Gym {
@@ -44,6 +45,8 @@ export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedLocation, setSelectedLocation] = useState("")
   const [view, setView] = useState<"gyms" | "trainers">("gyms") // Toggle state
+  const [showMapView, setShowMapView] = useState(false)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
 
   useEffect(() => {
     // Fetch gym data from the backend
@@ -51,6 +54,7 @@ export default function SearchPage() {
       .then((response) => {
         if (response.data && Array.isArray(response.data.gyms)) {
           setGyms(response.data.gyms)
+          console.log("Fetched gyms:", response.data.gyms)
         } else {
           console.error("Unexpected response format:", response.data)
           setGyms([])
@@ -73,7 +77,70 @@ export default function SearchPage() {
         console.error("Error fetching trainers:", error)
         setTrainers([])
       })
+
   }, [])
+
+  // Get filtered gyms based on search criteria
+  const getFilteredGyms = () => {
+    return gyms.filter((gym) => {
+      const matchesName = gym.gym_name.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesLocation = !selectedLocation || 
+        selectedLocation === "default" || 
+        gym.address.toLowerCase().includes(selectedLocation.toLowerCase()) ||
+        (gym.location && gym.location.toLowerCase().includes(selectedLocation.toLowerCase()))
+      return matchesName && matchesLocation
+    })
+  }
+
+  // Handle "Find Near Me" button click
+  const handleFindNearMe = () => {
+    if (view === "gyms") {
+      // Get user's location first
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            })
+            setShowMapView(true)
+          },
+          (error) => {
+            // Handle geolocation error properly
+            let errorMessage = 'Unknown error occurred'
+            switch(error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location access denied by user'
+                break
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information unavailable'
+                break
+              case error.TIMEOUT:
+                errorMessage = 'Location request timed out'
+                break
+            }
+            console.warn('Geolocation error:', errorMessage)
+            // Show map anyway with default location (Colombo, Sri Lanka)
+            setUserLocation({ lat: 6.9271, lng: 79.8612 })
+            setShowMapView(true)
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 600000
+          }
+        )
+      } else {
+        // Browser doesn't support geolocation, show map anyway
+        console.warn('Geolocation not supported by this browser')
+        setUserLocation({ lat: 6.9271, lng: 79.8612 })
+        setShowMapView(true)
+      }
+    } else {
+      // For trainers, you could implement a different behavior or show a message
+      alert("Map view is currently available for gyms only.")
+    }
+  }
 
   return (
     <div className="bg-black-400 min-h-screen">
@@ -146,7 +213,7 @@ export default function SearchPage() {
                 <SelectItem value="vavuniya">Vavuniya</SelectItem>
               </SelectContent>
             </Select>
-            <Button>
+            <Button onClick={handleFindNearMe}>
               <MapPin className="mr-2 h-4 w-4" />
               Find Near Me
             </Button>
@@ -156,14 +223,7 @@ export default function SearchPage() {
         {/* Display Gym or Trainer Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {view === "gyms" &&
-            gyms
-              .filter((gym) => {
-                const matchesName = gym.gym_name.toLowerCase().includes(searchQuery.toLowerCase())
-                const matchesLocation =
-                  !selectedLocation || selectedLocation === "default"|| gym.location.toLowerCase() === selectedLocation
-                return matchesName && matchesLocation
-              })
-              .map((gym) => <GymCard key={gym.gym_id} gym={gym} />)}
+            getFilteredGyms().map((gym) => <GymCard key={gym.gym_id} gym={gym} />)}
 
           {view === "trainers" &&
             trainers
@@ -179,6 +239,15 @@ export default function SearchPage() {
 
         </div>
       </div>
+
+      {/* Map View Modal */}
+      {showMapView && (
+        <GymsMapView 
+          gyms={getFilteredGyms()} 
+          onClose={() => setShowMapView(false)}
+          userLocation={userLocation}
+        />
+      )}
     </div>
     </div>
   )
