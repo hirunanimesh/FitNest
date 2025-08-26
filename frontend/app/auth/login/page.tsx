@@ -10,8 +10,9 @@ import Link from "next/link"
 import { AppLogo } from "@/components/AppLogo"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
-import { LoginUser, GetUserInfo } from "@/lib/api"
+import { LoginUser } from "@/lib/api"
 import { PublicRoute } from "@/components/PublicRoute"
+// Removed unused TIMEOUT import
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,6 +23,8 @@ export default function LoginPage() {
     // Check if user is coming back from OAuth
     const checkOAuthSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("OAuth session data:", session);
+      console.log("OAuth session user metadata:", session?.user.user_metadata.role);
       if (session) {
         // Check if user has completed their profile
         await handleOAuthSuccess(session);
@@ -41,38 +44,22 @@ export default function LoginPage() {
   }, []);
 
   const handleOAuthSuccess = async (session: any) => {
-    try {
-      const userRole = session.user.user_metadata?.role;
-      
-      // If user has a role, redirect based on role
-      if (userRole) {
-        redirectBasedOnRole(userRole);
-        return;
-      }
-
-      // If no role, this is a Google OAuth user - check if they have a customer profile
+     // If no role present yet, fetch latest auth user (could have been just updated) and decide.
       try {
-        const { data, error } = await supabase
-          .from('customer')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (data) {
-          // Profile exists, redirect to user dashboard
-          router.push("/dashboard/user");
-        } else {
-          // No profile exists, redirect to complete profile
-          router.push("/auth/complete-profile");
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.error("Error fetching user for role:", userError);
+          return;
+        }
+        const refreshedRole = user?.user_metadata?.role;
+        console.log("Refreshed user role:", refreshedRole);
+        if (refreshedRole) {
+          redirectBasedOnRole(refreshedRole);
+          return;
         }
       } catch (error) {
-        console.error("Error checking customer profile:", error);
-        // If error, assume they need to complete profile
-        router.push("/auth/complete-profile");
+        console.error("Error determining role from auth metadata:", error);
       }
-    } catch (error) {
-      console.error("Error handling OAuth success:", error);
-    }
   };
 
   const redirectBasedOnRole = (role: string) => {

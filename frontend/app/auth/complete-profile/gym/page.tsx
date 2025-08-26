@@ -304,7 +304,7 @@ export default function CompleteGymProfile() {
 
       // Redirect after success
       setTimeout(() => {
-        router.push("/dashboard/gym")
+        router.push("/auth/login")
       }, 2000)
 
     } catch (err: any) {

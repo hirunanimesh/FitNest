@@ -272,7 +272,7 @@ export default function CompleteTrainerProfile() {
 
       // Redirect after success
       setTimeout(() => {
-        router.push("/dashboard/trainer")
+        router.push("/auth/login")
       }, 2000)
 
     } catch (err: any) {
