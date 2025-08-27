@@ -35,7 +35,7 @@ const UpcomingSessions = () => {
       time: "11:00 AM",
       amount: "$22",
       description: "A high-intensity interval training session to burn calories.",
-      image: "https://i.ibb.co/2F3k9kH/hiit-workout.jpg",
+      image: "https://i.ibb.co/Y7H22TGc/CR011-AG-July-w-o-7-22-article-images-HIIT-Workout-banner-7-30-24.jpg",
     },
     {
       id: 3,
@@ -45,7 +45,7 @@ const UpcomingSessions = () => {
       time: "5:00 PM",
       amount: "$20",
       description: "A fun and energetic dance workout to improve fitness.",
-      image: "https://i.ibb.co/4p3z4kP/zumba-dance.jpg",
+      image: "https://i.ibb.co/WNkwS13v/2149346546.webp",
     },
   ];
 
