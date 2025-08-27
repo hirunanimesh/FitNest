@@ -157,10 +157,6 @@ services:
     container_name: fitnest-frontend
     ports:
       - "3010:3010"
-    volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-      - frontend_next_cache:/app/.next
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://localhost:3000
