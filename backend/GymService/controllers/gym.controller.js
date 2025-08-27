@@ -1,5 +1,5 @@
 // gym.controller.js
-import { createGym,getallgyms, getgymbyid, gettotalmembercount, updategymdetails } from '../services/gym.service.js';
+import { approvetrainer, createGym,getallgyms, getgymbyid, getgymtrainercount, getgymtrainers, gettotalmembercount, updategymdetails } from '../services/gym.service.js';
 
 export const addGym = async (req, res) => {
   try {
@@ -24,9 +24,9 @@ export const getAllGyms = async (req,res)=>{
 }
 
 export const getGymById = async (req, res) => {
-    const { gymId } = req.params;
+    const { userId } = req.params;
     try {
-        const gym = await getgymbyid(gymId);
+        const gym = await getgymbyid(userId);
         if (gym) {
         res.status(200).json({ message: "Gym retrieved successfully", gym });
         } else {
@@ -69,3 +69,49 @@ export const getTotalGymMemberCount = async (req,res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
+
+export const getTrainers = async (req,res) =>{
+    const {gymId} = req.params
+    try{
+        const trainers_data = await getgymtrainers(gymId)
+        if(trainers_data !== null){
+            res.status(200).json({message:"Trainers retrive successfully",trainers_data})
+        }else{
+            res.status(404).json({ message: "fetching trainers error" });
+        }
+    }catch(error){
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+export const approveTrainer = async (req,res) => {
+    const {request_id} = req.params
+    try{
+        const approve = await approvetrainer(request_id)
+        if(approve){
+            res.status(200).json({message:"Approved trainer request",approve,success:true})
+        }else{
+            res.status(404).json({ message: "Not approved request!" ,success:false});
+        }
+    }catch(error){
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+export const getGymTrainerCount = async (req,res) => {
+    const {gymId} = req.params
+    console.log("Gym ID:", gymId);
+    try{
+        const trainers_count = await getgymtrainercount(gymId)
+        console.log("Trainer count:", trainers_count);
+        if(trainers_count !== null){
+            res.status(200).json({message:"Trainers count retrive successfully",trainers_count})
+        }
+        if(trainers_count === 0 | trainers_count === null){
+            res.status(200).json({message:"No trainers found",trainers_count})
+        }
+    }catch(error){
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+

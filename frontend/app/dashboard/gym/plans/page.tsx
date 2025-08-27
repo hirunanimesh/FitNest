@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { GetGymPlans } from "@/api/gym/route";
 
 const mockPlans = [
 	{ id: 1, name: "Basic Plan", price: "$20/month", description: "Access to gym equipment" },
@@ -22,6 +23,8 @@ export default function GymPlans() {
 		price: "",
 		description: "",
 	});
+
+	
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();

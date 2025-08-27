@@ -186,3 +186,15 @@ export const CompleteOAuthProfileGym = async (profileData) => {
         throw error;
     }
 };
+
+export const GetGymProfileData = async(id) =>{
+    try{
+        const response = await axios.get(`${Base_URL}/api/gym/getgymbyid/${id}`)
+        if(!response){
+            console.error("Error fetching data!")
+        }
+        return response.data
+    }catch(error){
+        console.error("Error fetching gym data",error)
+    }
+}

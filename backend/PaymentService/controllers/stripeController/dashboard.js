@@ -2,10 +2,10 @@ import stripe from "../../lib/stripe.js";
 import {findStripeAccount} from '../../controllers/mongoController/add-plan-data.js'
 
 export default async function getDashboardLink(req,res){
-    const {user_id} = req.body
+    const {user_id} = req.params
     const stripeAccount = await findStripeAccount({user_id});
     if (!stripeAccount || !stripeAccount.account_id) {
-        return res.status(404).json({ error: 'Stripe account not found.' });
+        return res.status(200).json({ error: 'Stripe account not found.', founded:false });
     }
     const account_id = stripeAccount.account_id;
 
@@ -18,7 +18,7 @@ export default async function getDashboardLink(req,res){
         if (!loginLink.url) {
             return res.status(500).json({ error: 'account that has not completed onboarding' });
         }else{
-            res.json({ url: loginLink.url });
+            res.json({ url: loginLink.url ,founded:true});
         }
 
     }catch(error){
