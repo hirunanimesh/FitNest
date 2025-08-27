@@ -16,11 +16,15 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:3001
       - GYM_SERVICE_URL=http://gym-service:3002
       - PAYMENT_SERVICE_URL=http://payment-service:3003
+      - USER_SERVICE_URL=http://user-service:3004
+      - TRAINER_SERVICE_URL=http://trainer-service:3005
       - NODE_ENV=production
     depends_on:
       - auth-service
       - gym-service
       - payment-service
+      - user-service
+      - trainer-service
     networks:
       - fitnest-network
     restart: unless-stopped
@@ -41,8 +45,6 @@ services:
     volumes:
       - ./backend/AuthService:/app
       - auth_service_node_modules:/app/node_modules
-    env_file:
-      - .env
     environment:
       - PORT=3001
       - NODE_ENV=production
@@ -66,8 +68,6 @@ services:
     volumes:
       - ./backend/GymService:/app
       - gym_service_node_modules:/app/node_modules
-    env_file:
-      - .env
     environment:
       - PORT=3002
       - NODE_ENV=production
@@ -91,17 +91,60 @@ services:
     volumes:
       - ./backend/PaymentService:/app
       - payment_service_node_modules:/app/node_modules
-    env_file:
-      - .env
     environment:
       - PORT=3003
       - NODE_ENV=production
     networks:
       - fitnest-network
-    restart:
-      unless-stopped
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # User Service
+  user-service:
+    build:
+      context: ./backend/UserService
+      dockerfile: Dockerfile
+    container_name: fitnest-user-service
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./backend/UserService:/app
+      - user_service_node_modules:/app/node_modules
+    environment:
+      - PORT=3004
+      - NODE_ENV=production
+    networks:
+      - fitnest-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Trainer Service
+  trainer-service:
+    build:
+      context: ./backend/TrainerService
+      dockerfile: Dockerfile
+    container_name: fitnest-trainer-service
+    ports:
+      - "3005:3005"
+    volumes:
+      - ./backend/TrainerService:/app
+      - trainer_service_node_modules:/app/node_modules
+    environment:
+      - PORT=3005
+      - NODE_ENV=production
+    networks:
+      - fitnest-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -147,6 +190,10 @@ volumes:
   gym_service_node_modules:
     driver: local
   payment_service_node_modules:
+    driver: local
+  user_service_node_modules:
+    driver: local
+  trainer_service_node_modules:
     driver: local
   frontend_node_modules:
     driver: local

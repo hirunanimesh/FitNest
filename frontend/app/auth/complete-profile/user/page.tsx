@@ -11,9 +11,12 @@ import { AppLogo } from "@/components/AppLogo"
 import { supabase } from "@/lib/supabase"
 import { CompleteOAuthProfileMember } from "@/lib/api"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
+import { PublicRoute } from "@/components/PublicRoute"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function CompleteProfile() {
   const router = useRouter()
+  const { refreshUserRole } = useAuth()
   const [date, setDate] = useState<Date>()
   const [dateInput, setDateInput] = useState("")
   const [gender, setGender] = useState("")
@@ -113,8 +116,12 @@ export default function CompleteProfile() {
       
       console.log("OAuth profile completed successfully")
       
-      // Redirect based on user role
-      router.push('/dashboard/user')
+      // Refresh the user role in the context before redirecting
+      await refreshUserRole()
+      
+      // Force a page refresh to ensure the auth context is updated
+      window.location.href = '/dashboard/user'
+      
     } catch (error: any) {
       console.error("Error completing OAuth profile:", error)
       // Check if the error response contains the already exists message
@@ -140,7 +147,8 @@ export default function CompleteProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-12">
+    <PublicRoute>
+      <div className="min-h-screen bg-gray-900 py-12">
       <div className="container mx-auto px-4">
         <div className="mb-8 text-center">
           <AppLogo />
@@ -339,5 +347,6 @@ export default function CompleteProfile() {
         )}
       </div>
     </div>
+    </PublicRoute>
   )
 }

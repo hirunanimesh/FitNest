@@ -35,6 +35,24 @@ services:
       - NODE_ENV=development
     command: npm run start  # Using start since it uses nodemon
 
+  # User Service - Development Overrides
+  user-service:
+    volumes:
+      - ./backend/UserService:/app
+      - /app/node_modules  # Anonymous volume to preserve node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  # Trainer Service - Development Overrides
+  trainer-service:
+    volumes:
+      - ./backend/TrainerService:/app
+      - /app/node_modules  # Anonymous volume to preserve node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
   # Frontend Service - Development Overrides
   frontend:
     volumes:

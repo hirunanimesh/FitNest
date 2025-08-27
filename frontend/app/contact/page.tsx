@@ -1,6 +1,7 @@
 import { Mail, Phone, MapPin, Clock, MessageSquare, Send } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import {Navbar} from "@/components/navbar"
+import { PublicRoute } from "@/components/PublicRoute"
 
 export default function ContactPage() {
   const contactMethods = [
@@ -34,7 +35,8 @@ export default function ContactPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white pt-16">
+    <PublicRoute>
+      <div className="min-h-screen bg-gray-900 text-white pt-16">
         <Navbar />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black">
@@ -257,5 +259,6 @@ export default function ContactPage() {
         </div>
       </section>
     </div>
+    </PublicRoute>
   )
 }
