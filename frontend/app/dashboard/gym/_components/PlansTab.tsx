@@ -36,7 +36,16 @@ import { Edit, Trash2, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle } from 'lucide-react';
-import { GetGymPlans, GetTrainers } from '@/api/gym/route';
+import { 
+  GetGymPlans, 
+  GetTrainers, 
+  CreateGymPlan, 
+  UpdateGymPlan, 
+  DeleteGymPlan,
+  AssignTrainersToPlan,
+  UpdatePlanTrainers,
+  GetPlanTrainers
+} from '@/api/gym/route';
 import { useGym } from '../context/GymContext';
 import { toast } from 'sonner';
 
@@ -61,7 +70,7 @@ interface Plan {
   created_at: string;
   price_id_stripe: string | null;
   product_id_stripe: string | null;
-  trainers?: string[];
+  trainers: string[];
 }
 
 interface GymPlansResponse {
@@ -113,7 +122,29 @@ const PlansTab: React.FC = () => {
         setLoading(true);
         const response: GymPlansResponse = await GetGymPlans(gymId);
         if (response?.data?.gymPlan) {
-          setPlans(response.data.gymPlan);
+          const plansWithTrainers = await Promise.all(
+            response.data.gymPlan.map(async (plan) => {
+              try {
+                const trainersResponse = await GetPlanTrainers(plan.plan_id);
+                
+                // Extract trainer IDs from the response
+                let trainerIds: string[] = [];
+                const trainersArray = trainersResponse?.data?.data;
+                if (Array.isArray(trainersArray)) {
+                  trainerIds = trainersArray.map((item: any) => String(item.trainer_id));
+                }
+                return {
+                  ...plan,
+                  trainers: trainerIds
+                };
+              } catch (error) {
+                console.error(`Error fetching trainers for plan ${plan.plan_id}:`, error);
+                console.error(`Error details:`, error);
+                return { ...plan, trainers: [] };
+              }
+            })
+          );
+          setPlans(plansWithTrainers);
         } else {
           setErrorMessage('No plans found for this gym');
           toast.error('No plans found for this gym');
@@ -175,8 +206,7 @@ const PlansTab: React.FC = () => {
 
   const handleDeletePlan = async (planId: string) => {
     try {
-      // TODO: Implement delete API call
-      // await DeleteGymPlan(planId);
+      await DeleteGymPlan(planId);
 
       setPlans((prev) => prev.filter((plan) => plan.plan_id !== planId));
       setSuccessMessage('Plan deleted successfully');
@@ -207,8 +237,7 @@ const PlansTab: React.FC = () => {
 
     try {
       if (currentPlan.plan_id) {
-        // TODO: Implement update API call
-        // await UpdateGymPlan(currentPlan.plan_id, currentPlan);
+        await UpdateGymPlan(currentPlan.plan_id, currentPlan);
 
         setPlans((prev) =>
           prev.map((plan) =>
@@ -224,26 +253,65 @@ const PlansTab: React.FC = () => {
               : plan
           )
         );
+        
+        // Update trainers for the existing plan
+        await UpdatePlanTrainers(currentPlan.plan_id, currentPlan.trainers);
+        
+        // Refresh the plans to show updated trainer assignments
+        const updatedPlans = await Promise.all(
+          plans.map(async (plan) => {
+            if (plan.plan_id === currentPlan.plan_id) {
+              try {
+                const trainersResponse = await GetPlanTrainers(plan.plan_id);
+                 let trainerIds: string[] = [];
+                 const trainersArrayUpdate = trainersResponse?.data?.data;
+                 if (Array.isArray(trainersArrayUpdate)) {
+                   trainerIds = trainersArrayUpdate.map((item: any) => String(item.trainer_id));
+                 }
+                 return { ...plan, trainers: trainerIds };
+              } catch (error) {
+                console.error(`Error refreshing trainers for plan ${plan.plan_id}:`, error);
+                return { ...plan, trainers: currentPlan.trainers };
+              }
+            }
+            return plan;
+          })
+        );
+        setPlans(updatedPlans);
+        
         setSuccessMessage('Plan updated successfully');
         toast.success('Plan updated successfully');
       } else {
-        // TODO: Implement create API call
-        // const newPlan = await CreateGymPlan(gymId, currentPlan);
-
-        const newPlan: Plan = {
-          plan_id: `temp-${Date.now()}`,
-          title: currentPlan.title,
-          price: parseFloat(currentPlan.price),
-          description: currentPlan.description,
-          duration: currentPlan.duration,
-          gym_id: gymId,
-          created_at: new Date().toISOString(),
-          price_id_stripe: null,
-          product_id_stripe: null,
-          trainers: currentPlan.trainers,
-        };
+        const response = await CreateGymPlan(gymId, currentPlan);
+        const newPlan: Plan = response.data.gymPlan;
 
         setPlans((prev) => [...prev, newPlan]);
+        
+        // Assign trainers to the new plan
+        if (currentPlan.trainers.length > 0) {
+          await AssignTrainersToPlan(newPlan.plan_id, currentPlan.trainers);
+          
+          // Refresh the newly created plan to show trainer assignments
+          try {
+            const trainersResponse = await GetPlanTrainers(newPlan.plan_id);
+            let trainerIds: string[] = [];
+            const trainersArrayNew = trainersResponse?.data?.data;
+            if (Array.isArray(trainersArrayNew)) {
+              trainerIds = trainersArrayNew.map((item: any) => String(item.trainer_id));
+            }
+            
+            setPlans((prev) => 
+              prev.map((plan) => 
+                plan.plan_id === newPlan.plan_id 
+                  ? { ...plan, trainers: trainerIds }
+                  : plan
+              )
+            );
+          } catch (error) {
+            console.error(`Error refreshing trainers for new plan ${newPlan.plan_id}:`, error);
+          }
+        }
+        
         setSuccessMessage('Plan created successfully');
         toast.success('Plan created successfully');
       }
@@ -353,6 +421,7 @@ const PlansTab: React.FC = () => {
               <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
+          
 
           {plans.length === 0 ? (
             <div className="text-center py-8">
@@ -373,76 +442,87 @@ const PlansTab: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {plans.map((plan) => (
-                  <TableRow key={plan.plan_id}>
-                    <TableCell className="font-medium text-white">
-                      {plan.title}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-green-400 border-green-400">
-                        {formatPrice(plan.price)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-blue-400 border-blue-400">
-                        {plan.duration}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-gray-300 max-w-xs truncate">
-                      {plan.description}
-                    </TableCell>
-                    <TableCell className="text-gray-300 max-w-xs">
-                      <div className="flex flex-wrap gap-1">
-                        {plan.trainers && plan.trainers.length > 0 ? (
-                          plan.trainers.slice(0, 2).map((trainerId, index) => {
-                            const trainer = trainers.find(
-                              (t) => String(t.id) === String(trainerId)
-                            );
-                            return trainer ? (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                {trainer.trainer_name}
-                              </Badge>
-                            ) : null;
-                          })
-                        ) : (
-                          <span className="text-gray-500 text-xs">
-                            No trainers assigned
-                          </span>
-                        )}
-                        {plan.trainers && plan.trainers.length > 2 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{plan.trainers.length - 2} more
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-black hover:text-white"
-                          onClick={() => handleEditPlan(plan)}
-                        >
-                          <Edit className="mr-1 h-4 w-4" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDeletePlan(plan.plan_id)}
-                        >
-                          <Trash2 className="mr-1 h-4 w-4" />
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {plans.map((plan) => {
+                  console.log('Rendering plan:', plan);
+                  return (
+                    <TableRow key={plan.plan_id}>
+                      <TableCell className="font-medium text-white">
+                        {plan.title}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-green-400 border-green-400">
+                          {formatPrice(plan.price)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-blue-400 border-blue-400">
+                          {plan.duration}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-gray-300 max-w-xs truncate">
+                        {plan.description}
+                      </TableCell>
+                      <TableCell className="text-gray-300 max-w-xs">
+                        <div className="flex flex-wrap gap-2">
+                          {plan.trainers && plan.trainers.length > 0 ? (
+                            plan.trainers.slice(0, 2).map((trainerId, index) => {
+                              const trainer = trainers.find(
+                                (t) => String(t.id) === String(trainerId)
+                              );
+                              return trainer && trainer.profile_img ? (
+                                <img
+                                  key={index}
+                                  src={trainer.profile_img}
+                                  alt={trainer.trainer_name}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                  title={trainer.trainer_name}
+                                />
+                              ) : trainer ? (
+                                <div
+                                  key={index}
+                                  className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs"
+                                  title={trainer.trainer_name}
+                                >
+                                  {trainer.trainer_name[0]}
+                                </div>
+                              ) : null;
+                            })
+                          ) : (
+                            <span className="text-gray-500 text-xs">
+                              No trainers assigned
+                            </span>
+                          )}
+                          {plan.trainers && plan.trainers.length > 2 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{plan.trainers.length - 2} more
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-black hover:text-white"
+                            onClick={() => handleEditPlan(plan)}
+                          >
+                            <Edit className="mr-1 h-4 w-4" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeletePlan(plan.plan_id)}
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" />
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
