@@ -1,16 +1,31 @@
+"use client";
 import React, { useState } from 'react';
-import { Calendar, momentLocalizer, View } from 'react-big-calendar';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import './calendar-overrides.css';
 import './color-picker.css';
 
-const localizer = momentLocalizer(moment);
+
+// Custom event rendering for color
+function renderEventContent(eventInfo: any) {
+  return (
+    <div style={{ backgroundColor: eventInfo.event.extendedProps.color, borderRadius: 4, padding: '2px 6px', color: '#fff' }}>
+      {eventInfo.event.title}
+    </div>
+  );
+}
 
 interface Event {
+  id: string;
   title: string;
-  start: Date;
-  end: Date;
+  start: string;
+  end: string;
   color: string;
 }
 
@@ -20,152 +35,131 @@ const Schedule: React.FC = () => {
   const [taskDate, setTaskDate] = useState('');
   const [taskTime, setTaskTime] = useState('');
   const [taskColor, setTaskColor] = useState('#ef4444');
-  const [view, setView] = useState<View>('month');
-  const [date, setDate] = useState<Date>(new Date());
-  const [showForm, setShowForm] = useState(false);
-  const [hovered, setHovered] = useState<'save' | 'cancel' | null>(null);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  // ...existing code...
 
   const handleSaveTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (taskTitle && taskDate) {
-      let dateObj = new Date(taskDate);
+      let startDate = taskDate;
+      let endDate = taskDate;
       if (taskTime) {
-        const [hours, minutes] = taskTime.split(":");
-        dateObj.setHours(Number(hours), Number(minutes));
+        startDate += `T${taskTime}`;
+        endDate += `T${taskTime}`;
       }
-      setEvents([
-        ...events,
-        {
-          title: taskTitle,
-          start: dateObj,
-          end: dateObj,
-          color: taskColor,
-        },
-      ]);
+      const newEvent: Event = {
+        id: `${Date.now()}`,
+        title: taskTitle,
+        start: startDate,
+        end: endDate,
+        color: taskColor,
+      };
+      setEvents([...events, newEvent]);
       setTaskTitle('');
       setTaskDate('');
       setTaskTime('');
       setTaskColor('#ef4444');
-      setShowForm(false);
+      setIsTaskDialogOpen(false);
     }
   };
 
-  const handleSelectSlot = (slotInfo: any) => {
-    setTaskDate(moment(slotInfo.start).format('YYYY-MM-DD'));
-  };
+  // ...existing code...
 
   return (
     <div>
       <h2>User Schedule</h2>
-      {!showForm && (
-        <button
-          type="button"
-          style={{
-            background: '#ef4444',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 4,
-            padding: '8px 16px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            marginLeft: '3rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            marginBottom: '1rem',
-          }}
-          onClick={() => setShowForm(true)}
-        >
-          Add Task
-        </button>
-      )}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-          <form onSubmit={handleSaveTask} className="bg-gray-900 p-8 rounded-xl shadow-2xl min-w-[320px] flex flex-col gap-4 relative">
-            <h3 className="text-white text-center text-lg font-semibold mb-2">Add Task</h3>
-            <div className="grid gap-4 py-2">
-              <div className="space-y-2">
-                <label htmlFor="task_title" className="text-gray-200 text-sm font-medium">Title</label>
-                <input
-                  id="task_title"
-                  type="text"
-                  placeholder="Task Title"
-                  value={taskTitle}
-                  onChange={e => setTaskTitle(e.target.value)}
-                  required
-                  className="bg-gray-800 text-white rounded-md border border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="task_date" className="text-gray-200 text-sm font-medium">Date</label>
-                <input
-                
+      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+        <DialogTrigger asChild>
+          <Button type="button" className="bg-red-500 text-white font-semibold ml-12 mb-4" onClick={() => setIsTaskDialogOpen(true)}>
+            Add Task
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px] bg-gray-900 text-gray-200">
+          <DialogHeader>
+            <DialogTitle>Add Task</DialogTitle>
+            <DialogDescription>
+              Add a new task to your schedule.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveTask} className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="task_title">Title</Label>
+              <Input
+                className='bg-gray-800'
+                id="task_title"
+                type="text"
+                placeholder="Task Title"
+                value={taskTitle}
+                onChange={e => setTaskTitle(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex gap-4">
+              <div className="space-y-2 flex-1">
+                <Label htmlFor="task_date">Date</Label>
+                <Input
+                  className='bg-gray-800'
                   id="task_date"
                   type="date"
                   value={taskDate}
                   onChange={e => setTaskDate(e.target.value)}
                   required
-                  className="bg-gray-800 text-white rounded-md border border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
-              <div className="space-y-2">
-                <label htmlFor="task_time" className="text-gray-200 text-sm font-medium">Time</label>
-                <input
+              <div className="space-y-2 flex-1">
+                <Label htmlFor="task_time">Time</Label>
+                <Input
+                  className='bg-gray-800'
                   id="task_time"
                   type="time"
                   value={taskTime}
                   onChange={e => setTaskTime(e.target.value)}
                   required
-                  className="bg-gray-800 text-white rounded-md border border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-[120px]"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="task_color" className="text-gray-200 text-sm font-medium">Color</label>
-                <input
-                  id="task_color"
-                  type="color"
-                  value={taskColor}
-                  onChange={e => setTaskColor(e.target.value)}
-                  className="color-picker w-8 h-8 p-0 border-none rounded-full"
-                  title="Choose event color"
                 />
               </div>
             </div>
-            <div className="flex gap-4 mt-4">
-              <button
-                type="submit"
-                className={`px-4 py-2 rounded-md font-semibold transition-colors duration-150 shadow ${hovered === 'cancel' ? 'bg-gray-800' : 'bg-red-500'} text-white hover:bg-gray-800`}
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                className={`px-4 py-2 rounded-md font-semibold transition-colors duration-150 shadow ${hovered === 'cancel' ? 'bg-red-500' : 'bg-gray-800'} text-white hover:bg-red-500`}
-                onClick={() => setShowForm(false)}
-                onMouseEnter={() => setHovered('cancel')}
-                onMouseLeave={() => setHovered(null)}
+            <div className="flex items-center gap-3">
+              <Label htmlFor="task_color" className="whitespace-nowrap">Color</Label>
+              <input
+                id="task_color"
+                type="color"
+                value={taskColor}
+                onChange={e => setTaskColor(e.target.value)}
+                className="color-picker w-8 h-8 p-0 rounded-full border-none"
+                style={{ boxShadow: `0 0 0 4px ${taskColor}33` }}
+                title="Choose event color"
+              />
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className='bg-gray-800'
+                onClick={() => setIsTaskDialogOpen(false)}
               >
                 Cancel
-              </button>
-            </div>
+              </Button>
+              <Button type="submit">
+                Save Task
+              </Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
-      {/* @ts-ignore: Suppress JSX type error for Calendar component */}
-      <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-  style={{ height: 600, marginLeft: '2rem', marginRight: '2rem' }}
-        defaultView="month"
-        view={view}
-        onView={setView}
-        date={date}
-        onNavigate={setDate}
-        views={{ month: true, week: true, day: true, agenda: true }}
-        selectable
-        onSelectSlot={handleSelectSlot}
-        eventPropGetter={(event) => ({ style: { backgroundColor: event.color, color: '#6e3131ff', borderRadius: 4 } })}
-      />
+        </DialogContent>
+      </Dialog>
+      <div style={{ height: 600, marginLeft: '2rem', marginRight: '2rem', backgroundColor: '#192024', borderRadius: 8 }}>
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          events={events}
+          eventContent={renderEventContent}
+          height="100%"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          }}
+        />
+      </div>
     </div>
   );
 };
