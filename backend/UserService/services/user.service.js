@@ -1,17 +1,5 @@
 import { supabase } from '../database/supabase.js';
 
-/*export async function createUser(userData) {
-  const { data, error } = await supabase
-    .from('customer')
-    .insert([userData])
-    .select(); 
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data[0]; // Return first inserted row
-}*/
 
 export async function updateUserDetails(userId, userData) {
   const { data, error } = await supabase
@@ -85,5 +73,3 @@ export async function getLatestWeightById(userId) {
 
   return data[0]; // Array of all weight entries
 }
-
-

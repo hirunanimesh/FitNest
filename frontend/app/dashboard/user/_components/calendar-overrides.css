@@ -1,0 +1,72 @@
+/* Make all time labels (including event times) gray */
+.fc-timegrid-slot-label, .fc-list-event-time, .fc-daygrid-event .fc-event-time {
+  color: #a3a3a3 !important;
+}
+/* Make day times (hour labels) gray */
+.fc-timegrid-axis-cushion {
+  color: #a3a3a3 !important;
+}
+/* Make calendar dates, month name, and week/day names gray */
+.fc-daygrid-day-number, .fc-timegrid-col .fc-col-header-cell-cushion,
+.fc-toolbar-title, /* month name */
+.fc-col-header-cell-cushion, /* week/day names */
+.fc-daygrid-week-number {
+  color: #a3a3a3 !important;
+}
+/* Make calendar dates gray */
+.fc-daygrid-day-number, .fc-timegrid-col .fc-col-header-cell-cushion {
+  color: #a3a3a3 !important;
+}
+/* calendar-overrides.css */
+.rbc-calendar {
+  background-color: #111;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.rbc-toolbar {
+  background-color: #222;
+  color: #fff;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.rbc-toolbar button {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+.rbc-toolbar button:hover {
+  background: #444;
+}
+
+.rbc-month-view {
+  border: 1px solid #444;
+}
+
+.rbc-month-row {
+  border-top: 1px solid #444;
+}
+
+.rbc-day-bg {
+  background: #111;
+}
+
+.rbc-today {
+  background: #1e293b;
+}
+
+.rbc-off-range-bg {
+  background: #222;
+}
+
+.rbc-event {
+  background: #ef4444;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 0.85rem;
+}

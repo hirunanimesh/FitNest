@@ -56,22 +56,7 @@ useEffect(() => {
             <p className="text-sm text-muted-foreground">{today}</p>
           
           <nav className="hidden md:flex space-x-8">
-            <a href="#Workout Progress" className="text-white hover:text-red-400">
-              Workout Progress
-            </a>
-            <a href="#Today's Sessions" className="text-white hover:text-red-400">
-              Today's Sessions
-            </a>
-            <a href="#Upcoming Sessions" className="text-white hover:text-red-400">
-              Upcoming Sessions
-            </a>
-            <a href="#Health Analytics" className="text-white hover:text-red-400">
-              Health Analytics
-            </a>
-            <a href="#Fitness Schedule" className="text-white hover:text-red-400">
-              Fitness Schedule
-            </a>
-          
+            
             <Link
               href="/dashboard/user/search"
               className="text-white hover:text-[#FB4141] px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group"

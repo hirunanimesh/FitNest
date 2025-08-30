@@ -318,6 +318,8 @@ class AuthController {
         }
       }
 
+      
+
       const result = await authmodel.customerRegister(
         email,
         password,
@@ -333,6 +335,7 @@ class AuthController {
         height,
         locationObject // Pass as JSON object for JSONB field
       );
+      console.log('customerRegister result:', result);
 
       res.status(201).json({
         success: true,

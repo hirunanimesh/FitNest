@@ -1,7 +1,7 @@
 //calendar
 //add weight
 
-import { getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
+import { addEventToCalendar ,getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
 import{addFeedback} from  '../services/feedback.service.js';
 
 /*export const addUser = async (req, res) => {
@@ -94,7 +94,24 @@ export const addfeedback = async (req, res) => {
         console.error("Error adding feedback:", error);
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
-};;
+};
+export const addEventToCalendarController = async (req, res) => {
+    try {
+        const { userId, event } = req.body;
+        if (!userId || !event) {
+            return res.status(400).json({ message: "Missing userId or event data" });
+        }
+        const result = await addEventToCalendar(userId, event);
+        if (result && result.success) {
+            res.status(200).json({ message: "Event added to calendar successfully", eventId: result.eventId });
+        } else {
+            res.status(500).json({ message: "Failed to add event to calendar", error: result?.error });
+        }
+    } catch (error) {
+        console.error("Error adding event to calendar:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
 
 
 
