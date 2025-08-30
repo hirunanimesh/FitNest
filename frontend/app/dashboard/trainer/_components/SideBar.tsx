@@ -2,8 +2,9 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { format } from "date-fns";
+import { supabase } from "@/lib/supabase";
 import {
     Sidebar,
     SidebarContent,
@@ -29,6 +30,7 @@ const mockTrainer = {
 
 const SideBar = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
 
   // Navigation items configuration
@@ -160,6 +162,15 @@ const SideBar = ({ children }: { children: React.ReactNode }) => {
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon" className="text-white hover:bg-gray-700">
                 <Bell className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={() => {
+                  supabase.auth.signOut();
+                  router.push("/auth/login");
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Logout
               </Button>
             </div>
           </div>
