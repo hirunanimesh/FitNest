@@ -317,100 +317,97 @@ class AuthModel {
     birthday,
     weight,
     height,
-    location,
-    accessToken,
-    refreshToken
+    location
   ) {
-      try {
-        // Create user and get the data object
-        const userData = await AuthModel.createUser(email, password, role);
-        if (!userData || !userData.user) {
-          throw new Error("User not returned from signUp");
-        }
-        const userId = userData.user.id;
+    try {
+      // Create user and get the data object
+      const userData = await AuthModel.createUser(email, password, role);
 
-        // Create Google Calendar named 'FitNest' for user
-        let calendarId = null;
-        if (accessToken && refreshToken) {
-          const { getOAuth2Client, createUserCalendar } = require("../lib/googleCalendar");
-          const oAuth2Client = getOAuth2Client(accessToken, refreshToken);
-          calendarId = await createUserCalendar(oAuth2Client);
-          console.log('Created Google Calendar ID:', calendarId);
-        }
-
-        // Prepare the insert data
-        const insertData = {
-          user_id: userId,
-          first_name: firstName,
-          last_name: LastName,
-          address: address,
-          phone_no: phoneNo,
-          profile_img: profileImg, // This will now be the Cloudinary URL
-          gender: gender,
-          birthday: birthday,
-          location: location, // This is now a JSON object for JSONB field
-          calendar_id: calendarId,
-        };
-        console.log("Data to insert:", JSON.stringify(insertData, null, 2));
-
-        // Insert customer data into customers table
-        const { data: customerdata, error: insertError } = await supabase
-          .from("customer")
-          .insert([insertData])
-          .select();
-        if (insertError) {
-          console.error("Database insertion error details:");
-          console.error("Error message:", insertError.message);
-          console.error("Error code:", insertError.code);
-          console.error("Error details:", insertError.details);
-          console.error("Error hint:", insertError.hint);
-          console.error(
-            "Full error object:",
-            JSON.stringify(insertError, null, 2)
-          );
-          throw insertError;
-        }
-        console.log("Customer data inserted successfully:", customerdata);
-        const customer_id = customerdata[0].customer_id;
-        console.log("Inserted customer ID:", customer_id);
-
-        const { data: physicalData, error: physicalError } = await supabase
-          .from("customer_progress")
-          .insert([
-            {
-              customer_id: customer_id,
-              height: height ? parseFloat(height) : null,
-              weight: weight ? parseFloat(weight) : null,
-            },
-          ]);
-        if (physicalError) {
-          console.error("Physical data insertion error:", physicalError);
-        }
-        console.log("Physical data inserted successfully:", physicalData);
-
-        // Return both user and customer data
-        return {
-          user: userData.user,
-          session: userData.session,
-          customer: customerdata[0],
-        };
-      } catch (error) {
-        console.error("Error registering customer:", error);
-        throw error;
+      if (!userData || !userData.user) {
+        throw new Error("User not returned from signUp");
       }
+
+      const userId = userData.user.id;
+
+      // Prepare the insert data
+      const insertData = {
+        user_id: userId,
+        first_name: firstName,
+        last_name: LastName,
+        address: address,
+        phone_no: phoneNo,
+        profile_img: profileImg, // This will now be the Cloudinary URL
+        gender: gender,
+        birthday: birthday,
+        // weight: weight ? parseInt(weight) : null,
+        // height: height ? parseInt(height) : null,
+        location: location, // This is now a JSON object for JSONB field
+      };
+      console.log("Data to insert:", JSON.stringify(insertData, null, 2));
+
+      // Insert customer data into customers table
+      const { data: customerdata, error: insertError } = await supabase
+        .from("customer")
+        .insert([insertData])
+        .select(); // Add .select() to return the inserted data
+
+      if (insertError) {
+        console.error("Database insertion error details:");
+        console.error("Error message:", insertError.message);
+        console.error("Error code:", insertError.code);
+        console.error("Error details:", insertError.details);
+        console.error("Error hint:", insertError.hint);
+        console.error(
+          "Full error object:",
+          JSON.stringify(insertError, null, 2)
+        );
+        throw insertError;
+      }
+
+      console.log("Customer data inserted successfully:", customerdata);
+      const customer_id = customerdata[0].customer_id; // Get the ID of the inserted customer
+      console.log("Inserted customer ID:", customer_id);
+
+      const { data: physicalData, error: physicalError } = await supabase
+        .from("customer_progress")
+        .insert([
+          {
+            customer_id: customer_id,
+            height: height ? parseFloat(height) : null,
+            weight: weight ? parseFloat(weight) : null,
+            // Map other physical data fields here
+          },
+        ]);
+
+      if (physicalError) {
+        console.error("Physical data insertion error:", physicalError);
+      }
+      console.log("Physical data inserted successfully:", physicalData);
+
+      // Return both user and customer data
+      return {
+        user: userData.user,
+        session: userData.session,
+        customer: customerdata[0], // Return the first (and only) inserted record
+      };
+    } catch (error) {
+      console.error("Error registering customer:", error);
+      throw error;
     }
+  }
+
   static async GymRegister(
     email,
-    password,
-    gymName,
-    address,
-    location,
-    contactNo,
-    profileImage,
-    description,
-    documents,
-    operatingHours,
-    ownerName
+      password,
+      gymName,
+      address,
+      location,
+      contactNo,
+      profileImage,
+      description,
+      documents,
+      operatingHours,
+      ownerName,
   ) {
     const role = "gym";
     try {
