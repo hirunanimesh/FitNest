@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { Bell } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import Statistics from "./_components/Statistics";
 import Plans from "./_components/Plans";
 import CreatePlan from "./_components/CreateSession";
@@ -20,6 +22,7 @@ const mockTrainer = {
 
 const TrainerDashboard = () => {
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -32,21 +35,6 @@ const TrainerDashboard = () => {
   return (
     <ProtectedRoute allowedRoles={['trainer']}>
       <div className="flex-1">
-        {/* <header className="flex h-16 items-center gap-2 border-b border-gray-800 px-4 bg-gray-800 text-white">
-          <SidebarTrigger className="-ml-1 text-white hover:bg-gray-700 data-[state=open]:bg-gray-700" />
-          <div className="flex flex-1 items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold">Hi, {mockTrainer.name}</h1>
-              <p className="text-sm text-gray-300">{today}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-gray-700">
-                <Bell className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </header> */}
-
         <div className="flex-1 space-y-6 p-6">
           {/* display statistics */}
           <Statistics/>

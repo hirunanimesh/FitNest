@@ -100,6 +100,7 @@ export default function CompleteGymProfile() {
   // Handle location selection from map
   const handleLocationSelect = (selectedLocation: Location) => {
     setLocation(selectedLocation)
+    setShowMap(false) // Close the modal automatically when location is selected
   }
 
   // Add new document entry

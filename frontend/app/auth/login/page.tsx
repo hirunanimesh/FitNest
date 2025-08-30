@@ -18,6 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if user is coming back from OAuth
@@ -35,7 +36,10 @@ export default function LoginPage() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change event:", event, session);
+      
       if (event === 'SIGNED_IN' && session) {
+        console.log("User signed in, redirecting...");
         await handleOAuthSuccess(session);
       }
     });
@@ -51,14 +55,29 @@ export default function LoginPage() {
           console.error("Error fetching user for role:", userError);
           return;
         }
-        const refreshedRole = user?.user_metadata?.role;
+        
+        let refreshedRole = user?.user_metadata?.role;
         console.log("Refreshed user role:", refreshedRole);
+        
+        // If no role in metadata, check database tables
+        if (!refreshedRole && user) {
+          console.log("No role in metadata for OAuth user, checking database tables...");
+          refreshedRole = await determineUserRole(user.id);
+          console.log("Determined role from database for OAuth user:", refreshedRole);
+        }
+        
         if (refreshedRole) {
           redirectBasedOnRole(refreshedRole);
           return;
         }
+        
+        // If still no role found, default to customer
+        console.log("No role found for OAuth user, defaulting to customer");
+        redirectBasedOnRole("customer");
       } catch (error) {
         console.error("Error determining role from auth metadata:", error);
+        // Fallback to customer dashboard on error
+        redirectBasedOnRole("customer");
       }
   };
 
@@ -81,31 +100,81 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Helper function to determine user role from database
+  const determineUserRole = async (userId: string): Promise<string> => {
+    try {
+      // Check if user is a customer
+      const { data: customerData, error: customerError } = await supabase
+        .from('customer')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (customerData && !customerError) return 'customer';
+
+      // Check if user is a trainer
+      const { data: trainerData, error: trainerError } = await supabase
+        .from('trainer')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (trainerData && !trainerError) return 'trainer';
+
+      // Check if user is a gym
+      const { data: gymData, error: gymError } = await supabase
+        .from('gym')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (gymData && !gymError) return 'gym';
+
+      // Default to customer if no specific role found
+      return 'customer';
+    } catch (error) {
+      console.error('Error determining user role:', error);
+      return 'customer'; // Default fallback
+    }
+  };
+
   const handleLogin = async () => {
     setIsLoading(true);
+    setError(null); // Clear any previous errors
 
     try {
-      const response = await LoginUser(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
 
-      if (response.success) {
-        console.log("Login successful");
-        
+      if (error) {
+        console.error("Login failed:", error);
+        setError(error.message);
+        return;
+      }
+
+      console.log("Login successful");
+
+      if (data.session && data.user) {
         // Store session data if needed
-        if (response.session) {
-          // You can store additional session data in localStorage if needed
-          localStorage.setItem('fitnes_session', JSON.stringify(response.session));
+        localStorage.setItem('fitnes_session', JSON.stringify(data.session));
+
+        // Get user role from metadata or determine from database
+        let userRole = data.user?.user_metadata?.role;
+        
+        if (!userRole) {
+          console.log("No role in metadata, checking database tables...");
+          userRole = await determineUserRole(data.user.id);
+          console.log("Determined role from database:", userRole);
         }
 
         // Redirect based on user role
-        const userRole = response.role || response.user?.user_metadata?.role || "customer";
         redirectBasedOnRole(userRole);
-      } else {
-        console.error("Login failed:", response.message);
-        // Handle login failure (show error message)
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      // Handle error (show error message)
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -171,7 +240,10 @@ export default function LoginPage() {
                 type="email" 
                 placeholder="your@email.com" 
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError(null); // Clear error when user types
+                }}
                 required 
                 disabled={isLoading}
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-red-500/20 h-11"
@@ -187,7 +259,10 @@ export default function LoginPage() {
                 name="password" 
                 type="password" 
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError(null); // Clear error when user types
+                }}
                 required 
                 disabled={isLoading}
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-red-500/20 h-11"
@@ -214,6 +289,12 @@ export default function LoginPage() {
                 Forgot password?
               </Link>
             </div>
+
+            {error && (
+              <div className="p-3 bg-red-900/20 border border-red-700/50 rounded-lg">
+                <p className="text-red-400 text-sm">{error}</p>
+              </div>
+            )}
 
             <Button 
               onClick={handleLogin}
