@@ -78,125 +78,67 @@ const Schedule: React.FC = () => {
         </button>
       )}
       {showForm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.6)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <form onSubmit={handleSaveTask} style={{
-            background: '#222',
-            padding: '2rem',
-            borderRadius: 12,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-            minWidth: 320,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
-            alignItems: 'stretch',
-            position: 'relative',
-          }}>
-            <h3 style={{ color: '#fff', margin: 0, textAlign: 'center' }}>Add Task</h3>
-            <input
-              type="text"
-              placeholder="Task Title"
-              value={taskTitle}
-              onChange={e => setTaskTitle(e.target.value)}
-              required
-              style={{ padding: '8px', borderRadius: 6, border: '1px solid #444', background: '#111', color: '#fff' }}
-            />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ flex: 1, position: 'relative' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <form onSubmit={handleSaveTask} className="bg-gray-900 p-8 rounded-xl shadow-2xl min-w-[320px] flex flex-col gap-4 relative">
+            <h3 className="text-white text-center text-lg font-semibold mb-2">Add Task</h3>
+            <div className="grid gap-4 py-2">
+              <div className="space-y-2">
+                <label htmlFor="task_title" className="text-gray-200 text-sm font-medium">Title</label>
                 <input
+                  id="task_title"
+                  type="text"
+                  placeholder="Task Title"
+                  value={taskTitle}
+                  onChange={e => setTaskTitle(e.target.value)}
+                  required
+                  className="bg-gray-800 text-white rounded-md border border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="task_date" className="text-gray-200 text-sm font-medium">Date</label>
+                <input
+                
+                  id="task_date"
                   type="date"
                   value={taskDate}
                   onChange={e => setTaskDate(e.target.value)}
                   required
-                  style={{
-                    padding: '12px 40px 12px 12px',
-                    borderRadius: 8,
-                    border: '2px solid #ef4444',
-                    background: '#fff',
-                    color: '#222',
-                    width: '100%',
-                    fontSize: '1rem',
-                    fontWeight: 500,
-                    outline: 'none',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                    marginBottom: 0,
-                    appearance: 'none',
-                    MozAppearance: 'none',
-                    WebkitAppearance: 'none',
-                  }}
+                  className="bg-gray-800 text-white rounded-md border border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
-                <span style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="7" width="18" height="14" rx="2" fill="#ef4444"/>
-                    <rect x="7" y="11" width="2" height="2" rx="1" fill="#fff"/>
-                    <rect x="11" y="11" width="2" height="2" rx="1" fill="#fff"/>
-                    <rect x="15" y="11" width="2" height="2" rx="1" fill="#fff"/>
-                    <rect x="7" y="15" width="2" height="2" rx="1" fill="#fff"/>
-                    <rect x="11" y="15" width="2" height="2" rx="1" fill="#fff"/>
-                    <rect x="15" y="15" width="2" height="2" rx="1" fill="#fff"/>
-                    <rect x="7" y="3" width="2" height="4" rx="1" fill="#ef4444"/>
-                    <rect x="15" y="3" width="2" height="4" rx="1" fill="#ef4444"/>
-                  </svg>
-                </span>
               </div>
-              <input
-                type="time"
-                value={taskTime}
-                onChange={e => setTaskTime(e.target.value)}
-                required
-                style={{ padding: '8px', borderRadius: 6, border: '2px solid #ef4444', background: '#fff', color: '#222', width: 120, fontSize: '1rem', fontWeight: 500, outline: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
-              />
+              <div className="space-y-2">
+                <label htmlFor="task_time" className="text-gray-200 text-sm font-medium">Time</label>
+                <input
+                  id="task_time"
+                  type="time"
+                  value={taskTime}
+                  onChange={e => setTaskTime(e.target.value)}
+                  required
+                  className="bg-gray-800 text-white rounded-md border border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-[120px]"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="task_color" className="text-gray-200 text-sm font-medium">Color</label>
+                <input
+                  id="task_color"
+                  type="color"
+                  value={taskColor}
+                  onChange={e => setTaskColor(e.target.value)}
+                  className="color-picker w-8 h-8 p-0 border-none rounded-full"
+                  title="Choose event color"
+                />
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: '#fff', fontSize: 15 }}>Color:</span>
-              <input
-                type="color"
-                value={taskColor}
-                onChange={e => setTaskColor(e.target.value)}
-                className="color-picker"
-                title="Choose event color"
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+            <div className="flex gap-4 mt-4">
               <button
                 type="submit"
-                style={{
-                  background: hovered === 'cancel' ? '#222' : '#ef4444',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  padding: '8px 16px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  transition: 'background 0.15s',
-                }}
+                className={`px-4 py-2 rounded-md font-semibold transition-colors duration-150 shadow ${hovered === 'cancel' ? 'bg-gray-800' : 'bg-red-500'} text-white hover:bg-gray-800`}
               >
                 Save
               </button>
               <button
                 type="button"
-                style={{
-                  background: hovered === 'cancel' ? '#ef4444' : '#222',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  padding: '8px 16px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  transition: 'background 0.15s',
-                }}
+                className={`px-4 py-2 rounded-md font-semibold transition-colors duration-150 shadow ${hovered === 'cancel' ? 'bg-red-500' : 'bg-gray-800'} text-white hover:bg-red-500`}
                 onClick={() => setShowForm(false)}
                 onMouseEnter={() => setHovered('cancel')}
                 onMouseLeave={() => setHovered(null)}

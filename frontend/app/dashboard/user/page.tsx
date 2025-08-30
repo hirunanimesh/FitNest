@@ -5,7 +5,6 @@ import TopBar from "./_components/TopBar"
 import Progress from "./_components/Progress"
 import TodaySessions from "./_components/TodaySessions"
 import UpcomingSessions from "./_components/UpcomingSessions"
-import KPI from "./_components/KPI"
 import Charts from "./_components/Charts"
 import Schedule from "./_components/Schedule"
 import MotivationQuotes from "./_components/MotivationQuote"
@@ -35,8 +34,7 @@ function UserDashboardContent() {
         {/* Upcoming Sessions */}
         <UpcomingSessions  />
 
-        {/* KPI Results */}
-        <KPI  />
+        
 
         {/* Charts */}
         <Charts />
