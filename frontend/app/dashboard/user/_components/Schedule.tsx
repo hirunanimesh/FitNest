@@ -14,8 +14,24 @@ import './color-picker.css';
 
 // Custom event rendering for color
 function renderEventContent(eventInfo: any) {
+  const color = eventInfo.event.backgroundColor || '#ef4444';
   return (
-    <div style={{ backgroundColor: eventInfo.event.extendedProps.color, borderRadius: 4, padding: '2px 6px', color: '#fff' }}>
+    <div
+      style={{
+        backgroundColor: color,
+        borderRadius: 4,
+        color: '#fff',
+        border: `2px solid ${color}`,
+        fontWeight: 500,
+        boxShadow: `0 2px 8px ${color}55`,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 0
+      }}
+    >
       {eventInfo.event.title}
     </div>
   );
@@ -26,7 +42,7 @@ interface Event {
   title: string;
   start: string;
   end: string;
-  color: string;
+  backgroundColor: string;
 }
 
 const Schedule: React.FC = () => {
@@ -52,13 +68,13 @@ const Schedule: React.FC = () => {
         title: taskTitle,
         start: startDate,
         end: endDate,
-        color: taskColor,
+        backgroundColor: taskColor,
       };
       setEvents([...events, newEvent]);
       setTaskTitle('');
       setTaskDate('');
       setTaskTime('');
-      setTaskColor('#ef4444');
+      setTaskColor('')
       setIsTaskDialogOpen(false);
     }
   };
