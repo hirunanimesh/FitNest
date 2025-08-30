@@ -49,29 +49,47 @@ const Schedule: React.FC = () => {
         customer_id: 1
     });
 
-    const [tasks, setTasks] = useState<Task[]>([
-        { id: 1, task_date: formatDate(new Date()), task: "Morning workout", note: "HIIT session", type: "workout", customer_id: 1 },
-        { id: 2, task_date: formatDate(new Date()), task: "Nutrition consultation", note: "Diet planning", type: "appointment", customer_id: 1 },
-        { id: 3, task_date: formatDate(new Date()), task: "Rest day", note: "Recovery", type: "rest", customer_id: 1 },
-        { id: 4, task_date: formatDate(new Date()), task: "Cardio session", note: "30 min run", type: "workout", customer_id: 1 },
-        { id: 5, task_date: formatDate(new Date()), task: "Meal prep", note: "Weekly preparation", type: "appointment", customer_id: 1 }
-    ]);
+    const [tasks, setTasks] = useState<Task[]>([]);
 
-    const handleTaskSubmit = (e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
+    // Fetch tasks from backend database on mount
+    React.useEffect(() => {
+        async function loadTasks() {
+            try {
+                const res = await fetch('/api/calendar/tasks');
+                const data = await res.json();
+                setTasks(data);
+            } catch (err) {
+                console.error('Failed to fetch tasks', err);
+            }
+        }
+        loadTasks();
+    }, []);
+
+    const handleTaskSubmit = async (e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        const newTask: Task = {
-            id: Date.now(),
-            ...taskForm,
-            type: "workout" // Default type
-        };
-        setTasks((prev) => [...prev, newTask]);
-        setTaskForm({
-            task_date: formatDate(new Date()),
-            task: "",
-            note: "",
-            customer_id: 1
-        });
-        setIsTaskDialogOpen(false);
+        const newTask: TaskForm = { ...taskForm };
+        try {
+            const res = await fetch('/api/calendar/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newTask),
+            });
+            if (res.ok) {
+                const addedTask = await res.json();
+                setTasks((prev) => [...prev, addedTask]);
+                setTaskForm({
+                    task_date: formatDate(new Date()),
+                    task: '',
+                    note: '',
+                    customer_id: 1
+                });
+                setIsTaskDialogOpen(false);
+            } else {
+                console.error('Failed to add task');
+            }
+        } catch (err) {
+            console.error('Error adding task', err);
+        }
     };
 
     return (

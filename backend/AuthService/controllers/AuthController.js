@@ -318,6 +318,12 @@ class AuthController {
         }
       }
 
+      // Get Google OAuth tokens from request (assume sent in body for demo)
+      const accessToken = req.body.googleAccessToken;
+      const refreshToken = req.body.googleRefreshToken;
+      console.log('Google OAuth accessToken:', accessToken);
+      console.log('Google OAuth refreshToken:', refreshToken);
+
       const result = await authmodel.customerRegister(
         email,
         password,
@@ -333,6 +339,7 @@ class AuthController {
         height,
         locationObject // Pass as JSON object for JSONB field
       );
+      console.log('customerRegister result:', result);
 
       res.status(201).json({
         success: true,
