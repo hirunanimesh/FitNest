@@ -318,11 +318,7 @@ class AuthController {
         }
       }
 
-      // Get Google OAuth tokens from request (assume sent in body for demo)
-      const accessToken = req.body.googleAccessToken;
-      const refreshToken = req.body.googleRefreshToken;
-      console.log('Google OAuth accessToken:', accessToken);
-      console.log('Google OAuth refreshToken:', refreshToken);
+      
 
       const result = await authmodel.customerRegister(
         email,

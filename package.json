@@ -10,10 +10,25 @@
     "migration:reset": "npx supabase db reset",
     "types:generate": "npx supabase gen types typescript --local"
   },
-  "keywords": ["supabase", "migrations", "database"],
+  "keywords": [
+    "supabase",
+    "migrations",
+    "database"
+  ],
   "author": "FitNest Team",
   "license": "MIT",
   "devDependencies": {
+    "@types/react": "^19.1.12",
+    "@types/react-big-calendar": "^1.16.2",
     "supabase": "^2.34.3"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.19",
+    "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
+    "@fullcalendar/react": "^6.1.19",
+    "date-fns": "^4.1.0",
+    "moment": "^2.30.1",
+    "react-big-calendar": "^1.19.4"
   }
 }
