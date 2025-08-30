@@ -51,6 +51,7 @@ export default function GymOwnerSignup() {
   // Handle location selection from map
   const handleLocationSelect = (selectedLocation: Location) => {
     setLocation(selectedLocation)
+    setShowMap(false) // Close the modal automatically when location is selected
   }
 
   // Add new document entry
@@ -270,7 +271,10 @@ export default function GymOwnerSignup() {
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between mb-8">
-          <button className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300 border border-slate-700/50 hover:border-slate-600">
+          <button 
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300 border border-slate-700/50 hover:border-slate-600"
+          >
             <ArrowLeft className="h-4 w-4" />
             <span className="font-medium">Back to Home</span>
           </button>
@@ -302,7 +306,7 @@ export default function GymOwnerSignup() {
           
           {/* Form Content */}
           <div className="p-8">
-            <div className="space-y-10">
+            <form onSubmit={handleSubmit} className="space-y-10">
               {/* Business Information Section */}
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-6">
@@ -686,7 +690,7 @@ export default function GymOwnerSignup() {
                   </a>
                 </p>
               </div>
-            </div>
+            </form>
           </div>
         </div>
 
@@ -707,13 +711,13 @@ export default function GymOwnerSignup() {
               </div>
               
               <div className="p-6">
-                <div className="w-full h-[500px] bg-slate-800 rounded-xl border border-slate-700/50 flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="mx-auto h-12 w-12 text-slate-500 mb-4" />
-                    <p className="text-slate-400">Google Map integration would go here</p>
-                    <p className="text-sm text-slate-500 mt-2">Click on the map to select your gym location</p>
-                  </div>
-                </div>
+                <GoogleMapPicker
+                  onLocationSelect={handleLocationSelect}
+                  initialLocation={location ?? undefined}
+                  searchPlaceholder="Search for your gym address..."
+                  height="500px"
+                  className="text-white"
+                />
               </div>
               
               <div className="p-6 border-t border-slate-700/50 flex gap-3 justify-end">
@@ -724,11 +728,9 @@ export default function GymOwnerSignup() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    setLocation({ lat: 6.7957, lng: 79.9009, address: "Sample Address, Moratuwa, Sri Lanka" });
-                    setShowMap(false);
-                  }}
-                  className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg"
+                  onClick={() => setShowMap(false)}
+                  disabled={!location}
+                  className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Confirm Location
                 </button>

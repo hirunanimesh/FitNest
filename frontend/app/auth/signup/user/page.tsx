@@ -99,7 +99,7 @@ export default function UserSignup() {
       
       // Redirect after showing success message
       setTimeout(() => {
-        router.push("/dashboard/user")
+        router.push("/auth/login")
       }, 2000)
     } catch (error: any) {
       console.error("Error registering user:", error)

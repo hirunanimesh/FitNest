@@ -1,4 +1,4 @@
-import { addgymplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, updategymplan } from "../services/plans.service.js";
+import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers } from "../services/plans.service.js";
 
 
 export const addGymPlan = async (req, res) => {
@@ -87,3 +87,55 @@ export const getMemberCountPerPlan = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
+
+export const assignTrainersToPlan = async (req, res) => {
+  try {
+    const { plan_id, trainer_ids } = req.body;
+    const result = await assigntrainerstoplan(plan_id, trainer_ids);
+    res.status(200).json({ 
+      message: "Trainers assigned to plan successfully", 
+      data: result 
+    });
+  } catch (error) {
+    console.error("Error assigning trainers to plan:", error);
+    res.status(500).json({ 
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
+
+export const getPlanTrainers = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const trainers = await getplantrainers(planId);
+    res.status(200).json({ 
+      message: "Plan trainers retrieved successfully", 
+      data: trainers 
+    });
+  } catch (error) {
+    console.error("Error retrieving plan trainers:", error);
+    res.status(500).json({ 
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
+
+export const updatePlanTrainers = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const { trainer_ids } = req.body;
+    const result = await updateplantrainers(planId, trainer_ids);
+    res.status(200).json({ 
+      message: "Plan trainers updated successfully", 
+      data: result 
+    });
+  } catch (error) {
+    console.error("Error updating plan trainers:", error);
+    res.status(500).json({ 
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
