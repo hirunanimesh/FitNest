@@ -15,46 +15,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 function UserDashboardContent() {
   
-   /*const [profileId, setProfileId] = useState<string | null>(null);
-       const [customerId, setCustomerId] = useState<string | null>(null);
-   
-   useEffect(() => {
-     async function fetchUserInfo() {
-       const {
-         data: { session },
-       } = await supabase.auth.getSession();
-       const token = session?.access_token;
-       if (!token) return;
-   
-       try {
-         const data = await GetUserInfo(token);
-         const profileId = data?.user?.id || null;
-         setProfileId(profileId);
-   
-         if (profileId) {
-           // Fetch customer_id from customer table
-           const { data: customerData, error } = await supabase
-             .from("customer")
-             .select("id")
-             .eq("user_id", profileId)
-             .single();
-   
-           if (error) {
-             console.error("Error fetching customer id:", error);
-             setCustomerId(null);
-           } else {
-             setCustomerId(customerData?.id);
-           }
-         }
-       } catch (error) {
-         console.error("Error fetching user info:", error);
-         setProfileId(null);
-         setCustomerId(null);
-       }
-     }
-   
-     fetchUserInfo();
-   }, []);*/
+  
   return (
     <div className="bg-black">
       {/* Header */}
