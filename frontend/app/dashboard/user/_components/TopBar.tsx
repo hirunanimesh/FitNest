@@ -51,19 +51,25 @@ useEffect(() => {
     <>
       <header className="fixed top-0 z-50 w-full bg-black shadow-lg border-b-2 border-[#FB4141]">
         <div className="container flex h-16 items-center justify-between px-2">
-          <Link href="/" className="flex items-center space-x-3 group">
-            <div className="p-2 bg-[#FB4141] rounded-lg group-hover:bg-[#e63636] transition-colors">
-              <Dumbbell className="h-6 w-6 text-white" />
-            </div>
-            <span className="font-bold text-2xl text-white">FitNest</span>
-          </Link>
-          <h1 className="text-lg text-white font-semibold px-8">
-              Hi, {userName}
-            </h1>
-            <p className="text-sm text-muted-foreground">{today}</p>
-          
-          <nav className="hidden md:flex space-x-8">
+          {/* Left side - Logo, greeting, and date */}
+          <div className="flex items-center space-x-6">
+            <Link href="/" className="flex items-center space-x-3 group">
+              <div className="p-2 bg-[#FB4141] rounded-lg group-hover:bg-[#e63636] transition-colors">
+                <Dumbbell className="h-6 w-6 text-white" />
+              </div>
+              <span className="font-bold text-2xl text-white">FitNest</span>
+            </Link>
             
+            <div className="flex flex-col">
+              <h1 className="text-lg text-white font-semibold">
+                Hi, {userName}
+              </h1>
+              <p className="text-sm text-gray-400">{today}</p>
+            </div>
+          </div>
+          
+          {/* Right side - Navigation and user actions */}
+          <nav className="hidden md:flex items-center space-x-6">
             <Link
               href="/dashboard/user/search"
               className="text-white hover:text-[#FB4141] px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group"
@@ -78,16 +84,18 @@ useEffect(() => {
                 <AvatarFallback>{userName?.[0] || "U"}</AvatarFallback>
               </Avatar>
             </Link>
+            
             <Button
               onClick={() => {
                 supabase.auth.signOut();
                 router.push("/auth/login");
               }}
+              className="bg-[#FB4141] hover:bg-[#e63636] text-white"
             >
               Logout
             </Button>
-            </nav>
-          </div>
+          </nav>
+        </div>
       </header>
     </>
   )
