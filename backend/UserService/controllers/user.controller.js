@@ -1,7 +1,7 @@
 //calendar
 //add weight
 
-import { addEventToCalendar ,getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
+import {getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
 import{addFeedback} from  '../services/feedback.service.js';
 
 /*export const addUser = async (req, res) => {
@@ -95,7 +95,7 @@ export const addfeedback = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
-export const addEventToCalendarController = async (req, res) => {
+/*export const addEventToCalendarController = async (req, res) => {
     try {
         const { userId, event } = req.body;
         if (!userId || !event) {
@@ -111,7 +111,7 @@ export const addEventToCalendarController = async (req, res) => {
         console.error("Error adding event to calendar:", error);
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
-};
+};*/
 
 
 
