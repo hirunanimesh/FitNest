@@ -60,21 +60,7 @@ export const GetUserInfo = async (token) => {
     }
 };
 
-export const GetCustomerById = async (customerId) => {
-    try {
-        const response = await axios.get(`${Base_URL}/api/user/getuserbyid/${customerId}`);
-        return response.data;
-    } catch (error) {
-        console.error("Error getting customer data:", error);
-        if (error.response && error.response.data) {
-            const backendError = error.response.data;
-            const newError = new Error(backendError.message || backendError.error || "Failed to fetch customer data");
-            newError.status = error.response.status;
-            throw newError;
-        }
-        throw error;
-    }
-};
+
 
 
 export const CompleteOAuthProfileMember = async (profileData) => {
@@ -207,6 +193,43 @@ export const CompleteOAuthProfileGym = async (profileData) => {
 export const GetGymProfileData = async(id) =>{
     try{
         const response = await axios.get(`${Base_URL}/api/gym/getgymbyid/${id}`)
+        if(!response){
+            console.error("Error fetching data!")
+        }
+        return response.data
+    }catch(error){
+        console.error("Error fetching gym data",error)
+    }
+}
+export const GetCustomerById = async (customerId) => {
+    try {
+        const response = await axios.get(`${Base_URL}/api/user/getuserbyid/${customerId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error getting customer data:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to fetch customer data");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+export const GetLatestWeight = async(customerId) =>{
+    try{
+        const response = await axios.get(`${Base_URL}/api/user/getlatestweightbyid/${customerId}`)
+        if(!response){
+            console.error("Error fetching data!")
+        }
+        return response.data
+    }catch(error){
+        console.error("Error fetching gym data",error)
+    }
+}
+export const GetWeight = async(customerId) =>{
+    try{
+        const response = await axios.get(`${Base_URL}/api/user/getweightbyid/${customerId}`)
         if(!response){
             console.error("Error fetching data!")
         }
