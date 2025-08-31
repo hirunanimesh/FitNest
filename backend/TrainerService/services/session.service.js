@@ -16,8 +16,7 @@ export async function addsession(sessionData) {
   export async function getallsessions() {
     const { data, error } = await supabase
       .from('trainer_sessions')
-      .select(`*
-      
+      .select(`*,
         trainer (
           trainer_name,
           contact_no
@@ -52,7 +51,12 @@ export async function addsession(sessionData) {
   export async function getallsessionbytrainerid(trainerId) {
     const { data, error } = await supabase
       .from('trainer_sessions')
-      .select('*')
+      .select(`*,
+        trainer(
+          trainer_name,
+          contact_no
+        )
+      `)
       .eq('trainer_id', trainerId);
 
       if(!data){
