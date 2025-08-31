@@ -4,76 +4,51 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Weight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Ruler, Activity } from 'lucide-react';
-import { supabase } from "@/lib/supabase";
-import {  GetUserInfo } from "@/lib/api"
-import axios from 'axios';
-
-interface ProgressEntry {
-    date: string;
-    weight: number;
-    height: number;
- }
+import { useAuth } from '@/contexts/AuthContext'
+import { GetLatestWeight } from '@/lib/api';
 
 const Progress = () => {
-    const [profileId, setProfileId] = useState<string | null>(null);
-    const [customerId, setCustomerId] = useState<string | null>(null);
     const [weightData, setWeightData] = useState<number |null >(null);
     const [heightData, setHeightData] = useState<number |null>(null);
-    const [loading, setLoading] = useState(true);
+    const { getUserProfileId } = useAuth();
+
+    // Calculate BMI
+    const calculateBMI = () => {
+        if (weightData && heightData && heightData > 0) {
+            const bmi = weightData / (heightData * heightData);
+            return bmi.toFixed(3);
+        }
+        return null;
+    };
+
+    // Get BMI category
+    const getBMICategory = () => {
+        const bmi = calculateBMI();
+        
+        if (bmi < 18.5) return "Underweight";
+        if (bmi < 25) return "Normal range";
+        if (bmi < 30) return "Overweight";
+        return "Obese";
+    };
 
     useEffect(() => {
         async function fetchAllData() {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
-            const token = session?.access_token;
-            if (!token) return;
-
             try {
-                const data = await GetUserInfo(token);
-                const profileId = data?.user?.id || null;
-                setProfileId(profileId);
-
-                if (profileId) {
-                    const { data: customerData, error } = await supabase
-                        .from("customer")
-                        .select("id")
-                        .eq("user_id", profileId)
-                        .single();
-
-                    if (error) {
-                        setCustomerId(null);
-                        setWeightData(null);
-                        setHeightData(null);
-                        setLoading(false);
-                        return;
-                    } else {
-                        setCustomerId(customerData?.id);
-
-                        try {
-                            const response = await axios.get(
-                                `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/getlatestweightbyid/28` //${customerData?.id}
-                            );
-                            if (response.data) {
-                                setWeightData(response.data.weight.weight);
-                                setHeightData(response.data.weight.height);
+                const customerId = await getUserProfileId();
+                        if (customerId) {
+                          const data = await GetLatestWeight(customerId);
+                          //console.log(data);
+                          
+                            setWeightData(data.weight.weight);
+                            setHeightData(data.weight.height);
                             }
-                        } catch (error) {
+                } catch (error) {
                             setWeightData(null);
                             setHeightData(null);
-                        }
-                    }
                 }
-            } catch (error) {
-                setCustomerId(null);
-                setWeightData(null);
-                setHeightData(null);
-            }
-            setLoading(false);
         }
-
-        fetchAllData();
-    }, []);
+    fetchAllData();
+    }, [getUserProfileId]);
 
     return (
         <div>
@@ -84,7 +59,7 @@ const Progress = () => {
                             <div>
                                 <p className="text-sm text-muted-foreground text-blue-500">Weight</p>
                                 <p className="text-2xl font-bold text-blue-500">
-                                    {loading ? "--" : weightData !== null ? `${weightData} kg` : "N/A"}
+                                    {weightData} kg
                                 </p>
                             </div>
                             <Weight className="h-8 w-8 text-blue-500" />
@@ -98,7 +73,7 @@ const Progress = () => {
                             <div>
                                 <p className="text-sm text-muted-foreground">Height</p>
                                 <p className="text-2xl font-bold text-green-500">
-                                    {loading ? "--" : heightData !== null ? `${heightData} m` : "N/A"}
+                                    {heightData} m
                                 </p>
                             </div>
                             <Ruler className="h-8 w-8 text-green-500" />
@@ -111,20 +86,17 @@ const Progress = () => {
                     <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
                         <div>
                         <p className="text-sm text-muted-foreground">BMI</p>
-                        <p className="text-2xl font-bold text-purple-500">24.0</p>
-                        <p className="text-xs text-muted-foreground">Normal range</p>
+                        <p className="text-2xl font-bold text-purple-500">
+                            {calculateBMI() || "--"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{getBMICategory()}</p>
                         </div>
                         <Activity className="h-8 w-8 text-purple-500" />
                     </div>
                     </CardContent>
-                </Card>
-                
+                </Card>   
     </div>
     </div>
   )
 }
-
-
-
-
 export default Progress

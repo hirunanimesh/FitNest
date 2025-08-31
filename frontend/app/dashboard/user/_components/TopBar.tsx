@@ -30,7 +30,7 @@ useEffect(() => {
             ? `${customerData.first_name} ${customerData.last_name}` 
             : customerData?.first_name || customerData?.last_name || null;
           setUserName(fullName);
-          console.log(customerData);
+          //console.log(customerData);
           setImgUrl(customerData.profile_img);
         } else {
           // If no customer ID, show default
