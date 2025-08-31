@@ -9,9 +9,11 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   userRole: string | null
+  customerId: number | null  // Add customer ID to context
   loading: boolean
   signOut: () => Promise<void>
   refreshUserRole: () => Promise<void>
+  getUserProfileId: () => Promise<number | null>  // Add function to get profile ID
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -28,16 +30,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
+  const [customerId, setCustomerId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   const getUserRole = async (user: User, session: Session) => {
     try {
-      // First check user metadata for role (for OAuth users)
-      if (user.user_metadata?.role) {
+       if (user.user_metadata?.role) {
         return user.user_metadata.role
       }
-
-      // For regular users, check if they have customer profile
+      // Check if they are a customer first
       const { data: customerData } = await supabase
         .from('customer')
         .select('id')
@@ -62,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Check if they are a gym
       const { data: gymData } = await supabase
         .from('gym')
-        .select('id')
+        .select('gym_id')  // Select gym primary key
         .eq('user_id', user.id)
         .single()
 
@@ -70,11 +71,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return 'gym'
       }
 
-      // If no role found but user exists, they might be in OAuth flow
-      // Return null to handle this case in the UI
+      // No role found
       return null
     } catch (error) {
       console.error('Error getting user role:', error)
+      return null
+    }
+  }
+
+  // Separate function to get user profile ID (for loading user data)
+  const getUserProfileId = async (): Promise<number | null> => {
+    if (!user) return null
+
+    try {
+      // Based on userRole, fetch the appropriate ID
+      if (userRole === 'customer') {
+        const { data: customerData } = await supabase
+          .from('customer')
+          .select('id')
+          .eq('user_id', user.id)
+          .single()
+        
+        return customerData?.id || null
+      }
+
+      if (userRole === 'trainer') {
+        const { data: trainerData } = await supabase
+          .from('trainer')
+          .select('id')
+          .eq('user_id', user.id)
+          .single()
+        
+        return trainerData?.id || null
+      }
+
+      if (userRole === 'gym') {
+        const { data: gymData } = await supabase
+          .from('gym')
+          .select('gym_id')
+          .eq('user_id', user.id)
+          .single()
+        
+        return gymData?.gym_id || null
+      }
+
+      return null
+    } catch (error) {
+      console.error('Error getting user profile ID:', error)
       return null
     }
   }
@@ -96,6 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           const role = await getUserRole(session.user, session)
           setUserRole(role)
+          // We'll load the profile ID later when needed, not during login
+          setCustomerId(null)
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error)
@@ -115,8 +160,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           const role = await getUserRole(session.user, session)
           setUserRole(role)
+          // We'll load the profile ID later when needed, not during auth change
+          setCustomerId(null)
         } else {
           setUserRole(null)
+          setCustomerId(null)
         }
 
         setLoading(false)
@@ -131,12 +179,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null)
     setSession(null)
     setUserRole(null)
+    setCustomerId(null)
   }
 
   const refreshUserRole = async () => {
     if (user && session) {
       const role = await getUserRole(user, session)
       setUserRole(role)
+      // Clear customerId, it will be loaded when needed
+      setCustomerId(null)
     }
   }
 
@@ -144,9 +195,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     userRole,
+    customerId,
     loading,
     signOut,
-    refreshUserRole
+    refreshUserRole,
+    getUserProfileId
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

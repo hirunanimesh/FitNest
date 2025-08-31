@@ -6,38 +6,45 @@ import { useRouter} from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { Dumbbell } from "lucide-react"
 import Link from "next/link"
-import {  GetUserInfo } from "@/lib/api"
+import { useAuth } from '@/contexts/AuthContext'
+import { GetCustomerById } from '@/lib/api'
 
 export default function  TopBar() {
 
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const[userName,setUserName] = useState<string|null>(null);
-  const[imgUrl,setImgUrl] = useState<string|null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
   const router = useRouter();
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
+  const { getUserProfileId } = useAuth();
 
 useEffect(() => {
     async function fetchUserInfo() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) return;
-
       try {
-        const data = await GetUserInfo(token);
-        const userMeta = data?.user?.user_metadata;
-        setUserName(userMeta?.full_name || userMeta?.name || null);
-        setImgUrl(userMeta?.avatar_url || userMeta?.picture || null);
-        setProfileId(data?.user?.id || null);
+        const customerId = await getUserProfileId();
+        
+        if (customerId) {
+          const data = await GetCustomerById(customerId);
+          const customerData = data.user;
+          
+          const fullName = customerData?.first_name && customerData?.last_name 
+            ? `${customerData.first_name} ${customerData.last_name}` 
+            : customerData?.first_name || customerData?.last_name || null;
+          setUserName(fullName);
+          console.log(customerData);
+          setImgUrl(customerData.profile_img);
+        } else {
+          // If no customer ID, show default
+          setUserName('User');
+          setImgUrl(null);
+        }
       } catch (error) {
-        setUserName(null);
-        setImgUrl(null);
-        setProfileId(null);
+        console.error('Error fetching customer data:', error);
+        
       }
     }
+
     fetchUserInfo();
-  }, []);
+  }, [getUserProfileId]);
 
 
   return (
@@ -50,7 +57,7 @@ useEffect(() => {
             </div>
             <span className="font-bold text-2xl text-white">FitNest</span>
           </Link>
-          <h1 className="text-lg text-white font-semibold text-black px-8">
+          <h1 className="text-lg text-white font-semibold px-8">
               Hi, {userName}
             </h1>
             <p className="text-sm text-muted-foreground">{today}</p>
@@ -65,10 +72,10 @@ useEffect(() => {
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FB4141] group-hover:w-full transition-all duration-200"></span>
             </Link>
         
-            <Link href={profileId ? `/dashboard/user/profile` : "#"}>
+            <Link href="/dashboard/user/profile">
               <Avatar className="cursor-pointer">
                 <AvatarImage src={imgUrl ?? undefined} />
-                <AvatarFallback>{userName?.[0] || "G"}</AvatarFallback>
+                <AvatarFallback>{userName?.[0] || "U"}</AvatarFallback>
               </Avatar>
             </Link>
             <Button
