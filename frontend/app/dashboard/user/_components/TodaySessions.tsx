@@ -49,6 +49,16 @@ const TodaySessions = () => {
       image: "https://i.ibb.co/8L82YtGc/3.webp",
       duration: "30 min",
     },
+    {
+      id: 4,
+      title: "HIIT Blast",
+      trainer: "Banula Lakvidu Hettiarachchi",
+      date: "2025-08-12",
+      time: "8:00 PM",
+      amount: "$25",
+      image: "https://i.ibb.co/WN3ZMzDf/hit-blust.jpg",
+      duration: "45 min",
+    },
   ];
 
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -70,7 +80,7 @@ const TodaySessions = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {sessions.slice(0, 3).map((session) => (
+          {sessions.slice(0, 4).map((session) => (
             <Card 
               key={session.id} 
               className={`bg-gray-900 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500 ${

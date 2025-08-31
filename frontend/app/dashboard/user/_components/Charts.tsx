@@ -213,10 +213,11 @@ useEffect(() => {
 
     return (
         <section id="Health Analytics" className="min-h-screen bg-black p-4">
-                <div >
-                    <h1 className="text-3xl font-bold text-white mb-2">Health Analytics</h1>
-                    <p className="text-white mt-2">Track your BMI and weight progress over time</p>
-                </div>
+                
+                <div className="text-center mb-12">
+          <h3 className="text-3xl font-bold text-white mb-4">Health Analytics</h3>
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto">Track your BMI and weight progress over time</p>
+        </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-black px-8">
                     {/* BMI Chart */}
                     <Card className='bg-[#192024]'>
