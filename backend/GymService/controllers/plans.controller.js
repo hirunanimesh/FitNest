@@ -1,3 +1,4 @@
+import { GymPlanCreateProducer, GymPlanDeleteProducer } from "../kafka/Producer.js";
 import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers } from "../services/plans.service.js";
 
 
@@ -6,6 +7,7 @@ export const addGymPlan = async (req, res) => {
         const gymPlan = await addgymplan(req.body);
         if (gymPlan) {
             res.status(200).json({ message: "Gym plan created successfully", gymPlan });
+            await GymPlanCreateProducer(gymPlan.plan_id,gymPlan.title,gymPlan.price,gymPlan.duration)
         }
     } catch (error) {
         console.error("Error creating gym plan:", error);
@@ -63,6 +65,7 @@ export const deleteGymPlan = async (req, res) => {
         const deleteplan = await deletegymplan(gymPlanId);
         if(deleteplan){
             res.status(200).json({ message: "Gym plan deleted successfully" });
+            await GymPlanDeleteProducer(gymPlanId)
         }else{
             res.status(404).json({ message: "Gym plan not found" });
         }
