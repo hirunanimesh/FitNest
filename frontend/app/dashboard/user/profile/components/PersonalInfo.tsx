@@ -38,6 +38,18 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
     } : null
   )
 
+  // Memoized update function to prevent re-creation on every render
+  const updateUserData = useCallback((field: string, value: any) => {
+    setUserData((prev: any) => ({ ...prev, [field]: value }))
+  }, [setUserData])
+
+  // Memoized initials calculation
+  const userInitials = useMemo(() => {
+    const firstName = userData.firstName || ""
+    const lastName = userData.lastName || ""
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+  }, [userData.firstName, userData.lastName])
+
   // Fix hydration mismatch by formatting date on client side only
   useEffect(() => {
     if (userData.dateOfBirth && typeof window !== "undefined") {
@@ -245,7 +257,7 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
             <Input
               id="firstName"
               value={userData.firstName || ""}
-              onChange={(e) => setUserData({ ...userData, firstName: e.target.value })}
+              onChange={(e) => updateUserData('firstName', e.target.value)}
               disabled={!isEditing}
               className="bg-[#192024] text-white"
             />
@@ -256,7 +268,7 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
             <Input
               id="lastName"
               value={userData.lastName || ""}
-              onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
+              onChange={(e) => updateUserData('lastName', e.target.value)}
               disabled={!isEditing}
               className="bg-[#192024] text-white"
             />
@@ -298,7 +310,7 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
             <Input
               id="phone"
               value={userData.phone || ""}
-              onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
+              onChange={(e) => updateUserData('phone', e.target.value)}
               disabled={!isEditing}
               className="bg-[#192024] text-white"
             />
@@ -316,7 +328,7 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
                   type="date"
                   id="dateOfBirth"
                   value={userData.dateOfBirth || ""}
-                  onChange={(e) => setUserData({ ...userData, dateOfBirth: e.target.value })}
+                  onChange={(e) => updateUserData('dateOfBirth', e.target.value)}
                   className="bg-[#192024] text-white border-gray-600 focus:border-red-500 focus:ring-red-500/20 [color-scheme:dark]"
                   required
                 />
