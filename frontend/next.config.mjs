@@ -11,9 +11,19 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    optimizePackageImports: ['@radix-ui/react-icons'],
+  },
   // Suppress useLayoutEffect warning from Next.js dev overlay
-  webpack: (config, { dev }) => {
-    if (dev) {
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      // Improve hot module replacement
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+        ignored: /node_modules/,
+      }
+      
       config.module.rules.push({
         test: /\.tsx?$/,
         loader: 'string-replace-loader',
@@ -37,7 +47,7 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: false, // Always enabled for PWA to work properly
+  disable: process.env.NODE_ENV === 'development', // Disable in development to prevent warnings
   buildExcludes: [
     /middleware-manifest\.json$/,
     /app-build-manifest\.json$/,

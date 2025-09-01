@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import upload from './config/multer.js'
 dotenv.config()
 
 import { addfeedback,getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails} from './controllers/user.controller.js'
@@ -13,7 +14,7 @@ app.use(cors())
 
 app.get('/getuserbyid/:userId',getuserbyid)
 //app.post('/adduser',addUser)
-app.patch('/updateuserdetails/:userId',updateuserdetails)
+app.patch('/updateuserdetails/:userId', upload.single('profileImage'), updateuserdetails)
 app.post('/addweight',addweight)
 app.get('/getweightbyid/:userId',getweightbyid)
 app.get('/getlatestweightbyid/:userId',getlatestweightbyid)

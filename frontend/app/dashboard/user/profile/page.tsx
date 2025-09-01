@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useCallback, useMemo } from "react"
 import { Save, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
@@ -15,15 +15,15 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [localUserData, setLocalUserData] = useState<any>({})
 
-  // Update local state when context data changes
+  // Update local state when context data changes - use callback to prevent re-renders
   React.useEffect(() => {
-    if (userData) {
+    if (userData && JSON.stringify(userData) !== JSON.stringify(localUserData)) {
       setLocalUserData(userData)
     }
-  }, [userData])
+  }, [userData]) // Remove localUserData from dependencies to prevent loops
 
-  // Save updated details
-  async function handleSave() {
+  // Memoize the save function to prevent re-creation on every render
+  const handleSave = useCallback(async () => {
     try {
       const customerId = await getUserProfileId()
       if (!customerId) return
@@ -42,16 +42,33 @@ export default function ProfilePage() {
       alert("Failed to update profile. Please try again.")
       setIsEditing(false)
     }
-  }
+  }, [localUserData, getUserProfileId, updateUserData, refreshUserData])
 
-  // Handle edit/save button click
-  function handleButtonClick() {
+  // Handle edit/save button click - memoized to prevent re-creation
+  const handleButtonClick = useCallback(() => {
     if (isEditing) {
       handleSave()
     } else {
       setIsEditing(true)
     }
-  }
+  }, [isEditing, handleSave])
+
+  // Memoized components to prevent unnecessary re-renders
+  const personalInfoComponent = useMemo(() => (
+    <PersonalInfo 
+      userData={localUserData} 
+      setUserData={setLocalUserData} 
+      isEditing={isEditing} 
+    />
+  ), [localUserData, isEditing])
+
+  const fitnessDataComponent = useMemo(() => (
+    <FitnessData 
+      userData={localUserData} 
+      setUserData={setLocalUserData} 
+      isEditing={isEditing} 
+    />
+  ), [localUserData, isEditing])
 
   return (
     <ProtectedRoute allowedRoles={["customer"]}>
@@ -101,10 +118,10 @@ export default function ProfilePage() {
             ) : (
               <div className="space-y-8">
                 {/* Personal Information Section */}
-                <PersonalInfo userData={localUserData} setUserData={setLocalUserData} isEditing={isEditing} />
+                {personalInfoComponent}
                 
                 {/* Fitness Data Section */}
-                <FitnessData userData={localUserData} setUserData={setLocalUserData} isEditing={isEditing} />
+                {fitnessDataComponent}
               </div>
             )}
           </div>

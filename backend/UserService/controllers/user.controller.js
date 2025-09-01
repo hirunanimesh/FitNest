@@ -1,10 +1,24 @@
 import {getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
 import{addFeedback} from  '../services/feedback.service.js';
+import { uploadImageToCloudinary } from '../utils/imageUpload.js';
 
 export const updateuserdetails = async (req, res) => {
     const { userId } = req.params;
     try {
-        const updatedUser = await updateUserDetails(userId, req.body);
+        let updateData = { ...req.body };
+        
+        // Handle image upload if file is provided
+        if (req.file) {
+            try {
+                const imageUrl = await uploadImageToCloudinary(req.file.buffer);
+                updateData.profile_image = imageUrl;
+            } catch (uploadError) {
+                console.error("Error uploading image:", uploadError);
+                return res.status(500).json({ message: "Image upload failed", error: uploadError.message });
+            }
+        }
+
+        const updatedUser = await updateUserDetails(userId, updateData);
         if (updatedUser) {
             res.status(200).json({ message: "User updated successfully", updatedUser });
         } else {

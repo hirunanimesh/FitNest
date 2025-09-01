@@ -126,10 +126,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     let isMounted = true;
     
     const fetchData = async () => {
-      const customerId = await getUserProfileId();
-      // Only fetch if component is still mounted and we have a customer ID
-      if (isMounted && customerId && (!userData || userData === null)) {
-        await fetchUserData();
+      if (isMounted && !userData && !isFetching) {
+        const customerId = await getUserProfileId();
+        if (customerId) {
+          await fetchUserData();
+        }
       }
     };
     
@@ -139,7 +140,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       isMounted = false;
     };
-  }, [getUserProfileId]); // Only re-run when getUserProfileId changes
+  }, []); // Empty dependency array to only run once on mount
 
   const value: UserContextType = {
     userData,
