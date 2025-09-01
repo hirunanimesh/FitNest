@@ -47,7 +47,11 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
+<<<<<<< Updated upstream
   disable: process.env.NODE_ENV === 'development', // Disable in development to prevent warnings
+=======
+  disable: process.env.NODE_ENV === 'development', // Disable PWA in development to prevent GenerateSW warnings
+>>>>>>> Stashed changes
   buildExcludes: [
     /middleware-manifest\.json$/,
     /app-build-manifest\.json$/,
