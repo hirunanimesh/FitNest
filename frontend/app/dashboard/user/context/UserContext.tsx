@@ -78,7 +78,12 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
       // Process weight history (optional)
       if (weightHistoryResponse.status === 'fulfilled') {
-        weightHistory = weightHistoryResponse.value.weights || [];
+        console.log("UserContext: Raw weight response:", weightHistoryResponse.value);
+        // GetWeight API returns response.data.weight as an array
+        weightHistory = weightHistoryResponse.value.weight || [];
+        console.log("UserContext: Weight history data:", weightHistory);
+      } else {
+        console.log("UserContext: Weight history request failed:", weightHistoryResponse.reason);
       }
 
       if (customer) {

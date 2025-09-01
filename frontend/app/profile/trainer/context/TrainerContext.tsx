@@ -16,6 +16,8 @@ interface TrainerData {
   bio: string;
   year_of_experience: number;
   rating: number;
+  sessions?: any[];
+  feedbacks?: any[];
 }
 
 interface TrainerContextType {
@@ -47,16 +49,52 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
     try {
       console.log(`Fetching trainer data for ID: ${trainerId}`);
       
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/gettrainerbyid/${trainerId}`
-      );
-      
-      if (response.data?.trainer) {
-        setTrainerData(response.data.trainer);
-        console.log("Trainer data fetched successfully:", response.data.trainer);
+      // Fetch all trainer data in parallel to reduce API calls
+      const [trainerResponse, sessionsResponse, feedbackResponse] = await Promise.allSettled([
+        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/gettrainerbyid/${trainerId}`),
+        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getallsessionbytrainerid/${trainerId}`),
+        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getfeedbackbytrainerid/${trainerId}`)
+      ]);
+
+      let trainer = null;
+      let sessions: any[] = [];
+      let feedbacks: any[] = [];
+
+      // Process trainer data
+      if (trainerResponse.status === 'fulfilled' && trainerResponse.value.data?.trainer) {
+        trainer = trainerResponse.value.data.trainer;
+      } else {
+        console.error("Trainer data request failed:", trainerResponse.status === 'rejected' ? trainerResponse.reason : "No trainer data");
+      }
+
+      // Process sessions data
+      if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.session) {
+        sessions = sessionsResponse.value.data.session;
+        console.log("Sessions data fetched successfully:", sessions);
+      } else {
+        console.log("Sessions data request failed or no sessions found:", sessionsResponse.status === 'rejected' ? sessionsResponse.reason : "No sessions data");
+      }
+
+      // Process feedback data
+      if (feedbackResponse.status === 'fulfilled' && feedbackResponse.value.data?.trainer) {
+        feedbacks = feedbackResponse.value.data.trainer;
+        console.log("Feedback data fetched successfully:", feedbacks);
+      } else {
+        console.log("Feedback data request failed or no feedback found:", feedbackResponse.status === 'rejected' ? feedbackResponse.reason : "No feedback data");
+      }
+
+      if (trainer) {
+        const trainerDataWithExtras: TrainerData = {
+          ...trainer,
+          sessions,
+          feedbacks
+        };
+        
+        setTrainerData(trainerDataWithExtras);
+        console.log("Trainer data with sessions and feedback loaded successfully:", trainerDataWithExtras);
       } else {
         setError("Trainer not found");
-        console.error("Unexpected response format:", response.data);
+        console.error("No trainer data available");
       }
     } catch (err: any) {
       setError(err.message || "Failed to fetch trainer data");
