@@ -159,3 +159,44 @@ export async function getplantrainers(planId) {
 export async function updateplantrainers(planId, trainerIds) {
   return await assigntrainerstoplan(planId, trainerIds);
 }
+
+export const getOneDayGyms = async () => {
+    try {
+        const gyms = await supabase
+            .from('Gym_plans')
+            .select(`
+                *,
+                gym (
+                    location,
+                    gym_id,
+                    profile_img
+                )
+            `)
+            .eq('duration', '1 day');
+        return gyms;
+    } catch (error) {
+        console.error("Error retrieving one day gyms:", error);
+        throw error;
+    }
+};
+
+//get gyms which are not providing one day plans
+export const getOtherGyms = async () => {
+    try {
+        const gyms = await supabase
+            .from('Gym_plans')
+            .select(`
+                *,
+                gym (
+                    location,
+                    gym_id,
+                    profile_img
+                )
+            `)
+            .neq('duration', '1 day');
+        return gyms;
+    } catch (error) {
+        console.error("Error retrieving other gyms:", error);
+        throw error;
+    }
+};

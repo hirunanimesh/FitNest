@@ -1,4 +1,5 @@
-import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers } from "../services/plans.service.js";
+import { GymPlanCreateProducer, GymPlanDeleteProducer } from "../kafka/Producer.js";
+import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers,getOneDayGyms , getOtherGyms } from "../services/plans.service.js";
 
 
 export const addGymPlan = async (req, res) => {
@@ -6,6 +7,7 @@ export const addGymPlan = async (req, res) => {
         const gymPlan = await addgymplan(req.body);
         if (gymPlan) {
             res.status(200).json({ message: "Gym plan created successfully", gymPlan });
+            await GymPlanCreateProducer(gymPlan.plan_id,gymPlan.title,gymPlan.price,gymPlan.duration)
         }
     } catch (error) {
         console.error("Error creating gym plan:", error);
@@ -63,6 +65,7 @@ export const deleteGymPlan = async (req, res) => {
         const deleteplan = await deletegymplan(gymPlanId);
         if(deleteplan){
             res.status(200).json({ message: "Gym plan deleted successfully" });
+            await GymPlanDeleteProducer(gymPlanId)
         }else{
             res.status(404).json({ message: "Gym plan not found" });
         }
@@ -138,4 +141,25 @@ export const updatePlanTrainers = async (req, res) => {
       error: error.message 
     });
   }
+};
+
+export const GetOneDayGyms = async (req, res) => {
+    try {
+        const gyms = await getOneDayGyms();
+        res.status(200).json({ message: "One day gyms retrieved successfully", gyms });
+    } catch (error) {
+        console.error("Error retrieving one day gyms:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
+
+//get gyms which are not providing one day plans
+export const GetOtherGyms = async (req, res) => {
+    try {
+        const gyms = await getOtherGyms();
+        res.status(200).json({ message: "Other gyms retrieved successfully", gyms });
+    } catch (error) {
+        console.error("Error retrieving other gyms:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
 };

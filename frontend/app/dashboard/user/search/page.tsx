@@ -10,6 +10,7 @@ import { MapPin } from "lucide-react"
 import GymCard from "@/components/GymCard"
 import TrainerCard from "@/components/TrainerCard" // Assuming you have a TrainerCard component
 import GymsMapView from "@/components/GymsMapView"
+import { GetOneDayGyms, GetOtherGyms } from "@/api/user/route"
 
 // Added a type definition for the gym and trainer data
 interface Gym {
@@ -20,6 +21,32 @@ interface Gym {
   address: string;
   location: string;
   contact_no?: string | null;
+}
+
+// Types for the new API response structure
+interface PlanGym {
+  plan_id: string;
+  gym_id: number;
+  price: number;
+  description: string;
+  title: string;
+  duration: string;
+  created_at: string;
+  product_id_stripe: string;
+  price_id_stripe: string;
+  gym: {
+    gym_id: number;
+    location: string; // JSON string with lat/lng
+    profile_img?: string | null;
+    gym_name?: string;
+    address?: string;
+    contact_no?: string | null;
+  };
+}
+
+interface MapGymData {
+  gym: PlanGym['gym'];
+  planType: 'oneDay' | 'other';
 }
 
 interface Trainer {
@@ -42,6 +69,8 @@ interface TrainerCardProps {
 export default function SearchPage() {
   const [gyms, setGyms] = useState<Gym[]>([])
   const [trainers, setTrainers] = useState<Trainer[]>([])
+  const [mapGymsData, setMapGymsData] = useState<MapGymData[]>([])
+  const [isLoadingMapData, setIsLoadingMapData] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedLocation, setSelectedLocation] = useState("")
   const [view, setView] = useState<"gyms" | "trainers">("gyms") // Toggle state
@@ -93,48 +122,108 @@ export default function SearchPage() {
   }
 
   // Handle "Find Near Me" button click
-  const handleFindNearMe = () => {
+  const handleFindNearMe = async () => {
     if (view === "gyms") {
-      // Get user's location first
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setUserLocation({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
+      setIsLoadingMapData(true)
+      try {
+        // Fetch both types of gyms for the map
+        const [oneDayResponse, otherResponse] = await Promise.all([
+          GetOneDayGyms(),
+          GetOtherGyms()
+        ])
+
+        const mapData: MapGymData[] = []
+
+        // Process one day gyms
+        if (oneDayResponse?.gyms?.data) {
+          oneDayResponse.gyms.data.forEach((planGym: PlanGym) => {
+            mapData.push({
+              gym: planGym.gym,
+              planType: 'oneDay'
             })
-            setShowMapView(true)
-          },
-          (error) => {
-            // Handle geolocation error properly
-            let errorMessage = 'Unknown error occurred'
-            switch(error.code) {
-              case error.PERMISSION_DENIED:
-                errorMessage = 'Location access denied by user'
-                break
-              case error.POSITION_UNAVAILABLE:
-                errorMessage = 'Location information unavailable'
-                break
-              case error.TIMEOUT:
-                errorMessage = 'Location request timed out'
-                break
+          })
+        }
+
+        // Process other gyms
+        if (otherResponse?.gyms?.data) {
+          otherResponse.gyms.data.forEach((planGym: PlanGym) => {
+            mapData.push({
+              gym: planGym.gym,
+              planType: 'other'
+            })
+          })
+        }
+
+        // Remove duplicates based on gym_id
+        const uniqueMapData = mapData.reduce((acc, current) => {
+          const existingIndex = acc.findIndex(item => item.gym.gym_id === current.gym.gym_id)
+          if (existingIndex === -1) {
+            acc.push(current)
+          } else {
+            // If gym already exists, prioritize 'oneDay' plan type
+            if (current.planType === 'oneDay') {
+              acc[existingIndex] = current
             }
-            console.warn('Geolocation error:', errorMessage)
-            // Show map anyway with default location (Colombo, Sri Lanka)
-            setUserLocation({ lat: 6.9271, lng: 79.8612 })
-            setShowMapView(true)
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 600000
           }
-        )
-      } else {
-        // Browser doesn't support geolocation, show map anyway
-        console.warn('Geolocation not supported by this browser')
-        setUserLocation({ lat: 6.9271, lng: 79.8612 })
-        setShowMapView(true)
+          return acc
+        }, [] as MapGymData[])
+
+        setMapGymsData(uniqueMapData)
+
+        if (uniqueMapData.length === 0) {
+          alert("No gyms with plans found. Please try again later.")
+          setIsLoadingMapData(false)
+          return
+        }
+
+        // Get user's location first
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              setUserLocation({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              })
+              setShowMapView(true)
+              setIsLoadingMapData(false)
+            },
+            (error) => {
+              // Handle geolocation error properly
+              let errorMessage = 'Unknown error occurred'
+              switch(error.code) {
+                case error.PERMISSION_DENIED:
+                  errorMessage = 'Location access denied by user'
+                  break
+                case error.POSITION_UNAVAILABLE:
+                  errorMessage = 'Location information unavailable'
+                  break
+                case error.TIMEOUT:
+                  errorMessage = 'Location request timed out'
+                  break
+              }
+              console.warn('Geolocation error:', errorMessage)
+              // Show map anyway with default location (Colombo, Sri Lanka)
+              setUserLocation({ lat: 6.9271, lng: 79.8612 })
+              setShowMapView(true)
+              setIsLoadingMapData(false)
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 600000
+            }
+          )
+        } else {
+          // Browser doesn't support geolocation, show map anyway
+          console.warn('Geolocation not supported by this browser')
+          setUserLocation({ lat: 6.9271, lng: 79.8612 })
+          setShowMapView(true)
+          setIsLoadingMapData(false)
+        }
+      } catch (error) {
+        console.error("Error fetching gym data for map:", error)
+        alert("Failed to load gym data for map view. Please try again.")
+        setIsLoadingMapData(false)
       }
     } else {
       // For trainers, you could implement a different behavior or show a message
@@ -213,9 +302,9 @@ export default function SearchPage() {
                 <SelectItem value="vavuniya">Vavuniya</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={handleFindNearMe}>
+            <Button onClick={handleFindNearMe} disabled={isLoadingMapData}>
               <MapPin className="mr-2 h-4 w-4" />
-              Find Near Me
+              {isLoadingMapData ? "Loading..." : "Find Near Me"}
             </Button>
           </div>
         </div>
@@ -243,7 +332,7 @@ export default function SearchPage() {
       {/* Map View Modal */}
       {showMapView && (
         <GymsMapView 
-          gyms={getFilteredGyms()} 
+          mapGymsData={mapGymsData}
           onClose={() => setShowMapView(false)}
           userLocation={userLocation}
         />
