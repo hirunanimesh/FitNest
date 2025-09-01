@@ -115,8 +115,7 @@ export const TrainerRegister = async (trainerData) => {
     }
 };
 
-export const 
-GymRegister = async (gymData) => {
+export const GymRegister = async (gymData) => {
     console.log("Gym data being sent:", gymData); // Debug log
     try {
         const config = {};

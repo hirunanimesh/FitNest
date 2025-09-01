@@ -15,7 +15,7 @@ const Progress = () => {
     // Calculate BMI
     const calculateBMI = () => {
         if (weightData && heightData && heightData > 0) {
-            const bmi = weightData / (heightData * heightData);
+            const bmi = weightData / (heightData * heightData*0.0001);
             return bmi.toFixed(3);
         }
         return null;
@@ -73,7 +73,7 @@ const Progress = () => {
                             <div>
                                 <p className="text-sm text-muted-foreground">Height</p>
                                 <p className="text-2xl font-bold text-green-500">
-                                    {heightData} m
+                                    {heightData} cm
                                 </p>
                             </div>
                             <Ruler className="h-8 w-8 text-green-500" />

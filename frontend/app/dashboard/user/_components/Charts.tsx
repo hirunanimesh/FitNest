@@ -153,7 +153,7 @@ const Charts: React.FC = () => {
                     weight: newWeight,
                     customer_id: customerId,
                     date: weightForm.date,
-                    BMI: (newWeight / (newHeight * newHeight)).toFixed(2)
+                    BMI: (newWeight / (newHeight * newHeight*0.0001)).toFixed(2)
                 };
                 console.log("Request data:", requestData);
                 
@@ -326,7 +326,7 @@ const Charts: React.FC = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="height">Height (m)</Label>
+                                            <Label htmlFor="height">Height (cm)</Label>
                                             <Input className='bg-gray-800'
                                                 id="height"
                                                 type="number"
@@ -336,7 +336,7 @@ const Charts: React.FC = () => {
                                                 value={weightForm.height}
                                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                                                     setWeightForm(prev => ({ ...prev, height: e.target.value }))}
-                                                placeholder="Enter height (e.g., 1.75)"
+                                                placeholder="Enter height (e.g., 175)"
                                                 required
                                             />
                                         </div>
