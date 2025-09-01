@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -70,21 +70,34 @@ export default function SearchPage() {
   const [trainers, setTrainers] = useState<Trainer[]>([])
   const [mapGymsData, setMapGymsData] = useState<MapGymData[]>([])
   const [isLoadingMapData, setIsLoadingMapData] = useState(false)
+  const [isLoadingData, setIsLoadingData] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedLocation, setSelectedLocation] = useState("")
   const [view, setView] = useState<"gyms" | "trainers">("gyms") // Toggle state
   const [showMapView, setShowMapView] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const hasDataFetched = useRef(false)
 
   useEffect(() => {
+    // Prevent duplicate API calls
+    if (hasDataFetched.current || isLoadingData) {
+      return
+    }
+    
+    hasDataFetched.current = true
+    setIsLoadingData(true)
+
+    console.log("Fetching gyms and trainers data...")
+
     // Fetch gym data from the backend
-    axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms`)
+    const fetchGyms = axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms`)
       .then((response) => {
+        console.log("Gyms API call completed")
         if (response.data && Array.isArray(response.data.gyms)) {
           setGyms(response.data.gyms)
           console.log("Fetched gyms:", response.data.gyms)
         } else {
-          console.error("Unexpected response format:", response.data)
+          console.error("Unexpected gyms response format:", response.data)
           setGyms([])
         }
       }).catch((error) => {
@@ -93,18 +106,25 @@ export default function SearchPage() {
       })
 
     // Fetch trainer data from the backend
-    axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getalltrainers`)
+    const fetchTrainers = axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getalltrainers`)
       .then((response) => {
+        console.log("Trainers API call completed")
         if (response.data && Array.isArray(response.data.trainers)) {
           setTrainers(response.data.trainers)
         } else {
-          console.error("Unexpected response format:", response.data)
+          console.error("Unexpected trainers response format:", response.data)
           setTrainers([])
         }
       }).catch((error) => {
         console.error("Error fetching trainers:", error)
         setTrainers([])
       })
+
+    // Wait for both API calls to complete
+    Promise.all([fetchGyms, fetchTrainers]).finally(() => {
+      setIsLoadingData(false)
+      console.log("Data fetching completed")
+    })
 
   }, [])
 
