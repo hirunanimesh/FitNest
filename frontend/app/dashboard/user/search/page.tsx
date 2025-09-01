@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { UserNavbar } from "@/components/user-navbar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin } from "lucide-react"
 import GymCard from "@/components/GymCard"
@@ -234,8 +233,6 @@ export default function SearchPage() {
   return (
     <div className="bg-black-400 min-h-screen">
     <div className="min-h-screen bg-black text-white">
-      <UserNavbar />
-
       <div className="container mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Gyms and Trainers in Sri Lanka</h1>

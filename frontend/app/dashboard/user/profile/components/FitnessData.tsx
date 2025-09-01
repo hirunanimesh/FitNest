@@ -4,10 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { GetLatestWeight } from '@/lib/api'
 
 interface FitnessDataProps {
   userData: any
@@ -16,14 +12,15 @@ interface FitnessDataProps {
 }
 
 export function FitnessData({ userData, setUserData, isEditing }: FitnessDataProps) {
-  const [weightData, setWeightData] = useState<number | null>(null);
-  const [heightData, setHeightData] = useState<number | null>(null);
-  const { getUserProfileId } = useAuth();
+  // Use data from UserContext (no API calls needed)
+  const currentWeight = userData.currentWeight || null;
+  const height = userData.height || null;
 
   // Calculate BMI
   const calculateBMI = () => {
-    if (weightData && heightData && heightData > 0) {
-      const bmi = weightData / (heightData * heightData * 0.0001);
+    if (currentWeight && height && height > 0) {
+      const heightInMeters = height / 100; // Convert cm to meters
+      const bmi = currentWeight / (heightInMeters * heightInMeters);
       return bmi.toFixed(2);
     }
     return null;
@@ -41,30 +38,6 @@ export function FitnessData({ userData, setUserData, isEditing }: FitnessDataPro
     return "Obese";
   };
 
-  useEffect(() => {
-    async function fetchAllData() {
-      try {
-        const customerId = await getUserProfileId();
-        if (customerId) {
-          const data = await GetLatestWeight(customerId);
-          setWeightData(data.weight.weight);
-          setHeightData(data.weight.height);
-          
-          // Update userData with fetched values
-          setUserData({ 
-            ...userData, 
-            weight: data.weight.weight,
-            height: data.weight.height
-          });
-        }
-      } catch (error) {
-        setWeightData(null);
-        setHeightData(null);
-      }
-    }
-    fetchAllData();
-  }, [getUserProfileId]);
-
   return (
     <Card className="bg-[#192024] text-white">
       <CardHeader>
@@ -78,11 +51,12 @@ export function FitnessData({ userData, setUserData, isEditing }: FitnessDataPro
             <Input
               id="weight"
               type="number"
-              value={userData.weight}
+              value={currentWeight || ""}
               disabled
               min="0"
               className="bg-[#192024] text-white"
               readOnly
+              placeholder="No weight data"
             />
           </div>
           <div className="space-y-2">
@@ -90,11 +64,12 @@ export function FitnessData({ userData, setUserData, isEditing }: FitnessDataPro
             <Input
               id="height"
               type="number"
-              value={userData.height}
+              value={height || ""}
               disabled
               min="0"
               className="bg-[#192024] text-white"
               readOnly
+              placeholder="No height data"
             />
           </div>
         </div>
@@ -105,15 +80,12 @@ export function FitnessData({ userData, setUserData, isEditing }: FitnessDataPro
             <div>
               <p className="font-semibold">Current BMI</p>
               <p className="text-2xl font-bold">
-                {calculateBMI()}
+                {calculateBMI() || "N/A"}
               </p>
             </div>
             <Badge variant="secondary">{getBMICategory()}</Badge>
           </div>
         </div>
-
-        
-        
       </CardContent>
     </Card>
   )

@@ -2,20 +2,21 @@
 import React from 'react'
 import { Card, CardContent } from "@/components/ui/card";
 import { Weight } from 'lucide-react';
-import { useState, useEffect } from 'react';
 import { Ruler, Activity } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext'
-import { GetLatestWeight } from '@/lib/api';
+import { useUserData } from '../context/UserContext';
 
 const Progress = () => {
-    const [weightData, setWeightData] = useState<number |null >(null);
-    const [heightData, setHeightData] = useState<number |null>(null);
-    const { getUserProfileId } = useAuth();
+    const { userData } = useUserData();
+    
+    // Use data from UserContext
+    const weightData = userData?.currentWeight || null;
+    const heightData = userData?.height || null;
 
     // Calculate BMI
     const calculateBMI = () => {
         if (weightData && heightData && heightData > 0) {
-            const bmi = weightData / (heightData * heightData*0.0001);
+            const heightInMeters = heightData / 100; // Convert cm to meters
+            const bmi = weightData / (heightInMeters * heightInMeters);
             return bmi.toFixed(3);
         }
         return null;
@@ -24,31 +25,14 @@ const Progress = () => {
     // Get BMI category
     const getBMICategory = () => {
         const bmi = calculateBMI();
+        if (!bmi) return "No data";
         
-        if (bmi < 18.5) return "Underweight";
-        if (bmi < 25) return "Normal range";
-        if (bmi < 30) return "Overweight";
+        const bmiValue = parseFloat(bmi);
+        if (bmiValue < 18.5) return "Underweight";
+        if (bmiValue < 25) return "Normal range";
+        if (bmiValue < 30) return "Overweight";
         return "Obese";
     };
-
-    useEffect(() => {
-        async function fetchAllData() {
-            try {
-                const customerId = await getUserProfileId();
-                        if (customerId) {
-                          const data = await GetLatestWeight(customerId);
-                          //console.log(data);
-                          
-                            setWeightData(data.weight.weight);
-                            setHeightData(data.weight.height);
-                            }
-                } catch (error) {
-                            setWeightData(null);
-                            setHeightData(null);
-                }
-        }
-    fetchAllData();
-    }, [getUserProfileId]);
 
     return (
         <div>

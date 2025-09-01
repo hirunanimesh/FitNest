@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+"use client"
+
+import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
@@ -6,46 +8,15 @@ import { useRouter} from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { Dumbbell } from "lucide-react"
 import Link from "next/link"
-import { useAuth } from '@/contexts/AuthContext'
-import { GetCustomerById } from '@/lib/api'
+import { useUserData } from '../context/UserContext'
 
 export default function  TopBar() {
-
-  const [userName, setUserName] = useState<string | null>(null);
-  const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const { userData } = useUserData();
   const router = useRouter();
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
-  const { getUserProfileId } = useAuth();
 
-useEffect(() => {
-    async function fetchUserInfo() {
-      try {
-        const customerId = await getUserProfileId();
-        
-        if (customerId) {
-          const data = await GetCustomerById(customerId);
-          const customerData = data.user;
-          
-          const fullName = customerData?.first_name && customerData?.last_name 
-            ? `${customerData.first_name} ${customerData.last_name}` 
-            : customerData?.first_name || customerData?.last_name || null;
-          setUserName(fullName);
-          //console.log(customerData);
-          setImgUrl(customerData.profile_img);
-        } else {
-          // If no customer ID, show default
-          setUserName('User');
-          setImgUrl(null);
-        }
-      } catch (error) {
-        console.error('Error fetching customer data:', error);
-        
-      }
-    }
-
-    fetchUserInfo();
-  }, [getUserProfileId]);
-
+  const userName = userData ? `${userData.firstName} ${userData.lastName}` : "User";
+  const imgUrl = userData?.avatar || null;
 
   return (
     <>
@@ -63,6 +34,14 @@ useEffect(() => {
             <p className="text-sm text-muted-foreground">{today}</p>
           
           <nav className="hidden md:flex space-x-8">
+            
+            <Link
+              href="/dashboard/user"
+              className="text-white hover:text-[#FB4141] px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group"
+            >
+              Dashboard
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FB4141] group-hover:w-full transition-all duration-200"></span>
+            </Link>
             
             <Link
               href="/dashboard/user/search"
@@ -91,5 +70,5 @@ useEffect(() => {
       </header>
     </>
   )
-};
+}
 

@@ -1,58 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { Save, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { UserNavbar } from "@/components/user-navbar"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useAuth } from "@/contexts/AuthContext"
-import { GetCustomerById, UpdateUserDetails } from "@/lib/api"
+import { UpdateUserDetails } from "@/lib/api"
 import { PersonalInfo, FitnessData } from "./components"
+import { useUserData } from "../context/UserContext"
 
 export default function ProfilePage() {
   const { getUserProfileId } = useAuth()
+  const { userData, isLoading, refreshUserData, updateUserData } = useUserData()
   const [isEditing, setIsEditing] = useState(false)
-  const [userData, setUserData] = useState<any>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    address: "",
-    dateOfBirth: "",
-    gender: "",
-    avatar: "",
-    weight: "",
-    height: "",
-  })
+  const [localUserData, setLocalUserData] = useState<any>({})
 
-  useEffect(() => {
-    fetchUserInfo()
-  }, [getUserProfileId])
-
-  // Fetch user data
-  async function fetchUserInfo() {
-    try {
-      const customerId = await getUserProfileId()
-      if (!customerId) return
-
-      const data = await GetCustomerById(customerId)
-      const customerData = data.user
-
-      if (customerData) {
-        setUserData({
-          firstName: customerData.first_name || "",
-          lastName: customerData.last_name || "",
-          phone: customerData.phone_no || "",
-          address: customerData.address || "",
-          dateOfBirth: customerData.birthday || "",
-          gender: customerData.gender || "",
-          avatar: customerData.profile_img || "",
-        })
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error)
+  // Update local state when context data changes
+  React.useEffect(() => {
+    if (userData) {
+      setLocalUserData(userData)
     }
-  }
+  }, [userData])
 
   // Save updated details
   async function handleSave() {
@@ -60,8 +28,14 @@ export default function ProfilePage() {
       const customerId = await getUserProfileId()
       if (!customerId) return
 
-      await UpdateUserDetails(customerId, userData)
-      await fetchUserInfo()
+      await UpdateUserDetails(customerId, localUserData)
+      
+      // Update the context with new data
+      updateUserData(localUserData)
+      
+      // Refresh from server to get latest data
+      await refreshUserData()
+      
       setIsEditing(false)
     } catch (error: any) {
       console.error("Full error object:", error)
@@ -82,8 +56,6 @@ export default function ProfilePage() {
   return (
     <ProtectedRoute allowedRoles={["customer"]}>
       <div className="min-h-screen bg-black text-white">
-        <UserNavbar />
-
         <div className="container mx-auto px-4 py-12 mt-12">
           <div className="max-w-4xl mx-auto">
             {/* Header with edit/save button */}
@@ -117,13 +89,24 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Sections */}
-            <div className="space-y-8">
-              {/* Personal Information Section */}
-              <PersonalInfo userData={userData} setUserData={setUserData} isEditing={isEditing} />
-              
-              {/* Fitness Data Section */}
-              <FitnessData userData={userData} setUserData={setUserData} isEditing={isEditing} />
-            </div>
+            {isLoading ? (
+              <div className="space-y-8">
+                <div className="animate-pulse">
+                  <div className="bg-gray-800 h-64 rounded-lg"></div>
+                </div>
+                <div className="animate-pulse">
+                  <div className="bg-gray-800 h-48 rounded-lg"></div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {/* Personal Information Section */}
+                <PersonalInfo userData={localUserData} setUserData={setLocalUserData} isEditing={isEditing} />
+                
+                {/* Fitness Data Section */}
+                <FitnessData userData={localUserData} setUserData={setLocalUserData} isEditing={isEditing} />
+              </div>
+            )}
           </div>
         </div>
       </div>
