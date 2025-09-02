@@ -6,9 +6,9 @@ import { UserDataProvider } from './context/UserContext'
 function Userlayout({ children }: { children: React.ReactNode }) {
   return (
     <UserDataProvider>
-      <div>
+      <div className="min-h-screen bg-black">
           <TopBar/>
-          <div>
+          <div className="bg-black">
               {children}
           </div>
       </div>

@@ -53,7 +53,7 @@ export default function TopBar() {
               </Link>
 
               {/* Greeting */}
-              <div className="hidden xs:flex flex-col">
+              <div className="flex flex-col">
                 <h1 className="text-sm sm:text-lg text-white font-semibold truncate max-w-32 sm:max-w-none">
                   Hi, {userName}
                 </h1>
@@ -212,7 +212,7 @@ export default function TopBar() {
       </header>
 
       {/* Spacer */}
-      <div className="h-16 sm:h-18"></div>
+      <div className="h-16 sm:h-18 bg-black"></div>
     </>
   )
 }
