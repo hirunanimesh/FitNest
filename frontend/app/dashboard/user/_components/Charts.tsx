@@ -297,7 +297,7 @@ const Charts: React.FC = () => {
                                     <div className="grid gap-4 py-4 ">
                                         <div className="space-y-2 ">
                                             <Label htmlFor="weight_date ">Date</Label>
-                                            <Input className='bg-gray-800'
+                                            <Input className='bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]'
                                                 id="weight_date"
                                                 type="date"
                                                 value={weightForm.date}

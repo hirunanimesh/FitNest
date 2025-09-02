@@ -42,6 +42,13 @@ const CreateSession = () => {
         price_id_stripe: "",
       });
 
+    // Handle date input and create Date object for display
+    const handleDateInputChange = (value: string) => {
+        setSessionForm((prev) => ({ ...prev, date: value }));
+    };
+
+    const date = sessionForm.date ? new Date(sessionForm.date) : null;
+
     const handleSessionSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const newSession: Session = {
@@ -75,21 +82,21 @@ const CreateSession = () => {
                   <Plus className="h-4 w-4 mr-1" /> Create New Session
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className='bg-gray-800 text-white'>
                 <DialogHeader>
                   <DialogTitle>Create New Session</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSessionSubmit}>
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="title" className="text-right">
+                      <Label htmlFor="title" className="text-right ">
                         Title
                       </Label>
                       <Input
                         id="title"
                         value={sessionForm.title}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, title: e.target.value }))}
-                        className="col-span-3"
+                        className="col-span-3 bg-gray-800"
                         required
                       />
                     </div>
@@ -101,7 +108,7 @@ const CreateSession = () => {
                         id="description"
                         value={sessionForm.description}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, description: e.target.value }))}
-                        className="col-span-3"
+                        className="col-span-3 bg-gray-800"
                         required
                       />
                     </div>
@@ -116,7 +123,7 @@ const CreateSession = () => {
                         min="0"
                         value={sessionForm.price}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                        className="col-span-3"
+                        className="col-span-3 bg-gray-800"
                         required
                       />
                     </div>
@@ -129,22 +136,34 @@ const CreateSession = () => {
                         type="time"
                         value={sessionForm.time}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, time: e.target.value }))}
-                        className="col-span-3"
+                        className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
                         required
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="date" className="text-right">
-                        Date
+                        Date <span className="text-red-500">*</span>
                       </Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={sessionForm.date}
-                        onChange={(e) => setSessionForm((prev) => ({ ...prev, date: e.target.value }))}
-                        className="col-span-3"
-                        required
-                      />
+                      <div className="col-span-3 space-y-2">
+                        <Input
+                          id="date"
+                          type="date"
+                          value={sessionForm.date}
+                          onChange={(e) => handleDateInputChange(e.target.value)}
+                          className="bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
+                          required
+                        />
+                        {date && (
+                          <p className="text-sm text-gray-400">
+                            Selected: {date.toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="duration" className="text-right">
@@ -154,10 +173,10 @@ const CreateSession = () => {
                         value={sessionForm.duration}
                         onValueChange={(value) => setSessionForm((prev) => ({ ...prev, duration: value }))}
                       >
-                        <SelectTrigger className="col-span-3">
+                        <SelectTrigger className="col-span-3 bg-gray-800">
                           <SelectValue placeholder="Select duration" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className='bg-gray-800 text-white'>
                           <SelectItem value="30 min">30 min</SelectItem>
                           <SelectItem value="45 min">45 min</SelectItem>
                           <SelectItem value="1 hr">1 hr</SelectItem>
@@ -175,7 +194,7 @@ const CreateSession = () => {
                         type="url"
                         value={sessionForm.zoom_link}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, zoom_link: e.target.value }))}
-                        className="col-span-3"
+                        className="col-span-3 bg-gray-800"
                         placeholder="https://zoom.us/j/..."
                         required
                       />
@@ -189,7 +208,7 @@ const CreateSession = () => {
                         type="url"
                         value={sessionForm.img_url}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, img_url: e.target.value }))}
-                        className="col-span-3"
+                        className="col-span-3 bg-gray-800"
                         placeholder="https://..."
                       />
                     </div>
