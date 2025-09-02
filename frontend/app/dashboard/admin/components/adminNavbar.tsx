@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Building2, FileCheck, MessageSquare } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 
 interface AdminNavbarProps {
   adminName?: string
@@ -21,6 +22,7 @@ export function AdminNavbar({
   pendingVerifications = 0,
 }: AdminNavbarProps) {
   const pathname = usePathname()
+  const router = useRouter()
 
   const navItems = [
     { href: "/dashboard/admin", label: "Dashboard", icon: Building2 },
@@ -83,6 +85,15 @@ export function AdminNavbar({
                 .join("")}
             </AvatarFallback>
           </Avatar>
+          <Button
+            onClick={() => {
+              supabase.auth.signOut();
+              router.push("/auth/login");
+            }}
+            className="bg-[#FB4141] hover:bg-[#e63636] text-white"
+          >
+            Logout
+          </Button>
         </div>
       </div>
     </nav>
