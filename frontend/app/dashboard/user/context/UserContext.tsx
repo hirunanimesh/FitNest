@@ -48,10 +48,10 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       const customerId = await getUserProfileId();
-      if (!customerId) {
+      /*if (!customerId) {
         setIsLoading(false);
         return;
-      }
+      }*/
 
       console.log("🔄 Fetching user data for ID:", customerId);
 
@@ -74,6 +74,10 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       // Process latest weight data (optional)
       if (latestWeightResponse.status === 'fulfilled') {
         latestWeight = latestWeightResponse.value.weight;
+      } else {
+        console.log("UserContext: Latest weight request failed:", latestWeightResponse.reason);
+        // For new users without weight data, this is expected
+        latestWeight = null;
       }
 
       // Process weight history (optional)
@@ -84,6 +88,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         console.log("UserContext: Weight history data:", weightHistory);
       } else {
         console.log("UserContext: Weight history request failed:", weightHistoryResponse.reason);
+        // For new users without weight history, this is expected
+        weightHistory = [];
       }
 
       if (customer) {
