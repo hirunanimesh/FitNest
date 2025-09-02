@@ -4,7 +4,7 @@ import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
-import { useRouter} from "next/navigation";
+import { usePathname,useRouter} from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { Dumbbell } from "lucide-react"
 import Link from "next/link"
@@ -14,10 +14,15 @@ export default function  TopBar() {
   const { userData } = useUserData();
   const router = useRouter();
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
-
+  const pathname = usePathname();
   const userName = userData ? `${userData.firstName} ${userData.lastName}` : "User";
   const imgUrl = userData?.avatar || null;
-
+// Check if current path matches the nav item
+   const isActive = (href: string) => {
+    const normalizedPathname = pathname.replace(/\/+$/, '');
+    const normalizedHref = href.replace(/\/+$/, '');
+    return normalizedPathname === normalizedHref;
+  };
   return (
     <>
       <header className="fixed top-0 z-50 w-full bg-black shadow-lg border-b-2 border-[#FB4141]">
@@ -40,23 +45,35 @@ export default function  TopBar() {
           </div>
           
           {/* Right side - Navigation and user actions */}
-          <nav className="hidden md:flex items-center space-x-6">
+          
+            <nav className="hidden md:flex items-center space-x-6">
             <Link
               href="/dashboard/user"
-              className="text-white hover:text-[#FB4141] px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group"
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group ${
+                isActive('/dashboard/trainer') 
+                  ? 'text-red-400' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
             >
               Dashboard
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FB4141] group-hover:w-full transition-all duration-200"></span>
+              <span className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-200 ${
+                isActive('/dashboard/user') ? 'w-full' : 'w-0 group-hover:w-full'
+              }`}></span>
             </Link>
-            
-            <Link
+
+              <Link
               href="/dashboard/user/search"
-              className="text-white hover:text-[#FB4141] px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group"
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group ${
+                isActive('/dashboard/trainer') 
+                  ? 'text-red-400' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
             >
               Search
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FB4141] group-hover:w-full transition-all duration-200"></span>
+              <span className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-200 ${
+                isActive('/dashboard/user/search') ? 'w-full' : 'w-0 group-hover:w-full'
+              }`}></span>
             </Link>
-        
             <Link href="/dashboard/user/profile">
               <Avatar className="cursor-pointer">
                 <AvatarImage src={imgUrl ?? undefined} />

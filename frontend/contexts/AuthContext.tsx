@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   userRole: string | null
-  customerId: number | null  // Add customer ID to context
+  userId: number | null  // User profile ID based on role
   loading: boolean
   signOut: () => Promise<void>
   refreshUserRole: () => Promise<void>
@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
-  const [customerId, setCustomerId] = useState<number | null>(null)
+  const [userId, setUserId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   const getUserRole = async (user: User, session: Session) => {
@@ -140,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const role = await getUserRole(session.user, session)
           setUserRole(role)
           // We'll load the profile ID later when needed, not during login
-          setCustomerId(null)
+          setUserId(null)
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error)
@@ -161,10 +161,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const role = await getUserRole(session.user, session)
           setUserRole(role)
           // We'll load the profile ID later when needed, not during auth change
-          setCustomerId(null)
+          setUserId(null)
         } else {
           setUserRole(null)
-          setCustomerId(null)
+          setUserId(null)
         }
 
         setLoading(false)
@@ -179,15 +179,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null)
     setSession(null)
     setUserRole(null)
-    setCustomerId(null)
+    setUserId(null)
   }
 
   const refreshUserRole = async () => {
     if (user && session) {
       const role = await getUserRole(user, session)
       setUserRole(role)
-      // Clear customerId, it will be loaded when needed
-      setCustomerId(null)
+      // Clear userId, it will be loaded when needed
+      setUserId(null)
     }
   }
 
@@ -195,7 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     userRole,
-    customerId,
+    userId,
     loading,
     signOut,
     refreshUserRole,
