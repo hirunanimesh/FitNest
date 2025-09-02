@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
-import { usePathname,useRouter} from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { Dumbbell, Menu, X, LogOut, User, Search, Home } from "lucide-react"
 import Link from "next/link"
@@ -12,13 +12,19 @@ import { useUserData } from "../context/UserContext"
 
 export default function TopBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { userData } = useUserData();
+  const { userData, isLoading, error } = useUserData();
   const router = useRouter();
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
   const pathname = usePathname();
   const userName = userData ? `${userData.firstName} ${userData.lastName}` : "User";
   const imgUrl = userData?.avatar || null;
-<<<<<<<<< Temporary merge branch 1
+
+ 
+  const isActive = (href: string) => {
+    const normalizedPathname = pathname.replace(/\/+$/, "");
+    const normalizedHref = href.replace(/\/+$/, "");
+    return normalizedPathname === normalizedHref;
+  };
 
   const handleLogout = () => {
     supabase.auth.signOut();
@@ -30,14 +36,6 @@ export default function TopBar() {
     setIsMobileMenuOpen(false);
   };
 
-=========
-// Check if current path matches the nav item
-   const isActive = (href: string) => {
-    const normalizedPathname = pathname.replace(/\/+$/, '');
-    const normalizedHref = href.replace(/\/+$/, '');
-    return normalizedPathname === normalizedHref;
-  };
->>>>>>>>> Temporary merge branch 2
   return (
     <>
       <header className="fixed top-0 z-50 w-full bg-gradient-to-r from-black via-gray-900 to-black backdrop-blur-md border-b border-red-500/30 shadow-2xl">
@@ -55,7 +53,7 @@ export default function TopBar() {
               </Link>
 
               {/* Greeting */}
-              <div className="hidden xs:flex flex-col">
+              <div className="flex flex-col">
                 <h1 className="text-sm sm:text-lg text-white font-semibold truncate max-w-32 sm:max-w-none">
                   Hi, {userName}
                 </h1>
@@ -74,7 +72,7 @@ export default function TopBar() {
                 }`}
               >
                 Dashboard
-                <span className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#FB4141] to-red-600 transition-all duration-300 ${
+                <span className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#FB4141] to-red-600 transition-all duration-300 ${
                   isActive("/dashboard/user") ? "w-full" : "w-0 group-hover:w-full"
                 }`}></span>
               </Link>
@@ -88,7 +86,7 @@ export default function TopBar() {
                 }`}
               >
                 Search
-                <span className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#FB4141] to-red-600 transition-all duration-300 ${
+                <span className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#FB4141] to-red-600 transition-all duration-300 ${
                   isActive("/dashboard/user/search") ? "w-full" : "w-0 group-hover:w-full"
                 }`}></span>
               </Link>
@@ -131,57 +129,6 @@ export default function TopBar() {
               </button>
             </div>
           </div>
-<<<<<<<<< Temporary merge branch 1
-=========
-          
-          {/* Right side - Navigation and user actions */}
-          
-            <nav className="hidden md:flex items-center space-x-6">
-            <Link
-              href="/dashboard/user"
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group ${
-                isActive('/dashboard/trainer') 
-                  ? 'text-red-400' 
-                  : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              Dashboard
-              <span className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-200 ${
-                isActive('/dashboard/user') ? 'w-full' : 'w-0 group-hover:w-full'
-              }`}></span>
-            </Link>
-
-              <Link
-              href="/dashboard/user/search"
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group ${
-                isActive('/dashboard/trainer') 
-                  ? 'text-red-400' 
-                  : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              Search
-              <span className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-200 ${
-                isActive('/dashboard/user/search') ? 'w-full' : 'w-0 group-hover:w-full'
-              }`}></span>
-            </Link>
-            <Link href="/dashboard/user/profile">
-              <Avatar className="cursor-pointer">
-                <AvatarImage src={imgUrl ?? undefined} />
-                <AvatarFallback>{userName?.[0] || "U"}</AvatarFallback>
-              </Avatar>
-            </Link>
-            
-            <Button
-              onClick={() => {
-                supabase.auth.signOut();
-                router.push("/auth/login");
-              }}
-              className="bg-[#FB4141] hover:bg-[#e63636] text-white"
-            >
-              Logout
-            </Button>
-          </nav>
->>>>>>>>> Temporary merge branch 2
         </div>
 
         {/* Mobile Menu Overlay */}
@@ -265,7 +212,7 @@ export default function TopBar() {
       </header>
 
       {/* Spacer */}
-      <div className="h-16 sm:h-18"></div>
+      <div className="h-16 sm:h-18 bg-black"></div>
     </>
   )
 }
