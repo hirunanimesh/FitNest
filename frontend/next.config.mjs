@@ -1,3 +1,5 @@
+import withPWA from 'next-pwa'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -9,6 +11,53 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Suppress useLayoutEffect warning from Next.js dev overlay
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.module.rules.push({
+        test: /\.tsx?$/,
+        loader: 'string-replace-loader',
+        options: {
+          search: 'useLayoutEffect',
+          replace: 'useEffect',
+          flags: 'g',
+        },
+        include: [
+          /node_modules\/next\/dist\/client\/components\/react-dev-overlay/
+        ]
+      })
+    }
+    return config
+  },
+  // Note: For port configuration, it's better to use package.json scripts
+  // This config is for other development settings
 }
 
-export default nextConfig
+const pwaConfig = withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development', // Disabled in development
+  buildExcludes: [
+    /middleware-manifest\.json$/,
+    /app-build-manifest\.json$/,
+    /_buildManifest\.js$/,
+    /_ssgManifest\.js$/
+  ],
+  publicExcludes: ['!robots.txt', '!sitemap.xml'],
+  // Add additional PWA configurations
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.*/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'offlineCache',
+        expiration: {
+          maxEntries: 50,
+        },
+      },
+    },
+  ],
+})
+
+export default pwaConfig(nextConfig)
