@@ -12,21 +12,20 @@ import { useUserData } from "../context/UserContext"
 
 export default function TopBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { userData } = useUserData();
+  const { userData, isLoading, error } = useUserData();
   const router = useRouter();
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
   const pathname = usePathname();
   const userName = userData ? `${userData.firstName} ${userData.lastName}` : "User";
   const imgUrl = userData?.avatar || null;
 
-  // ✅ Keep from s9 branch: check active route
+ 
   const isActive = (href: string) => {
     const normalizedPathname = pathname.replace(/\/+$/, "");
     const normalizedHref = href.replace(/\/+$/, "");
     return normalizedPathname === normalizedHref;
   };
 
-  // ✅ Keep from main branch: logout + close menu
   const handleLogout = () => {
     supabase.auth.signOut();
     router.push("/auth/login");
@@ -73,7 +72,7 @@ export default function TopBar() {
                 }`}
               >
                 Dashboard
-                <span className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#FB4141] to-red-600 transition-all duration-300 ${
+                <span className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#FB4141] to-red-600 transition-all duration-300 ${
                   isActive("/dashboard/user") ? "w-full" : "w-0 group-hover:w-full"
                 }`}></span>
               </Link>
@@ -87,7 +86,7 @@ export default function TopBar() {
                 }`}
               >
                 Search
-                <span className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#FB4141] to-red-600 transition-all duration-300 ${
+                <span className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#FB4141] to-red-600 transition-all duration-300 ${
                   isActive("/dashboard/user/search") ? "w-full" : "w-0 group-hover:w-full"
                 }`}></span>
               </Link>
