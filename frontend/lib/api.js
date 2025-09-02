@@ -212,6 +212,22 @@ export const GetCustomerById = async (customerId) => {
         throw error;
     }
 };
+export const GetTrainerById = async (trainerId) => {
+    try {
+        const response = await axios.get(`${Base_URL}/api/trainer/gettrainerbyid/${trainerId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error getting trainer data:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to fetch trainer data");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+
 export const GetLatestWeight = async(customerId) =>{
     try{
         const response = await axios.get(`${Base_URL}/api/user/getlatestweightbyid/${customerId}`)
