@@ -56,7 +56,7 @@ export default function ProfilePage() {
   return (
     <ProtectedRoute allowedRoles={["customer"]}>
       <div className="min-h-screen bg-black text-white">
-        <div className="container mx-auto px-4 py-12 mt-12">
+        <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto">
             {/* Header with edit/save button */}
             <div className="flex justify-between items-center mb-8">

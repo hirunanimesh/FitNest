@@ -48,10 +48,16 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       const customerId = await getUserProfileId();
-      /*if (!customerId) {
+      
+      console.log("🔍 UserContext Debug:", { customerId });
+      
+      if (!customerId) {
+        console.log("❌ No customer ID found");
+        setError("No customer profile found");
         setIsLoading(false);
+        setIsFetching(false);
         return;
-      }*/
+      }
 
       console.log("🔄 Fetching user data for ID:", customerId);
 
@@ -69,6 +75,10 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       // Process customer data
       if (customerResponse.status === 'fulfilled') {
         customer = customerResponse.value.user;
+        console.log("✅ Customer data received:", customer);
+      } else {
+        console.error("❌ Customer fetch failed:", customerResponse.reason);
+        setError(`Failed to load profile: ${customerResponse.reason?.message || 'Unknown error'}`);
       }
 
       // Process latest weight data (optional)
