@@ -1,37 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import axios from "axios";
+import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
-
-/*export default function Header() {
-  const router = useRouter(); 
-  const trainerName = "Banula Lakvidu Hettiarachchi";*/
+import { useTrainerData } from "../context/TrainerContext";
 
 export default function Header() {
-  const [trainerName, setTrainerName] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  const trainerId = searchParams.get("id"); // Get trainerId from the query string
+  const { trainerData, isLoading } = useTrainerData();
   const router = useRouter();
-  useEffect(() => {
-
-    const fetchTrainerName = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/gettrainerbyid/${trainerId}`
-        );
-        if (response.data && response.data.trainer) {
-          setTrainerName(response.data.trainer.trainer_name); // Assuming the API returns trainer_name
-        } else {
-          console.error("Unexpected response format:", response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching trainer name:", error);
-      }
-    };
-
-    fetchTrainerName();
-  }, [trainerId]);
+  const trainerName = trainerData?.trainer_name || "Trainer";
   return (
     <header className="bg-gray-800 shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">

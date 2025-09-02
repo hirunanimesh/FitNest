@@ -1,7 +1,6 @@
 "use client"
 //import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect } from "react";
-import TopBar from "./_components/TopBar"
 import Progress from "./_components/Progress"
 import TodaySessions from "./_components/TodaySessions"
 import UpcomingSessions from "./_components/UpcomingSessions"
@@ -17,9 +16,6 @@ function UserDashboardContent() {
   
   return (
     <div className="bg-black">
-      {/* Header */}
-       <TopBar />
-
       {/* Main Content */}
       <div className="flex-1 space-y-10 p-20">
         {/* Motivation Quote */}

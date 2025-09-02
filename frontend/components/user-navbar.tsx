@@ -1,41 +1,40 @@
 "use client"
-import { supabase } from "@/lib/supabase";
-import React, { useState, useEffect } from "react";
-import { useRouter} from "next/navigation";
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {  Dumbbell } from "lucide-react"
+
 import Link from "next/link"
-import {  GetUserInfo } from "@/lib/api"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarImage } from "@/components/ui/avatar"
+import { Dumbbell } from "lucide-react"
+import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
+import { useRouter} from "next/navigation";
+import { useAuth } from '@/contexts/AuthContext'
+import { GetCustomerById } from '@/lib/api'
 
 export function UserNavbar() {
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
   const router = useRouter();
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const[userName,setUserName] = useState<string|null>(null);
-  const[imgUrl,setImgUrl] = useState<string|null>(null);
-  
+  const { getUserProfileId } = useAuth();
+
   useEffect(() => {
-      async function fetchUserInfo() {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        if (!token) return;
-  
-        try {
-          const data = await GetUserInfo(token);
-          const userMeta = data?.user?.user_metadata;
-          setUserName(userMeta?.full_name || userMeta?.name || null);
-          setImgUrl(userMeta?.avatar_url || userMeta?.picture || null);
-          setProfileId(data?.user?.id || null);
-        } catch (error) {
-          setUserName(null);
+    async function fetchUserInfo() {
+      try {
+        const customerId = await getUserProfileId();
+        
+        if (customerId) {
+          const data = await GetCustomerById(customerId);
+          const customerData = data.user;
+          setImgUrl(customerData.profile_img);
+        } else {
           setImgUrl(null);
-          setProfileId(null);
         }
+      } catch (error) {
+        console.error('Error fetching customer data:', error);
       }
-      fetchUserInfo();
-    }, []);
+    }
+
+    fetchUserInfo();
+  }, [getUserProfileId]);
+
   
   return (
     <header className="fixed top-0 z-50 w-full bg-black shadow-lg border-b-2 border-[#FB4141]">
@@ -67,7 +66,6 @@ export function UserNavbar() {
            
                 <Avatar className="cursor-pointer">
                   <AvatarImage src={imgUrl ?? undefined} />
-                  <AvatarFallback>{userName?.[0] || "G"}</AvatarFallback>
                   </Avatar>
              
             <Button

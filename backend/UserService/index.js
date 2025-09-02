@@ -13,7 +13,7 @@ app.use(cors())
 
 app.get('/getuserbyid/:userId',getuserbyid)
 //app.post('/adduser',addUser)
-app.put('/updateuserdetails/:userId',updateuserdetails)
+app.patch('/updateuserdetails/:userId',updateuserdetails)
 app.post('/addweight',addweight)
 app.get('/getweightbyid/:userId',getweightbyid)
 app.get('/getlatestweightbyid/:userId',getlatestweightbyid)

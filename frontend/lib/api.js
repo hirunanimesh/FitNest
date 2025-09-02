@@ -60,9 +60,6 @@ export const GetUserInfo = async (token) => {
     }
 };
 
-
-
-
 export const CompleteOAuthProfileMember = async (profileData) => {
     try {
         const config = {};
@@ -115,8 +112,7 @@ export const TrainerRegister = async (trainerData) => {
     }
 };
 
-export const 
-GymRegister = async (gymData) => {
+export const GymRegister = async (gymData) => {
     console.log("Gym data being sent:", gymData); // Debug log
     try {
         const config = {};
@@ -238,3 +234,46 @@ export const GetWeight = async(customerId) =>{
         console.error("Error fetching gym data",error)
     }
 }
+
+export const UpdateUserDetails = async (customerId, userData) => {
+    try {
+        const config = {};
+        let requestData;
+        
+        // Check if userData is FormData (contains file) or regular object
+        if (userData instanceof FormData) {
+            // If it's FormData, set the appropriate headers and use it directly
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+            requestData = userData;
+        } else {
+            // If it's regular object data, transform it to the expected format
+            const payload = {};
+            if (userData.firstName) payload.first_name = userData.firstName;
+            if (userData.lastName) payload.last_name = userData.lastName;
+            if (userData.phone) payload.phone_no = userData.phone;
+            if (userData.address) payload.address = userData.address;
+            if (userData.dateOfBirth) payload.birthday = userData.dateOfBirth;
+            if (userData.gender) payload.gender = userData.gender;
+            if (userData.avatar) payload.profile_img = userData.avatar;
+            requestData = payload;
+        }
+
+        const response = await axios.patch(
+            `${Base_URL}/api/user/updateuserdetails/${customerId}`,
+            requestData,
+            config
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating user details:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to update user details");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};

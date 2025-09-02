@@ -1,43 +1,39 @@
 "use client";
-import axios from "axios";
-import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle,CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Video } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useTrainerData } from '../context/TrainerContext';
 
 export default function SessionsSection() {
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
-  const searchParams = useSearchParams();
+  const { trainerData, isLoading, error } = useTrainerData();
 
-  useEffect(() => {
-    const fetchSessions = async () => {
-      const trainerId = searchParams.get("id"); // Updated to fetch "id" from the URL
-      console.log("Fetching sessions for trainerId:", trainerId);
+  const sessions = trainerData?.sessions || [];
 
-      if (!trainerId) {
-        console.error("Trainer ID is missing in the URL");
-        return;
-      }
+  if (isLoading) {
+    return (
+      <section id="sessions" className="py-20 bg-gray-800">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-white mb-4">Available Sessions</h3>
+            <div className="text-gray-300">Loading sessions...</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getallsessionbytrainerid/${trainerId}`
-        );
-        console.log("Fetched sessions:", response.data);
-        if (response.data && response.data.session) {
-          setSessions(response.data.session);
-        } else {
-          console.error("Unexpected response format:", response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching sessions:", error);
-      }
-    };
-
-    fetchSessions();
-  }, [searchParams]);
+  if (error) {
+    return (
+      <section id="sessions" className="py-20 bg-gray-800">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-white mb-4">Available Sessions</h3>
+            <div className="text-red-400">Error loading sessions: {error}</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="sessions" className="py-20 bg-gray-800">
@@ -50,12 +46,10 @@ export default function SessionsSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {sessions.map((session) => (
+          {sessions.map((session: any) => (
             <Card
               key={session.session_id}
-              className={`bg-gray-900 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500 ${
-                selectedSession === session.session_id.toString() ? "ring-2 ring-red-500" : ""
-              }`}
+              className="bg-gray-900 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500"
             >
               <CardHeader>
                  <img

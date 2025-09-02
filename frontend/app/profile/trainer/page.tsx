@@ -9,20 +9,23 @@ import BlogSection from "./components/BlogSection"
 import ContactSection from "./components/ContactSection"
 import { Suspense } from "react"
 import Feedback from "./components/Feedback"
+import { TrainerDataProvider } from "./context/TrainerContext"
 
 function TrainerPageContent() {
   console.log("TrainerPage rendered"); // Debug log
 
   return (
-    <main className="bg-gray-900 min-h-screen text-gray-100">
-      <Header />
-      <HeroSection />
-      <AboutSection />
-      <SessionsSection />
-      <Feedback />
-      <BlogSection />
-      <ContactSection />
-    </main>
+    <TrainerDataProvider>
+      <main className="bg-gray-900 min-h-screen text-gray-100">
+        <Header />
+        <HeroSection />
+        <AboutSection />
+        <SessionsSection />
+        <Feedback />
+        <BlogSection />
+        <ContactSection />
+      </main>
+    </TrainerDataProvider>
   )
 }
 
