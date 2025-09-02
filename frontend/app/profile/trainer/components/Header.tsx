@@ -34,8 +34,8 @@ export default function Header() {
             <a href="#sessions" className="text-gray-300 hover:text-red-400">
               Sessions
             </a>
-            <a href="#testimonials" className="text-gray-300 hover:text-red-400">
-              Testimonials
+            <a href="#feedbacks" className="text-gray-300 hover:text-red-400">
+              Feedbacks
             </a>
             <a href="#blog" className="text-gray-300 hover:text-red-400">
               Blog
