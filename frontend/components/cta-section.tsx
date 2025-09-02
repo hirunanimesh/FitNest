@@ -44,10 +44,10 @@ export function CTASection(): JSX.Element {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link href="http://localhost:3010/auth/signup">
+          <Link href="http://localhost:3010/auth/signup" className="w-full sm:w-auto">
             <Button
               size="lg"
-              className="text-base px-8 py-4 bg-primary hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="w-full sm:w-64 text-base px-8 py-4 bg-primary hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               Start Your Journey
             </Button>
@@ -56,7 +56,7 @@ export function CTASection(): JSX.Element {
           <Button
             variant="outline"
             size="lg"
-            className="text-lg px-8 py-4 bg-transparent border-white text-white hover:bg-white hover:text-black transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm"
+            className="w-full sm:w-64 text-base px-8 py-4 bg-transparent border-white text-white hover:bg-white hover:text-black transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm"
             onClick={openModal}
           >
             <Play className="mr-2 h-5 w-5" />
