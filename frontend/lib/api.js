@@ -220,7 +220,14 @@ export const GetLatestWeight = async(customerId) =>{
         }
         return response.data
     }catch(error){
-        console.error("Error fetching gym data",error)
+        console.log("GetLatestWeight error:", error.response?.status);
+        // Handle 404 specifically - user might not have weight data yet
+        if (error.response?.status === 404) {
+            console.log("No weight data found for user:", customerId);
+            return { weight: null }; // Return null weight instead of throwing
+        }
+        console.error("Error fetching latest weight data:", error)
+        throw error; // Re-throw other errors
     }
 }
 export const GetWeight = async(customerId) =>{
@@ -231,7 +238,14 @@ export const GetWeight = async(customerId) =>{
         }
         return response.data
     }catch(error){
-        console.error("Error fetching gym data",error)
+        console.log("GetWeight error:", error.response?.status);
+        // Handle 404 specifically - user might not have weight history yet
+        if (error.response?.status === 404) {
+            console.log("No weight history found for user:", customerId);
+            return { weight: [] }; // Return empty array instead of throwing
+        }
+        console.error("Error fetching weight history data:", error)
+        throw error; // Re-throw other errors
     }
 }
 
