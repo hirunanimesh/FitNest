@@ -1,4 +1,4 @@
-//public profile
+"use client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -7,8 +7,34 @@ import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Clock, Dumbbell, FlameIcon as Fire, Heart, MapPin, Target, Trophy, Users, Zap } from "lucide-react"
 import { PublicRoute } from "@/components/PublicRoute"
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-export default function GymProfilePage() {
+export default function UserProfilePage() {
+  const searchParams = useSearchParams()
+  const userId = searchParams.get('id')
+  const userName = searchParams.get('name')
+  
+  // Default user data - you can replace this with API call using userId
+  const [userData, setUserData] = useState({
+    first_name: "Alex",
+    last_name: "Johnson",
+    profile_img: "/fitness-woman-profile.png",
+    age: 28,
+    location: "Downtown Branch"
+  })
+
+  // If name is passed via query params, use it (from the modal)
+  useEffect(() => {
+    if (userName) {
+      const [first_name, ...last_name_parts] = decodeURIComponent(userName).split(' ')
+      setUserData(prev => ({
+        ...prev,
+        first_name: first_name || "Alex",
+        last_name: last_name_parts.join(' ') || "Johnson"
+      }))
+    }
+  }, [userName])
   const achievements = [
     { title: "Completed 5K run", date: "2 days ago", icon: Trophy },
     { title: "Lost 3kg this month", date: "1 week ago", icon: Target },
@@ -21,34 +47,37 @@ export default function GymProfilePage() {
     { label: "Weight Lifted (kg)", value: 2850, max: 3000, color: "bg-red-600" },
   ]
 
-  
   return (
     <PublicRoute>
       <div className="min-h-screen bg-black text-white p-4 md:p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header Section */}
-        <Card className="bg-gray-900 border-gray-800">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              <Avatar className="w-24 h-24 border-2 border-red-500">
-                <AvatarImage src="/fitness-woman-profile.png" alt="Alex Johnson" />
-                <AvatarFallback className="bg-gray-800 text-white text-xl">AJ</AvatarFallback>
-              </Avatar>
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header Section */}
+          <Card className="bg-gray-900 border-gray-800">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                <Avatar className="w-24 h-24 border-2 border-red-500">
+                  <AvatarImage src={userData.profile_img} alt={`${userData.first_name} ${userData.last_name}`} />
+                  <AvatarFallback className="bg-gray-800 text-white text-xl">
+                    {userData.first_name[0]}{userData.last_name[0]}
+                  </AvatarFallback>
+                </Avatar>
 
-              <div className="flex-1 space-y-3">
-                <div>
-                  <h1 className="text-3xl font-bold text-white">Alex Johnson</h1>
-                  <div className="flex items-center gap-4 text-gray-400 mt-2">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      28 years old
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      Downtown Branch
-                    </span>
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <h1 className="text-3xl font-bold text-white">
+                      {userData.first_name} {userData.last_name}
+                    </h1>
+                    <div className="flex items-center gap-4 text-gray-400 mt-2">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {userData.age} years old
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {userData.location}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
                 <p className="text-gray-300 max-w-2xl">
                   "Love early morning runs and strength training! Always looking to push my limits and inspire others on
@@ -249,8 +278,6 @@ export default function GymProfilePage() {
                 </div>
               </CardContent>
             </Card>
-
-            
           </div>
         </div>
       </div>
