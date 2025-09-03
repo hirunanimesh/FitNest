@@ -3,10 +3,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Building2, FileCheck, MessageSquare } from "lucide-react"
+import { Building2, FileCheck, MessageSquare, Users } from "lucide-react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+import { usePathname } from "next/navigation"
 
 interface AdminNavbarProps {
   adminName?: string
@@ -22,12 +21,12 @@ export function AdminNavbar({
   pendingVerifications = 0,
 }: AdminNavbarProps) {
   const pathname = usePathname()
-  const router = useRouter()
 
   const navItems = [
     { href: "/dashboard/admin", label: "Dashboard", icon: Building2 },
     { href: "/dashboard/admin/verifications", label: "Verifications", icon: FileCheck, badge: pendingVerifications },
     { href: "/dashboard/admin/inquiries", label: "User Inquiries", icon: MessageSquare },
+    { href: "/dashboard/admin/trainers-gyms", label: "Trainers/Gyms", icon: Users },
   ]
 
   return (
@@ -85,15 +84,6 @@ export function AdminNavbar({
                 .join("")}
             </AvatarFallback>
           </Avatar>
-          <Button
-            onClick={() => {
-              supabase.auth.signOut();
-              router.push("/auth/login");
-            }}
-            className="bg-[#FB4141] hover:bg-[#e63636] text-white"
-          >
-            Logout
-          </Button>
         </div>
       </div>
     </nav>
