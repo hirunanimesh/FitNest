@@ -10,6 +10,7 @@ import { MapPin } from "lucide-react"
 import GymCard from "@/components/GymCard"
 import TrainerCard from "@/components/TrainerCard" // Assuming you have a TrainerCard component
 import GymsMapView from "@/components/GymsMapView"
+import { useRouter } from "next/navigation"
 
 // Added a type definition for the gym and trainer data
 interface Gym {
@@ -47,6 +48,8 @@ export default function SearchPage() {
   const [view, setView] = useState<"gyms" | "trainers">("gyms") // Toggle state
   const [showMapView, setShowMapView] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+
+  const router = useRouter()
 
   useEffect(() => {
     // Fetch gym data from the backend
@@ -223,7 +226,7 @@ export default function SearchPage() {
         {/* Display Gym or Trainer Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {view === "gyms" &&
-            getFilteredGyms().map((gym) => <GymCard key={gym.gym_id} gym={gym} />)}
+            getFilteredGyms().map((gym) => <GymCard key={gym.gym_id} gym={gym} onClick={() => router.push(`/dashboard/user/gym/${gym.gym_id}`)} />)}
 
           {view === "trainers" &&
             trainers

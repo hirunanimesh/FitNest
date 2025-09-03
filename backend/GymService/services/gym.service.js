@@ -25,11 +25,11 @@ export async function getallgyms(){
         return data; // Return all gyms
 }
 
-export async function getgymbyid(userId) {
+export async function getgymbyid(gymId) {
         const { data, error } = await supabase
         .from('gym')
         .select('*')
-        .eq('user_id', userId)
+        .eq('gym_id', gymId)
         .single(); // Fetch single gym by ID
 
         if(!data){
@@ -41,6 +41,24 @@ export async function getgymbyid(userId) {
         }
         
         return data; // Return the gym data
+}
+
+export async function getgymbyuserid(userId) {
+  const { data, error } = await supabase
+  .from('gym')
+  .select('*')
+  .eq('user_id', userId)
+  .single(); // Fetch single gym by ID
+
+  if(!data){
+          return null;
+  }
+  
+  if (error) {
+  throw new Error(error.message);
+  }
+  
+  return data; // Return the gym data
 }
 
 export async function updategymdetails(gymId, gymData) {
