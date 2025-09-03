@@ -88,6 +88,28 @@ const trainersData = [
     joinedDate: "2023-01-10",
   },
 ]
+const downloadCSV = (data: any[]) => {
+  const csvRows = [
+    ["Name", "Address", "Contact Number", "Joined Date", "Total Members"],
+    ...data.map((item) => [
+      item.name,
+      item.address,
+      item.contactNumber,
+      item.joinedDate,
+      item.totalMembers,
+    ]),
+  ]
+
+  const csvString = csvRows.map((row) => row.join(",")).join("\n")
+  const blob = new Blob([csvString], { type: "text/csv" })
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "gyms_trainers_data.csv"
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 export default function TrainersGymsPage() {
   const [selectedView, setSelectedView] = useState<"gyms" | "trainers">("gyms")
@@ -132,39 +154,48 @@ export default function TrainersGymsPage() {
       <div className="min-h-screen bg-gray-900 p-4 md:p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h1 className="text-2xl md:text-3xl font-bold text-white">
-              {selectedView === "gyms" ? "Gym Management" : "Trainer Management"}
-            </h1>
+          <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
+  <h1 className="text-2xl md:text-3xl font-bold text-white">
+    {selectedView === "gyms" ? "Gym Management" : "Trainer Management"}
+  </h1>
 
-            {/* View Selection */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setSelectedView("gyms")}
-                variant={selectedView === "gyms" ? "default" : "outline"}
-                className={
-                  selectedView === "gyms"
-                    ? "bg-red-600 hover:bg-red-700 text-white border-0"
-                    : "border-gray-600 text-black hover:bg-gray-300"
-                }
-              >
-                <Building2 className="h-4 w-4 mr-2" />
-                Gyms
-              </Button>
-              <Button
-                onClick={() => setSelectedView("trainers")}
-                variant={selectedView === "trainers" ? "default" : "outline"}
-                className={
-                  selectedView === "trainers"
-                    ? "bg-red-600 hover:bg-red-700 text-white border-0"
-                    : "border-gray-600 text-black hover:bg-gray-300"
-                }
-              >
-                <UserCheck className="h-4 w-4 mr-2" />
-                Trainers
-              </Button>
-            </div>
-          </div>
+  {/* View Selection */}
+  <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+    <Button
+      onClick={() => downloadCSV(selectedView === "gyms" ? filteredAndSortedGyms : filteredAndSortedTrainers)}
+      className="w-full sm:w-auto lg:min-w-[120px] order-3 sm:order-1"
+    >
+      Download CSV
+    </Button>
+    
+    <div className="flex gap-2 order-1 sm:order-2">
+      <Button
+        onClick={() => setSelectedView("gyms")}
+        variant={selectedView === "gyms" ? "default" : "outline"}
+        className={`flex-1 sm:flex-none ${
+          selectedView === "gyms"
+            ? "bg-red-600 hover:bg-red-700 text-white border-0"
+            : "border-gray-600 text-black hover:bg-gray-300"
+        }`}
+      >
+        <Building2 className="h-4 w-4 mr-2" />
+        Gyms
+      </Button>
+      <Button
+        onClick={() => setSelectedView("trainers")}
+        variant={selectedView === "trainers" ? "default" : "outline"}
+        className={`flex-1 sm:flex-none ${
+          selectedView === "trainers"
+            ? "bg-red-600 hover:bg-red-700 text-white border-0"
+            : "border-gray-600 text-black hover:bg-gray-300"
+        }`}
+      >
+        <UserCheck className="h-4 w-4 mr-2" />
+        Trainers
+      </Button>
+    </div>
+  </div>
+</div>
 
           {/* Filters and Search */}
           <Card className="bg-gray-800 border-gray-700">
