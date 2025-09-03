@@ -307,3 +307,20 @@ export const UpdateUserDetails = async (customerId, userData) => {
         throw error;
     }
 };
+
+// Session API functions
+export const AddSession = async (sessionData) => {
+    try {
+        const response = await axios.post(`${Base_URL}/api/trainer/addsession`, sessionData);
+        return response.data;
+    } catch (error) {
+        console.error("Error adding session:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to create session");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};

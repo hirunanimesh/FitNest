@@ -8,6 +8,9 @@ const trainerProxy = createProxyMiddleware({
   pathRewrite: {
     '^/api/trainer': '' // Remove /api/trainer prefix when forwarding
   },
+  parseReqBody: false, // Important for file uploads
+  proxyTimeout: 60000,
+  timeout: 60000,
   onProxyReq: (proxyReq, req, res) => {
     console.log(`[Trainer Proxy] ${req.method} ${req.originalUrl} -> ${proxyReq.getHeader('host')}${req.url}`);
   },
