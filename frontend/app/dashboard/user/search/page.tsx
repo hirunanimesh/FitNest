@@ -1,21 +1,17 @@
-"use client"
+"use client";
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin } from "lucide-react";
+import GymCard from "@/components/GymCard";
+import TrainerCard from "@/components/TrainerCard";
+import GymsMapView from "@/components/GymsMapView";
+import { useRouter } from "next/navigation";
+import { GetOneDayGyms, GetOtherGyms } from "@/api/user/route";
 
-import { useState, useEffect, useRef } from "react"
-import axios from "axios"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MapPin } from "lucide-react"
-import GymCard from "@/components/GymCard"
-import TrainerCard from "@/components/TrainerCard" // Assuming you have a TrainerCard component
-import GymsMapView from "@/components/GymsMapView"
-
-import { useRouter } from "next/navigation"
-
-import { GetOneDayGyms, GetOtherGyms } from "@/api/user/route"
-
-
-// Added a type definition for the gym and trainer data
+// Type definitions
 interface Gym {
   gym_id: number;
   gym_name: string;
@@ -26,7 +22,6 @@ interface Gym {
   contact_no?: string | null;
 }
 
-// Types for the new API response structure
 interface PlanGym {
   plan_id: string;
   gym_id: number;
@@ -39,7 +34,7 @@ interface PlanGym {
   price_id_stripe: string;
   gym: {
     gym_id: number;
-    location: string; // JSON string with lat/lng
+    location: string;
     profile_img?: string | null;
     gym_name?: string;
     address?: string;
@@ -58,309 +53,366 @@ interface Trainer {
   profile_img?: string | null;
   expertise: string;
   contact_no?: string | null;
-  experience_years: number; // Added experience years
-  email: string; // Added email
-  skills: string| string[]; // Added skills as an array
-  bio: string; // Added bio as a paragraph
-  year_of_experience: number; // Added to match TrainerCard's Trainer type
-  rating: number; // Added to match TrainerCard's Trainer type
-}
-interface TrainerCardProps {
-  trainer: Trainer;
+  experience_years: number;
+  email: string;
+  skills: string | string[];
+  bio: string;
+  year_of_experience: number;
+  rating: number;
 }
 
 export default function SearchPage() {
-  const [gyms, setGyms] = useState<Gym[]>([])
-  const [trainers, setTrainers] = useState<Trainer[]>([])
-  const [mapGymsData, setMapGymsData] = useState<MapGymData[]>([])
-  const [isLoadingMapData, setIsLoadingMapData] = useState(false)
-  const [isLoadingData, setIsLoadingData] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedLocation, setSelectedLocation] = useState("")
-  const [view, setView] = useState<"gyms" | "trainers">("gyms") // Toggle state
-  const [showMapView, setShowMapView] = useState(false)
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const hasDataFetched = useRef(false)
-
-  const router = useRouter()
+  const [gyms, setGyms] = useState<Gym[]>([]);
+  const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const [mapGymsData, setMapGymsData] = useState<MapGymData[]>([]);
+  const [isLoadingMapData, setIsLoadingMapData] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [view, setView] = useState<"gyms" | "trainers">("gyms");
+  const [showMapView, setShowMapView] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const hasDataFetched = useRef(false);
+  const router = useRouter();
 
   useEffect(() => {
-    // Prevent duplicate API calls
     if (hasDataFetched.current || isLoadingData) {
-      return
+      return;
     }
-    
-    hasDataFetched.current = true
-    setIsLoadingData(true)
 
-    console.log("Fetching gyms and trainers data...")
+    hasDataFetched.current = true;
+    setIsLoadingData(true);
 
-    // Fetch gym data from the backend
-    const fetchGyms = axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms`)
+    const fetchGyms = axios
+      .get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms`)
       .then((response) => {
-        console.log("Gyms API call completed")
         if (response.data && Array.isArray(response.data.gyms)) {
-          setGyms(response.data.gyms)
-          console.log("Fetched gyms:", response.data.gyms)
+          setGyms(response.data.gyms);
         } else {
-          console.error("Unexpected gyms response format:", response.data)
-          setGyms([])
+          setGyms([]);
         }
-      }).catch((error) => {
-        console.error("Error fetching gyms:", error)
-        setGyms([])
       })
+      .catch((error) => {
+        setGyms([]);
+      });
 
-    // Fetch trainer data from the backend
-    const fetchTrainers = axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getalltrainers`)
+    const fetchTrainers = axios
+      .get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getalltrainers`)
       .then((response) => {
-        console.log("Trainers API call completed")
         if (response.data && Array.isArray(response.data.trainers)) {
-          setTrainers(response.data.trainers)
+          setTrainers(response.data.trainers);
         } else {
-          console.error("Unexpected trainers response format:", response.data)
-          setTrainers([])
+          setTrainers([]);
         }
-      }).catch((error) => {
-        console.error("Error fetching trainers:", error)
-        setTrainers([])
       })
+      .catch((error) => {
+        setTrainers([]);
+      });
 
-    // Wait for both API calls to complete
     Promise.all([fetchGyms, fetchTrainers]).finally(() => {
-      setIsLoadingData(false)
-      console.log("Data fetching completed")
-    })
+      setIsLoadingData(false);
+    });
+  }, []);
 
-  }, [])
-
-  // Get filtered gyms based on search criteria
   const getFilteredGyms = () => {
     return gyms.filter((gym) => {
-      const matchesName = gym.gym_name.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesLocation = !selectedLocation || 
-        selectedLocation === "default" || 
+      const matchesName = gym.gym_name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesLocation =
+        !selectedLocation ||
+        selectedLocation === "default" ||
         gym.address.toLowerCase().includes(selectedLocation.toLowerCase()) ||
-        (gym.location && gym.location.toLowerCase().includes(selectedLocation.toLowerCase()))
-      return matchesName && matchesLocation
-    })
-  }
+        (gym.location && gym.location.toLowerCase().includes(selectedLocation.toLowerCase()));
+      return matchesName && matchesLocation;
+    });
+  };
 
-  // Handle "Find Near Me" button click
   const handleFindNearMe = async () => {
     if (view === "gyms") {
-      setIsLoadingMapData(true)
+      setIsLoadingMapData(true);
       try {
-        // Fetch both types of gyms for the map
-        const [oneDayResponse, otherResponse] = await Promise.all([
-          GetOneDayGyms(),
-          GetOtherGyms()
-        ])
+        const [oneDayResponse, otherResponse] = await Promise.all([GetOneDayGyms(), GetOtherGyms()]);
 
-        const mapData: MapGymData[] = []
+        const mapData: MapGymData[] = [];
 
-        // Process one day gyms
         if (oneDayResponse?.gyms?.data) {
           oneDayResponse.gyms.data.forEach((planGym: PlanGym) => {
             mapData.push({
               gym: planGym.gym,
-              planType: 'oneDay'
-            })
-          })
+              planType: 'oneDay',
+            });
+          });
         }
 
-        // Process other gyms
         if (otherResponse?.gyms?.data) {
           otherResponse.gyms.data.forEach((planGym: PlanGym) => {
             mapData.push({
               gym: planGym.gym,
-              planType: 'other'
-            })
-          })
+              planType: 'other',
+            });
+          });
         }
 
-        // Remove duplicates based on gym_id
         const uniqueMapData = mapData.reduce((acc, current) => {
-          const existingIndex = acc.findIndex(item => item.gym.gym_id === current.gym.gym_id)
+          const existingIndex = acc.findIndex((item) => item.gym.gym_id === current.gym.gym_id);
           if (existingIndex === -1) {
-            acc.push(current)
-          } else {
-            // If gym already exists, prioritize 'oneDay' plan type
-            if (current.planType === 'oneDay') {
-              acc[existingIndex] = current
-            }
+            acc.push(current);
+          } else if (current.planType === 'oneDay') {
+            acc[existingIndex] = current;
           }
-          return acc
-        }, [] as MapGymData[])
+          return acc;
+        }, [] as MapGymData[]);
 
-        setMapGymsData(uniqueMapData)
+        setMapGymsData(uniqueMapData);
 
         if (uniqueMapData.length === 0) {
-          alert("No gyms with plans found. Please try again later.")
-          setIsLoadingMapData(false)
-          return
+          alert("No gyms with plans found. Please try again later.");
+          setIsLoadingMapData(false);
+          return;
         }
 
-        // Get user's location first
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (position) => {
               setUserLocation({
                 lat: position.coords.latitude,
-                lng: position.coords.longitude
-              })
-              setShowMapView(true)
-              setIsLoadingMapData(false)
+                lng: position.coords.longitude,
+              });
+              setShowMapView(true);
+              setIsLoadingMapData(false);
             },
             (error) => {
-              // Handle geolocation error properly
-              let errorMessage = 'Unknown error occurred'
-              switch(error.code) {
+              let errorMessage = 'Unknown error occurred';
+              switch (error.code) {
                 case error.PERMISSION_DENIED:
-                  errorMessage = 'Location access denied by user'
-                  break
+                  errorMessage = 'Location access denied by user';
+                  break;
                 case error.POSITION_UNAVAILABLE:
-                  errorMessage = 'Location information unavailable'
-                  break
+                  errorMessage = 'Location information unavailable';
+                  break;
                 case error.TIMEOUT:
-                  errorMessage = 'Location request timed out'
-                  break
+                  errorMessage = 'Location request timed out';
+                  break;
               }
-              console.warn('Geolocation error:', errorMessage)
-              // Show map anyway with default location (Colombo, Sri Lanka)
-              setUserLocation({ lat: 6.9271, lng: 79.8612 })
-              setShowMapView(true)
-              setIsLoadingMapData(false)
+              setUserLocation({ lat: 6.9271, lng: 79.8612 });
+              setShowMapView(true);
+              setIsLoadingMapData(false);
             },
             {
               enableHighAccuracy: true,
               timeout: 10000,
-              maximumAge: 600000
+              maximumAge: 600000,
             }
-          )
+          );
         } else {
-          // Browser doesn't support geolocation, show map anyway
-          console.warn('Geolocation not supported by this browser')
-          setUserLocation({ lat: 6.9271, lng: 79.8612 })
-          setShowMapView(true)
-          setIsLoadingMapData(false)
+          setUserLocation({ lat: 6.9271, lng: 79.8612 });
+          setShowMapView(true);
+          setIsLoadingMapData(false);
         }
       } catch (error) {
-        console.error("Error fetching gym data for map:", error)
-        alert("Failed to load gym data for map view. Please try again.")
-        setIsLoadingMapData(false)
+        alert("Failed to load gym data for map view. Please try again.");
+        setIsLoadingMapData(false);
       }
     } else {
-      // For trainers, you could implement a different behavior or show a message
-      alert("Map view is currently available for gyms only.")
+      alert("Map view is currently available for gyms only.");
     }
-  }
+  };
 
   return (
-    <div className="bg-black-400 min-h-screen">
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">Gyms and Trainers in Sri Lanka</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900/20 to-slate-900 text-white">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Header Section */}
+        <div className="mb-12 text-center animate-fade-in">
+          <h1 className="text-4xl sm:text-5xl font-black">
+            <span className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent">
+              Find Gyms & Trainers in Sri Lanka
+            </span>
+          </h1>
+          <p className="mt-4 text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto">
+            Discover the best fitness centers and personal trainers to kickstart your fitness journey.
+          </p>
+        </div>
 
-          {/* Toggle Buttons */}
-          <div className="flex gap-4 mb-6 ">
-            <Button 
-              variant={view === "gyms" ? "default" : "outline" }
-              onClick={() => setView("gyms")}
-              className={view === "gyms" ? "" : "bg-[#192024] text-white"}
-            >
-              View Gyms
-            </Button>
-            <Button
-              variant={view === "trainers" ? "default" : "outline"}
-              onClick={() => setView("trainers")}
-              className={view === "trainers" ? "" : "bg-[#192024] text-white"}
-            >
-              View Trainers
-            </Button>
+        {/* Toggle Buttons */}
+        <div className="flex justify-center gap-4 mb-8">
+          <Button
+            variant={view === "gyms" ? "default" : "outline"}
+            onClick={() => setView("gyms")}
+            className={`px-6 py-3 rounded-full font-semibold text-lg transition-all duration-300 ${
+              view === "gyms"
+                ? "bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-500/25 hover:scale-105"
+                : "bg-white/5 border-white/10 text-white hover:bg-red-500/20 hover:border-red-500/20"
+            }`}
+          >
+            View Gyms
+          </Button>
+          <Button
+            variant={view === "trainers" ? "default" : "outline"}
+            onClick={() => setView("trainers")}
+            className={`px-6 py-3 rounded-full font-semibold text-lg transition-all duration-300 ${
+              view === "trainers"
+                ? "bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-500/25 hover:scale-105"
+                : "bg-white/5 border-white/10 text-white hover:bg-red-500/20 hover:border-red-500/20"
+            }`}
+          >
+            View Trainers
+          </Button>
+        </div>
+
+        {/* Search Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-12 animate-fade-in delay-200">
+          <Input
+            placeholder="Search by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-red-500 focus:ring-red-500 rounded-xl py-6 text-lg"
+          />
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white focus:border-red-500 focus:ring-red-500 rounded-xl py-6">
+              <SelectValue placeholder="Select Location" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-900 text-white border-white/10">
+              <SelectItem value="default">All Locations</SelectItem>
+              {[
+                "Ampara",
+                "Anuradhapura",
+                "Badulla",
+                "Batticaloa",
+                "Colombo",
+                "Galle",
+                "Gampaha",
+                "Hambantota",
+                "Jaffna",
+                "Kalutara",
+                "Kandy",
+                "Kegalle",
+                "Kilinochchi",
+                "Kurunegala",
+                "Mannar",
+                "Matale",
+                "Matara",
+                "Moneragala",
+                "Mullaitivu",
+                "Nuwara Eliya",
+                "Polonnaruwa",
+                "Puttalam",
+                "Ratnapura",
+                "Trincomalee",
+                "Vavuniya",
+              ].map((location) => (
+                <SelectItem key={location} value={location.toLowerCase()}>
+                  {location}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={handleFindNearMe}
+            disabled={isLoadingMapData}
+            className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl py-6 font-semibold text-lg shadow-lg shadow-red-500/25 transition-all duration-300 hover:scale-105"
+          >
+            <MapPin className="mr-2 h-5 w-5" />
+            {isLoadingMapData ? "Loading..." : "Find Near Me"}
+          </Button>
+        </div>
+
+        {/* Loading State */}
+        {isLoadingData ? (
+          <div className="text-center py-16">
+            <div className="relative inline-block">
+              <div className="w-16 h-16 border-4 border-red-500/30 rounded-full animate-spin border-t-red-500"></div>
+              <div className="absolute inset-0 w-12 h-12 border-4 border-rose-500/30 rounded-full animate-spin border-t-rose-500 animate-reverse"></div>
+            </div>
+            <p className="mt-4 text-lg text-slate-300">Loading gyms and trainers...</p>
           </div>
+        ) : (
+          <>
+            {/* Gym/Trainer Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {view === "gyms" &&
+                getFilteredGyms().map((gym) => (
+                  <GymCard
+                    key={gym.gym_id}
+                    gym={gym}
+                    onClick={() => router.push(`/dashboard/user/gym/${gym.gym_id}`)}
+                  />
+                ))}
+              {view === "trainers" &&
+                trainers
+                  .filter((trainer) => {
+                    const matchesName = trainer.trainer_name.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchesLocation =
+                      !selectedLocation || trainer.expertise.toLowerCase().includes(selectedLocation);
+                    return matchesName && matchesLocation;
+                  })
+                  .map((trainer) => <TrainerCard key={trainer.id} trainer={trainer} />)}
+            </div>
 
-          {/* Search Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6 ">
-            <div className="flex-1 " >
-              <Input
-                placeholder="Search by name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#192024] text-white"
+            {/* No Results Message */}
+            {view === "gyms" && getFilteredGyms().length === 0 && (
+              <div className="text-center py-16">
+                <MapPin className="w-16 h-16 text-red-500 mx-auto" />
+                <p className="mt-4 text-lg text-slate-300">No gyms found matching your criteria.</p>
+              </div>
+            )}
+            {view === "trainers" &&
+              trainers.filter((trainer) => {
+                const matchesName = trainer.trainer_name.toLowerCase().includes(searchQuery.toLowerCase());
+                const matchesLocation =
+                  !selectedLocation || trainer.expertise.toLowerCase().includes(selectedLocation);
+                return matchesName && matchesLocation;
+              }).length === 0 && (
+                <div className="text-center py-16">
+                  <MapPin className="w-16 h-16 text-red-500 mx-auto" />
+                  <p className="mt-4 text-lg text-slate-300">No trainers found matching your criteria.</p>
+                </div>
+              )}
+          </>
+        )}
+
+        {/* Map View Modal */}
+        {showMapView && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+            <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-4xl max-h-[80vh] overflow-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-white">Gyms Near You</h2>
+                <Button
+                  onClick={() => setShowMapView(false)}
+                  className="bg-red-600 hover:bg-red-700 text-white rounded-full"
+                >
+                  Close
+                </Button>
+              </div>
+              <GymsMapView
+                mapGymsData={mapGymsData}
+                onClose={() => setShowMapView(false)}
+                userLocation={userLocation}
+                
               />
             </div>
-            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-              <SelectTrigger className="w-full md:w-48 bg-[#192024]">
-                <SelectValue placeholder="Location  " />
-              </SelectTrigger>
-              <SelectContent className=" bg-[#192024] text-white">
-                {/* Updated dropdown menu with real district names */}
-                <SelectItem value="default">All Locations</SelectItem>
-                <SelectItem value="ampara">Ampara</SelectItem>
-                <SelectItem value="anuradhapura">Anuradhapura</SelectItem>
-                <SelectItem value="badulla">Badulla</SelectItem>
-                <SelectItem value="batticaloa">Batticaloa</SelectItem>
-                <SelectItem value="colombo">Colombo</SelectItem>
-                <SelectItem value="galle">Galle</SelectItem>
-                <SelectItem value="gampaha">Gampaha</SelectItem>
-                <SelectItem value="hambantota">Hambantota</SelectItem>
-                <SelectItem value="jaffna">Jaffna</SelectItem>
-                <SelectItem value="kalutara">Kalutara</SelectItem>
-                <SelectItem value="kandy">Kandy</SelectItem>
-                <SelectItem value="kegalle">Kegalle</SelectItem>
-                <SelectItem value="kilinochchi">Kilinochchi</SelectItem>
-                <SelectItem value="kurunegala">Kurunegala</SelectItem>
-                <SelectItem value="mannar">Mannar</SelectItem>
-                <SelectItem value="matale">Matale</SelectItem>
-                <SelectItem value="matara">Matara</SelectItem>
-                <SelectItem value="moneragala">Moneragala</SelectItem>
-                <SelectItem value="mullaitivu">Mullaitivu</SelectItem>
-                <SelectItem value="nuwara-eliya">Nuwara Eliya</SelectItem>
-                <SelectItem value="polonnaruwa">Polonnaruwa</SelectItem>
-                <SelectItem value="puttalam">Puttalam</SelectItem>
-                <SelectItem value="ratnapura">Ratnapura</SelectItem>
-                <SelectItem value="trincomalee">Trincomalee</SelectItem>
-                <SelectItem value="vavuniya">Vavuniya</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleFindNearMe} disabled={isLoadingMapData}>
-              <MapPin className="mr-2 h-4 w-4" />
-              {isLoadingMapData ? "Loading..." : "Find Near Me"}
-            </Button>
           </div>
-        </div>
-
-        {/* Display Gym or Trainer Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {view === "gyms" &&
-            getFilteredGyms().map((gym) => <GymCard key={gym.gym_id} gym={gym} onClick={() => router.push(`/dashboard/user/gym/${gym.gym_id}`)} />)}
-
-          {view === "trainers" &&
-            trainers
-              .filter((trainer) => {
-                const matchesName = trainer.trainer_name.toLowerCase().includes(searchQuery.toLowerCase())
-                const matchesLocation =
-                  !selectedLocation || trainer.expertise.toLowerCase().includes(selectedLocation)
-                return matchesName && matchesLocation
-              })
-              .map((trainer) => (
-  <TrainerCard key={trainer.id} trainer={trainer} />
-))}
-
-        </div>
+        )}
       </div>
 
-      {/* Map View Modal */}
-      {showMapView && (
-        <GymsMapView 
-          mapGymsData={mapGymsData}
-          onClose={() => setShowMapView(false)}
-          userLocation={userLocation}
-        />
-      )}
+      {/* Custom Styles */}
+      <style jsx global>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes reverse {
+          from { transform: rotate(360deg); }
+          to { transform: rotate(0deg); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.8s ease-out;
+        }
+        .animate-reverse {
+          animation: reverse 2s linear infinite;
+        }
+        .delay-200 {
+          animation-delay: 0.2s;
+        }
+      `}</style>
     </div>
-    </div>
-  )
+  );
 }
