@@ -1,5 +1,5 @@
 // gym.controller.js
-import { approvetrainer, createGym,getallgyms, getgymbyid, getgymtrainercount, getgymtrainers, gettotalmembercount, updategymdetails } from '../services/gym.service.js';
+import { approvetrainer, createGym,getallgyms, getgymbyid, getgymbyuserid, getgymtrainercount, getgymtrainers, gettotalmembercount, updategymdetails } from '../services/gym.service.js';
 
 export const addGym = async (req, res) => {
   try {
@@ -24,9 +24,24 @@ export const getAllGyms = async (req,res)=>{
 }
 
 export const getGymById = async (req, res) => {
+    const { gymId } = req.params;
+    try {
+        const gym = await getgymbyid(gymId);
+        if (gym) {
+        res.status(200).json({ message: "Gym retrieved successfully", gym });
+        } else {
+        res.status(404).json({ message: "Gym not found" });
+        }
+    } catch (error) {
+        console.error("Error retrieving gym:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+export const getGymByUserId = async (req, res) => {
     const { userId } = req.params;
     try {
-        const gym = await getgymbyid(userId);
+        const gym = await getgymbyuserid(userId);
         if (gym) {
         res.status(200).json({ message: "Gym retrieved successfully", gym });
         } else {

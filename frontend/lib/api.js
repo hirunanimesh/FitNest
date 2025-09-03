@@ -188,7 +188,7 @@ export const CompleteOAuthProfileGym = async (profileData) => {
 
 export const GetGymProfileData = async(id) =>{
     try{
-        const response = await axios.get(`${Base_URL}/api/gym/getgymbyid/${id}`)
+        const response = await axios.get(`${Base_URL}/api/gym/getgymbyuserid/${id}`)
         if(!response){
             console.error("Error fetching data!")
         }
