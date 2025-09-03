@@ -56,14 +56,12 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
     }
   }, [userData.dateOfBirth])
 
-  // Upload image using API Gateway -> UserService endpoint with axios
+  // Upload image using API Gateway -> UserService endpoint
   const uploadToCloudinary = async (file: File): Promise<string> => {
     const formData = new FormData()
-    formData.append('image', file) // UserService expects 'image' field name
+    formData.append('image', file)
 
     try {
-      
-      
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/upload-image`,
         formData,
@@ -71,36 +69,17 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
           headers: {
             'Content-Type': 'multipart/form-data',
           },
-          timeout: 60000, // 60 second timeout to match API Gateway
+          timeout: 60000,
         }
       )
-
-      console.log('Upload response data:', response.data)
       
-      // UserService returns imageUrl, url, or secure_url
       return response.data.imageUrl || response.data.url || response.data.secure_url
       
     } catch (error: any) {
-      console.error('Image upload error via API Gateway:', error)
+      console.error('Image upload error:', error)
       
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        throw new Error('Cannot connect to API Gateway. Please ensure the gateway is running on port 3000.')
-      }
-      
-      if (error.response) {
-        // Server responded with error status
-        console.error('Error response data:', error.response.data)
-        console.error('Error response status:', error.response.status)
-        
-        if (error.response.status === 503) {
-          throw new Error('UserService is unavailable. Please ensure the UserService is running.')
-        }
-        
-        if (error.response.data && error.response.data.message) {
-          throw new Error(error.response.data.message)
-        } else {
-          throw new Error(`Upload failed with status ${error.response.status}`)
-        }
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
       }
       
       throw new Error('Image upload failed')
@@ -183,25 +162,11 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
         return
       }
 
-      // Upload image to Cloudinary first
       const imageUrl = await uploadToCloudinary(selectedImage)
-      console.log("Cloudinary URL received:", imageUrl)
       
-      // Update user profile with new image URL using regular object (not FormData)
-      const updateData = {
-        avatar: imageUrl  // This will be mapped to profile_img in the API
-      }
+      await UpdateUserDetails(customerId, { avatar: imageUrl })
       
-      // Debug logging
-      console.log("Customer ID:", customerId)
-      console.log("Update data being sent:", updateData)
-      
-      await UpdateUserDetails(customerId, updateData)
-      
-      // Update local state with the new Cloudinary URL
       setUserData({ ...userData, avatar: imageUrl })
-      
-      // Reset modal state
       setSelectedImage(null)
       setImagePreview("")
       setIsImageModalOpen(false)
@@ -212,12 +177,6 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
       })
       
     } catch (error: any) {
-      console.error("Error uploading image:", error)
-      console.error("Error details:", {
-        message: error.message,
-        status: error.status,
-        response: error.response?.data
-      })
       toast({
         variant: "destructive",
         title: "Upload Failed",

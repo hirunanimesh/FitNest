@@ -8,10 +8,10 @@ const authProxy = createProxyMiddleware({
   pathRewrite: {
     '^/': 'api/auth/' // Remove /api/auth prefix when forwarding
   },
-  onProxyReq: (proxyReq, req, res) => {
+  onProxyReq: (proxyReq, req) => {
     console.log(`[Auth Proxy] ${req.method} ${req.originalUrl} -> ${proxyReq.getHeader('host')}${req.url}`);
   },
-  onError: (err, req, res) => {
+  onError: (err, res) => {
     console.error(`[Auth Proxy Error] ${err.message}`);
     res.status(503).json({
       status: 'error',
@@ -19,7 +19,7 @@ const authProxy = createProxyMiddleware({
       error: 'Service is currently down or unreachable'
     });
   },
-  onProxyRes: (proxyRes, req, res) => {
+  onProxyRes: (proxyRes, req) => {
     // Log successful proxy responses
     console.log(`[Auth Proxy] Response: ${proxyRes.statusCode} for ${req.method} ${req.originalUrl}`);
   }

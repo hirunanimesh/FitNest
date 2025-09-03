@@ -100,10 +100,6 @@ export const addfeedback = async (req, res) => {
 };*/
 export const uploadProfileImage = async (req, res) => {
     try {
-      console.log("Profile image upload request received");
-      console.log("Request file:", req.file);
-
-      // Check if a file was uploaded
       if (!req.file) {
         return res.status(400).json({
           success: false,
@@ -111,38 +107,19 @@ export const uploadProfileImage = async (req, res) => {
         });
       }
 
-      let profileImageUrl = null;
-
-      try {
-        // Upload image to Cloudinary
-        const cloudinaryResult = await uploadImage(
-          req.file.buffer,
-          "fitnest/profile-updates",
-          `profile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        );
-        profileImageUrl = cloudinaryResult.secure_url;
-        console.log(
-          "Profile image uploaded successfully to Cloudinary:",
-          profileImageUrl
-        );
-      } catch (uploadError) {
-        console.error("Error uploading image to Cloudinary:", uploadError);
-        return res.status(500).json({
-          success: false,
-          message: "Failed to upload image to cloud storage",
-          error: uploadError.message,
-        });
-      }
+      const cloudinaryResult = await uploadImage(
+        req.file.buffer,
+        "fitnest/profile-updates",
+        `profile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      );
 
       res.status(200).json({
         success: true,
         message: "Image uploaded successfully",
-        imageUrl: profileImageUrl,
-        url: profileImageUrl, // Alternative field name for compatibility
-        secure_url: profileImageUrl, // Another alternative field name
+        imageUrl: cloudinaryResult.secure_url,
       });
     } catch (error) {
-      console.error("[User Service] Error during image upload:", error);
+      console.error("Error during image upload:", error);
       res.status(500).json({
         success: false,
         message: "Failed to upload image",
