@@ -17,6 +17,15 @@ function addPlanData ({plan_id,product_id,price_id}){
     .catch(err => console.error('❌ Save error:', err));
 }
 
+async function deletePlanData (plan_id){
+
+    const deletedPlan = await StripePlanData.findOneAndDelete({plan_id})
+    .then(deletedPlan => {
+      console.log('📦 User deleted:', deletedPlan);
+    })
+    .catch(err => console.error('❌ Delete error:', err));
+}
+
 
 async function findStripeCustomerId ({customer_id}){
     
@@ -59,4 +68,4 @@ async function findStripeAccount ({user_id}){
     return stripeAccount;
 }
 
-export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount };
+export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData};

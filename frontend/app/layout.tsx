@@ -22,8 +22,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
-    shortcut: '/icons/icon-192x192.svg',
-    apple: '/icons/icon-192x192.svg',
+    shortcut: '/icons/icon-192x192.png',
+    apple: '/icons/icon-192x192.png',
   },
   appleWebApp: {
     capable: true,
@@ -62,6 +62,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <script src="/register-sw-simple.js" defer></script>
+        <script src="/pwa-diagnostic.js" defer></script>
         <style>{`
 html {
   font-family: ${GeistSans.style.fontFamily};

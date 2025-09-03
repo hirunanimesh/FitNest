@@ -206,6 +206,19 @@ const PlansTab: React.FC = () => {
 
   const handleDeletePlan = async (planId: string) => {
     try {
+      // Find the plan to check if it has assigned trainers
+      const planToDelete = plans.find(plan => plan.plan_id === planId);
+      
+      if (planToDelete && planToDelete.trainers && planToDelete.trainers.length > 0) {
+        setErrorMessage('Before delete plan remove trainers first');
+        toast.error('Before delete plan remove trainers first');
+        
+        setTimeout(() => {
+          setErrorMessage('');
+        }, 3000);
+        return;
+      }
+
       await DeleteGymPlan(planId);
 
       setPlans((prev) => prev.filter((plan) => plan.plan_id !== planId));

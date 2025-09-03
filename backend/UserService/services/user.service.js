@@ -51,7 +51,8 @@ export async function addWeight(weightData) {
   const { data, error } = await supabase
     .from('customer_progress')
     .select('*')
-    .eq('customer_id', userId);
+    .eq('customer_id', userId)
+    .order('date', { decending: false });
 
   if (error) {
     throw new Error(error.message);

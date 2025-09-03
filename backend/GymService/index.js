@@ -3,8 +3,10 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 
+
 import { addGym,approveTrainer,getAllGyms, getGymById, getGymByUserId, getGymTrainerCount, getTotalGymMemberCount, getTrainers, updateGymDetails } from './controllers/gym.controller.js'
-import { addGymPlan, deleteGymPlan, getAllGymPlans, getGymPlanByGymId, getMemberCountPerPlan, updateGymPlan, assignTrainersToPlan, getPlanTrainers, updatePlanTrainers } from './controllers/plans.controller.js'
+import { addGymPlan, deleteGymPlan, getAllGymPlans, getGymPlanByGymId, getMemberCountPerPlan, updateGymPlan, assignTrainersToPlan, getPlanTrainers, updatePlanTrainers , GetOneDayGyms , GetOtherGyms} from './controllers/plans.controller.js'
+
 
 const app = express()
 app.use(express.json())
@@ -34,6 +36,9 @@ app.get('/getplanmembercount/:plan_id',getMemberCountPerPlan)
 app.get('/gettrainers/:gymId',getTrainers)
 app.put('/approvetrainer/:request_id',approveTrainer)
 app.get('/getstatistics/:gymId',getGymTrainerCount)
+
+app.get('/one-day', GetOneDayGyms)
+app.get('/other', GetOtherGyms)
 
 app.listen(process.env.PORT || 3002,()=>{
     console.log(`Gym Service is running on port ${process.env.PORT || 3002}`)

@@ -25,14 +25,42 @@ interface Gym {
   operating_Hours?: string;
 }
 
+// New types for the API response structure
+interface PlanGym {
+  plan_id: string;
+  gym_id: number;
+  price: number;
+  description: string;
+  title: string;
+  duration: string;
+  created_at: string;
+  product_id_stripe: string;
+  price_id_stripe: string;
+  gym: {
+    gym_id: number;
+    location: string; // JSON string with lat/lng
+    profile_img?: string | null;
+    gym_name?: string;
+    address?: string;
+    contact_no?: string | null;
+  };
+}
+
+interface MapGymData {
+  gym: PlanGym['gym'];
+  planType: 'oneDay' | 'other';
+}
+
 interface GymsMapViewProps {
-  gyms: Gym[]
+  mapGymsData?: MapGymData[];
+  gyms?: Gym[]; // Keep for backward compatibility
   onClose: () => void
   userLocation?: { lat: number; lng: number } | null
 }
 
 const GymsMapView: React.FC<GymsMapViewProps> = ({
-  gyms,
+  gyms = [],
+  mapGymsData = [],
   onClose,
   userLocation
 }) => {
@@ -260,60 +288,127 @@ const GymsMapView: React.FC<GymsMapViewProps> = ({
     markersRef.current.forEach(marker => marker.setMap(null))
     markersRef.current = []
 
-    gyms.forEach(gym => {
-      const location = parseLocation(gym.location)
-      if (!location) return
+    // Use mapGymsData if available, otherwise fall back to gyms
+    if (mapGymsData && mapGymsData.length > 0) {
+      // Handle new API data with different colored markers
+      mapGymsData.forEach(gymData => {
+        const location = parseLocation(gymData.gym.location)
+        if (!location) return
 
-      const marker = new window.google.maps.Marker({
-        position: location,
-        map: mapInstanceRef.current,
-        title: gym.gym_name,
-        icon: {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="16" cy="16" r="12" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
-              <path d="M12 14h8v4h-8v-4z" fill="#ffffff"/>
-              <circle cx="10" cy="16" r="2" fill="#ffffff"/>
-              <circle cx="22" cy="16" r="2" fill="#ffffff"/>
-            </svg>
-          `),
-          scaledSize: new window.google.maps.Size(32, 32),
-          anchor: new window.google.maps.Point(16, 16)
-        }
+        // Determine marker color based on plan type
+        const markerColor = gymData.planType === 'oneDay' ? '#3b82f6' : '#ef4444' // Blue for one day, Red for others
+        const markerIcon = gymData.planType === 'oneDay' ? 'calendar' : 'dumbbell'
+
+        const marker = new window.google.maps.Marker({
+          position: location,
+          map: mapInstanceRef.current,
+          title: gymData.gym.gym_name || `Gym ${gymData.gym.gym_id}`,
+          icon: {
+            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="12" fill="${markerColor}" stroke="#ffffff" stroke-width="2"/>
+                ${gymData.planType === 'oneDay' 
+                  ? `<rect x="10" y="10" width="12" height="8" rx="1" fill="#ffffff"/>
+                     <line x1="12" y1="13" x2="20" y2="13" stroke="${markerColor}" stroke-width="1"/>
+                     <line x1="12" y1="15" x2="20" y2="15" stroke="${markerColor}" stroke-width="1"/>`
+                  : `<path d="M12 14h8v4h-8v-4z" fill="#ffffff"/>
+                     <circle cx="10" cy="16" r="2" fill="#ffffff"/>
+                     <circle cx="22" cy="16" r="2" fill="#ffffff"/>`
+                }
+              </svg>
+            `),
+            scaledSize: new window.google.maps.Size(32, 32),
+            anchor: new window.google.maps.Point(16, 16)
+          }
+        })
+
+        // Add click listener to marker
+        marker.addListener('click', () => {
+          const content = `
+            <div style="max-width: 250px; color: #000;">
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${gymData.gym.gym_name || `Gym ${gymData.gym.gym_id}`}</h3>
+              <span style="display: inline-block; padding: 2px 8px; font-size: 12px; border-radius: 4px; margin-bottom: 8px; background-color: ${markerColor}; color: white;">
+                ${gymData.planType === 'oneDay' ? 'One Day Plans Available' : 'Other Plans Available'}
+              </span>
+              ${gymData.gym.profile_img ? `<img src="${gymData.gym.profile_img}" alt="${gymData.gym.gym_name || 'Gym'}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;">` : ''}
+              ${gymData.gym.address ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Address:</strong> ${gymData.gym.address}</p>` : ''}
+              ${gymData.gym.contact_no ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Contact:</strong> ${gymData.gym.contact_no}</p>` : ''}
+            </div>
+          `
+          
+          infoWindowRef.current.setContent(content)
+          infoWindowRef.current.open(mapInstanceRef.current, marker)
+        })
+
+        markersRef.current.push(marker)
       })
-
-      // Add click listener to marker
-      marker.addListener('click', () => {
-        setSelectedGym(gym)
-        
-        const content = `
-          <div style="max-width: 250px; color: #000;">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${gym.gym_name}</h3>
-            ${gym.profile_img ? `<img src="${gym.profile_img}" alt="${gym.gym_name}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;">` : ''}
-            <p style="margin: 4px 0; font-size: 14px;"><strong>Address:</strong> ${gym.address}</p>
-            ${gym.contact_no ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Contact:</strong> ${gym.contact_no}</p>` : ''}
-            ${gym.description ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Description:</strong> ${gym.description}</p>` : ''}
-            ${gym.operating_Hours ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Hours:</strong> ${gym.operating_Hours}</p>` : ''}
-            ${gym.verified ? '<span style="color: #10b981; font-size: 12px;">✓ Verified</span>' : ''}
-          </div>
-        `
-        
-        infoWindowRef.current.setContent(content)
-        infoWindowRef.current.open(mapInstanceRef.current, marker)
-      })
-
-      markersRef.current.push(marker)
-    })
-
-    // Adjust map bounds to show all gyms
-    if (gyms.length > 0) {
-      const bounds = new window.google.maps.LatLngBounds()
-      
+    } else if (gyms && gyms.length > 0) {
+      // Handle legacy gym data
       gyms.forEach(gym => {
         const location = parseLocation(gym.location)
-        if (location) {
-          bounds.extend(new window.google.maps.LatLng(location.lat, location.lng))
-        }
+        if (!location) return
+
+        const marker = new window.google.maps.Marker({
+          position: location,
+          map: mapInstanceRef.current,
+          title: gym.gym_name,
+          icon: {
+            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="12" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+                <path d="M12 14h8v4h-8v-4z" fill="#ffffff"/>
+                <circle cx="10" cy="16" r="2" fill="#ffffff"/>
+                <circle cx="22" cy="16" r="2" fill="#ffffff"/>
+              </svg>
+            `),
+            scaledSize: new window.google.maps.Size(32, 32),
+            anchor: new window.google.maps.Point(16, 16)
+          }
+        })
+
+        // Add click listener to marker
+        marker.addListener('click', () => {
+          setSelectedGym(gym)
+          
+          const content = `
+            <div style="max-width: 250px; color: #000;">
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${gym.gym_name}</h3>
+              ${gym.profile_img ? `<img src="${gym.profile_img}" alt="${gym.gym_name}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;">` : ''}
+              <p style="margin: 4px 0; font-size: 14px;"><strong>Address:</strong> ${gym.address}</p>
+              ${gym.contact_no ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Contact:</strong> ${gym.contact_no}</p>` : ''}
+              ${gym.description ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Description:</strong> ${gym.description}</p>` : ''}
+              ${gym.operating_Hours ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Hours:</strong> ${gym.operating_Hours}</p>` : ''}
+              ${gym.verified ? '<span style="color: #10b981; font-size: 12px;">✓ Verified</span>' : ''}
+            </div>
+          `
+          
+          infoWindowRef.current.setContent(content)
+          infoWindowRef.current.open(mapInstanceRef.current, marker)
+        })
+
+        markersRef.current.push(marker)
+      })
+    }
+
+    // Adjust map bounds to show all markers
+    const allLocations: { lat: number; lng: number }[] = []
+    if (mapGymsData && mapGymsData.length > 0) {
+      mapGymsData.forEach(gymData => {
+        const location = parseLocation(gymData.gym.location)
+        if (location) allLocations.push(location)
+      })
+    } else if (gyms && gyms.length > 0) {
+      gyms.forEach(gym => {
+        const location = parseLocation(gym.location)
+        if (location) allLocations.push(location)
+      })
+    }
+
+    if (allLocations.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds()
+      
+      allLocations.forEach(location => {
+        bounds.extend(new window.google.maps.LatLng(location.lat, location.lng))
       })
 
       // Include user location in bounds
@@ -344,7 +439,7 @@ const GymsMapView: React.FC<GymsMapViewProps> = ({
     if (isMapLoaded && mapInstanceRef.current) {
       addGymMarkers()
     }
-  }, [gyms, isMapLoaded])
+  }, [gyms, mapGymsData, isMapLoaded])
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -388,11 +483,27 @@ const GymsMapView: React.FC<GymsMapViewProps> = ({
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
               <span>Your Location</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span>Gyms</span>
-            </div>
-            <span className="ml-auto">Found {gyms.length} gym{gyms.length !== 1 ? 's' : ''}</span>
+            {mapGymsData && mapGymsData.length > 0 ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span>One Day Plans</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span>Other Plans</span>
+                </div>
+                <span className="ml-auto">Found {mapGymsData.length} gym{mapGymsData.length !== 1 ? 's' : ''}</span>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span>Gyms</span>
+                </div>
+                <span className="ml-auto">Found {gyms?.length || 0} gym{(gyms?.length || 0) !== 1 ? 's' : ''}</span>
+              </>
+            )}
           </div>
         </div>
       </div>

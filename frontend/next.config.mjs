@@ -37,9 +37,27 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development', // Disable in development
-  buildExcludes: [/middleware-manifest\.json$/],
+  disable: process.env.NODE_ENV === 'development', // Disable PWA in development to avoid warnings
+  buildExcludes: [
+    /middleware-manifest\.json$/,
+    /app-build-manifest\.json$/,
+    /_buildManifest\.js$/,
+    /_ssgManifest\.js$/
+  ],
   publicExcludes: ['!robots.txt', '!sitemap.xml'],
+  // Add additional PWA configurations
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.*/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'offlineCache',
+        expiration: {
+          maxEntries: 50,
+        },
+      },
+    },
+  ],
 })
 
 export default pwaConfig(nextConfig)

@@ -1,20 +1,5 @@
-//calendar
-//add weight
-
 import {getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
 import{addFeedback} from  '../services/feedback.service.js';
-
-/*export const addUser = async (req, res) => {
-  try {
-    const user = await createUser(req.body);
-    if (user) {
-      res.status(200).json({ message: "User created successfully", user });
-    }
-  } catch (error) {
-    console.error("Error creating user:", error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
-  }
-};*/
 
 export const updateuserdetails = async (req, res) => {
     const { userId } = req.params;

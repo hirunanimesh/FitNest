@@ -27,7 +27,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, CheckCircle, XCircle } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Loader2 } from 'lucide-react'; // Import Loader2
 import { GetTrainers, ApproveTrainer } from '@/api/gym/route';
 import { useGym } from '../context/GymContext';
 
@@ -104,7 +104,7 @@ const TrainerTab: React.FC = () => {
                 setErrorMessage('Failed to load trainers. Please try again.');
             }
         };
-        
+
         if (gymId) {
             loadTrainers();
         }
@@ -130,7 +130,7 @@ const TrainerTab: React.FC = () => {
         const requestIdString = String(requestId);
         setLoadingStates(prev => ({ ...prev, [requestIdString]: true }));
         setErrorMessage("");
-        
+
         try {
             await ApproveTrainer(requestId);
             // Update the trainers list to reflect the approval
@@ -142,16 +142,16 @@ const TrainerTab: React.FC = () => {
                 )
             );
             setSuccessMessage(`${trainerName} has been successfully approved!`);
-            
+
             // Hide success message after 5 seconds
             setTimeout(() => {
                 setSuccessMessage("");
             }, 5000);
-            
+
         } catch (error) {
             console.error('Error approving trainer:', error);
             setErrorMessage(`Failed to approve ${trainerName}. Please try again.`);
-            
+
             // Hide error message after 5 seconds
             setTimeout(() => {
                 setErrorMessage("");
@@ -179,7 +179,7 @@ const TrainerTab: React.FC = () => {
                             <AlertDescription>{successMessage}</AlertDescription>
                         </Alert>
                     )}
-                    
+
                     {errorMessage && (
                         <Alert className="mb-4 border-red-500 bg-red-50 text-red-800">
                             <XCircle className="h-4 w-4" />
@@ -253,9 +253,13 @@ const TrainerTab: React.FC = () => {
                                                         variant="default"
                                                         size="sm"
                                                         onClick={() => handleApprove(profile.request_id, profile.name)}
-                                                        disabled={loadingStates[String(profile.request_id)]}                                                      
+                                                        disabled={loadingStates[String(profile.request_id)]}
                                                     >
-                                                        {loadingStates[String(profile.request_id)] ? "Approving..." : "Approve"}
+                                                        {loadingStates[String(profile.request_id)] ? (
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin text-red-500" />
+                                                        ) : (
+                                                            "Approve"
+                                                        )}
                                                     </Button>
                                                 )}
                                             </div>
@@ -338,9 +342,13 @@ const TrainerTab: React.FC = () => {
                                                     variant="default"
                                                     size="sm"
                                                     onClick={() => handleApprove(profile.request_id, profile.name)}
-                                                    disabled={loadingStates[String(profile.request_id)]}                                                    
+                                                    disabled={loadingStates[String(profile.request_id)]}
                                                 >
-                                                    {loadingStates[String(profile.request_id)] ? "Approving..." : "Approve"}
+                                                    {loadingStates[String(profile.request_id)] ? (
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin text-red-500" />
+                                                    ) : (
+                                                        "Approve"
+                                                    )}
                                                 </Button>
                                             ) : (
                                                 <Badge className='bg-blue-500 hover:bg-blue-600 text-xs'>Approved</Badge>

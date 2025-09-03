@@ -1,45 +1,33 @@
-"use client"
+import React from "react";
+import { DashboardStats } from "./components/dashboard-stats";
+import { DashboardCharts } from "./components/dashboard-charts";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Pending from "./_components/Pending"
-import Feedback from "./_components/Feedback"
-import Analytics from "./_components/Analytics"
-import Statistics from "./_components/Statistics"
-
-export default function AdminDashboard() {
-
+function AdminDashboardPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="border-b border-gray-700 pb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          Admin Dashboard
+        </h1>
+        <p className="text-gray-400 text-lg">
+          Monitor your platform's performance and manage operations
+        </p>
+      </div>
 
-      <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage and monitor the FitConnect platform</p>
-        </div>
-
-        {/* Stats Overview */}
-        <Statistics/>
-
-        <Tabs defaultValue="verifications" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="verifications">Pending Verifications</TabsTrigger>
-            <TabsTrigger value="feedback">User Feedback</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="verifications" className="space-y-6">
-            <Pending/>
-          </TabsContent>
-
-          <TabsContent value="feedback" className="space-y-6">
-            <Feedback/>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <Analytics/>
-          </TabsContent>
-        </Tabs>
+      {/* Stats Overview */}
+      <div>
+        <h2 className="text-xl font-semibold text-white mb-4">Platform Overview</h2>
+        <DashboardStats />
+      </div>
+      
+      {/* Charts Section */}
+      <div>
+        <h2 className="text-xl font-semibold text-white mb-4">Analytics & Insights</h2>
+        <DashboardCharts />
       </div>
     </div>
-  )
+  );
 }
+
+export default AdminDashboardPage;

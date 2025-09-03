@@ -7,10 +7,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Plus } from 'lucide-react';
-
-import { supabase } from "@/lib/supabase";
 import axios from 'axios';
-import {  GetUserInfo } from "@/lib/api"
+import { useAuth } from '@/contexts/AuthContext'
+import { useUserData } from '../context/UserContext'
 
 interface BMIData {
     day: string;
@@ -21,12 +20,14 @@ interface BMIData {
 interface WeightData {
     day: string;
     weight: number;
+    height: number;    
     date: string;
 }
 
 interface WeightForm {
     date: string;
     weight: string;
+    height: string;
 }
 
 interface TooltipProps {
@@ -41,47 +42,11 @@ interface TooltipProps {
 
 const Charts: React.FC = () => {
     const [isWeightDialogOpen, setIsWeightDialogOpen] = useState<boolean>(false);
-    const [profileId, setProfileId] = useState<string | null>(null);
-    const [customerId, setCustomerId] = useState<string | null>(null);
-
-useEffect(() => {
-  async function fetchUserInfo() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) return;
-
-    try {
-      const data = await GetUserInfo(token);
-      const profileId = data?.user?.id || null;
-      setProfileId(profileId);
-
-      if (profileId) {
-        // Fetch customer_id from customer table
-        const { data: customerData, error } = await supabase
-          .from("customer")
-          .select("id")
-          .eq("user_id", profileId)
-          .single();
-
-        if (error) {
-          console.error("Error fetching customer id:", error);
-          setCustomerId(null);
-        } else {
-          setCustomerId(customerData?.id);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user info:", error);
-      setProfileId(null);
-      setCustomerId(null);
-    }
-  }
-
-  fetchUserInfo();
-}, []);
-
+    const [bmiData, setBmiData] = useState<BMIData[]>([]);
+    const [weightData, setWeightData] = useState<WeightData[]>([]);
+    const { getUserProfileId } = useAuth();
+    const { userData, refreshUserData } = useUserData();
+    
     const formatDate = (date: Date): string => {
         return date.toISOString().split('T')[0];
     };
@@ -93,105 +58,123 @@ useEffect(() => {
 
     const [weightForm, setWeightForm] = useState<WeightForm>({
         date: formatDate(new Date()),
-        weight: ""
+        weight: "",
+        height: ""
     });
 
-    // Generate dummy BMI data for the last 30 days
-    const generateBMIData = (): BMIData[] => {
-        const data: BMIData[] = [];
-        const baseDate = new Date();
+    // Transform weight data from UserContext
+    const processWeightData = () => {
+        console.log("Charts: Processing weight data...");
+        console.log("Charts: userData.weightHistory:", userData?.weightHistory);
         
-        for (let i = 29; i >= 0; i--) {
-            const date = new Date(baseDate);
-            date.setDate(date.getDate() - i);
+        if (userData?.weightHistory && Array.isArray(userData.weightHistory)) {
+            console.log("Charts: Weight history is array with length:", userData.weightHistory.length);
             
-            // Generate realistic BMI values with some variation (22-26 range)
-            const baseBMI = 24;
-            const variation = (Math.sin(i * 0.2) + Math.random() * 0.5 - 0.25) * 2;
-            const bmi = Math.round((baseBMI + variation) * 10) / 10;
-            
-            data.push({
-                day: formatDisplayDate(date),
-                bmi: bmi,
-                date: formatDate(date)
+            // Transform the weight data
+            const transformedWeightData: WeightData[] = userData.weightHistory.map((entry: any) => {
+                console.log("Charts: Processing entry:", entry);
+                // Use the user-selected date instead of created_at
+                const date = new Date(entry.date);
+                return {
+                    day: formatDisplayDate(date),
+                    weight: parseFloat(entry.weight),
+                    height: parseFloat(entry.height),
+                    date: formatDate(date)
+                };
             });
+
+            console.log("Charts: Transformed weight data:", transformedWeightData);
+
+            // Sort by user-selected date in chronological order and keep last 30 entries
+            const sortedWeightData = transformedWeightData
+                .sort((a: WeightData, b: WeightData) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .slice(-30);
+
+            console.log("Charts: Sorted weight data:", sortedWeightData);
+            setWeightData(sortedWeightData);
+
+            // Use BMI data from database
+            const bmiEntries: BMIData[] = userData.weightHistory.map((entry: any) => {
+                // Use the user-selected date instead of created_at
+                const date = new Date(entry.date);
+                // Use the BMI value from database response
+                const bmi = parseFloat(entry.BMI) || 0;
+                
+                return {
+                    day: formatDisplayDate(date),
+                    bmi: bmi,
+                    date: formatDate(date)
+                };
+            });
+
+            // Sort by user-selected date in chronological order and keep last 30 entries
+            const sortedBmiData = bmiEntries
+                .sort((a: BMIData, b: BMIData) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .slice(-30);
+
+            console.log("Charts: Sorted BMI data:", sortedBmiData);
+            setBmiData(sortedBmiData);
+        } else {
+            console.log("Charts: No weight history data or not an array");
         }
-        return data;
     };
 
-    // Generate dummy weight data for the last 30 days
-    const generateWeightData = (): WeightData[] => {
-        const data: WeightData[] = [];
-        const baseDate = new Date();
-        
-        for (let i = 29; i >= 0; i--) {
-            const date = new Date(baseDate);
-            date.setDate(date.getDate() - i);
-            
-            // Generate realistic weight values with gradual decrease (70-75 kg range)
-            const baseWeight = 72;
-            const trend = -i * 0.05; // Gradual weight loss trend
-            const variation = Math.sin(i * 0.3) * 0.5 + (Math.random() * 0.8 - 0.4);
-            const weight = Math.round((baseWeight + trend + variation) * 10) / 10;
-            
-            data.push({
-                day: formatDisplayDate(date),
-                weight: Math.max(weight, 68), // Minimum weight constraint
-                date: formatDate(date)
-            });
+    // Process weight data when userData changes
+    useEffect(() => {
+        console.log("Charts: UserData changed:", userData);
+        console.log("Charts: WeightHistory:", userData?.weightHistory);
+        if (userData?.weightHistory) {
+            processWeightData();
         }
-        return data;
-    };
-
-    const [bmiData, setBmiData] = useState<BMIData[]>(generateBMIData());
-    const [weightData, setWeightData] = useState<WeightData[]>(generateWeightData());
+    }, [userData?.weightHistory]);
 
     // Fixed event handler - changed to mouse event for button clicks
     const handleWeightSubmit = async(e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         
+        /*console.log("Add Weight button clicked");
+        console.log("Weight form data:", weightForm);*/
+       
+        const customerId = await getUserProfileId();
         const newWeight = parseFloat(weightForm.weight);
-        if (newWeight > 0) {
-            const newEntry: WeightData = {
-                day: formatDisplayDate(new Date(weightForm.date)),
-                weight: newWeight,
-                date: weightForm.date
-            };
-            await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/addweight`,{
-                height: 1.75, // Example height, adjust as needed
-                weight: newWeight,
-                customer_id: customerId,
-                
-                
-                date: weightForm.date,
-                
-            });
-            // Add new entry and keep only last 30 entries
-            setWeightData(prev => {
-                const updated = [...prev, newEntry].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                return updated.slice(-30);
-            });
-
-            // Calculate BMI (assuming height of 1.75m for demo)
-            const height = 1.75;
-            const bmi = Math.round((newWeight / (height * height)) * 10) / 10;
-            const newBMIEntry: BMIData = {
-                day: formatDisplayDate(new Date(weightForm.date)),
-                bmi: bmi,
-                date: weightForm.date
-            };
-            
-            setBmiData(prev => {
-                const updated = [...prev, newBMIEntry].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                return updated.slice(-30);
-            });
-        }
+        const newHeight = parseFloat(weightForm.height);
         
-        setWeightForm({
-            date: formatDate(new Date()),
-            weight: ""
-        });
-        setIsWeightDialogOpen(false);
+        console.log("Parsed weight:", newWeight, "Parsed height:", newHeight);
+        
+        if (newWeight > 0 && newHeight > 0 && customerId) {
+            console.log("Validation passed, sending request...");
+            try {
+                const requestData = {
+                    height: newHeight,
+                    weight: newWeight,
+                    customer_id: customerId,
+                    date: weightForm.date,
+                    BMI: (newWeight / (newHeight * newHeight*0.0001)).toFixed(2)
+                };
+                console.log("Request data:", requestData);
+                
+                await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/addweight`, requestData);
+                
+                console.log("Weight added successfully");
+
+                // Refresh the weight data from UserContext after adding new entry
+                await refreshUserData();
+                
+                setWeightForm({
+                    date: formatDate(new Date()),
+                    weight: "",
+                    height: ""
+                });
+                setIsWeightDialogOpen(false);
+            } catch (error) {
+                console.error("Error adding weight:", error);
+            }
+        } else {
+            console.log("Validation failed:");
+            console.log("- Weight valid:", newWeight > 0);
+            console.log("- Height valid:", newHeight > 0);
+            console.log("- Customer ID exists:", !!customerId);
+        }
     };
 
     // Custom tooltip for better data display
@@ -227,7 +210,7 @@ useEffect(() => {
                                 BMI Variation
                             </CardTitle>
                             <CardDescription className='text-white mb-4'>
-                                Body Mass Index tracking over the last 30 days
+                                Body Mass Index tracking over time
                                 <br />
                                 <span className="text-xs text-gray-500">
                                     Current: {bmiData.length > 0 ? bmiData[bmiData.length - 1].bmi : 'N/A'} BMI
@@ -290,7 +273,7 @@ useEffect(() => {
                                     Weight Variation
                                 </CardTitle>
                                 <CardDescription className='text-white'>
-                                    Weight tracking over the last 30 days
+                                    Weight tracking over time
                                     <br />
                                     <span className="text-xs text-gray-500">
                                         Current: {weightData.length > 0 ? weightData[weightData.length - 1].weight : 'N/A'} kg
@@ -308,14 +291,13 @@ useEffect(() => {
                                     <DialogHeader>
                                         <DialogTitle>Add Weight Entry</DialogTitle>
                                         <DialogDescription>
-                                            Record your current weight for tracking progress.
+                                            Record your current weight and height for tracking progress.
                                         </DialogDescription>
                                     </DialogHeader>
-                                    {/* Fixed: Removed onSubmit from div, as divs don't have form submission */}
                                     <div className="grid gap-4 py-4 ">
                                         <div className="space-y-2 ">
                                             <Label htmlFor="weight_date ">Date</Label>
-                                            <Input className='bg-gray-800'
+                                            <Input className='bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]'
                                                 id="weight_date"
                                                 type="date"
                                                 value={weightForm.date}
@@ -336,6 +318,21 @@ useEffect(() => {
                                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                                                     setWeightForm(prev => ({ ...prev, weight: e.target.value }))}
                                                 placeholder="Enter weight (e.g., 70.5)"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="height">Height (cm)</Label>
+                                            <Input className='bg-gray-800'
+                                                id="height"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                max="3"
+                                                value={weightForm.height}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                                                    setWeightForm(prev => ({ ...prev, height: e.target.value }))}
+                                                placeholder="Enter height (e.g., 175)"
                                                 required
                                             />
                                         </div>
@@ -391,17 +388,18 @@ useEffect(() => {
                                     </p>
                                 </div>
                                 <div className="p-2 bg-gray-700 rounded-lg">
-                                    <p className="text-xs text-gray-200">Weight Loss</p>
+                                    <p className="text-xs text-gray-200">Weight Change</p>
                                     <p className="text-sm font-semibold text-green-600">
                                         {weightData.length > 1 ? 
-                                            `${(weightData[0].weight - weightData[weightData.length - 1].weight).toFixed(1)} kg` : '0 kg'}
+                                            `${(weightData[weightData.length - 1].weight - weightData[0].weight).toFixed(1)} kg` : '0 kg'}
                                     </p>
                                 </div>
                                 <div className="p-2 bg-gray-700 rounded-lg">
                                     <p className="text-xs text-gray-200">Goal Progress</p>
                                     <p className="text-sm font-semibold text-purple-600">
                                         {weightData.length > 1 && weightData[0].weight > weightData[weightData.length - 1].weight ? 
-                                            '📉 On Track' : '📊 Monitor'}
+                                            '📉 Losing' : weightData.length > 1 && weightData[0].weight < weightData[weightData.length - 1].weight ? 
+                                            '📈 Gaining' : '📊 Monitor'}
                                     </p>
                                 </div>
                             </div>

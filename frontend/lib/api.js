@@ -60,23 +60,6 @@ export const GetUserInfo = async (token) => {
     }
 };
 
-export const GetCustomerById = async (customerId) => {
-    try {
-        const response = await axios.get(`${Base_URL}/api/user/getuserbyid/${customerId}`);
-        return response.data;
-    } catch (error) {
-        console.error("Error getting customer data:", error);
-        if (error.response && error.response.data) {
-            const backendError = error.response.data;
-            const newError = new Error(backendError.message || backendError.error || "Failed to fetch customer data");
-            newError.status = error.response.status;
-            throw newError;
-        }
-        throw error;
-    }
-};
-
-
 export const CompleteOAuthProfileMember = async (profileData) => {
     try {
         const config = {};
@@ -129,8 +112,7 @@ export const TrainerRegister = async (trainerData) => {
     }
 };
 
-export const 
-GymRegister = async (gymData) => {
+export const GymRegister = async (gymData) => {
     console.log("Gym data being sent:", gymData); // Debug log
     try {
         const config = {};
@@ -215,3 +197,113 @@ export const GetGymProfileData = async(id) =>{
         console.error("Error fetching gym data",error)
     }
 }
+export const GetCustomerById = async (customerId) => {
+    try {
+        const response = await axios.get(`${Base_URL}/api/user/getuserbyid/${customerId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error getting customer data:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to fetch customer data");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+export const GetTrainerById = async (trainerId) => {
+    try {
+        const response = await axios.get(`${Base_URL}/api/trainer/gettrainerbyid/${trainerId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error getting trainer data:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to fetch trainer data");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+
+export const GetLatestWeight = async(customerId) =>{
+    try{
+        const response = await axios.get(`${Base_URL}/api/user/getlatestweightbyid/${customerId}`)
+        if(!response){
+            console.error("Error fetching data!")
+        }
+        return response.data
+    }catch(error){
+        console.log("GetLatestWeight error:", error.response?.status);
+        // Handle 404 specifically - user might not have weight data yet
+        if (error.response?.status === 404) {
+            console.log("No weight data found for user:", customerId);
+            return { weight: null }; // Return null weight instead of throwing
+        }
+        console.error("Error fetching latest weight data:", error)
+        throw error; // Re-throw other errors
+    }
+}
+export const GetWeight = async(customerId) =>{
+    try{
+        const response = await axios.get(`${Base_URL}/api/user/getweightbyid/${customerId}`)
+        if(!response){
+            console.error("Error fetching data!")
+        }
+        return response.data
+    }catch(error){
+        console.log("GetWeight error:", error.response?.status);
+        // Handle 404 specifically - user might not have weight history yet
+        if (error.response?.status === 404) {
+            console.log("No weight history found for user:", customerId);
+            return { weight: [] }; // Return empty array instead of throwing
+        }
+        console.error("Error fetching weight history data:", error)
+        throw error; // Re-throw other errors
+    }
+}
+
+export const UpdateUserDetails = async (customerId, userData) => {
+    try {
+        const config = {};
+        let requestData;
+        
+        // Check if userData is FormData (contains file) or regular object
+        if (userData instanceof FormData) {
+            // If it's FormData, set the appropriate headers and use it directly
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+            requestData = userData;
+        } else {
+            // If it's regular object data, transform it to the expected format
+            const payload = {};
+            if (userData.firstName) payload.first_name = userData.firstName;
+            if (userData.lastName) payload.last_name = userData.lastName;
+            if (userData.phone) payload.phone_no = userData.phone;
+            if (userData.address) payload.address = userData.address;
+            if (userData.dateOfBirth) payload.birthday = userData.dateOfBirth;
+            if (userData.gender) payload.gender = userData.gender;
+            if (userData.avatar) payload.profile_img = userData.avatar;
+            requestData = payload;
+        }
+
+        const response = await axios.patch(
+            `${Base_URL}/api/user/updateuserdetails/${customerId}`,
+            requestData,
+            config
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating user details:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to update user details");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};

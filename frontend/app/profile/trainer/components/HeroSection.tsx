@@ -1,33 +1,11 @@
 "use client"
-import { useEffect, useState } from "react";
-import axios from "axios";
 import { Badge } from "@/components/ui/badge";
-import {  useSearchParams } from "next/navigation";
+import { useTrainerData } from "../context/TrainerContext";
 import { Star } from "lucide-react";
 
 export default function HeroSection() {
-  const [trainerImgUrl, setTrainerImgUrl] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  const trainerId = searchParams.get("id"); // Make sure this matches your URL param
-  useEffect(() => {
-
-    const fetchTrainerImgUrl = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/gettrainerbyid/${trainerId}`
-        );
-        if (response.data?.trainer) {
-          setTrainerImgUrl(response.data.trainer.profile_img || null);
-        } else {
-          console.error("Unexpected response format:", response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching trainer image URL:", error);
-      }
-    };
-
-    fetchTrainerImgUrl();
-  }, [trainerId]);
+  const { trainerData, isLoading } = useTrainerData();
+  const trainerImgUrl = trainerData?.profile_img || null;
 
   return (
     <section className="bg-gradient-to-br from-gray-800 to-gray-900 py-20">
