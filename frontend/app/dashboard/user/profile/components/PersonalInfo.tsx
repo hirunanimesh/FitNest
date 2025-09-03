@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, MapPinIcon, Camera, Edit3, X } from "lucide-react"
+import { Upload, MapPinIcon, Edit3, X } from "lucide-react"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
 import { UpdateUserDetails } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
+import axios from "axios"
+
 interface PersonalInfoProps {
   userData: any
   setUserData: (data: any) => void
@@ -54,30 +56,53 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
     }
   }, [userData.dateOfBirth])
 
-  // Real Cloudinary upload function - replace with your actual implementation
+  // Upload image using API Gateway -> UserService endpoint with axios
   const uploadToCloudinary = async (file: File): Promise<string> => {
     const formData = new FormData()
-    formData.append('file', file)
-    formData.append('upload_preset', 'your_upload_preset') // Replace with your preset
-    formData.append('folder', 'fitnest/customers')
+    formData.append('image', file) // UserService expects 'image' field name
 
     try {
-      const response = await fetch(
-        'https://api.cloudinary.com/v1_1/dacknfqtw/image/upload', // Replace with your cloud name
+      
+      
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/upload-image`,
+        formData,
         {
-          method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 60000, // 60 second timeout to match API Gateway
         }
       )
 
-      if (!response.ok) {
-        throw new Error('Failed to upload image to Cloudinary')
+      console.log('Upload response data:', response.data)
+      
+      // UserService returns imageUrl, url, or secure_url
+      return response.data.imageUrl || response.data.url || response.data.secure_url
+      
+    } catch (error: any) {
+      console.error('Image upload error via API Gateway:', error)
+      
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        throw new Error('Cannot connect to API Gateway. Please ensure the gateway is running on port 3000.')
       }
-
-      const data = await response.json()
-      return data.secure_url // This will be in format like your example
-    } catch (error) {
-      console.error('Cloudinary upload error:', error)
+      
+      if (error.response) {
+        // Server responded with error status
+        console.error('Error response data:', error.response.data)
+        console.error('Error response status:', error.response.status)
+        
+        if (error.response.status === 503) {
+          throw new Error('UserService is unavailable. Please ensure the UserService is running.')
+        }
+        
+        if (error.response.data && error.response.data.message) {
+          throw new Error(error.response.data.message)
+        } else {
+          throw new Error(`Upload failed with status ${error.response.status}`)
+        }
+      }
+      
       throw new Error('Image upload failed')
     }
   }

@@ -1,5 +1,6 @@
 import {getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
 import{addFeedback} from  '../services/feedback.service.js';
+import { uploadImage } from '../config/cloudinary.js';
 
 export const updateuserdetails = async (req, res) => {
     const { userId } = req.params;
@@ -97,6 +98,58 @@ export const addfeedback = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };*/
+export const uploadProfileImage = async (req, res) => {
+    try {
+      console.log("Profile image upload request received");
+      console.log("Request file:", req.file);
+
+      // Check if a file was uploaded
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No image file provided",
+        });
+      }
+
+      let profileImageUrl = null;
+
+      try {
+        // Upload image to Cloudinary
+        const cloudinaryResult = await uploadImage(
+          req.file.buffer,
+          "fitnest/profile-updates",
+          `profile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        );
+        profileImageUrl = cloudinaryResult.secure_url;
+        console.log(
+          "Profile image uploaded successfully to Cloudinary:",
+          profileImageUrl
+        );
+      } catch (uploadError) {
+        console.error("Error uploading image to Cloudinary:", uploadError);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload image to cloud storage",
+          error: uploadError.message,
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Image uploaded successfully",
+        imageUrl: profileImageUrl,
+        url: profileImageUrl, // Alternative field name for compatibility
+        secure_url: profileImageUrl, // Another alternative field name
+      });
+    } catch (error) {
+      console.error("[User Service] Error during image upload:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to upload image",
+        error: error.message,
+      });
+    }
+  }
 
 
 
