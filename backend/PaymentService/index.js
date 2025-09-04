@@ -13,6 +13,7 @@ import getConnectedAccountPayments from './controllers/stripeController/get-conn
 import oneTimePayment from './controllers/stripeController/one-time-payment.js';
 import getCurrentMonthRevenue from './controllers/stripeController/get-monthly-revenue.js';
 import { GymPlanCreatedConsumer, GymPlanDeletedConsumer } from './kafka/Consumer.js';
+import cancelSubscription from './controllers/stripeController/cancel-subscription.js';
 
 dotenv.config();
 
@@ -25,8 +26,9 @@ connectDatabase()
 app.use('/create-plan',createPlan)
 app.use('/create-account/:user_id', createAccount);
 app.use('/subscribe',subscribe)
+app.use('/cancel-subscription', cancelSubscription)
 app.use('/getinvoices',getInvoices)
-app.use('/getsubscription',getSubscriptions)
+app.use('/getsubscription/:customerId',getSubscriptions)
 app.use('/getpayments',getPaymentList)
 app.get('/stripedashboard/:user_id',getDashboardLink)
 app.use('/connectedaccountpayments/:userId',getConnectedAccountPayments)

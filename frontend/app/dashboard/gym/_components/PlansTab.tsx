@@ -126,20 +126,13 @@ const PlansTab: React.FC = () => {
             response.data.gymPlan.map(async (plan) => {
               try {
                 const trainersResponse = await GetPlanTrainers(plan.plan_id);
-                
-                // Extract trainer IDs from the response
                 let trainerIds: string[] = [];
                 const trainersArray = trainersResponse?.data?.data;
                 if (Array.isArray(trainersArray)) {
                   trainerIds = trainersArray.map((item: any) => String(item.trainer_id));
                 }
-                return {
-                  ...plan,
-                  trainers: trainerIds
-                };
+                return { ...plan, trainers: trainerIds };
               } catch (error) {
-                console.error(`Error fetching trainers for plan ${plan.plan_id}:`, error);
-                console.error(`Error details:`, error);
                 return { ...plan, trainers: [] };
               }
             })
@@ -150,7 +143,6 @@ const PlansTab: React.FC = () => {
           toast.error('No plans found for this gym');
         }
       } catch (error) {
-        console.error('Error fetching gym plans:', error);
         setErrorMessage('Failed to load gym plans. Please try again.');
         toast.error('Failed to load gym plans');
       } finally {
@@ -175,11 +167,10 @@ const PlansTab: React.FC = () => {
             .map((item) => item.trainer);
           setTrainers(approvedTrainers);
         } else {
-          console.log('No trainers found for this gym');
+          setErrorMessage('No trainers found for this gym');
           toast.info('No trainers found for this gym');
         }
       } catch (error) {
-        console.error('Error fetching trainers:', error);
         setErrorMessage('Failed to load trainers.');
         toast.error('Failed to load trainers');
       } finally {
@@ -206,36 +197,23 @@ const PlansTab: React.FC = () => {
 
   const handleDeletePlan = async (planId: string) => {
     try {
-      // Find the plan to check if it has assigned trainers
       const planToDelete = plans.find(plan => plan.plan_id === planId);
-      
       if (planToDelete && planToDelete.trainers && planToDelete.trainers.length > 0) {
-        setErrorMessage('Before delete plan remove trainers first');
-        toast.error('Before delete plan remove trainers first');
-        
-        setTimeout(() => {
-          setErrorMessage('');
-        }, 3000);
+        setErrorMessage('Cannot delete plan with assigned trainers. Remove trainers first.');
+        toast.error('Cannot delete plan with assigned trainers');
+        setTimeout(() => setErrorMessage(''), 3000);
         return;
       }
 
       await DeleteGymPlan(planId);
-
       setPlans((prev) => prev.filter((plan) => plan.plan_id !== planId));
       setSuccessMessage('Plan deleted successfully');
       toast.success('Plan deleted successfully');
-
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      console.error('Error deleting plan:', error);
       setErrorMessage('Failed to delete plan. Please try again.');
       toast.error('Failed to delete plan');
-
-      setTimeout(() => {
-        setErrorMessage('');
-      }, 3000);
+      setTimeout(() => setErrorMessage(''), 3000);
     }
   };
 
@@ -251,7 +229,6 @@ const PlansTab: React.FC = () => {
     try {
       if (currentPlan.plan_id) {
         await UpdateGymPlan(currentPlan.plan_id, currentPlan);
-
         setPlans((prev) =>
           prev.map((plan) =>
             plan.plan_id === currentPlan.plan_id
@@ -266,24 +243,19 @@ const PlansTab: React.FC = () => {
               : plan
           )
         );
-        
-        // Update trainers for the existing plan
         await UpdatePlanTrainers(currentPlan.plan_id, currentPlan.trainers);
-        
-        // Refresh the plans to show updated trainer assignments
         const updatedPlans = await Promise.all(
           plans.map(async (plan) => {
             if (plan.plan_id === currentPlan.plan_id) {
               try {
                 const trainersResponse = await GetPlanTrainers(plan.plan_id);
-                 let trainerIds: string[] = [];
-                 const trainersArrayUpdate = trainersResponse?.data?.data;
-                 if (Array.isArray(trainersArrayUpdate)) {
-                   trainerIds = trainersArrayUpdate.map((item: any) => String(item.trainer_id));
-                 }
-                 return { ...plan, trainers: trainerIds };
+                let trainerIds: string[] = [];
+                const trainersArrayUpdate = trainersResponse?.data?.data;
+                if (Array.isArray(trainersArrayUpdate)) {
+                  trainerIds = trainersArrayUpdate.map((item: any) => String(item.trainer_id));
+                }
+                return { ...plan, trainers: trainerIds };
               } catch (error) {
-                console.error(`Error refreshing trainers for plan ${plan.plan_id}:`, error);
                 return { ...plan, trainers: currentPlan.trainers };
               }
             }
@@ -291,20 +263,14 @@ const PlansTab: React.FC = () => {
           })
         );
         setPlans(updatedPlans);
-        
         setSuccessMessage('Plan updated successfully');
         toast.success('Plan updated successfully');
       } else {
         const response = await CreateGymPlan(gymId, currentPlan);
         const newPlan: Plan = response.data.gymPlan;
-
         setPlans((prev) => [...prev, newPlan]);
-        
-        // Assign trainers to the new plan
         if (currentPlan.trainers.length > 0) {
           await AssignTrainersToPlan(newPlan.plan_id, currentPlan.trainers);
-          
-          // Refresh the newly created plan to show trainer assignments
           try {
             const trainersResponse = await GetPlanTrainers(newPlan.plan_id);
             let trainerIds: string[] = [];
@@ -312,7 +278,6 @@ const PlansTab: React.FC = () => {
             if (Array.isArray(trainersArrayNew)) {
               trainerIds = trainersArrayNew.map((item: any) => String(item.trainer_id));
             }
-            
             setPlans((prev) => 
               prev.map((plan) => 
                 plan.plan_id === newPlan.plan_id 
@@ -321,10 +286,9 @@ const PlansTab: React.FC = () => {
               )
             );
           } catch (error) {
-            console.error(`Error refreshing trainers for new plan ${newPlan.plan_id}:`, error);
+            // Silent failure for trainer refresh
           }
         }
-        
         setSuccessMessage('Plan created successfully');
         toast.success('Plan created successfully');
       }
@@ -338,18 +302,11 @@ const PlansTab: React.FC = () => {
         trainers: [],
       });
       setIsPlanDialogOpen(false);
-
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      console.error('Error saving plan:', error);
       setErrorMessage('Failed to save plan. Please try again.');
       toast.error('Failed to save plan');
-
-      setTimeout(() => {
-        setErrorMessage('');
-      }, 3000);
+      setTimeout(() => setErrorMessage(''), 3000);
     }
   };
 
@@ -365,13 +322,10 @@ const PlansTab: React.FC = () => {
 
   const getTrainerNames = (trainerIds: string[]): string => {
     if (!trainerIds || trainerIds.length === 0) return 'No trainers assigned';
-
     const assignedTrainers = trainers.filter((trainer) =>
       trainerIds.includes(String(trainer.id))
     );
-
     if (assignedTrainers.length === 0) return 'No trainers assigned';
-
     return assignedTrainers.map((trainer) => trainer.trainer_name).join(', ');
   };
 
@@ -381,24 +335,24 @@ const PlansTab: React.FC = () => {
 
   if (loading) {
     return (
-      <Card className="bg-gray-800 text-white">
-        <CardContent className="p-6">
-          <div className="flex justify-center items-center h-32">
-            <div className="text-gray-300">Loading gym plans...</div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex justify-center items-center h-32 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50">
+        <div className="text-slate-300 text-sm sm:text-base animate-pulse">
+          Loading gym plans...
+        </div>
+      </div>
     );
   }
 
   return (
-    <div>
-      <Card className="bg-gray-800 text-white">
-        <CardHeader>
-          <div className="flex items-center justify-between">
+    <div className="animate-fade-in">
+      <Card className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50">
+        <CardHeader className="px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle>Gym Plans Management</CardTitle>
-              <CardDescription className="text-gray-300">
+              <CardTitle className="text-xl sm:text-2xl text-white">
+                Gym Plans Management
+              </CardTitle>
+              <CardDescription className="text-sm sm:text-base text-slate-400 mt-1">
                 Manage subscription plans and pricing
               </CardDescription>
             </div>
@@ -414,68 +368,62 @@ const PlansTab: React.FC = () => {
                 });
                 setIsPlanDialogOpen(true);
               }}
+              className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add New Plan
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6 py-6">
           {successMessage && (
-            <Alert className="mb-4 border-green-500 bg-green-50 text-green-800">
-              <CheckCircle className="h-4 w-4" />
+            <Alert className="mb-4 bg-green-500/10 border-green-500/50 text-green-200 rounded-lg">
+              <CheckCircle className="h-4 w-4 text-green-400" />
               <AlertDescription>{successMessage}</AlertDescription>
             </Alert>
           )}
-
           {errorMessage && (
-            <Alert className="mb-4 border-red-500 bg-red-50 text-red-800">
-              <XCircle className="h-4 w-4" />
+            <Alert className="mb-4 bg-red-500/10 border-red-500/50 text-red-200 rounded-lg">
+              <XCircle className="h-4 w-4 text-red-400" />
               <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
-          
 
           {plans.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-400">
+              <p className="text-slate-400 text-sm sm:text-base">
                 No plans found. Create your first plan to get started.
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-gray-300">Plan Name</TableHead>
-                  <TableHead className="text-gray-300">Price</TableHead>
-                  <TableHead className="text-gray-300">Duration</TableHead>
-                  <TableHead className="text-gray-300">Description</TableHead>
-                  <TableHead className="text-gray-300">Assigned Trainers</TableHead>
-                  <TableHead className="text-gray-300">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {plans.map((plan) => {
-                  console.log('Rendering plan:', plan);
-                  return (
-                    <TableRow key={plan.plan_id}>
-                      <TableCell className="font-medium text-white">
-                        {plan.title}
-                      </TableCell>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[600px]">
+                <TableHeader>
+                  <TableRow className="border-b border-gray-700/50">
+                    <TableHead className="text-gray-300 text-xs sm:text-sm font-semibold uppercase w-[20%]">Plan Name</TableHead>
+                    <TableHead className="text-gray-300 text-xs sm:text-sm font-semibold uppercase w-[15%]">Price</TableHead>
+                    <TableHead className="text-gray-300 text-xs sm:text-sm font-semibold uppercase w-[18%]">Duration</TableHead>
+                    <TableHead className="text-gray-300 text-xs sm:text-sm font-semibold uppercase w-[22%]">Description</TableHead>
+                    <TableHead className="text-gray-300 text-xs sm:text-sm font-semibold uppercase w-[20%]">Assigned Trainers</TableHead>
+                    <TableHead className="text-gray-300 text-xs sm:text-sm font-semibold uppercase w-[15%]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {plans.map((plan) => (
+                    <TableRow key={plan.plan_id} className="border-b border-gray-700/50 hover:bg-red-500/10">
+                      <TableCell className="text-white text-xs sm:text-sm font-medium">{plan.title}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-green-400 border-green-400">
+                        <Badge variant="outline" className="text-green-400 border-green-400/50 text-xs sm:text-sm px-2 sm:px-3 py-0.5 truncate">
                           {formatPrice(plan.price)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-blue-400 border-blue-400">
+                        <Badge variant="outline" className="text-pink-400 border-pink-400/50 text-xs sm:text-sm px-2 sm:px-3 py-0.5 truncate text-ellipsis overflow-hidden whitespace-nowrap">
                           {plan.duration}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-gray-300 max-w-xs truncate">
-                        {plan.description}
-                      </TableCell>
-                      <TableCell className="text-gray-300 max-w-xs">
+                      <TableCell className="text-slate-300 text-xs sm:text-sm">{plan.description}</TableCell>
+                      <TableCell className="text-slate-300 text-xs sm:text-sm">
                         <div className="flex flex-wrap gap-2">
                           {plan.trainers && plan.trainers.length > 0 ? (
                             plan.trainers.slice(0, 2).map((trainerId, index) => {
@@ -487,13 +435,13 @@ const PlansTab: React.FC = () => {
                                   key={index}
                                   src={trainer.profile_img}
                                   alt={trainer.trainer_name}
-                                  className="w-8 h-8 rounded-full object-cover"
+                                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
                                   title={trainer.trainer_name}
                                 />
                               ) : trainer ? (
                                 <div
                                   key={index}
-                                  className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs"
+                                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs sm:text-sm"
                                   title={trainer.trainer_name}
                                 >
                                   {trainer.trainer_name[0]}
@@ -501,12 +449,12 @@ const PlansTab: React.FC = () => {
                               ) : null;
                             })
                           ) : (
-                            <span className="text-gray-500 text-xs">
+                            <span className="text-slate-500 text-xs sm:text-sm">
                               No trainers assigned
                             </span>
                           )}
                           {plan.trainers && plan.trainers.length > 2 && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-xs sm:text-sm bg-gray-700 text-slate-300">
                               +{plan.trainers.length - 2} more
                             </Badge>
                           )}
@@ -517,7 +465,7 @@ const PlansTab: React.FC = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-black hover:text-white"
+                            className="text-black   border-gray-600 hover:bg-white px-3 sm:px-4 py-1.5 sm:py-2"
                             onClick={() => handleEditPlan(plan)}
                           >
                             <Edit className="mr-1 h-4 w-4" />
@@ -526,6 +474,7 @@ const PlansTab: React.FC = () => {
                           <Button
                             size="sm"
                             variant="destructive"
+                            className="bg-red-600 hover:bg-red-700 px-3 sm:px-4 py-1.5 sm:py-2"
                             onClick={() => handleDeletePlan(plan.plan_id)}
                           >
                             <Trash2 className="mr-1 h-4 w-4" />
@@ -534,26 +483,26 @@ const PlansTab: React.FC = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
-        <DialogContent className="bg-gray-900 text-white border border-gray-700">
+        <DialogContent className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 max-w-[95vw] sm:max-w-lg rounded-lg p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl text-white">
               {currentPlan.plan_id ? 'Edit Plan' : 'Add New Plan'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handlePlanSubmit} className="space-y-4">
             <div>
-              <Label className="text-sm font-medium mb-2 block">Title</Label>
+              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Title</Label>
               <Input
-                className="text-gray-800 bg-white"
+                className="bg-gray-800 text-white border-gray-600 focus:border-red-500/50 text-sm sm:text-base"
                 placeholder="Enter plan name"
                 value={currentPlan.title}
                 onChange={(e) =>
@@ -566,9 +515,9 @@ const PlansTab: React.FC = () => {
               />
             </div>
             <div>
-              <Label className="text-sm font-medium mb-2 block">Price</Label>
+              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Price</Label>
               <Input
-                className="text-gray-800 bg-white"
+                className="bg-gray-800 text-white border-gray-600 focus:border-red-500/50 text-sm sm:text-base"
                 type="number"
                 step="0.01"
                 placeholder="e.g., 2500"
@@ -583,9 +532,9 @@ const PlansTab: React.FC = () => {
               />
             </div>
             <div>
-              <Label className="text-sm font-medium mb-2 block">Description</Label>
+              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Description</Label>
               <Input
-                className="text-gray-800 bg-white"
+                className="bg-gray-800 text-white border-gray-600 focus:border-red-500/50 text-sm sm:text-base"
                 placeholder="Enter plan description"
                 value={currentPlan.description}
                 onChange={(e) =>
@@ -598,7 +547,7 @@ const PlansTab: React.FC = () => {
               />
             </div>
             <div>
-              <Label className="text-sm font-medium mb-2 block">Duration</Label>
+              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Duration</Label>
               <Select
                 value={currentPlan.duration}
                 onValueChange={(value) =>
@@ -608,10 +557,10 @@ const PlansTab: React.FC = () => {
                   }))
                 }
               >
-                <SelectTrigger className="w-full text-gray-800 bg-white">
+                <SelectTrigger className="bg-gray-800 text-white border-gray-600 focus:border-red-500/50 text-sm sm:text-base">
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-800 text-white border-gray-600">
                   <SelectItem value="1 day">1 day</SelectItem>
                   <SelectItem value="1 week">1 week</SelectItem>
                   <SelectItem value="1 month">1 month</SelectItem>
@@ -622,37 +571,32 @@ const PlansTab: React.FC = () => {
               </Select>
             </div>
             <div>
-              <Label className="text-sm font-medium mb-2 block">
-                Assign Trainers
-              </Label>
+              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Assign Trainers</Label>
               {loadingTrainers ? (
-                <div className="text-gray-400 text-sm">Loading trainers...</div>
+                <div className="text-slate-400 text-sm sm:text-base animate-pulse">Loading trainers...</div>
               ) : trainers.length === 0 ? (
-                <div className="text-gray-400 text-sm">
-                  No approved trainers available
-                </div>
+                <div className="text-slate-400 text-sm sm:text-base">No approved trainers available</div>
               ) : (
-                <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-600 rounded p-3">
+                <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-600 rounded-lg p-3 sm:p-4">
                   {trainers.map((trainer) => (
                     <div key={trainer.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={`trainer-${trainer.id}`}
                         checked={currentPlan.trainers.includes(String(trainer.id))}
                         onCheckedChange={() => toggleTrainer(trainer.id)}
+                        className="border-gray-600 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500 h-5 w-5 sm:h-6 sm:w-6"
                       />
                       <Label
                         htmlFor={`trainer-${trainer.id}`}
-                        className="text-sm flex-1"
+                        className="text-sm sm:text-base text-slate-300 flex-1"
                       >
                         <div className="flex items-center justify-between">
                           <span>{trainer.trainer_name}</span>
-                          <div className="flex items-center space-x-2 text-xs text-gray-400">
+                          <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-400">
                             <span>⭐ {trainer.rating}</span>
                             <span>{trainer.years_of_experience}y</span>
                             {trainer.verified && (
-                              <Badge
-                                className="bg-green-500 hover:bg-green-600 text-xs px-1 py-0"
-                              >
+                              <Badge className="bg-green-500/50 text-green-200 text-xs px-1 py-0">
                                 ✓
                               </Badge>
                             )}
@@ -664,21 +608,24 @@ const PlansTab: React.FC = () => {
                 </div>
               )}
               {currentPlan.trainers.length > 0 && (
-                <div className="mt-2 text-sm text-gray-300">
+                <div className="mt-2 text-xs sm:text-sm text-slate-300">
                   Selected: {currentPlan.trainers.length} trainer(s)
                 </div>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
               <Button
                 type="button"
-                className="text-black"
                 variant="outline"
+                className="text-white border-gray-600 hover:bg-red-500/20 hover:text-red-200 px-4 sm:px-6 py-2 sm:py-2.5"
                 onClick={() => setIsPlanDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button
+                type="submit"
+                className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white px-4 sm:px-6 py-2 sm:py-2.5"
+              >
                 {currentPlan.plan_id ? 'Update Plan' : 'Add Plan'}
               </Button>
             </DialogFooter>
