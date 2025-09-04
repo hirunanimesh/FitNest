@@ -15,6 +15,7 @@ interface TrainerData {
   rating: number;
   verified: boolean;
   skills: string[];
+  sessions?: any[];
 }
 
 interface TrainerContextType {
