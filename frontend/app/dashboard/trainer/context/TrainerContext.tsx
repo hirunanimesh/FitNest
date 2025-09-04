@@ -3,18 +3,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { GetTrainerById } from '@/lib/api';
-
+import axios from 'axios';
 interface TrainerData {
   trainer_id: number;
   trainer_name: string;
-  profile_img?: string | null;
-  contact_no?: string | null;
+  profile_img: string | null;
+  contact_no: string | null;
+  address: string | null;
+  dateOfBirth: string;
+  gender: string | null;
   email: string;
   bio: string;
   years_of_experience: number;
   rating: number;
   verified: boolean;
   skills: string[];
+  sessions?: any[];
 }
 
 interface TrainerContextType {
@@ -49,12 +53,20 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
       
       // Get trainer ID directly from AuthContext
       const trainerId = await getUserProfileId();
+      const [ sessionsResponse ] = await Promise.allSettled([
+        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getallsessionbytrainerid/${trainerId}`),
+      ]);
       
-      if (!trainerId) {
-        setError("Trainer ID not found");
-        return;
-      }
+       let sessions: any[] = [];
 
+       // Process sessions data
+    if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.session) {
+      sessions = sessionsResponse.value.data.session;
+      console.log("Sessions data fetched successfully:", sessions);
+    } else {
+      console.log("Sessions data request failed or no sessions found:", 
+        sessionsResponse.status === 'rejected' ? sessionsResponse.reason : "No sessions data");
+    }
       // Get trainer profile data using the API function
       const trainerProfileData = await GetTrainerById(trainerId);
 
@@ -71,7 +83,28 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
             years_of_experience: trainer.years_of_experience || trainer.experience || 0,
             rating: trainer.rating || 0,
             verified: trainer.verified || false,
-            skills: Array.isArray(trainer.skills) ? trainer.skills : (trainer.skills ? trainer.skills.split(',') : [])
+            skills: (() => {
+              if (Array.isArray(trainer.skills)) {
+                return trainer.skills;
+              }
+              if (typeof trainer.skills === 'string') {
+                // Try to parse as JSON first
+                try {
+                  const parsed = JSON.parse(trainer.skills);
+                  if (Array.isArray(parsed)) {
+                    return parsed;
+                  }
+                } catch (e) {
+                  // If JSON parsing fails, try splitting by comma
+                  return trainer.skills.split(',').map((skill: string) => skill.trim());
+                }
+              }
+              return [];
+            })(),
+            sessions: sessions,
+            dateOfBirth: trainer.dateOfBirth || trainer.dob || '',
+            gender: trainer.gender || '',
+            address: trainer.address || '',
           };
 
           setTrainerData(trainerData);
@@ -96,7 +129,11 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
           years_of_experience: 0,
           rating: 0,
           verified: false,
-          skills: []
+          skills: [],
+          sessions: [],
+          dateOfBirth: "",
+          gender: "",
+          address: ""
         };
         setTrainerData(fallbackData);
       }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { VerificationRequests } from '../components/verification-requests'
+import VerificationRequests  from '../components/verification-requests'
 
 function VerificationsPage() {
   return (

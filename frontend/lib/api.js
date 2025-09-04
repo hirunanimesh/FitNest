@@ -307,3 +307,144 @@ export const UpdateUserDetails = async (customerId, userData) => {
         throw error;
     }
 };
+
+// Session API functions
+export const AddSession = async (sessionData) => {
+    try {
+        const response = await axios.post(`${Base_URL}/api/trainer/addsession`, sessionData);
+        return response.data;
+    } catch (error) {
+        console.error("Error adding session:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to create session");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+export const UpdateSessionDetails = async (sessionId, sessionData) => {
+    try {
+        const config = {};
+        let requestData;
+
+        // Check if sessionData is FormData (contains file) or regular object
+        if (sessionData instanceof FormData) {
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+            requestData = sessionData;
+        } else {
+            // Map only relevant session fields
+            const payload = {};
+            if (sessionData.title) payload.title = sessionData.title;
+            if (sessionData.description) payload.description = sessionData.description;
+            if (sessionData.price) payload.price = sessionData.price;
+            if (sessionData.duration) payload.duration = sessionData.duration;
+            if (sessionData.trainerId) payload.trainer_id = sessionData.trainerId;
+            if (sessionData.zoom_link) payload.zoom_link = sessionData.zoom_link;
+            if (sessionData.img_url) payload.img_url = sessionData.img_url; // <-- FIXED
+            if (sessionData.time) payload.time = sessionData.time;
+            if (sessionData.date) payload.date = sessionData.date;
+            // Add other session fields as needed
+            requestData = payload;
+        }
+
+        const response = await axios.patch(
+            `${Base_URL}/api/trainer/updatesession/${sessionId}`,
+            requestData,
+            config
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating session details:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to update session details");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+export const DeleteSession = async (sessionId) => {
+    try {
+        await axios.delete(`${Base_URL}/api/trainer/deletesession/${sessionId}`);
+        // Do not show toast here; handle it in the component
+    } catch (error) {
+        console.error('Error deleting session:', error);
+        throw error;
+    }
+};
+export const UpdateTrainerDetails = async (trainerId, trainerData) => {
+    try {
+        const config = {};
+        let requestData;
+        
+        // Check if trainerData is FormData (contains file) or regular object
+        if (trainerData instanceof FormData) {
+            // If it's FormData, set the appropriate headers and use it directly
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+            requestData = trainerData;
+        } else {
+            // If it's regular object data, transform it to the expected format
+            const payload = {};
+            if (trainerData.Name) payload.trainer_name = trainerData.Name;
+            if (trainerData.years_of_experience) payload.years_of_experience = trainerData.years_of_experience;
+            if (trainerData.contact_no) payload.contact_no = trainerData.contact_no;
+            if (trainerData.bio) payload.bio = trainerData.bio;
+            if (trainerData.skills) payload.skills = trainerData.skills;
+            if (trainerData.profile_img) payload.profile_img = trainerData.profile_img;
+            requestData = payload;
+        }
+
+        const response = await axios.patch(
+            `${Base_URL}/api/trainer/updatetrainerdetails/${trainerId}`,
+            requestData,
+            config
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating trainer details:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to update user details");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+
+export const uploadToCloudinary = async (file) => {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    try {
+        const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                timeout: 60000,
+            }
+        );
+        return response.data.secure_url;
+    } catch (error) {
+        console.error("Image upload error:", error);
+        if (error.response?.data?.error?.message) {
+            throw new Error(error.response.data.error.message);
+        }
+        throw new Error("Image upload failed");
+    }
+}
+

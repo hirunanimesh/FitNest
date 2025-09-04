@@ -10,8 +10,8 @@ interface Trainer {
   profile_img?: string | null;
   expertise: string;
   contact_no?: string | null;
-  year_of_experience: number;
-  rating?: number;
+  years_of_experience: number;
+  rating?: number ;
   bio: string;
   email: string;
   skills?: string | string[];
@@ -23,7 +23,13 @@ interface TrainerCardProps {
 
 export default function TrainerCard({ trainer }: TrainerCardProps) {
   const profileImg = trainer.profile_img || "https://images.unsplash.com/photo-1597345470829-cedbac7ef36e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80";
-  const rating = typeof trainer.rating === 'number' && !isNaN(trainer.rating) ? trainer.rating : 4.5;
+  const rating = (() => {
+    if (trainer.rating === null || trainer.rating === undefined) return 4.5;
+    
+    const numRating = trainer.rating;
+    
+    return !isNaN(numRating) && numRating >= 0 && numRating <= 5 ? numRating : 4.5;
+  })();
 
   return (
     <Link href={`/profile/trainer?id=${trainer.id}`}>
@@ -50,7 +56,7 @@ export default function TrainerCard({ trainer }: TrainerCardProps) {
             {trainer.expertise}
           </Badge>
           <div className="flex items-center justify-between text-sm text-slate-300 group-hover:text-red-100 transition-colors">
-            <span>Experience: {trainer.year_of_experience} years</span>
+            <span>Experience: {trainer.years_of_experience} years</span>
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
               <span>{rating.toFixed(1)}</span>

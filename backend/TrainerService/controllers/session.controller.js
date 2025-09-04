@@ -7,7 +7,7 @@ import {
     getallsessionbytrainerid
 } from "../services/session.service.js";
 
-
+import { uploadImage } from '../config/cloudinary.js';
 export const addSession = async (req, res) => {
     try {
         const session = await addsession(req.body);
@@ -95,3 +95,32 @@ export const deleteSession = async (req, res) => {
     }
 }
 
+export const uploadSessionImage = async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No image file provided",
+        });
+      }
+
+      const cloudinaryResult = await uploadImage(
+        req.file.buffer,
+        "fitnest/profile-updates",
+        `profile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "Image uploaded successfully",
+        imageUrl: cloudinaryResult.secure_url,
+      });
+    } catch (error) {
+      console.error("Error during image upload:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to upload image",
+        error: error.message,
+      });
+    }
+  }
