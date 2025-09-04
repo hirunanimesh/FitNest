@@ -53,10 +53,10 @@ export default async function subscribe(req, res) {
                 },
                 application_fee_percent: 10,
             },
-            success_url: 'https://yourapp.com/success',
-            cancel_url: 'https://yourapp.com/cancel',
+            success_url: `${process.env.DOMAIN}/dashboard/user`,
+            cancel_url: `${process.env.DOMAIN}/dashboard/user`,
         });
-
+        console.log(session.subscription)
         res.json({ url: session.url });
     } catch (error) {
         res.status(500).json({ error: 'An unexpected error occurred' });
