@@ -28,12 +28,12 @@ app.get('/getallsessions', getAllSession);
 app.get('/getsessionbysessionid/:sessionId', getSessionBySessionId);
 app.get('/getallsessionbytrainerid/:trainerId', getallSessionByTrainerId);
 app.patch('/updatesession/:sessionId', updatedSession);
-app.post('/uploadsessionimage', upload.single('image'), uploadSessionImage)
+app.post('/uploadimage', upload.single('image'), uploadSessionImage)
 app.delete('/deletesession/:sessionId', deleteSession);
 
 app.get('/getalltrainers', getallTrainers);
 app.get('/gettrainerbyid/:trainerId', getTrainerById);
-app.put('/updatetrainerdetails/:trainerId', updateTrainerDetails);
+app.patch('/updatetrainerdetails/:trainerId', updateTrainerDetails);
 app.get('/getfeedbackbytrainerid/:trainerId',getFeedbackbyTrainerId);
 //api  for calendar function
 //get subscribe user

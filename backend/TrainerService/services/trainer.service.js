@@ -1,19 +1,6 @@
 
 import { supabase } from '../database/supabase.js';
 
-/*export async function createTrainer(trainerData) {
-  const { data, error } = await supabase
-    .from('trainer')
-    .insert([trainerData])
-    .select(); 
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data[0]; // Return first inserted row
-}*/
-
 export async function getalltrainers(){
         const { data, error } = await supabase
         .from('trainer')
@@ -56,7 +43,8 @@ export async function updatetrainerdetails(trainerId, trainerData) {
   }
 
   return data[0]; // Return updated trainer
-}     
+} 
+    
 export async function getfeedbackbytrainerid(trainerId) {
   const { data, error } = await supabase
     .from("feedback")
