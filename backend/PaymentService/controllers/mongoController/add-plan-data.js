@@ -69,8 +69,15 @@ async function findStripeAccount ({user_id}){
 }
 
 async function findStripePriceId ({planId}){
-    const stripe_price_id = await StripePlanData.findOne({plan_id:planId})
-    return stripe_price_id;
+    const stripe_plan = await StripePlanData.findOne({plan_id:planId})
+    return stripe_plan;
 }
 
-export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData, findStripePriceId};
+async function findPlansByProductId({product_id}){
+    const plans = await StripePlanData.find({
+        product_id: { $in: product_id },
+      });
+    return plans;
+}
+
+export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData, findStripePriceId,findPlansByProductId};

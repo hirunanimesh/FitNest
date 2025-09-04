@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MapPin, Phone, Clock, User, CheckCircle, XCircle, Star, Navigation, Shield, Award, Calendar } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { GetGymDetails, GetGymPlans, SubscribeGymPlan } from '@/api/user/route';
+import { GetGymDetails, GetGymPlans, GetUserSubscriptions, SubscribeGymPlan } from '@/api/user/route';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -59,6 +59,7 @@ const GymProfile: React.FC = () => {
     const [subscriptionErrorMessage, setSubscriptionErrorMessage] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
     const plansSectionRef = useRef<HTMLDivElement>(null);
+    const [myPlans, setMyPlans] = useState<string[]>([]);
 
     // Scroll to top on page load
     useEffect(() => {
@@ -184,8 +185,15 @@ const GymProfile: React.FC = () => {
             }
         };
 
+        const fetchMySubscriptions = async () => {
+            const customer_id = await getUserProfileId();
+            const MyPlans = await GetUserSubscriptions(customer_id);
+            setMyPlans(MyPlans.planIds);
+        };
+
         getSession();
         fetchGymDetails();
+        fetchMySubscriptions();
         fetchGymPlans();
     }, [gymId]);
 
@@ -232,7 +240,7 @@ const GymProfile: React.FC = () => {
                     description: 'Opening secure payment gateway in a new tab.',
                     duration: 3000,
                 });
-                window.open(result.url, '_blank');
+                window.location.assign(result.url);
                 setTimeout(() => setSuccessMessage(''), 3000);
             } else {
                 let errorMessage = 'Subscription failed';
@@ -564,7 +572,8 @@ const GymProfile: React.FC = () => {
                                     'from-orange-500 to-red-600'
                                 ];
                                 const gradient = gradients[index % gradients.length];
-                                
+                                const isSubscribed = myPlans.includes(plan.plan_id);
+
                                 return (
                                     <Card
                                         key={plan.plan_id}
@@ -594,12 +603,21 @@ const GymProfile: React.FC = () => {
                                             <p className="text-slate-300 text-center leading-relaxed flex-grow group-hover:text-red-100 transition-colors">
                                                 {plan.description}
                                             </p>
-                                            <Button
-                                                onClick={() => handleSubscribe(plan.plan_id)}
-                                                className={`w-full bg-gradient-to-r ${gradient} hover:shadow-xl hover:shadow-red-500/25 text-white font-bold py-4 text-lg rounded-xl transition-all duration-300 hover:scale-105 group-hover:shadow-2xl`}
-                                            >
-                                                Subscribe Now
-                                            </Button>
+                                            {isSubscribed ? (
+                                                <Button
+                                                    disabled
+                                                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 text-lg rounded-xl opacity-80"
+                                                >
+                                                    Subscribed
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    onClick={() => handleSubscribe(plan.plan_id)}
+                                                    className={`w-full bg-gradient-to-r ${gradient} hover:shadow-xl hover:shadow-red-500/25 text-white font-bold py-4 text-lg rounded-xl transition-all duration-300 hover:scale-105 group-hover:shadow-2xl`}
+                                                >
+                                                    Subscribe Now
+                                                </Button>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 );
