@@ -15,6 +15,7 @@ app.post('/addweight',addweight)
 app.get('/getweightbyid/:userId',getweightbyid)
 app.get('/getlatestweightbyid/:userId',getlatestweightbyid)
 app.post('/addfeedback',addfeedback)
+
 app.post('/upload-image', upload.single('image'), uploadProfileImage);
 app.listen(process.env.PORT || 3004,()=>{
    

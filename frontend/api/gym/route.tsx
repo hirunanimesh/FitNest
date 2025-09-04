@@ -82,3 +82,19 @@ export const GetPlanTrainers = async(planId: any) => {
     const response = await axios.get(`${Base_URL}/api/gym/get-plan-trainers/${planId}`)
     return response
 }
+
+export const GetGymCustomerIds = async(gymPlans:any[])=>{
+    console.log("Gym Plans in API Call",gymPlans)
+    const customerIds = await axios.post(`${Base_URL}/api/payment/getgymcustomerids`,{
+        gymPlans: gymPlans
+    })
+    return customerIds
+}
+
+export const GetAllGymCustomers = async(customerIds:string[])=>{
+    console.log("Customer Ids in API Call",customerIds)
+    const customers = await axios.post(`${Base_URL}/api/gym/getallgymusers`,{
+        customerIds: customerIds
+    })
+    return customers
+}

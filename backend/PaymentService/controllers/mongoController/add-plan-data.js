@@ -80,4 +80,16 @@ async function findPlansByProductId({product_id}){
     return plans;
 }
 
-export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData, findStripePriceId,findPlansByProductId};
+async function findPlansByPlanIds({plan_ids}){
+    const plans = await StripePlanData.find({
+        plan_id: { $in: plan_ids },
+      });
+    return plans;
+}
+
+async function findCustomerByStripeId({stripe_customer_id}){
+    const customer = await StripeCustomer.findOne({stripe_customer_id})
+    return customer;
+}
+
+export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData, findStripePriceId,findPlansByProductId,findPlansByPlanIds,findCustomerByStripeId};

@@ -49,7 +49,7 @@ import {
 import { useGym } from '../context/GymContext';
 import { toast } from 'sonner';
 
-// Define interfaces for TypeScript
+// TypeScript interfaces
 interface Trainer {
   id: string | number;
   trainer_name: string;
@@ -115,7 +115,7 @@ const PlansTab: React.FC = () => {
     trainers: [],
   });
 
-  // Fetch gym plans from database
+  // Fetch gym plans
   useEffect(() => {
     const fetchGymPlans = async () => {
       try {
@@ -155,7 +155,7 @@ const PlansTab: React.FC = () => {
     }
   }, [gymId]);
 
-  // Fetch approved trainers for this gym
+  // Fetch trainers
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
@@ -286,7 +286,7 @@ const PlansTab: React.FC = () => {
               )
             );
           } catch (error) {
-            // Silent failure for trainer refresh
+            // Silent failure
           }
         }
         setSuccessMessage('Plan created successfully');
@@ -333,12 +333,11 @@ const PlansTab: React.FC = () => {
     return `$${price.toLocaleString()}`;
   };
 
+  // Loading spinner for plans
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-32 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50">
-        <div className="text-slate-300 text-sm sm:text-base animate-pulse">
-          Loading gym plans...
-        </div>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-red-500"></div>
       </div>
     );
   }
@@ -465,7 +464,7 @@ const PlansTab: React.FC = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-black   border-gray-600 hover:bg-white px-3 sm:px-4 py-1.5 sm:py-2"
+                            className="text-black border-gray-600 hover:bg-white px-3 sm:px-4 py-1.5 sm:py-2"
                             onClick={() => handleEditPlan(plan)}
                           >
                             <Edit className="mr-1 h-4 w-4" />
@@ -494,75 +493,56 @@ const PlansTab: React.FC = () => {
       <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
         <DialogContent className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 max-w-[95vw] sm:max-w-lg rounded-lg p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl text-white">
+            <DialogTitle className="text-xl sm:text-2xl text-white">
               {currentPlan.plan_id ? 'Edit Plan' : 'Add New Plan'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handlePlanSubmit} className="space-y-4">
-            <div>
-              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Title</Label>
+            <div className="space-y-2">
+              <Label htmlFor="title">Plan Name</Label>
               <Input
-                className="bg-gray-800 text-white border-gray-600 focus:border-red-500/50 text-sm sm:text-base"
-                placeholder="Enter plan name"
+                id="title"
                 value={currentPlan.title}
                 onChange={(e) =>
-                  setCurrentPlan((prev) => ({
-                    ...prev,
-                    title: e.target.value,
-                  }))
+                  setCurrentPlan({ ...currentPlan, title: e.target.value })
                 }
                 required
               />
             </div>
-            <div>
-              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Price</Label>
+            <div className="space-y-2">
+              <Label htmlFor="price">Price</Label>
               <Input
-                className="bg-gray-800 text-white border-gray-600 focus:border-red-500/50 text-sm sm:text-base"
+                id="price"
                 type="number"
-                step="0.01"
-                placeholder="e.g., 2500"
                 value={currentPlan.price}
                 onChange={(e) =>
-                  setCurrentPlan((prev) => ({
-                    ...prev,
-                    price: e.target.value,
-                  }))
+                  setCurrentPlan({ ...currentPlan, price: e.target.value })
                 }
                 required
               />
             </div>
-            <div>
-              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Description</Label>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
               <Input
-                className="bg-gray-800 text-white border-gray-600 focus:border-red-500/50 text-sm sm:text-base"
-                placeholder="Enter plan description"
+                id="description"
                 value={currentPlan.description}
                 onChange={(e) =>
-                  setCurrentPlan((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
+                  setCurrentPlan({ ...currentPlan, description: e.target.value })
                 }
-                required
               />
             </div>
-            <div>
-              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Duration</Label>
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration</Label>
               <Select
-                value={currentPlan.duration}
                 onValueChange={(value) =>
-                  setCurrentPlan((prev) => ({
-                    ...prev,
-                    duration: value,
-                  }))
+                  setCurrentPlan({ ...currentPlan, duration: value })
                 }
+                value={currentPlan.duration}
               >
-                <SelectTrigger className="bg-gray-800 text-white border-gray-600 focus:border-red-500/50 text-sm sm:text-base">
+                <SelectTrigger>
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 text-white border-gray-600">
-                  <SelectItem value="1 day">1 day</SelectItem>
-                  <SelectItem value="1 week">1 week</SelectItem>
+                <SelectContent>
                   <SelectItem value="1 month">1 month</SelectItem>
                   <SelectItem value="3 months">3 months</SelectItem>
                   <SelectItem value="6 months">6 months</SelectItem>
@@ -570,12 +550,17 @@ const PlansTab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label className="text-sm sm:text-base font-medium text-slate-300 mb-2 block">Assign Trainers</Label>
+
+            <div className="space-y-2">
+              <Label>Assign Trainers</Label>
               {loadingTrainers ? (
-                <div className="text-slate-400 text-sm sm:text-base animate-pulse">Loading trainers...</div>
+                <div className="flex justify-center items-center h-16">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-b-4 border-red-500"></div>
+                </div>
               ) : trainers.length === 0 ? (
-                <div className="text-slate-400 text-sm sm:text-base">No approved trainers available</div>
+                <div className="text-slate-400 text-sm sm:text-base">
+                  No approved trainers available
+                </div>
               ) : (
                 <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-600 rounded-lg p-3 sm:p-4">
                   {trainers.map((trainer) => (
@@ -586,19 +571,14 @@ const PlansTab: React.FC = () => {
                         onCheckedChange={() => toggleTrainer(trainer.id)}
                         className="border-gray-600 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500 h-5 w-5 sm:h-6 sm:w-6"
                       />
-                      <Label
-                        htmlFor={`trainer-${trainer.id}`}
-                        className="text-sm sm:text-base text-slate-300 flex-1"
-                      >
+                      <Label htmlFor={`trainer-${trainer.id}`} className="text-sm sm:text-base text-slate-300 flex-1">
                         <div className="flex items-center justify-between">
                           <span>{trainer.trainer_name}</span>
                           <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-400">
                             <span>⭐ {trainer.rating}</span>
                             <span>{trainer.years_of_experience}y</span>
                             {trainer.verified && (
-                              <Badge className="bg-green-500/50 text-green-200 text-xs px-1 py-0">
-                                ✓
-                              </Badge>
+                              <Badge className="bg-green-500/50 text-green-200 text-xs px-1 py-0">✓</Badge>
                             )}
                           </div>
                         </div>
@@ -607,26 +587,18 @@ const PlansTab: React.FC = () => {
                   ))}
                 </div>
               )}
-              {currentPlan.trainers.length > 0 && (
-                <div className="mt-2 text-xs sm:text-sm text-slate-300">
-                  Selected: {currentPlan.trainers.length} trainer(s)
-                </div>
-              )}
             </div>
-            <DialogFooter className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
+
+            <DialogFooter className="flex justify-end space-x-2 mt-2">
               <Button
                 type="button"
                 variant="outline"
-                className="text-white border-gray-600 hover:bg-red-500/20 hover:text-red-200 px-4 sm:px-6 py-2 sm:py-2.5"
                 onClick={() => setIsPlanDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white px-4 sm:px-6 py-2 sm:py-2.5"
-              >
-                {currentPlan.plan_id ? 'Update Plan' : 'Add Plan'}
+              <Button type="submit" className="bg-red-500 hover:bg-red-600 text-white">
+                {currentPlan.plan_id ? 'Update Plan' : 'Create Plan'}
               </Button>
             </DialogFooter>
           </form>

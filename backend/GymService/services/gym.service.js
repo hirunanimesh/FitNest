@@ -123,3 +123,16 @@ export async function getgymtrainercount(gymId){
   }
   return data;
 }
+
+export async function getAllGymUsersByIds(customerIds) {
+  console.log("Fetching users for customer IDs:", customerIds);
+  const { data, error } = await supabase
+    .from('customer')
+    .select('*')
+    .in('id', customerIds);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data; // array of customer objects
+}

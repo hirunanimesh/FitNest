@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 
-import { addGym,approveTrainer,getAllGyms, getGymById, getGymByUserId, getGymTrainerCount, getTotalGymMemberCount, getTrainers, updateGymDetails } from './controllers/gym.controller.js'
+import { addGym,approveTrainer,getAllGyms, getAllGymUsers, getGymById, getGymByUserId, getGymTrainerCount, getTotalGymMemberCount, getTrainers, updateGymDetails } from './controllers/gym.controller.js'
 import { addGymPlan, deleteGymPlan, getAllGymPlans, getGymPlanByGymId, getMemberCountPerPlan, updateGymPlan, assignTrainersToPlan, getPlanTrainers, updatePlanTrainers , GetOneDayGyms , GetOtherGyms} from './controllers/plans.controller.js'
 
 
@@ -19,6 +19,8 @@ app.get('/getallgyms',getAllGyms)
 app.get('/getgymbyid/:gymId',getGymById)
 app.get('/getgymbyuserid/:userId',getGymByUserId)
 app.put('/updategymdetails/:gymId',updateGymDetails)
+
+app.post('/getallgymusers',getAllGymUsers)
 
 app.post('/addgymplan', addGymPlan)
 app.get('/getallgymplans',getAllGymPlans)
