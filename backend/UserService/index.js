@@ -18,7 +18,6 @@ app.post('/addweight',addweight)
 app.get('/getweightbyid/:userId',getweightbyid)
 app.get('/getlatestweightbyid/:userId',getlatestweightbyid)
 app.post('/addfeedback',addfeedback)
-
 app.listen(process.env.PORT || 3004,()=>{
     console.log(`User Service is running on port ${process.env.PORT || 3004}`)
 })

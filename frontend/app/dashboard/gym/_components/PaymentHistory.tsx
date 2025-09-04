@@ -5,7 +5,6 @@ import { CreateAccount, GetDashboardLink, GetPaymentHistory } from '@/api/gym/ro
 import { toast } from 'sonner';
 import { useGym } from '../context/GymContext';
 
-// Interface for payment data
 interface Payment {
   id: string;
   amount: number;
@@ -18,30 +17,27 @@ interface Payment {
 
 const PaymentHistory: React.FC = () => {
   const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState<boolean>(true);
   const { userId } = useGym();
 
   useEffect(() => {
     const fetchPayments = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
         const response = await GetPaymentHistory(userId);
         if (response.data?.payments) {
           setPaymentHistory(response.data.payments);
-          console.log(response.data.payments);
         } else {
           throw new Error('No payments data received');
         }
       } catch (error) {
         console.error('Error fetching payment history:', error);
         toast.error('Error fetching payment history');
-      }finally{
-        setLoading(false)
+      } finally {
+        setLoading(false);
       }
     };
-    if (userId) {
-      fetchPayments();
-    }
+    if (userId) fetchPayments();
   }, [userId]);
 
   const getSession = async (): Promise<string | null> => {
@@ -82,70 +78,69 @@ const PaymentHistory: React.FC = () => {
   };
 
   return (
-    <div className="w-full p-4 bg-gray-800 bg-[hsl(var(--card))] rounded-[var(--radius)] shadow-lg">
-      <div className="flex flex-row justify-between items-center">
-        <h2 className="text-2xl text-white font-semibold mb-4">Payment History</h2>
-        <Button variant="outline" onClick={goToDashboard}>
-          Stripe Dashboard
-        </Button>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-[hsl(var(--border))] bg-gray-800">
-          <thead className="bg-gray-800">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Receipt
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[hsl(var(--border))]">
-            {paymentHistory.length > 0 ? (
-              paymentHistory.map((payment, index) => (
-                <tr key={payment.id} className="hover:bg-gray-700">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    {index + 1}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    {new Date(payment.created).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    {payment.amount.toFixed(2)} {payment.currency.toUpperCase()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <Button
-                      size="sm"
-                      onClick={() => window.open(payment.receipt_url, '_blank', 'noopener,noreferrer')}
-                    >
-                      View Receipt
-                    </Button>
-                  </td>
+    <div className="w-full p-4 bg-gray-800 rounded-[var(--radius)] shadow-lg">
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-red-500"></div>
+        </div>
+      ) : (
+        <div className="animate-fade-in">
+          {/* Header */}
+          <div className="flex flex-row justify-between items-center mb-4">
+            <h2 className="text-2xl text-white font-semibold">Payment History</h2>
+            <Button variant="outline" onClick={goToDashboard}>
+              Stripe Dashboard
+            </Button>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-[hsl(var(--border))] bg-gray-800">
+              <thead className="bg-gray-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Receipt</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-300">
-                  No payment history available
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-[hsl(var(--border))]">
+                {paymentHistory.length > 0 ? (
+                  paymentHistory.map((payment, index) => (
+                    <tr key={payment.id} className="hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{index + 1}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {new Date(payment.created).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {payment.amount.toFixed(2)} {payment.currency.toUpperCase()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <Button
+                          size="sm"
+                          onClick={() => window.open(payment.receipt_url, '_blank', 'noopener,noreferrer')}
+                        >
+                          View Receipt
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-300">
+                      No payment history available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 // gym.controller.js
-import { approvetrainer, createGym,getallgyms, getgymbyid, getgymbyuserid, getgymtrainercount, getgymtrainers, gettotalmembercount, updategymdetails } from '../services/gym.service.js';
+import { approvetrainer, createGym,getallgyms, getAllGymUsersByIds, getgymbyid, getgymbyuserid, getgymtrainercount, getgymtrainers, gettotalmembercount, updategymdetails } from '../services/gym.service.js';
 
 export const addGym = async (req, res) => {
   try {
@@ -129,4 +129,26 @@ export const getGymTrainerCount = async (req,res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
+
+export const getAllGymUsers = async (req, res) => {
+    console.log("Awooooooooooooooooo");
+    const { customerIds } = req.body;
+    console.log("Received customerIds:", customerIds);
+  
+    if (!customerIds || !Array.isArray(customerIds) || customerIds.length === 0) {
+      return res.status(400).json({ error: "customerIds must be a non-empty array" });
+    }
+  
+    try {
+      const customers = await getAllGymUsersByIds(customerIds); // <-- FIXED
+      if (!customers || customers.length === 0) {
+        return res.status(404).json({ error: "No customers found for given IDs" });
+      }
+  
+      res.json({ customers });
+    } catch (error) {
+      res.status(500).json({ error: "Unexpected error", details: error.message });
+    }
+  };
+  
 
