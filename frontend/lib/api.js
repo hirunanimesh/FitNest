@@ -368,3 +368,13 @@ export const UpdateSessionDetails = async (sessionId, sessionData) => {
         throw error;
     }
 };
+export const DeleteSession = async (sessionId) => {
+    try {
+        await axios.delete(`${Base_URL}/api/trainer/deletesession/${sessionId}`);
+        // Do not show toast here; handle it in the component
+    } catch (error) {
+        console.error('Error deleting session:', error);
+        throw error;
+    }
+};
+       
