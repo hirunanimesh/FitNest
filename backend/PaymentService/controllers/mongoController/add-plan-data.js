@@ -12,7 +12,7 @@ function addPlanData ({plan_id,product_id,price_id}){
 
     plan_data.save()
     .then(savedPlan => {
-      console.log('📦 User saved:', savedPlan);
+      console.log('📦 Plan saved:', savedPlan);
     })
     .catch(err => console.error('❌ Save error:', err));
 }
@@ -68,4 +68,9 @@ async function findStripeAccount ({user_id}){
     return stripeAccount;
 }
 
-export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData};
+async function findStripePriceId ({planId}){
+    const stripe_price_id = await StripePlanData.findOne({plan_id:planId})
+    return stripe_price_id;
+}
+
+export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData, findStripePriceId};

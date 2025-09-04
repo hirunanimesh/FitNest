@@ -297,105 +297,131 @@ export default function UserInquiries() {
       </div>
 
       {/* Inquiries List */}
-      <div className="space-y-4">
-        {filteredInquiries.map((inquiry) => (
-          <div key={inquiry.id} className="bg-gray-800 border-gray-700 border rounded-lg hover:bg-gray-750 transition-colors">
-            <div className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="flex items-center gap-2 text-gray-300">{getInquiryTypeIcon(inquiry.inquiryType)}</div>
+     <div className="space-y-4">
+  {filteredInquiries.map((inquiry) => (
+    <div key={inquiry.id} className="bg-gray-800 border-gray-700 border rounded-lg hover:bg-gray-750 transition-colors">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          {/* Main content section */}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 flex-1">
+            {/* Icon - hidden on mobile for space */}
+            <div className="hidden sm:flex items-center gap-2 text-gray-300 flex-shrink-0">
+              {getInquiryTypeIcon(inquiry.inquiryType)}
+            </div>
 
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="text-lg font-semibold text-white">{inquiry.subject}</h3>
-                      <span className={getStatusColor(inquiry.status)}>{inquiry.status}</span>
-                      <span className={getPriorityColor(inquiry.priority)}>{inquiry.priority} priority</span>
-                      {inquiry.targetBanned && (
-                        <span className="bg-red-500/20 text-red-300 border-red-300/30 px-2 py-1 rounded-md text-xs border flex items-center gap-1">
-                          <Ban className="w-3 h-3" />
-                          Banned
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-300 text-xs font-medium">
-                          {inquiry.reporterName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white">Reporter: {inquiry.reporterName}</p>
-                          <p className="text-xs text-gray-300">{inquiry.reporterEmail}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center text-red-300 text-xs font-medium">
-                          {inquiry.targetName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white">Target: {inquiry.targetName}</p>
-                          <p className="text-xs text-gray-300">
-                            {inquiry.targetEmail} • {inquiry.targetType}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(inquiry.submittedAt)}
-                    </div>
-                  </div>
+            <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
+              {/* Header with subject and badges */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                {/* Mobile: Show icon inline with subject */}
+                <div className="flex items-center gap-2 sm:hidden text-gray-300">
+                  {getInquiryTypeIcon(inquiry.inquiryType)}
+                  <h3 className="text-lg font-semibold text-white truncate">{inquiry.subject}</h3>
                 </div>
-
-                <div className="flex items-center gap-2 ml-4">
-                  <button
-                    onClick={() => {
-                      setSelectedInquiry(inquiry)
-                      setDetailsDialogOpen(true)
-                    }}
-                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-white text-sm flex items-center gap-2 transition-colors"
-                  >
-                    <Eye className="w-4 h-4" />
-                    View Details
-                  </button>
-
-                  <select
-                    value={inquiry.status}
-                    onChange={(e) => handleUpdateStatus(inquiry.id, e.target.value as UserInquiry["status"])}
-                    className="px-3 py-1 bg-gray-700 border-gray-600 border rounded text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  >
-                    <option value="pending" className="bg-gray-800 text-white">Pending</option>
-                    <option value="reviewed" className="bg-gray-800 text-white">Reviewed</option>
-                    <option value="resolved" className="bg-gray-800 text-white">Resolved</option>
-                    <option value="dismissed" className="bg-gray-800 text-white">Dismissed</option>
-                  </select>
-
-                  {!inquiry.targetBanned && (
-                    <button
-                      onClick={() => {
-                        setSelectedInquiry(inquiry)
-                        setBanDialogOpen(true)
-                      }}
-                      className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded flex items-center gap-2 transition-colors"
-                    >
-                      <Ban className="w-4 h-4" />
-                      Ban User
-                    </button>
+                
+                {/* Desktop: Subject only */}
+                <h3 className="hidden sm:block text-lg font-semibold text-white">{inquiry.subject}</h3>
+                
+                {/* Status and priority badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={getStatusColor(inquiry.status)}>{inquiry.status}</span>
+                  <span className={getPriorityColor(inquiry.priority)}>{inquiry.priority} priority</span>
+                  {inquiry.targetBanned && (
+                    <span className="bg-red-500/20 text-red-300 border-red-300/30 px-2 py-1 rounded-md text-xs border flex items-center gap-1">
+                      <Ban className="w-3 h-3" />
+                      Banned
+                    </span>
                   )}
                 </div>
               </div>
+
+              {/* Reporter and Target info */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+                {/* Reporter */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-300 text-xs font-medium flex-shrink-0">
+                    {inquiry.reporterName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-white truncate">Reporter: {inquiry.reporterName}</p>
+                    <p className="text-xs text-gray-300 truncate">{inquiry.reporterEmail}</p>
+                  </div>
+                </div>
+
+                {/* Target */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center text-red-300 text-xs font-medium flex-shrink-0">
+                    {inquiry.targetName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-white truncate">Target: {inquiry.targetName}</p>
+                    <p className="text-xs text-gray-300 truncate">
+                      {inquiry.targetEmail} • {inquiry.targetType}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Date */}
+              <div className="flex items-center gap-2 text-sm text-gray-300">
+                <Calendar className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{formatDate(inquiry.submittedAt)}</span>
+              </div>
             </div>
           </div>
-        ))}
+
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-2 sm:gap-2 lg:gap-2 xl:gap-2 lg:ml-4 min-w-0 sm:min-w-fit">
+            {/* View Details button */}
+            <button
+              onClick={() => {
+                setSelectedInquiry(inquiry)
+                setDetailsDialogOpen(true)
+              }}
+              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-white text-sm flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
+            >
+              <Eye className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">View Details</span>
+              <span className="sm:hidden">Details</span>
+            </button>
+
+            {/* Status dropdown */}
+            <select
+              value={inquiry.status}
+              onChange={(e) => handleUpdateStatus(inquiry.id, e.target.value as UserInquiry["status"])}
+              className="px-3 py-2 bg-gray-700 border-gray-600 border rounded text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-0"
+            >
+              <option value="pending" className="bg-gray-800 text-white">Pending</option>
+              <option value="reviewed" className="bg-gray-800 text-white">Reviewed</option>
+              <option value="resolved" className="bg-gray-800 text-white">Resolved</option>
+              <option value="dismissed" className="bg-gray-800 text-white">Dismissed</option>
+            </select>
+
+            {/* Ban user button */}
+            {!inquiry.targetBanned && (
+              <button
+                onClick={() => {
+                  setSelectedInquiry(inquiry)
+                  setBanDialogOpen(true)
+                }}
+                className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
+              >
+                <Ban className="w-4 h-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Ban User</span>
+                <span className="sm:hidden">Ban</span>
+              </button>
+            )}
+          </div>
+        </div>
       </div>
+    </div>
+  ))}
+</div>
 
       {/* Details Dialog */}
       {detailsDialogOpen && selectedInquiry && (

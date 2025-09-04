@@ -16,7 +16,7 @@ const Adminlayout = ({ children }: AdminLayoutProps) => {
           platformName="FitNest"
           pendingVerifications={5} // You can make this dynamic later
         />
-        <main className="p-6">
+        <main className="p-px md:p-6">
           {children}
         </main>
       </div>
