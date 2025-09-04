@@ -22,9 +22,9 @@ const Statistics: React.FC = () => {
   const { gymId } = useGym();
   const {userId} = useGym()
   const [statistics, setStatistics] = useState<Stat[]>([
-    { title: "Total Members", value: 120, icon: Users, iconColor: "text-blue-500" },
+    { title: "Total Members", value: 0, icon: Users, iconColor: "text-blue-500" },
     { title: "Total Trainers", value: 0, icon: UserCheck, iconColor: "text-green-500" },
-    { title: "Monthly Revenue", value: 400, icon: DollarSign, iconColor: "text-yellow-500" },
+    { title: "Monthly Revenue", value: 0, icon: DollarSign, iconColor: "text-yellow-500" },
     { title: "Total Revenue", value: 0, icon: Users, iconColor: "text-purple-500" },
   ]);
 
