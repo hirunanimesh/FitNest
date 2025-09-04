@@ -9,10 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Upload, MapPinIcon, Edit3, X } from "lucide-react"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
-import { UpdateUserDetails } from "@/lib/api"
+import { UpdateUserDetails, uploadToCloudinary } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
-import axios from "axios"
 
 interface PersonalInfoProps {
   userData: any
@@ -55,36 +54,6 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
       setFormattedDob("")
     }
   }, [userData.dateOfBirth])
-
-  // Upload image using API Gateway -> UserService endpoint
-  const uploadToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append('image', file)
-
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/upload-image`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          timeout: 60000,
-        }
-      )
-      
-      return response.data.imageUrl || response.data.url || response.data.secure_url
-      
-    } catch (error: any) {
-      console.error('Image upload error:', error)
-      
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message)
-      }
-      
-      throw new Error('Image upload failed')
-    }
-  }
 
   // Handle image file selection
   const handleImageSelect = useCallback((file: File) => {
@@ -162,6 +131,7 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
         return
       }
 
+      // Use imported uploadToCloudinary
       const imageUrl = await uploadToCloudinary(selectedImage)
       
       await UpdateUserDetails(customerId, { avatar: imageUrl })

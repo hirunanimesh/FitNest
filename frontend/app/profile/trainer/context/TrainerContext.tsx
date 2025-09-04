@@ -10,11 +10,10 @@ interface TrainerData {
   profile_img?: string | null;
   expertise: string;
   contact_no?: string | null;
-  experience_years: number;
+  years_of_experience: number;
   email: string;
   skills: string | string[];
   bio: string;
-  year_of_experience: number;
   rating: number;
   sessions?: any[];
   feedbacks?: any[];

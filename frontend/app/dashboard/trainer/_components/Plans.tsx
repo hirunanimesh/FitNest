@@ -11,7 +11,8 @@ import CreatePlan from './CreateSession';
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
-import { UpdateSessionDetails } from "@/lib/api";
+import { UpdateSessionDetails,DeleteSession } from "@/lib/api";
+import { Dialog, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 
 interface Session {
   session_id: number;
@@ -40,6 +41,10 @@ export default function Plans() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sessions: Session[] = trainerData?.sessions || [];
+
+  // Delete confirmation modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<number | null>(null);
 
   // Upload image to Cloudinary (or your backend)
   const uploadToCloudinary = async (file: File): Promise<string> => {
@@ -187,6 +192,40 @@ export default function Plans() {
     }
   };
 
+  // Open delete confirmation modal
+  const openDeleteModal = (sessionId: number) => {
+    setSessionToDelete(sessionId);
+    setShowDeleteModal(true);
+  };
+
+  // Close modal
+  const closeDeleteModal = () => {
+    setSessionToDelete(null);
+    setShowDeleteModal(false);
+  };
+
+  // Confirm delete
+  const confirmDelete = async () => {
+    if (sessionToDelete !== null) {
+      try {
+        await DeleteSession(sessionToDelete);
+        await refreshTrainerData();
+        toast({
+          title: "Session deleted",
+          description: "Session has been deleted successfully."
+        });
+      } catch (error) {
+        console.error('Error deleting session:', error);
+        toast({
+          variant: "destructive",
+          title: "Delete Failed",
+          description: "Failed to delete session. Please try again."
+        });
+      }
+      closeDeleteModal();
+    }
+  };
+
   // Handle input changes
   const handleInputChange = (field: string, value: string | number) => {
     setEditFormData(prev => ({
@@ -195,262 +234,268 @@ export default function Plans() {
     }));
   };
 
-  // Delete session
-  const handleDelete = async (sessionId: number) => {
-    try {
-      const confirmDelete = window.confirm('Are you sure you want to delete this session?');
-      if (!confirmDelete) return;
-
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/session/${sessionId}`);
-      await refreshTrainerData();
-      toast({
-        title: "Session deleted",
-        description: "Session has been deleted successfully."
-      });
-    } catch (error) {
-      console.error('Error deleting session:', error);
-      toast({
-        variant: "destructive",
-        title: "Delete Failed",
-        description: "Failed to delete session. Please try again."
-      });
-    }
-  };
-
   const isEditing = (sessionId: number) => editingSessionId === sessionId;
 
   return (
-    <section id="sessions">
-      <div className="container mx-auto px-4">
-        <div className='flex flex-row justify-between'>
-          <h2 className="text-2xl font-semibold mb-4 text-white">Ongoing Sessions</h2>
-          <CreatePlan />
-        </div>
+    <>
+      {/* Delete Confirmation Modal */}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent className="bg-gray-700 items-center justify-center text-lg">
+          <div className="text-white text-center mb-4">
+        Are you sure you want to delete this session?
+          </div>
+          <DialogFooter>
+      <div className="flex justify-center gap-x-8 w-full">
+        <Button
+          variant="outline"
+          onClick={closeDeleteModal}
+          className="bg-gray-600 text-white border-gray-600 hover:bg-gray-700"
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={confirmDelete}
+          className="bg-red-600 text-white border-red-600 hover:bg-red-700"
+        >
+          Delete
+        </Button>
+      </div>
+    </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <section id="sessions">
+        <div className="container mx-auto px-4">
+          <div className='flex flex-row justify-between'>
+            <h2 className="text-2xl font-semibold mb-4 text-white">Ongoing Sessions</h2>
+            <CreatePlan />
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {sessions.map((session: Session) => (
-            <Card
-              key={session.session_id}
-              className="bg-gray-800 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500"
-            >
-              <CardHeader>
-                <div className="relative">
-                  <div
-                    className={`w-full h-full rounded-md mb-2 overflow-hidden border-2 ${isDragging ? "border-blue-500" : "border-transparent"}`}
-                    onDragOver={isEditing(session.session_id) ? handleDragOver : undefined}
-                    onDragLeave={isEditing(session.session_id) ? handleDragLeave : undefined}
-                    onDrop={isEditing(session.session_id) ? handleDrop : undefined}
-                  >
-                    <img
-                      src={
-                        isEditing(session.session_id)
-                          ? imagePreview || editFormData.img_url || "/placeholder.svg"
-                          : session.img_url || "/placeholder.svg"
-                      }
-                      alt={session.title}
-                      className="w-full h-64 object-cover"
-                    />
-                  </div>
-                  {isEditing(session.session_id) && (
-                    <div className="absolute top-2 right-2 flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="bg-gray-700 text-white border-gray-600 hover:bg-gray-800"
-                        onClick={() => fileInputRef.current?.click()}
-                        type="button"
-                        disabled={isUploadingImage}
-                      >
-                        <ImagePlus className="w-4 h-4 mr-2" />
-                        {isUploadingImage ? "Uploading..." : "Change Image"}
-                      </Button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFileInputChange}
-                        disabled={isUploadingImage}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {sessions.map((session: Session) => (
+              <Card
+                key={session.session_id}
+                className="bg-gray-800 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500"
+              >
+                <CardHeader>
+                  <div className="relative">
+                    <div
+                      className={`w-full h-full rounded-md mb-2 overflow-hidden border-2 ${isDragging ? "border-blue-500" : "border-transparent"}`}
+                      onDragOver={isEditing(session.session_id) ? handleDragOver : undefined}
+                      onDragLeave={isEditing(session.session_id) ? handleDragLeave : undefined}
+                      onDrop={isEditing(session.session_id) ? handleDrop : undefined}
+                    >
+                      <img
+                        src={
+                          isEditing(session.session_id)
+                            ? imagePreview || editFormData.img_url || "/placeholder.svg"
+                            : session.img_url || "/placeholder.svg"
+                        }
+                        alt={session.title}
+                        className="w-full h-64 object-cover"
                       />
                     </div>
-                  )}
-                </div>
+                    {isEditing(session.session_id) && (
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-gray-700 text-white border-gray-600 hover:bg-gray-800"
+                          onClick={() => fileInputRef.current?.click()}
+                          type="button"
+                          disabled={isUploadingImage}
+                        >
+                          <ImagePlus className="w-4 h-4 mr-2" />
+                          {isUploadingImage ? "Uploading..." : "Change Image"}
+                        </Button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFileInputChange}
+                          disabled={isUploadingImage}
+                        />
+                      </div>
+                    )}
+                  </div>
 
-                {/* Title Field */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-white min-w-[60px]">Title:</Label>
-                  {isEditing(session.session_id) ? (
-                    <Input
-                      value={editFormData.title || ''}
-                      onChange={(e) => handleInputChange('title', e.target.value)}
-                      className="bg-[#192024] text-white border-gray-600 flex-1"
-                    />
-                  ) : (
-                    <span className="text-sm text-white flex-1">{session.title}</span>
-                  )}
-                </div>
+                  {/* Title Field */}
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm text-white min-w-[60px]">Title:</Label>
+                    {isEditing(session.session_id) ? (
+                      <Input
+                        value={editFormData.title || ''}
+                        onChange={(e) => handleInputChange('title', e.target.value)}
+                        className="bg-[#192024] text-white border-gray-600 flex-1"
+                      />
+                    ) : (
+                      <span className="text-sm text-white flex-1">{session.title}</span>
+                    )}
+                  </div>
 
-                {/* Price Field */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-white min-w-[60px]">Price:</Label>
-                  {isEditing(session.session_id) ? (
-                    <Input
-                      type="number"
-                      value={editFormData.price || ''}
-                      onChange={(e) => handleInputChange('price', Number(e.target.value))}
-                      className="bg-[#192024] text-white border-gray-600 flex-1"
-                    />
-                  ) : (
-                    <span className="text-sm text-white flex-1">Rs.{session.price}</span>
-                  )}
-                </div>
+                  {/* Price Field */}
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm text-white min-w-[60px]">Price:</Label>
+                    {isEditing(session.session_id) ? (
+                      <Input
+                        type="number"
+                        value={editFormData.price || ''}
+                        onChange={(e) => handleInputChange('price', Number(e.target.value))}
+                        className="bg-[#192024] text-white border-gray-600 flex-1"
+                      />
+                    ) : (
+                      <span className="text-sm text-white flex-1">Rs.{session.price}</span>
+                    )}
+                  </div>
 
-                {/* Duration Field */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-white min-w-[60px]">Duration:</Label>
-                  {isEditing(session.session_id) ? (
-                    <Select
-                      value={editFormData.duration || ''}
-                      onValueChange={(value) => handleInputChange('duration', value)}
-                    >
-                      <SelectTrigger className="col-span-3 bg-gray-800 text-white">
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                      <SelectContent className='bg-gray-800 text-white'>
-                        <SelectItem value="30 min">30 min</SelectItem>
-                        <SelectItem value="45 min">45 min</SelectItem>
-                        <SelectItem value="1 hr">1 hr</SelectItem>
-                        <SelectItem value="1 hr 30 min">1 hr 30 min</SelectItem>
-                        <SelectItem value="2 hr">2 hr</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span className="text-sm text-white flex-1">{session.duration}</span>
-                  )}
-                </div>
+                  {/* Duration Field */}
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm text-white min-w-[60px]">Duration:</Label>
+                    {isEditing(session.session_id) ? (
+                      <Select
+                        value={editFormData.duration || ''}
+                        onValueChange={(value) => handleInputChange('duration', value)}
+                      >
+                        <SelectTrigger className="col-span-3 bg-gray-800 text-white">
+                          <SelectValue placeholder="Select duration" />
+                        </SelectTrigger>
+                        <SelectContent className='bg-gray-800 text-white'>
+                          <SelectItem value="30 min">30 min</SelectItem>
+                          <SelectItem value="45 min">45 min</SelectItem>
+                          <SelectItem value="1 hr">1 hr</SelectItem>
+                          <SelectItem value="1 hr 30 min">1 hr 30 min</SelectItem>
+                          <SelectItem value="2 hr">2 hr</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm text-white flex-1">{session.duration}</span>
+                    )}
+                  </div>
 
-                {/* Date Field */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-white min-w-[60px]">Date:</Label>
-                  {isEditing(session.session_id) ? (
-                    <Input
-                      type="date"
-                      value={editFormData.date || ''}
-                      onChange={(e) => handleInputChange('date', e.target.value)}
-                      className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
-                    />
-                  ) : (
-                    <span className="text-sm text-white flex-1">{session.date}</span>
-                  )}
-                </div>
+                  {/* Date Field */}
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm text-white min-w-[60px]">Date:</Label>
+                    {isEditing(session.session_id) ? (
+                      <Input
+                        type="date"
+                        value={editFormData.date || ''}
+                        onChange={(e) => handleInputChange('date', e.target.value)}
+                        className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
+                      />
+                    ) : (
+                      <span className="text-sm text-white flex-1">{session.date}</span>
+                    )}
+                  </div>
 
-                {/* Time Field */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-white min-w-[60px]">Time:</Label>
-                  {isEditing(session.session_id) ? (
-                    <Input
-                      type="time"
-                      value={editFormData.time || ''}
-                      onChange={(e) => handleInputChange('time', e.target.value)}
-                      className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
-                    />
-                  ) : (
-                    <span className="text-sm text-white flex-1">{session.time}</span>
-                  )}
-                </div>
-                {/* Zoom Field */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-white min-w-[60px]">Zoom Link:</Label>
-                  {isEditing(session.session_id) ? (
-                    <Input
-                      type="url"
-                      value={editFormData.zoom_link || ''}
-                      onChange={(e) => handleInputChange('zoom_link', e.target.value)}
-                      className="bg-[#192024] text-white border-gray-600 flex-1"
-                    />
-                  ) : (
-                    <span className="text-sm text-white flex-1">{session.zoom_link}</span>
-                  )}
-                </div>
-                {/* Description Field */}
-                <div className="flex items-start gap-2">
-                  <Label className="text-sm text-white min-w-[60px] pt-2">Description:</Label>
-                  {isEditing(session.session_id) ? (
-                    <Textarea
-                      value={editFormData.description || ''}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      className="bg-[#192024] text-white border-gray-600 min-h-[60px] flex-1"
-                      rows={3}
-                    />
-                  ) : (
-                    <span className="text-sm text-white flex-1">{session.description}</span>
-                  )}
-                </div>
-              </CardHeader>
-              
-              <CardContent>
-                <ul className="space-y-2 mb-4">
-                  {session.features?.map((feature: string, index: number) => (
-                    <li key={index} className="text-sm text-gray-400 flex items-center">
-                      <div className="w-1.5 h-1.5 bg-red-600 rounded-full mr-2"></div>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                  {/* Time Field */}
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm text-white min-w-[60px]">Time:</Label>
+                    {isEditing(session.session_id) ? (
+                      <Input
+                        type="time"
+                        value={editFormData.time || ''}
+                        onChange={(e) => handleInputChange('time', e.target.value)}
+                        className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
+                      />
+                    ) : (
+                      <span className="text-sm text-white flex-1">{session.time}</span>
+                    )}
+                  </div>
+                  {/* Zoom Field */}
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm text-white min-w-[60px]">Zoom Link:</Label>
+                    {isEditing(session.session_id) ? (
+                      <Input
+                        type="url"
+                        value={editFormData.zoom_link || ''}
+                        onChange={(e) => handleInputChange('zoom_link', e.target.value)}
+                        className="bg-[#192024] text-white border-gray-600 flex-1"
+                      />
+                    ) : (
+                      <span className="text-sm text-white flex-1">{session.zoom_link}</span>
+                    )}
+                  </div>
+                  {/* Description Field */}
+                  <div className="flex items-start gap-2">
+                    <Label className="text-sm text-white min-w-[60px] pt-2">Description:</Label>
+                    {isEditing(session.session_id) ? (
+                      <Textarea
+                        value={editFormData.description || ''}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        className="bg-[#192024] text-white border-gray-600 min-h-[60px] flex-1"
+                        rows={3}
+                      />
+                    ) : (
+                      <span className="text-sm text-white flex-1">{session.description}</span>
+                    )}
+                  </div>
+                </CardHeader>
                 
-                {/* Action Buttons */}
-                <div className="flex gap-2 mt-4">
-                  {isEditing(session.session_id) ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSaveEdit(session.session_id)}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700"
-                        disabled={isUploadingImage}
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        {isUploadingImage ? "Saving..." : "Save"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCancelEdit}
-                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white border-gray-600 hover:border-gray-700"
-                        disabled={isUploadingImage}
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(session)}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(session.session_id)}
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                <CardContent>
+                  <ul className="space-y-2 mb-4">
+                    {session.features?.map((feature: string, index: number) => (
+                      <li key={index} className="text-sm text-gray-400 flex items-center">
+                        <div className="w-1.5 h-1.5 bg-red-600 rounded-full mr-2"></div>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 mt-4">
+                    {isEditing(session.session_id) ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSaveEdit(session.session_id)}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700"
+                          disabled={isUploadingImage}
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {isUploadingImage ? "Saving..." : "Save"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelEdit}
+                          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white border-gray-600 hover:border-gray-700"
+                          disabled={isUploadingImage}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(session)}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openDeleteModal(session.session_id)}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

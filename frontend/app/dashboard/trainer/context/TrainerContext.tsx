@@ -7,8 +7,11 @@ import axios from 'axios';
 interface TrainerData {
   trainer_id: number;
   trainer_name: string;
-  profile_img?: string | null;
-  contact_no?: string | null;
+  profile_img: string | null;
+  contact_no: string | null;
+  address: string | null;
+  dateOfBirth: string;
+  gender: string | null;
   email: string;
   bio: string;
   years_of_experience: number;
@@ -80,8 +83,28 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
             years_of_experience: trainer.years_of_experience || trainer.experience || 0,
             rating: trainer.rating || 0,
             verified: trainer.verified || false,
-            skills: Array.isArray(trainer.skills) ? trainer.skills : (trainer.skills ? trainer.skills.split(',') : []),
-            sessions: sessions
+            skills: (() => {
+              if (Array.isArray(trainer.skills)) {
+                return trainer.skills;
+              }
+              if (typeof trainer.skills === 'string') {
+                // Try to parse as JSON first
+                try {
+                  const parsed = JSON.parse(trainer.skills);
+                  if (Array.isArray(parsed)) {
+                    return parsed;
+                  }
+                } catch (e) {
+                  // If JSON parsing fails, try splitting by comma
+                  return trainer.skills.split(',').map((skill: string) => skill.trim());
+                }
+              }
+              return [];
+            })(),
+            sessions: sessions,
+            dateOfBirth: trainer.dateOfBirth || trainer.dob || '',
+            gender: trainer.gender || '',
+            address: trainer.address || '',
           };
 
           setTrainerData(trainerData);
@@ -107,7 +130,10 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
           rating: 0,
           verified: false,
           skills: [],
-          sessions: []
+          sessions: [],
+          dateOfBirth: "",
+          gender: "",
+          address: ""
         };
         setTrainerData(fallbackData);
       }

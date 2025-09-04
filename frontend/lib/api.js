@@ -368,3 +368,83 @@ export const UpdateSessionDetails = async (sessionId, sessionData) => {
         throw error;
     }
 };
+export const DeleteSession = async (sessionId) => {
+    try {
+        await axios.delete(`${Base_URL}/api/trainer/deletesession/${sessionId}`);
+        // Do not show toast here; handle it in the component
+    } catch (error) {
+        console.error('Error deleting session:', error);
+        throw error;
+    }
+};
+export const UpdateTrainerDetails = async (trainerId, trainerData) => {
+    try {
+        const config = {};
+        let requestData;
+        
+        // Check if trainerData is FormData (contains file) or regular object
+        if (trainerData instanceof FormData) {
+            // If it's FormData, set the appropriate headers and use it directly
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+            requestData = trainerData;
+        } else {
+            // If it's regular object data, transform it to the expected format
+            const payload = {};
+            if (trainerData.Name) payload.trainer_name = trainerData.Name;
+            if (trainerData.years_of_experience) payload.years_of_experience = trainerData.years_of_experience;
+            if (trainerData.contact_no) payload.contact_no = trainerData.contact_no;
+            if (trainerData.bio) payload.bio = trainerData.bio;
+            if (trainerData.skills) payload.skills = trainerData.skills;
+            if (trainerData.profile_img) payload.profile_img = trainerData.profile_img;
+            requestData = payload;
+        }
+
+        const response = await axios.patch(
+            `${Base_URL}/api/trainer/updatetrainerdetails/${trainerId}`,
+            requestData,
+            config
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating trainer details:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to update user details");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+
+export const uploadToCloudinary = async (file) => {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    try {
+        const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                timeout: 60000,
+            }
+        );
+        return response.data.secure_url;
+    } catch (error) {
+        console.error("Image upload error:", error);
+        if (error.response?.data?.error?.message) {
+            throw new Error(error.response.data.error.message);
+        }
+        throw new Error("Image upload failed");
+    }
+}
+
