@@ -1,15 +1,18 @@
 "use client";
-import { useState,useCallback,useRef } from "react";
-import { Card, CardContent, CardHeader} from "@/components/ui/card";
+import { useState, useCallback, useRef } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Trash2, Save, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Edit, Trash2, Save, X, ImagePlus } from "lucide-react";
 import { useTrainerData } from '../context/TrainerContext';
 import CreatePlan from './CreateSession';
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import { UpdateSessionDetails } from "@/lib/api";
+
 interface Session {
   session_id: number;
   title: string;
@@ -28,18 +31,98 @@ interface Session {
 }
 
 export default function Plans() {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const { trainerData, refreshTrainerData } = useTrainerData();
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Session>>({});
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string>("")
-  const [isUploadingImage, setIsUploadingImage] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const sessions: Session[] = trainerData?.sessions || [];
 
+  // Upload image to Cloudinary (or your backend)
+  const uploadToCloudinary = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/uploadsessionimage`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 60000,
+        }
+      );
+      return response.data.imageUrl || response.data.url || response.data.secure_url;
+    } catch (error: any) {
+      console.error('Image upload error:', error);
+      throw new Error(error.response?.data?.message || 'Image upload failed');
+    }
+  };
+
+  // Handle image file selection
+  const handleImageSelect = useCallback((file: File) => {
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    if (!validTypes.includes(file.type)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid File Type",
+        description: "Please select a valid image file (JPEG, PNG, GIF, or WebP)"
+      });
+      return;
+    }
+
+    if (file.size > maxSize) {
+      toast({
+        variant: "destructive",
+        title: "File Too Large",
+        description: "Please select an image smaller than 10MB"
+      });
+      return;
+    }
+
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, [toast]);
+
+  // Handle file input change
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleImageSelect(files[0]);
+    }
+  };
+
+  // Handle drag events for image upload
+  const [isDragging, setIsDragging] = useState(false);
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleImageSelect(files[0]);
+    }
+  }, [handleImageSelect]);
+
+  // Start editing a session
   const handleEdit = (session: Session) => {
     setEditingSessionId(session.session_id);
     setEditFormData({
@@ -52,161 +135,59 @@ export default function Plans() {
       img_url: session.img_url,
       zoom_link: session.zoom_link,
     });
+    setSelectedImage(null);
+    setImagePreview("");
   };
-  const uploadToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append('image', file)
 
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/session/uploadsessionimage`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          timeout: 60000,
-        }
-      )
-      
-      return response.data.imageUrl || response.data.url || response.data.secure_url
-      
-    } catch (error: any) {
-      console.error('Image upload error:', error)
-      
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message)
-      }
-      
-      throw new Error('Image upload failed')
-    }
-  }
-
-  // Handle image file selection
-  const handleImageSelect = useCallback((file: File) => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    const maxSize = 10 * 1024 * 1024 // 10MB
-
-    if (!validTypes.includes(file.type)) {
-      toast({
-        variant: "destructive",
-        title: "Invalid File Type",
-        description: "Please select a valid image file (JPEG, PNG, GIF, or WebP)"
-      })
-      return
-    }
-
-    if (file.size > maxSize) {
-      toast({
-        variant: "destructive", 
-        title: "File Too Large",
-        description: "Please select an image smaller than 10MB"
-      })
-      return
-    }
-
-    setSelectedImage(file)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string)
-    }
-    reader.readAsDataURL(file)
-  }, [toast])
-
-  // Handle drag events
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    
-    const files = Array.from(e.dataTransfer.files)
-    if (files.length > 0) {
-      handleImageSelect(files[0])
-    }
-  }, [handleImageSelect])
-
-  // Handle file input change
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files && files.length > 0) {
-      handleImageSelect(files[0])
-    }
-  }
-
-  // Handle image upload
-  const handleImageUpload = async () => {
-    if (!selectedImage) return
-
-    setIsUploadingImage(true)
-    try {
-      const sessionId = await getSessionId()
-      if (!sessionId) {
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "Unable to get user ID. Please try logging in again."
-        })
-        return
-      }
-
-      const imageUrl = await uploadToCloudinary(selectedImage)
-      
-      await UpdateSessionDetails(sessionId, { avatar: imageUrl })
-      
-      setSessionData({ ...sessionData, avatar: imageUrl })
-      setSelectedImage(null)
-      setImagePreview("")
-      setIsImageModalOpen(false)
-      
-      toast({
-        title: "Success!",
-        description: "Profile image updated successfully"
-      })
-      
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Upload Failed",
-        description: error.message || "Failed to update profile image. Please try again."
-      })
-    } finally {
-      setIsUploadingImage(false)
-    }
-  }
+  // Cancel editing
   const handleCancelEdit = () => {
     setEditingSessionId(null);
     setEditFormData({});
+    setSelectedImage(null);
+    setImagePreview("");
   };
 
+  // Save edits, including image upload if changed
   const handleSaveEdit = async (sessionId: number) => {
     try {
-      // TODO: Implement save API call
-      console.log('Saving session:', sessionId, editFormData);
-      
-      // Add your update API call here
-      // await axios.put(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/session/${sessionId}`, editFormData);
-      
-      // Reset editing state
+      let img_url = editFormData.img_url;
+      if (selectedImage) {
+        setIsUploadingImage(true);
+        img_url = await uploadToCloudinary(selectedImage);
+        setIsUploadingImage(false);
+      }
+      const updatedData = { ...editFormData, img_url };
+
+      // Debug: log endpoint and payload
+      console.log("UpdateSessionDetails called with:", sessionId, updatedData);
+
+      await UpdateSessionDetails(sessionId, updatedData);
+
       setEditingSessionId(null);
       setEditFormData({});
-      
-      // Refresh data
+      setSelectedImage(null);
+      setImagePreview("");
       await refreshTrainerData();
-    } catch (error) {
+      toast({
+        title: "Session updated",
+        description: "Session details have been updated successfully."
+      });
+    } catch (error: any) {
+      setIsUploadingImage(false);
       console.error('Error updating session:', error);
-      // Add error toast notification here
+
+      // Show more error details in toast
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: error.message 
+          ? `Error: ${error.message} (Status: ${error.status || error.response?.status || "unknown"})`
+          : "Failed to update session. Please try again."
+      });
     }
   };
 
+  // Handle input changes
   const handleInputChange = (field: string, value: string | number) => {
     setEditFormData(prev => ({
       ...prev,
@@ -214,21 +195,25 @@ export default function Plans() {
     }));
   };
 
+  // Delete session
   const handleDelete = async (sessionId: number) => {
     try {
       const confirmDelete = window.confirm('Are you sure you want to delete this session?');
       if (!confirmDelete) return;
 
-      // Add your delete API call here
-      // await axios.delete(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/session/${sessionId}`);
-      
-      console.log('Delete session:', sessionId);
-      
-      // Refresh the data after deletion
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/session/${sessionId}`);
       await refreshTrainerData();
+      toast({
+        title: "Session deleted",
+        description: "Session has been deleted successfully."
+      });
     } catch (error) {
       console.error('Error deleting session:', error);
-      // You can add error toast notification here
+      toast({
+        variant: "destructive",
+        title: "Delete Failed",
+        description: "Failed to delete session. Please try again."
+      });
     }
   };
 
@@ -249,12 +234,48 @@ export default function Plans() {
               className="bg-gray-800 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500"
             >
               <CardHeader>
-                <img
-                  src={session.img_url || "/placeholder.svg"}
-                  alt={session.title}
-                  className="w-full h-full object-cover rounded-md mb-2"
-                />
-                
+                <div className="relative">
+                  <div
+                    className={`w-full h-full rounded-md mb-2 overflow-hidden border-2 ${isDragging ? "border-blue-500" : "border-transparent"}`}
+                    onDragOver={isEditing(session.session_id) ? handleDragOver : undefined}
+                    onDragLeave={isEditing(session.session_id) ? handleDragLeave : undefined}
+                    onDrop={isEditing(session.session_id) ? handleDrop : undefined}
+                  >
+                    <img
+                      src={
+                        isEditing(session.session_id)
+                          ? imagePreview || editFormData.img_url || "/placeholder.svg"
+                          : session.img_url || "/placeholder.svg"
+                      }
+                      alt={session.title}
+                      className="w-full h-64 object-cover"
+                    />
+                  </div>
+                  {isEditing(session.session_id) && (
+                    <div className="absolute top-2 right-2 flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-gray-700 text-white border-gray-600 hover:bg-gray-800"
+                        onClick={() => fileInputRef.current?.click()}
+                        type="button"
+                        disabled={isUploadingImage}
+                      >
+                        <ImagePlus className="w-4 h-4 mr-2" />
+                        {isUploadingImage ? "Uploading..." : "Change Image"}
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileInputChange}
+                        disabled={isUploadingImage}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 {/* Title Field */}
                 <div className="flex items-center gap-2">
                   <Label className="text-sm text-white min-w-[60px]">Title:</Label>
@@ -288,11 +309,21 @@ export default function Plans() {
                 <div className="flex items-center gap-2">
                   <Label className="text-sm text-white min-w-[60px]">Duration:</Label>
                   {isEditing(session.session_id) ? (
-                    <Input
+                    <Select
                       value={editFormData.duration || ''}
-                      onChange={(e) => handleInputChange('duration', e.target.value)}
-                      className="bg-[#192024] text-white border-gray-600 flex-1"
-                    />
+                      onValueChange={(value) => handleInputChange('duration', value)}
+                    >
+                      <SelectTrigger className="col-span-3 bg-gray-800 text-white">
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                      <SelectContent className='bg-gray-800 text-white'>
+                        <SelectItem value="30 min">30 min</SelectItem>
+                        <SelectItem value="45 min">45 min</SelectItem>
+                        <SelectItem value="1 hr">1 hr</SelectItem>
+                        <SelectItem value="1 hr 30 min">1 hr 30 min</SelectItem>
+                        <SelectItem value="2 hr">2 hr</SelectItem>
+                      </SelectContent>
+                    </Select>
                   ) : (
                     <span className="text-sm text-white flex-1">{session.duration}</span>
                   )}
@@ -306,7 +337,7 @@ export default function Plans() {
                       type="date"
                       value={editFormData.date || ''}
                       onChange={(e) => handleInputChange('date', e.target.value)}
-                      className="bg-[#192024] text-white border-gray-600 flex-1"
+                      className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
                     />
                   ) : (
                     <span className="text-sm text-white flex-1">{session.date}</span>
@@ -321,7 +352,7 @@ export default function Plans() {
                       type="time"
                       value={editFormData.time || ''}
                       onChange={(e) => handleInputChange('time', e.target.value)}
-                      className="bg-[#192024] text-white border-gray-600 flex-1"
+                      className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
                     />
                   ) : (
                     <span className="text-sm text-white flex-1">{session.time}</span>
@@ -332,9 +363,9 @@ export default function Plans() {
                   <Label className="text-sm text-white min-w-[60px]">Zoom Link:</Label>
                   {isEditing(session.session_id) ? (
                     <Input
-                      type="link"
+                      type="url"
                       value={editFormData.zoom_link || ''}
-                      onChange={(e) => handleInputChange('link', e.target.value)}
+                      onChange={(e) => handleInputChange('zoom_link', e.target.value)}
                       className="bg-[#192024] text-white border-gray-600 flex-1"
                     />
                   ) : (
@@ -376,15 +407,17 @@ export default function Plans() {
                         size="sm"
                         onClick={() => handleSaveEdit(session.session_id)}
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700"
+                        disabled={isUploadingImage}
                       >
                         <Save className="w-4 h-4 mr-2" />
-                        Save
+                        {isUploadingImage ? "Saving..." : "Save"}
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleCancelEdit}
                         className="flex-1 bg-gray-600 hover:bg-gray-700 text-white border-gray-600 hover:border-gray-700"
+                        disabled={isUploadingImage}
                       >
                         <X className="w-4 h-4 mr-2" />
                         Cancel
