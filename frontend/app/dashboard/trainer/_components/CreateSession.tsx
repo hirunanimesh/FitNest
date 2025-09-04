@@ -1,11 +1,15 @@
 import React from 'react'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from 'lucide-react';
+import { Plus, Upload, X } from 'lucide-react';
+import axios from 'axios';
+import { AddSession } from '@/lib/api';
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Session {
     session_id?: number;
@@ -25,8 +29,14 @@ interface Session {
   }
 
 const CreateSession = () => {
+    const { toast } = useToast()
+    const { getUserProfileId } = useAuth()
     const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false);
     const [sessions, setSessions] = useState<Session[]>([]);
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string>("");
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [isCreatingSession, setIsCreatingSession] = useState(false);
     const [sessionForm, setSessionForm] = useState({
         title: "",
         description: "",
@@ -42,6 +52,20 @@ const CreateSession = () => {
         price_id_stripe: "",
       });
 
+    // Set trainer ID when component mounts
+    useEffect(() => {
+        const setTrainerIdInForm = async () => {
+            const trainerId = await getUserProfileId();
+            if (trainerId) {
+                setSessionForm(prev => ({
+                    ...prev,
+                    trainer_id: trainerId
+                }));
+            }
+        };
+        setTrainerIdInForm();
+    }, [getUserProfileId]);
+
     // Handle date input and create Date object for display
     const handleDateInputChange = (value: string) => {
         setSessionForm((prev) => ({ ...prev, date: value }));
@@ -49,30 +73,197 @@ const CreateSession = () => {
 
     const date = sessionForm.date ? new Date(sessionForm.date) : null;
 
-    const handleSessionSubmit = (e: React.FormEvent) => {
+    const handleSessionSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newSession: Session = {
-          session_id: Date.now(),
-          ...sessionForm,
-          users: [],
-        };
-        setSessions((prev) => [...prev, newSession]);
-        setSessionForm({ 
-          title: "", 
-          description: "", 
-          price: 0,
-          time: "", 
-          duration: "", 
-          zoom_link: "",
-          img_url: "",
-          date: "",
-          trainer_id: 1,
-          booked: false,
-          product_id_stripe: "",
-          price_id_stripe: "",
-        });
-        setIsSessionDialogOpen(false);
-      };
+        
+        // Validate required fields
+        if (!sessionForm.title || !sessionForm.description || !sessionForm.price || 
+            !sessionForm.time || !sessionForm.duration || !sessionForm.date) {
+            toast({
+                variant: "destructive",
+                title: "Validation Error",
+                description: "Please fill in all required fields"
+            });
+            return;
+        }
+
+        if (!sessionForm.img_url) {
+            toast({
+                variant: "destructive", 
+                title: "Image Required",
+                description: "Please upload an image for the session"
+            });
+            return;
+        }
+
+        setIsCreatingSession(true);
+        
+        try {
+            // Get trainer ID from auth context
+            const trainerId = await getUserProfileId();
+            if (!trainerId) {
+                toast({
+                    variant: "destructive",
+                    title: "Authentication Error", 
+                    description: "Unable to get trainer ID. Please log in again."
+                });
+                return;
+            }
+
+            // Prepare session data for backend
+            const sessionData = {
+                trainer_id: trainerId,
+                title: sessionForm.title,
+                description: sessionForm.description,
+                price: sessionForm.price,
+                time: sessionForm.time,
+                duration: sessionForm.duration,
+                zoom_link: sessionForm.zoom_link,
+                img_url: sessionForm.img_url,
+                date: sessionForm.date,
+                booked: false,
+                product_id_stripe: sessionForm.product_id_stripe,
+                price_id_stripe: sessionForm.price_id_stripe,
+            };
+
+            // Call backend API
+            const response = await AddSession(sessionData);
+            
+            // Add to local state (optional, for immediate UI update)
+            const newSession: Session = {
+                session_id: response.session_id || Date.now(),
+                ...sessionData,
+                users: [],
+            };
+            setSessions((prev) => [...prev, newSession]);
+
+            // Reset form
+            setSessionForm({ 
+                title: "", 
+                description: "", 
+                price: 0,
+                time: "", 
+                duration: "", 
+                zoom_link: "",
+                img_url: "",
+                date: "",
+                trainer_id: trainerId,
+                booked: false,
+                product_id_stripe: "",
+                price_id_stripe: "",
+            });
+            
+            // Reset image states
+            setSelectedImage(null);
+            setImagePreview("");
+            setIsSessionDialogOpen(false);
+            
+            toast({
+                title: "Success!",
+                description: "Session created successfully!"
+            });
+            
+        } catch (error: any) {
+            console.error('Error creating session:', error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: error.message || 'Failed to create session. Please try again.'
+            });
+        } finally {
+            setIsCreatingSession(false);
+        }
+    };
+
+    // Upload image to TrainerService
+    const uploadImageToTrainerService = async (file: File): Promise<string> => {
+        const formData = new FormData()
+        formData.append('image', file)
+
+        try {
+            const response = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/uploadsessionimage`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    timeout: 60000,
+                }
+            )
+            
+            return response.data.imageUrl
+        } catch (error: any) {
+            console.error('Image upload error:', error)
+            throw new Error('Failed to upload image')
+        }
+    }
+
+    // Handle image file selection
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+            const maxSize = 10 * 1024 * 1024 // 10MB
+
+            if (!validTypes.includes(file.type)) {
+                toast({
+                    variant: "destructive",
+                    title: "Invalid File Type",
+                    description: "Please select a valid image file (JPEG, PNG, GIF, or WebP)"
+                });
+                return
+            }
+
+            if (file.size > maxSize) {
+                toast({
+                    variant: "destructive", 
+                    title: "File Too Large",
+                    description: "File size must be less than 10MB"
+                });
+                return
+            }
+
+            setSelectedImage(file)
+            
+            // Create preview
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                setImagePreview(e.target?.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    // Upload image and update form
+    const handleImageUpload = async () => {
+        if (!selectedImage) return
+
+        setIsUploadingImage(true)
+        try {
+            const imageUrl = await uploadImageToTrainerService(selectedImage)
+            setSessionForm(prev => ({ ...prev, img_url: imageUrl }))
+            toast({
+                title: "Success!",
+                description: "Image uploaded successfully!"
+            });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Upload Failed", 
+                description: "Failed to upload image. Please try again."
+            });
+        } finally {
+            setIsUploadingImage(false)
+        }
+    }
+
+    // Remove selected image
+    const removeImage = () => {
+        setSelectedImage(null)
+        setImagePreview("")
+        setSessionForm(prev => ({ ...prev, img_url: "" }))
+    }
 
   return (
     <div>
@@ -200,21 +391,76 @@ const CreateSession = () => {
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="img_url" className="text-right">
-                        Image URL
+                      <Label className="text-right">
+                        Session Image
                       </Label>
-                      <Input
-                        id="img_url"
-                        type="url"
-                        value={sessionForm.img_url}
-                        onChange={(e) => setSessionForm((prev) => ({ ...prev, img_url: e.target.value }))}
-                        className="col-span-3 bg-gray-800"
-                        placeholder="https://..."
-                      />
+                      <div className="col-span-3 space-y-3">
+                        {/* File Input */}
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageSelect}
+                            className="bg-gray-800"
+                          />
+                          {selectedImage && !sessionForm.img_url && (
+                            <Button
+                              type="button"
+                              onClick={handleImageUpload}
+                              disabled={isUploadingImage}
+                              variant="outline"
+                              size="sm"
+                              className='bg-green-700'
+                            >
+                              {isUploadingImage ? (
+                                "Uploading..."
+                              ) : (
+                                <>
+                                  <Upload className="h-4 w-4 mr-2 " />
+                                  Upload
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          {sessionForm.img_url && (
+                            <Button
+                              type="button"
+                              onClick={removeImage}
+                              variant="outline"
+                              size="sm"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Image Preview */}
+                        {imagePreview && (
+                          <div className="relative">
+                            <img
+                              src={imagePreview}
+                              alt="Preview"
+                              className="w-32 h-32 object-cover rounded-md border"
+                            />
+                          </div>
+                        )}
+
+                        {/* Success Message */}
+                        {sessionForm.img_url && (
+                          <p className="text-green-500 text-sm">
+                            ✓ Image uploaded successfully
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="submit">Create Session</Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isCreatingSession || isUploadingImage}
+                    >
+                      {isCreatingSession ? "Creating..." : "Create Session"}
+                    </Button>
                   </DialogFooter>
                 </form>
               </DialogContent>

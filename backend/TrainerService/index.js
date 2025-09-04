@@ -1,10 +1,11 @@
-
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 
+import upload from './config/multer.js'
 import {
+  uploadSessionImage,
   addSession,
   deleteSession,
   getAllSession,
@@ -26,14 +27,13 @@ app.post('/addsession', addSession);
 app.get('/getallsessions', getAllSession);
 app.get('/getsessionbysessionid/:sessionId', getSessionBySessionId);
 app.get('/getallsessionbytrainerid/:trainerId', getallSessionByTrainerId);
-app.put('/updatesession/:sessionId', updatedSession);
+app.patch('/updatesession/:sessionId', updatedSession);
+app.post('/uploadsessionimage', upload.single('image'), uploadSessionImage)
 app.delete('/deletesession/:sessionId', deleteSession);
 
-//app.post('/addTrainer', addTrainer);
 app.get('/getalltrainers', getallTrainers);
 app.get('/gettrainerbyid/:trainerId', getTrainerById);
 app.put('/updatetrainerdetails/:trainerId', updateTrainerDetails);
-
 app.get('/getfeedbackbytrainerid/:trainerId',getFeedbackbyTrainerId);
 //api  for calendar function
 //get subscribe user

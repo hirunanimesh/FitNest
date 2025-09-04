@@ -307,3 +307,64 @@ export const UpdateUserDetails = async (customerId, userData) => {
         throw error;
     }
 };
+
+// Session API functions
+export const AddSession = async (sessionData) => {
+    try {
+        const response = await axios.post(`${Base_URL}/api/trainer/addsession`, sessionData);
+        return response.data;
+    } catch (error) {
+        console.error("Error adding session:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to create session");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+export const UpdateSessionDetails = async (sessionId, sessionData) => {
+    try {
+        const config = {};
+        let requestData;
+
+        // Check if sessionData is FormData (contains file) or regular object
+        if (sessionData instanceof FormData) {
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+            requestData = sessionData;
+        } else {
+            // Map only relevant session fields
+            const payload = {};
+            if (sessionData.title) payload.title = sessionData.title;
+            if (sessionData.description) payload.description = sessionData.description;
+            if (sessionData.price) payload.price = sessionData.price;
+            if (sessionData.duration) payload.duration = sessionData.duration;
+            if (sessionData.trainerId) payload.trainer_id = sessionData.trainerId;
+            if (sessionData.zoom_link) payload.zoom_link = sessionData.zoom_link;
+            if (sessionData.img_url) payload.img_url = sessionData.img_url; // <-- FIXED
+            if (sessionData.time) payload.time = sessionData.time;
+            if (sessionData.date) payload.date = sessionData.date;
+            // Add other session fields as needed
+            requestData = payload;
+        }
+
+        const response = await axios.patch(
+            `${Base_URL}/api/trainer/updatesession/${sessionId}`,
+            requestData,
+            config
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating session details:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to update session details");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};

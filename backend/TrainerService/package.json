@@ -14,9 +14,11 @@
   "description": "",
   "dependencies": {
     "@supabase/supabase-js": "^2.53.1",
+    "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "multer": "^2.0.2",
     "nodemon": "^3.0.0"
   }
 }
