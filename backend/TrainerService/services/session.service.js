@@ -114,3 +114,50 @@ export async function addsession(sessionData) {
     throw new Error(`Failed to upload image: ${error.message}`);
   }
 }
+export async function getallplansbytrainerid(trainerId) {
+    const { data, error } = await supabase
+      .from('trainer_plan')
+      .select(`*,
+        trainer(
+          trainer_name,
+          contact_no
+        )
+      `)
+      .eq('trainer_id', trainerId);
+
+      if(!data){
+        return null;
+      }
+    if (error) {
+        throw new Error(error.message);
+    }
+    return data;
+  }
+
+  export async function updateplan(planId, planData) {
+    const { data, error } = await supabase
+      .from('trainer_plan')
+      .update(planData)
+      .eq('id', planId)
+      .select();
+  
+    if (error) {
+      throw new Error(error.message);
+    }
+  
+    return data[0]; // Return updated plan
+  }
+
+  export async function deleteplan(planId) {
+    const { data, error } = await supabase
+      .from('trainer_plan')
+      .delete()
+      .eq('id', planId)
+      .select();
+  
+    if (error) {
+      throw new Error(error.message);
+    }
+  
+    return data[0];
+  }

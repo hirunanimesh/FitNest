@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
@@ -8,6 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from 'lucide-react';
 import { CalendarIcon } from 'lucide-react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import { supabase } from "@/lib/supabase";
+import axios from 'axios';
 
 import { format } from 'date-fns';
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
@@ -31,6 +37,55 @@ interface TaskForm {
 const Calendar: React.FC = () => {
     const [isTaskDialogOpen, setIsTaskDialogOpen] = useState<boolean>(false);
     const [date, setDate] = useState<Date | undefined>(new Date());
+    const [events, setEvents] = useState<any[]>([]);
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setUserId(user.id);
+                fetchCalendarEvents(user.id);
+            }
+        };
+        getUser();
+    }, []);
+
+    const fetchCalendarEvents = async (id: string) => {
+        try {
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/userservice/calendar/events/${id}`);
+            const googleEvents = response.data.map((event: any) => ({
+                id: event.id,
+                title: event.summary,
+                start: event.start.dateTime || event.start.date,
+                end: event.end.dateTime || event.end.date,
+                backgroundColor: '#34a853'
+            }));
+            setEvents(googleEvents);
+        } catch (error) {
+            console.error('Error fetching calendar events:', error);
+        }
+    };
+
+    const createCalendarEvent = async (eventData: any) => {
+        if (!userId) return;
+        try {
+            await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/userservice/calendar/event/${userId}`, eventData);
+            fetchCalendarEvents(userId);
+        } catch (error) {
+            console.error('Error creating calendar event:', error);
+        }
+    };
+
+    const connectGoogleCalendar = async () => {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                scopes: 'email profile https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events'
+            }
+        });
+        if (error) console.error('Error connecting to Google:', error);
+    };
 
     const formatDate = (date: Date): string => {
         return date.toISOString().split('T')[0];
@@ -59,19 +114,22 @@ const Calendar: React.FC = () => {
 
     const handleTaskSubmit = (e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        const newTask: Task = {
-            id: Date.now(),
-            ...taskForm,
-            type: "workout" // Default type
-        };
-        setTasks((prev) => [...prev, newTask]);
-        setTaskForm({
-            task_date: formatDate(new Date()),
-            task: "",
-            note: "",
-            customer_id: 1
-        });
-        setIsTaskDialogOpen(false);
+        if (taskForm.task && taskForm.task_date && userId) {
+            const eventData = {
+                summary: taskForm.task,
+                description: taskForm.note,
+                start: taskForm.task_date,
+                end: taskForm.task_date
+            };
+            createCalendarEvent(eventData);
+            setTaskForm({
+                task_date: formatDate(new Date()),
+                task: "",
+                note: "",
+                customer_id: 1
+            });
+            setIsTaskDialogOpen(false);
+        }
     };
 
     return (
@@ -92,11 +150,19 @@ const Calendar: React.FC = () => {
                             <CardDescription className='text-gray-300'>Select dates and view your schedule</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <CalendarUI
-                                mode="single"
-                                selected={date}
-                                onSelect={setDate}
-                                className="rounded-md  w-full bg-transparent text-white "
+                            <Button onClick={connectGoogleCalendar} className="mb-4 bg-blue-500 text-white">
+                                Connect Google Calendar
+                            </Button>
+                            <FullCalendar
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
+                                events={events}
+                                height="auto"
+                                headerToolbar={{
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                                }}
                             />
                             
                             {/* Legend */}

@@ -31,8 +31,7 @@ interface Plan {
   category: 'workout' | 'diet';
   description: string;
   instructionPdf?: string;
-  
-  image: string;
+  img_url: string;
 }
 
 // Mock data
@@ -44,7 +43,7 @@ const initialPlans: Plan[] = [
     description: 'Full-body strength training program for beginners.',
     instructionPdf: '/pdfs/strength-training.pdf',
     
-    image:
+    img_url: 
       'https://pouch.jumpshare.com/preview/7fNgZZyybniUasB_-ns5Skgh7SXfV2MMyNfU5nLNVQgJx8bzUomVql7lWleexm0DJrkPb3zbhBKz3JSBYuJ-wZ8a64vhw-G6H-eGKkN8mrw',
   },
   {
@@ -54,7 +53,7 @@ const initialPlans: Plan[] = [
     description: 'Low-carb, high-fat diet plan for weight loss.',
     instructionPdf: '/pdfs/keto-diet.pdf',
    
-    image:
+    img_url:
       'https://pouch.jumpshare.com/preview/EE2dMW8FIBEZxMEsuVb6vgUqcVfEA-3lSQX9QFJtJPTrdSrH35W2raQSA542ZZepJrkPb3zbhBKz3JSBYuJ-weaiEIW5e8c61vYWyozgPsQ',
   },
   {
@@ -64,7 +63,7 @@ const initialPlans: Plan[] = [
     description: 'High-intensity interval training for advanced users.',
     instructionPdf: '/pdfs/hiit-workout.pdf',
     
-    image: 'https://i.postimg.cc/HWwQf6f7/20-minute-hiit-workout.jpg',
+    img_url: 'https://i.postimg.cc/HWwQf6f7/20-minute-hiit-workout.jpg',
   },
   {
     id: 4,
@@ -73,7 +72,7 @@ const initialPlans: Plan[] = [
     description: 'Plant-based meal plan for balanced nutrition.',
     instructionPdf: '/pdfs/vegan-meal-plan.pdf',
     
-    image: 'https://i.postimg.cc/bJXt5ngT/images-2.jpg',
+    img_url: 'https://i.postimg.cc/bJXt5ngT/images-2.jpg',
   },
 ];
 

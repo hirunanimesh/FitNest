@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
+import axios from 'axios';
 import './calendar-overrides.css';
 import './color-picker.css';
 
@@ -52,25 +54,62 @@ const Schedule: React.FC = () => {
   const [taskTime, setTaskTime] = useState('');
   const [taskColor, setTaskColor] = useState('#ef4444');
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        fetchCalendarEvents(user.id);
+      }
+    };
+    getUser();
+  }, []);
+
+  const fetchCalendarEvents = async (id: string) => {
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/userservice/calendar/events/${id}`);
+      const googleEvents = response.data.map((event: any) => ({
+        id: event.id,
+        title: event.summary,
+        start: event.start.dateTime || event.start.date,
+        end: event.end.dateTime || event.end.date,
+        backgroundColor: '#4285f4'
+      }));
+      setEvents(googleEvents);
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+    }
+  };
+
+  const createCalendarEvent = async (eventData: any) => {
+    if (!userId) return;
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/userservice/calendar/event/${userId}`, eventData);
+      fetchCalendarEvents(userId); // Refresh events
+    } catch (error) {
+      console.error('Error creating calendar event:', error);
+    }
+  };
   // ...existing code...
 
   const handleSaveTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (taskTitle && taskDate) {
+    if (taskTitle && taskDate && userId) {
       let startDate = taskDate;
       let endDate = taskDate;
       if (taskTime) {
         startDate += `T${taskTime}`;
         endDate += `T${taskTime}`;
       }
-      const newEvent: Event = {
-        id: `${Date.now()}`,
-        title: taskTitle,
+      const eventData = {
+        summary: taskTitle,
+        description: 'Task added from FitNest',
         start: startDate,
-        end: endDate,
-        backgroundColor: taskColor,
+        end: endDate
       };
-      setEvents([...events, newEvent]);
+      createCalendarEvent(eventData);
       setTaskTitle('');
       setTaskDate('');
       setTaskTime('');
@@ -81,9 +120,22 @@ const Schedule: React.FC = () => {
 
   // ...existing code...
 
+  const connectGoogleCalendar = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        scopes: 'email profile https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events'
+      }
+    });
+    if (error) console.error('Error connecting to Google:', error);
+  };
+
   return (
     <div>
       <h2>User Schedule</h2>
+      <Button onClick={connectGoogleCalendar} className="bg-blue-500 text-white font-semibold ml-12 mb-4">
+        Connect Google Calendar
+      </Button>
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
         <DialogTrigger asChild>
           <Button type="button" className="bg-red-500 text-white font-semibold ml-12 mb-4" onClick={() => setIsTaskDialogOpen(true)}>
