@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest --testPathPatterns=\"unit.test.js\"",
+    "test:integration": "jest --testPathPatterns=\"index.test.js\"",
+    "test:verbose": "jest --verbose"
   },
   "dependencies": {
     "axios": "^1.11.0",
@@ -15,7 +21,11 @@
     "http-proxy-middleware": "^3.0.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@types/jest": "^30.0.0",
+    "jest": "^30.1.3",
+    "nock": "^14.0.10",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
   },
   "keywords": [
     "api-gateway",

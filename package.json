@@ -8,7 +8,10 @@
     "migration:link": "npx supabase link",
     "migration:push": "npx supabase db push",
     "migration:reset": "npx supabase db reset",
-    "types:generate": "npx supabase gen types typescript --local"
+    "types:generate": "npx supabase gen types typescript --local",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "supabase",
@@ -18,9 +21,16 @@
   "author": "FitNest Team",
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "@types/jest": "^30.0.0",
     "@types/react": "^19.1.12",
     "@types/react-big-calendar": "^1.16.2",
-    "supabase": "^2.34.3"
+    "babel-jest": "^30.1.2",
+    "jest": "^30.1.3",
+    "nock": "^14.0.10",
+    "supabase": "^2.34.3",
+    "supertest": "^7.1.4"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.19",
