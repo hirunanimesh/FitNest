@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Upload, X } from 'lucide-react';
 import axios from 'axios';
-import { AddSession } from '@/lib/api';
+import { AddSession, uploadToCloudinary } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -175,24 +175,11 @@ const CreateSession = () => {
         }
     };
 
-    // Upload image to TrainerService
+    // Upload image to Cloudinary
     const uploadImageToTrainerService = async (file: File): Promise<string> => {
-        const formData = new FormData()
-        formData.append('image', file)
-
         try {
-            const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/uploadsessionimage`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                    timeout: 60000,
-                }
-            )
-            
-            return response.data.imageUrl
+            const imageUrl = await uploadToCloudinary(file);
+            return imageUrl;
         } catch (error: any) {
             console.error('Image upload error:', error)
             throw new Error('Failed to upload image')

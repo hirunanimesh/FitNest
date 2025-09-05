@@ -3,9 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 
-import upload from './config/multer.js'
 import {
-  uploadSessionImage,
   addSession,
   deleteSession,
   getAllSession,
@@ -28,7 +26,6 @@ app.get('/getallsessions', getAllSession);
 app.get('/getsessionbysessionid/:sessionId', getSessionBySessionId);
 app.get('/getallsessionbytrainerid/:trainerId', getallSessionByTrainerId);
 app.patch('/updatesession/:sessionId', updatedSession);
-app.post('/uploadimage', upload.single('image'), uploadSessionImage)
 app.delete('/deletesession/:sessionId', deleteSession);
 
 app.get('/getalltrainers', getallTrainers);
