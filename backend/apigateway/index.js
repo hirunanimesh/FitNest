@@ -58,11 +58,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-const PORT = config.port;
-app.listen(PORT, () => {
-  console.log(`🚀 API Gateway is running on port ${PORT}`);
-  console.log(`📡 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 Proxying to services:`, config.services);
-  console.log(`🌐 CORS enabled for: ${config.cors.origin}`);
-});
+// Start server only if this file is run directly, not when imported
+if (require.main === module) {
+  const PORT = config.port;
+  app.listen(PORT, () => {
+    console.log(`🚀 API Gateway is running on port ${PORT}`);
+    console.log(`📡 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔗 Proxying to services:`, config.services);
+    console.log(`🌐 CORS enabled for: ${config.cors.origin}`);
+  });
+}
+
+// Export the app for testing
+module.exports = app;

@@ -38,3 +38,8 @@ next-env.d.ts
 # Icon generation script (optional)
 generate-icons.js
 
+# Test coverage reports
+/coverage
+coverage/
+*.lcov
+
