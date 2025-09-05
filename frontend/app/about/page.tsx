@@ -218,7 +218,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section
       <section className="py-20 bg-gradient-to-r from-orange-600 to-red-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">Ready to Start Your Fitness Journey?</h2>
@@ -235,7 +235,7 @@ export default function AboutPage() {
             </button>
           </div>
         </div>
-      </section>
+      </section> */}
     </div>
     </PublicRoute>
   )
