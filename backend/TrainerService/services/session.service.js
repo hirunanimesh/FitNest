@@ -1,5 +1,4 @@
 import { supabase } from "../database/supabase.js";
-import { uploadImage } from '../config/cloudinary.js';
 export async function addsession(sessionData) {
     const { data, error } = await supabase
       .from('trainer_sessions')
