@@ -22,6 +22,16 @@ interface Gym {
   contact_no?: string | null;
 }
 
+interface PaginatedGymResponse {
+  data: Gym[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 interface PlanGym {
   plan_id: string;
   gym_id: number;
@@ -60,69 +70,184 @@ interface Trainer {
   rating: number;
 }
 
+interface PaginatedTrainerResponse {
+  data: Trainer[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export default function SearchPage() {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [mapGymsData, setMapGymsData] = useState<MapGymData[]>([]);
   const [isLoadingMapData, setIsLoadingMapData] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [view, setView] = useState<"gyms" | "trainers">("gyms");
   const [showMapView, setShowMapView] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const hasDataFetched = useRef(false);
+  
+  // Pagination states
+  const [gymPagination, setGymPagination] = useState({
+    page: 1,
+    hasNext: false,
+    total: 0,
+    totalPages: 0
+  });
+  const [trainerPagination, setTrainerPagination] = useState({
+    page: 1,
+    hasNext: false,
+    total: 0,
+    totalPages: 0
+  });
+
   const router = useRouter();
 
+  // Initial data loading
   useEffect(() => {
-    if (hasDataFetched.current || isLoadingData) {
-      return;
-    }
-
-    hasDataFetched.current = true;
-    setIsLoadingData(true);
-
-    const fetchGyms = axios
-      .get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms`)
-      .then((response) => {
-        if (response.data && Array.isArray(response.data.gyms)) {
-          setGyms(response.data.gyms);
-        } else {
-          setGyms([]);
-        }
-      })
-      .catch((error) => {
-        setGyms([]);
-      });
-
-    const fetchTrainers = axios
-      .get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getalltrainers`)
-      .then((response) => {
-        if (response.data && Array.isArray(response.data.trainers)) {
-          setTrainers(response.data.trainers);
-        } else {
-          setTrainers([]);
-        }
-      })
-      .catch((error) => {
-        setTrainers([]);
-      });
-
-    Promise.all([fetchGyms, fetchTrainers]).finally(() => {
-      setIsLoadingData(false);
-    });
+    fetchInitialData();
   }, []);
 
-  const getFilteredGyms = () => {
-    return gyms.filter((gym) => {
-      const matchesName = gym.gym_name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesLocation =
-        !selectedLocation ||
-        selectedLocation === "default" ||
-        gym.address.toLowerCase().includes(selectedLocation.toLowerCase()) ||
-        (gym.location && gym.location.toLowerCase().includes(selectedLocation.toLowerCase()));
-      return matchesName && matchesLocation;
-    });
+  // Refetch data when search or location changes
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchQuery || selectedLocation) {
+        fetchFilteredData();
+      } else {
+        fetchInitialData();
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, selectedLocation, view]);
+
+  const fetchInitialData = async () => {
+    setIsLoadingData(true);
+    try {
+      if (view === "gyms") {
+        await fetchGyms(1, true);
+      } else {
+        await fetchTrainers(1, true);
+      }
+    } catch (error) {
+      console.error("Error fetching initial data:", error);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  const fetchFilteredData = async () => {
+    setIsLoadingData(true);
+    try {
+      if (view === "gyms") {
+        await fetchGyms(1, true, searchQuery, selectedLocation);
+      } else {
+        await fetchTrainers(1, true, searchQuery);
+      }
+    } catch (error) {
+      console.error("Error fetching filtered data:", error);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  const fetchGyms = async (page: number, reset: boolean = false, search: string = "", location: string = "") => {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "12",
+        ...(search && { search }),
+        ...(location && location !== "default" && { location })
+      });
+
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms?${params}`
+      );
+
+      if (response.data && response.data.gyms) {
+        const gymData: PaginatedGymResponse = response.data.gyms;
+        
+        if (reset) {
+          setGyms(gymData.data);
+        } else {
+          setGyms(prev => [...prev, ...gymData.data]);
+        }
+        
+        setGymPagination({
+          page: gymData.page,
+          hasNext: gymData.hasNext,
+          total: gymData.total,
+          totalPages: gymData.totalPages
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching gyms:", error);
+      if (reset) setGyms([]);
+    }
+  };
+
+  const fetchTrainers = async (page: number, reset: boolean = false, search: string = "") => {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "12",
+        ...(search && { search })
+      });
+
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getalltrainers?${params}`
+      );
+
+      if (response.data && response.data.trainers) {
+        const trainerData: PaginatedTrainerResponse = response.data.trainers;
+        
+        if (reset) {
+          setTrainers(trainerData.data);
+        } else {
+          setTrainers(prev => [...prev, ...trainerData.data]);
+        }
+        
+        setTrainerPagination({
+          page: trainerData.page,
+          hasNext: trainerData.hasNext,
+          total: trainerData.total,
+          totalPages: trainerData.totalPages
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching trainers:", error);
+      if (reset) setTrainers([]);
+    }
+  };
+
+  const handleViewMore = async () => {
+    setIsLoadingMore(true);
+    try {
+      if (view === "gyms") {
+        await fetchGyms(
+          gymPagination.page + 1, 
+          false, 
+          searchQuery, 
+          selectedLocation
+        );
+      } else {
+        await fetchTrainers(
+          trainerPagination.page + 1, 
+          false, 
+          searchQuery
+        );
+      }
+    } catch (error) {
+      console.error("Error loading more data:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   const handleFindNearMe = async () => {
@@ -328,7 +453,7 @@ export default function SearchPage() {
             {/* Gym/Trainer Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {view === "gyms" &&
-                getFilteredGyms().map((gym) => (
+                gyms.map((gym) => (
                   <GymCard
                     key={gym.gym_id}
                     gym={gym}
@@ -336,33 +461,45 @@ export default function SearchPage() {
                   />
                 ))}
               {view === "trainers" &&
-                trainers
-                  .filter((trainer) => {
-                    const matchesName = trainer.trainer_name.toLowerCase().includes(searchQuery.toLowerCase());
-                    
-                    return matchesName ;
-                  })
-                  .map((trainer) => <TrainerCard key={trainer.id} trainer={trainer} />)}
+                trainers.map((trainer) => (
+                  <TrainerCard key={trainer.id} trainer={trainer} />
+                ))}
             </div>
 
+            {/* View More Button */}
+            {((view === "gyms" && gymPagination.hasNext) || 
+              (view === "trainers" && trainerPagination.hasNext)) && (
+              <div className="text-center mt-8">
+                <Button
+                  onClick={handleViewMore}
+                  disabled={isLoadingMore}
+                  className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl px-8 py-3 font-semibold text-lg shadow-lg shadow-red-500/25 transition-all duration-300 hover:scale-105"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 rounded-full animate-spin border-t-white mr-2"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    "View More"
+                  )}
+                </Button>
+              </div>
+            )}
+
             {/* No Results Message */}
-            {view === "gyms" && getFilteredGyms().length === 0 && (
+            {view === "gyms" && gyms.length === 0 && (
               <div className="text-center py-16">
                 <MapPin className="w-16 h-16 text-red-500 mx-auto" />
                 <p className="mt-4 text-lg text-slate-300">No gyms found matching your criteria.</p>
               </div>
             )}
-            {view === "trainers" &&
-              trainers.filter((trainer) => {
-                const matchesName = trainer.trainer_name.toLowerCase().includes(searchQuery.toLowerCase());
-               
-                return matchesName;
-              }).length === 0 && (
-                <div className="text-center py-16">
-                  <MapPin className="w-16 h-16 text-red-500 mx-auto" />
-                  <p className="mt-4 text-lg text-slate-300">No trainers found matching your criteria.</p>
-                </div>
-              )}
+            {view === "trainers" && trainers.length === 0 && (
+              <div className="text-center py-16">
+                <MapPin className="w-16 h-16 text-red-500 mx-auto" />
+                <p className="mt-4 text-lg text-slate-300">No trainers found matching your criteria.</p>
+              </div>
+            )}
           </>
         )}
 

@@ -2,7 +2,11 @@ import { getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerde
 
 export const getallTrainers = async (req,res)=>{
     try{
-        const trainers = await getalltrainers();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const search = req.query.search || '';
+        
+        const trainers = await getalltrainers(page, limit, search);
         res.status(200).json({ message: "Trainers retrieved successfully", trainers });       
     }catch(error){
         console.error("Error retrieving trainers:", error);
