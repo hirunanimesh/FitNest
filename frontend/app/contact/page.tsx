@@ -218,16 +218,16 @@ export default function ContactPage() {
                     </p>
                   </div>
                 </div>
-                <button className="mt-6 bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-600 hover:to-orange-600 transition-colors">
+                {/* <button className="mt-6 bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-600 hover:to-orange-600 transition-colors">
                   Get Directions
-                </button>
+                </button> */}
               </CardContent>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* FAQ Preview */}
+      {/* FAQ Preview
       <section className="py-20 bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">Frequently Asked Questions</h2>
@@ -257,7 +257,7 @@ export default function ContactPage() {
             View All FAQs
           </button>
         </div>
-      </section>
+      </section> */}
     </div>
     </PublicRoute>
   )
