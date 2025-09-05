@@ -30,10 +30,24 @@ function renderEventContent(eventInfo: any) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 0
+        padding: '4px 6px',
+        overflow: 'hidden'
       }}
     >
-      {eventInfo.event.title}
+          <div style={{
+            width: '100%',
+            // allow up to 2 lines then clamp
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'normal',
+            textAlign: 'center',
+            lineHeight: '1rem',
+            fontSize: '0.75rem',
+            fontWeight: 400
+          }}>{eventInfo.event.title}</div>
     </div>
   );
 }
@@ -45,6 +59,8 @@ interface Event {
   end: string;
   backgroundColor: string;
   color?: string;
+  description?: string | null;
+  extendedProps?: { description?: string | null };
 }
 
 const Schedule: React.FC = () => {
@@ -92,8 +108,9 @@ const Schedule: React.FC = () => {
             title: ev.title || ev.task || '',
             start: ev.start || ev.task_date || ev.start_ts || '',
             end: ev.end || ev.end_ts || '',
-            backgroundColor: ev.backgroundColor || ev.color || '#ef4444',
-            color: ev.color || ev.backgroundColor || '#ef4444'
+            backgroundColor: ev.backgroundColor || ev.color || '#28375cff',
+            color: ev.color || ev.backgroundColor || '#1a2e84ff',
+            extendedProps: { description: ev.description || null }
           })));
         }
       } catch (err) {
@@ -198,7 +215,9 @@ const Schedule: React.FC = () => {
               title: updated.title || payload.title,
               start: updated.start || payload.start,
               end: updated.end || payload.end,
-              backgroundColor: updated.color || payload.color || taskColor
+              backgroundColor: updated.color || payload.color || taskColor,
+              description: updated.description || payload.description || '',
+              extendedProps: { description: updated.description || payload.description || '' }
             }) : ev))
             setEditingEvent(null)
           } else {
@@ -220,7 +239,9 @@ const Schedule: React.FC = () => {
               start: saved.start,
               end: saved.end,
               backgroundColor: taskColor,
-              color: taskColor
+              color: taskColor,
+              description: saved.description || payload.description || '',
+              extendedProps: { description: saved.description || payload.description || '' }
             }
             setEvents(prev => [...prev, newEvent])
           }
@@ -257,7 +278,8 @@ const Schedule: React.FC = () => {
       title: ev.title,
       start: startIso,
       end: endIso,
-      backgroundColor: ev.backgroundColor || taskColor
+      backgroundColor: ev.backgroundColor || taskColor,
+    description: ev.extendedProps?.description || ''
     }
     setViewingEvent(viewed);
     // populate fields for potential edit but remain in view mode until pencil pressed
@@ -265,7 +287,7 @@ const Schedule: React.FC = () => {
     setTaskDate(s.date);
     setStartTime(s.time);
     setEndTime(e.time);
-    setTaskDescription(ev.extendedProps?.description || '');
+  setTaskDescription(ev.extendedProps?.description || '');
     setTaskColor(ev.backgroundColor || taskColor);
     setIsEditing(false);
     setIsTaskDialogOpen(true);
@@ -301,9 +323,19 @@ const Schedule: React.FC = () => {
   }
 
   // keyboard shortcuts when dialog is open: 'e' to edit, 'Delete' to delete
+  // Ignore shortcuts when focus is inside an input/textarea/contentEditable element so typing is not blocked.
   useEffect(() => {
     if (!isTaskDialogOpen) return
     const onKey = (ev: KeyboardEvent) => {
+      try {
+        const target = ev.target as HTMLElement | null
+        const tag = target && target.tagName ? target.tagName.toLowerCase() : ''
+        const isEditable = tag === 'input' || tag === 'textarea' || (target && target.isContentEditable)
+        if (isEditable) return // allow normal typing inside form fields
+      } catch (e) {
+        // ignore
+      }
+
       if (ev.key === 'e' || ev.key === 'E') {
         ev.preventDefault()
         enableEditMode()
@@ -355,71 +387,69 @@ const Schedule: React.FC = () => {
     <div>
       <h2>User Schedule</h2>
       <Dialog open={isTaskDialogOpen} onOpenChange={handleDialogOpenChange}>
-        <Button type="button" className="bg-red-500 text-white font-semibold ml-12 mb-4" onClick={openAddTask}>
+  <Button type="button" className="bg-red-500 text-white font-semibold ml-16 mb-4" onClick={openAddTask}>
           Add Task
         </Button>
-        <DialogContent className="sm:max-w-[425px] bg-gray-900 text-gray-200">
+        <DialogContent className="w-[92vw] max-w-[520px] bg-gray-900 text-gray-200 p-6">
           {viewingEvent && !isEditing ? (
-            // VIEW MODE: show details like Google Calendar popup with edit/delete icons
-            <div className="py-4">
-              <DialogHeader>
-                <DialogTitle>{viewingEvent.title}</DialogTitle>
-              </DialogHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <div style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: viewingEvent.backgroundColor }} />
-                    <h3 className="text-lg font-semibold">{viewingEvent.title}</h3>
+            <div>
+              <DialogHeader className="mb-4 p-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: viewingEvent.backgroundColor, marginTop: 6 }} />
+                    <div>
+                      <DialogTitle className="text-lg font-semibold leading-tight">{viewingEvent.title}</DialogTitle>
+                      <div className="text-sm text-gray-300 mt-1">{new Date(viewingEvent.start).toLocaleString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-300 mt-2">{new Date(viewingEvent.start).toLocaleString()} - {viewingEvent.end ? new Date(viewingEvent.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</p>
-                  <p className="text-sm text-gray-400 mt-2">{/* recurrence/extra info could go here */}</p>
-                  <p className="text-sm text-gray-300 mt-3">{/* description */}{taskDescription}</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={enableEditMode}
+                      title="Edit"
+                      aria-label="Edit event"
+                      className="p-2 rounded hover:bg-gray-800"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#cbd5e1" />
+                        <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="#cbd5e1" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteEvent}
+                      title="Delete"
+                      aria-label="Delete event"
+                      className="p-2 rounded hover:bg-gray-800"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12z" fill="#fecaca" />
+                        <path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="#fecaca" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <button
-                    type="button"
-                    onClick={enableEditMode}
-                    title="Edit"
-                    aria-label="Edit event"
-                    className="p-2 rounded hover:bg-gray-800"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#cbd5e1" />
-                      <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="#cbd5e1" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDeleteEvent}
-                    title="Delete"
-                    aria-label="Delete event"
-                    className="p-2 rounded hover:bg-gray-800"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                      <path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12z" fill="#fecaca" />
-                      <path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="#fecaca" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div className="mt-4 flex justify-end">
-                <Button variant="outline" onClick={() => { setIsTaskDialogOpen(false); setViewingEvent(null); }}>Close</Button>
+              </DialogHeader>
+
+              <div className="text-sm text-gray-300 whitespace-pre-wrap">
+                {taskDescription || 'No description'}
               </div>
             </div>
           ) : (
-            // EDIT / CREATE MODE: show form (reuse existing form layout)
             <>
-              <DialogHeader>
-                <DialogTitle>{editingEvent ? 'Edit Task' : 'Add Task'}</DialogTitle>
-                <DialogDescription>
-                  {editingEvent ? 'Edit the task details.' : 'Add a new task to your schedule.'}
-                </DialogDescription>
+              <DialogHeader className="mb-2 p-0">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <DialogTitle className="text-lg font-semibold">{editingEvent ? 'Edit Task' : 'Add Task'}</DialogTitle>
+                    <DialogDescription className="text-sm text-gray-400">{editingEvent ? 'Edit the task details.' : 'Add a new task to your schedule.'}</DialogDescription>
+                  </div>
+                </div>
               </DialogHeader>
-              <form onSubmit={handleSaveTask} className="grid gap-4 py-4">
+              <form onSubmit={handleSaveTask} className="grid gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="task_title">Title</Label>
                   <Input
-                    className='bg-gray-800'
+                    className='bg-gray-800 h-10'
                     id="task_title"
                     type="text"
                     placeholder="Task Title"
@@ -428,11 +458,11 @@ const Schedule: React.FC = () => {
                     required
                   />
                 </div>
-                <div className="flex gap-4">
-                  <div className="space-y-2 flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="task_date">Date</Label>
                     <Input
-                      className='bg-gray-800'
+                       className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
                       id="task_date"
                       type="date"
                       value={taskDate}
@@ -440,20 +470,20 @@ const Schedule: React.FC = () => {
                       required
                     />
                   </div>
-                  <div className="space-y-2 flex-1">
+                  <div className="space-y-2">
                     <Label htmlFor="start_time">Start Time</Label>
                     <Input
-                      className='bg-gray-800'
+                       className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
                       id="start_time"
                       type="time"
                       value={startTime}
                       onChange={e => setStartTime(e.target.value)}
                     />
                   </div>
-                  <div className="space-y-2 flex-1">
+                  <div className="space-y-2">
                     <Label htmlFor="end_time">End Time</Label>
                     <Input
-                      className='bg-gray-800'
+                       className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
                       id="end_time"
                       type="time"
                       value={endTime}
@@ -463,10 +493,9 @@ const Schedule: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="task_description">Description (optional)</Label>
-                  <Input
-                    className='bg-gray-800'
+                  <textarea
                     id="task_description"
-                    type="text"
+                    className="bg-gray-800 w-full rounded-md p-2 text-sm h-24 resize-none"
                     placeholder="Details about the task"
                     value={taskDescription}
                     onChange={e => setTaskDescription(e.target.value)}
@@ -484,8 +513,8 @@ const Schedule: React.FC = () => {
                     title="Choose event color"
                   />
                 </div>
-                <DialogFooter>
-                  <div className="flex items-center gap-2">
+                <DialogFooter className="p-0 mt-2">
+                  <div className="flex items-center justify-end gap-3">
                     <Button 
                       type="button" 
                       variant="outline" 
@@ -494,7 +523,6 @@ const Schedule: React.FC = () => {
                     >
                       Cancel
                     </Button>
-                    {/* Delete is available from the view popup (trash icon) or Delete key; hide it in the edit form to avoid accidental deletes */}
                     <Button type="submit">
                       Save Task
                     </Button>
@@ -505,7 +533,7 @@ const Schedule: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-      <div className="ml-12 mb-4 flex items-center gap-3">
+  <div className="ml-16 mb-4 flex items-center gap-3">
         {googleConnected === null ? (
           <span className="text-sm text-gray-400">Checking Google Calendar connection...</span>
         ) : googleConnected ? (
@@ -521,14 +549,16 @@ const Schedule: React.FC = () => {
           </Button>
         )}
       </div>
-      <div style={{ height: 600, marginLeft: '2rem', marginRight: '2rem', backgroundColor: '#192024', borderRadius: 8 }}>
+  <div style={{ marginLeft: '4rem', marginRight: '4rem', backgroundColor: '#192024', borderRadius: 8 }}>
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
           events={events}
           eventClick={handleEventClick}
           eventContent={renderEventContent}
-          height="100%"
+          // Let calendar size itself to content so the page grows instead of internal scrolling
+          contentHeight="auto"
+          // optional: also enable dayMaxEventRows if you want compact multi-day display
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',

@@ -143,7 +143,7 @@ export async function saveOrUpdateEventsForUser(userId, events) {
       task_date: taskDate,
       task: ev.title,
       customer_id: customerId,
-      note: ev.description || null,
+      description: ev.description || null,
       color: ev.color || null
     }
     // Upsert by google_event_id. If color column missing, retry without color.
@@ -188,16 +188,16 @@ export async function saveOrUpdateEventsForUser(userId, events) {
   }
   // Return events for the user
   // Attempt to select including color; if column doesn't exist, fall back to select without color
-  try {
-    const { data: all, error } = await supabase.from('calendar').select('calendar_id, task, task_date, color').eq('customer_id', customerId)
+    try {
+    const { data: all, error } = await supabase.from('calendar').select('calendar_id, task, task_date, color, description').eq('customer_id', customerId)
     if (error) throw error
-    return (all || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: r.color }))
+    return (all || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: r.color, description: r.description }))
   } catch (err) {
-    // if color column missing, retry without it
-    if (String(err.message).toLowerCase().includes('column') && String(err.message).toLowerCase().includes('color')) {
+    // if color/description column missing, retry without them
+    if (String(err.message).toLowerCase().includes('column') && (String(err.message).toLowerCase().includes('color') || String(err.message).toLowerCase().includes('description'))) {
       const { data: all2, error: e2 } = await supabase.from('calendar').select('calendar_id, task, task_date').eq('customer_id', customerId)
       if (e2) throw e2
-      return (all2 || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: null }))
+      return (all2 || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: null, description: null }))
     }
     throw err
   }
@@ -249,20 +249,21 @@ export async function saveOrCreateEventForUser(userId, payload) {
     task_date: taskDate,
     task: payload.title || payload.summary || 'No title',
     customer_id: customerId,
-    note: payload.description || null,
+    description: payload.description || null,
     google_event_id: null,
     color: payload.color || null
   }
   // Insert, but if color column missing, retry without color
   let inserted
   try {
-    const r = await supabase.from('calendar').insert([row]).select().single()
+    // Select only known columns to avoid schema-cache/wildcard issues
+    const r = await supabase.from('calendar').insert([row]).select('calendar_id, task, task_date, customer_id, google_event_id, color, description').single()
     if (r.error) throw r.error
     inserted = r.data
   } catch (err) {
     if (String(err.message).toLowerCase().includes('column') && String(err.message).toLowerCase().includes('color')) {
       delete row.color
-      const r2 = await supabase.from('calendar').insert([row]).select().single()
+      const r2 = await supabase.from('calendar').insert([row]).select('calendar_id, task, task_date, customer_id, google_event_id, description').single()
       if (r2.error) throw r2.error
       inserted = r2.data
     } else throw err
@@ -330,8 +331,8 @@ export async function saveOrCreateEventForUser(userId, payload) {
           try { json = JSON.parse(attempt.bodyText) } catch (e) { json = null }
         }
         if (json && json.id) {
-          // update local row with google_event_id
-          const { data: upd, error: updErr } = await supabase.from('calendar').update({ google_event_id: json.id }).eq('calendar_id', inserted.calendar_id).select().single()
+          // update local row with google_event_id (explicit select)
+          const { data: upd, error: updErr } = await supabase.from('calendar').update({ google_event_id: json.id }).eq('calendar_id', inserted.calendar_id).select('calendar_id, task, task_date, customer_id, google_event_id, color, description').single()
           if (updErr) console.error('failed update google_event_id', updErr)
           inserted.google_event_id = json.id
         } else {
@@ -357,30 +358,32 @@ export async function saveOrCreateEventForUser(userId, payload) {
     start: normalizedStart || inserted.task_date,
     end: normalizedEnd || inserted.task_date,
   google_event_id: inserted.google_event_id || null,
-  color: inserted.color || null
+  color: inserted.color || null,
+  description: inserted.description || null
   }
 }
 
 export async function updateEventForUser(calendarId, payload) {
   // payload: { title?, start?, end?, description?, color? }
   // update local row and, if it has google_event_id, patch Google event
-  const { data: existing, error: selErr } = await supabase.from('calendar').select('*').eq('calendar_id', calendarId).single()
+  // Avoid wildcard select to prevent schema cache mismatch; list known columns
+  const { data: existing, error: selErr } = await supabase.from('calendar').select('calendar_id, task, task_date, customer_id, google_event_id, color, description').eq('calendar_id', calendarId).single()
   if (selErr) throw selErr
 
   const updates = {}
   if (payload.title) updates.task = payload.title
-  if (payload.description !== undefined) updates.note = payload.description
+  if (payload.description !== undefined) updates.description = payload.description
   if (payload.color !== undefined) updates.color = payload.color
   if (payload.start) {
     updates.task_date = String(payload.start).includes('T') ? new Date(String(payload.start)).toISOString() : String(payload.start)
   }
 
-  const { data: upd, error: updErr } = await supabase.from('calendar').update(updates).eq('calendar_id', calendarId).select().single()
+  const { data: upd, error: updErr } = await supabase.from('calendar').update(updates).eq('calendar_id', calendarId).select('calendar_id, task, task_date, customer_id, google_event_id, color, description').single()
   if (updErr) {
     // If update failed because color column missing, retry without color
     if (String(updErr.message).toLowerCase().includes('column') && String(updErr.message).toLowerCase().includes('color')) {
       delete updates.color
-      const { data: upd2, error: updErr2 } = await supabase.from('calendar').update(updates).eq('calendar_id', calendarId).select().single()
+      const { data: upd2, error: updErr2 } = await supabase.from('calendar').update(updates).eq('calendar_id', calendarId).select('calendar_id, task, task_date, customer_id, google_event_id, description').single()
       if (updErr2) throw updErr2
       return upd2
     }
@@ -432,7 +435,8 @@ export async function updateEventForUser(calendarId, payload) {
 export async function deleteEventForUser(calendarId) {
   // delete local row and delete Google event if present
   // Use maybeSingle so missing rows don't throw — delete should be idempotent
-  const { data: existing, error: selErr } = await supabase.from('calendar').select('*').eq('calendar_id', calendarId).maybeSingle()
+  // Use explicit column list to avoid wildcard-related schema cache lookups
+  const { data: existing, error: selErr } = await supabase.from('calendar').select('calendar_id, task, task_date, customer_id, google_event_id, color, description').eq('calendar_id', calendarId).maybeSingle()
   if (selErr) throw selErr
   if (!existing) {
     // Nothing to delete locally — treat as success (idempotent)
