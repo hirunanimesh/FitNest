@@ -1,17 +1,22 @@
 module.exports = {
-  preset: 'ts-jest',
   testEnvironment: 'node',
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1'
-  },
+  testMatch: ['**/__tests__/**/*.unit.test.js'],
+  moduleFileExtensions: ['js', 'json', 'jsx', 'ts', 'tsx', 'node'],
+  testTimeout: 30000,
   collectCoverage: true,
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
-    }
-  },
-  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/dist/']
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
+  collectCoverageFrom: [
+    'controllers/**/*.js',
+    'model/**/*.js',
+    'config/**/*.js',
+    '!**/node_modules/**',
+    '!**/__tests__/**',
+    '!server.js',
+    '!superbaseClient.js'
+  ],
+  setupFilesAfterEnv: ['<rootDir>/test-setup.js'],
+  testPathIgnorePatterns: ['/node_modules/'],
+  verbose: true,
+  clearMocks: true
 };

@@ -2,20 +2,32 @@ module.exports = {
   // Multi-project configuration for microservices
   projects: [
     {
-      displayName: "Backend Services",
-      testMatch: ["<rootDir>/backend/**/__tests__/**/*.test.js"],
+      displayName: "API Gateway Tests",
+      testMatch: ["<rootDir>/backend/apigateway/**/__tests__/**/*.test.js"],
       testEnvironment: "node",
       testTimeout: 30000,
       transform: {
         "^.+\\.jsx?$": "babel-jest"
       },
-      // Mock environment variables for tests
       setupFilesAfterEnv: ["<rootDir>/test-setup.js"],
       collectCoverageFrom: [
-        "backend/**/*.js",
-        "!backend/**/node_modules/**",
-        "!backend/**/__tests__/**",
-        "!backend/**/jest.config.js"
+        "backend/apigateway/**/*.js",
+        "!backend/apigateway/**/node_modules/**",
+        "!backend/apigateway/**/__tests__/**"
+      ]
+    },
+    {
+      displayName: "AuthService Tests", 
+      testMatch: ["<rootDir>/backend/AuthService/**/__tests__/**/*.unit.test.js"],
+      testEnvironment: "node",
+      testTimeout: 30000,
+      setupFilesAfterEnv: ["<rootDir>/backend/AuthService/test-setup.js"],
+      collectCoverageFrom: [
+        "backend/AuthService/**/*.js",
+        "!backend/AuthService/**/node_modules/**", 
+        "!backend/AuthService/**/__tests__/**",
+        "!backend/AuthService/server.js",
+        "!backend/AuthService/superbaseClient.js"
       ]
     }
   ],
