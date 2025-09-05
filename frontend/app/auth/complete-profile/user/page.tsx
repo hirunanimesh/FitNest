@@ -13,6 +13,7 @@ import { CompleteOAuthProfileMember } from "@/lib/api"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
 import { PublicRoute } from "@/components/PublicRoute"
 import { useAuth } from "@/contexts/AuthContext"
+import { useToast } from "@/hooks/use-toast"
 
 export default function CompleteProfile() {
   const router = useRouter()
@@ -30,6 +31,7 @@ export default function CompleteProfile() {
     email: "",
     profileImageUrl: ""
   })
+  const { toast } = useToast()
 
   useEffect(() => {
     const checkUserSession = async () => {
@@ -60,12 +62,42 @@ export default function CompleteProfile() {
 
   // Handle date input changes
   const handleDateInputChange = (value: string) => {
-    setDateInput(value)
-    if (value) {
-      const parsedDate = new Date(value)
-      if (!isNaN(parsedDate.getTime())) {
+    // Allow only numbers and forward slashes
+    const formattedValue = value.replace(/[^\d/]/g, '')
+    
+    // Auto-format DD/MM/YYYY
+    let formatted = formattedValue
+    if (formattedValue.length >= 2 && formattedValue.indexOf('/') === -1) {
+      formatted = formattedValue.slice(0, 2) + '/' + formattedValue.slice(2)
+    }
+    if (formattedValue.length >= 5 && formattedValue.split('/').length === 2) {
+      const parts = formattedValue.split('/')
+      formatted = parts[0] + '/' + parts[1].slice(0, 2) + '/' + parts[1].slice(2)
+    }
+    
+    // Limit to DD/MM/YYYY format
+    if (formatted.length > 10) {
+      formatted = formatted.slice(0, 10)
+    }
+    
+    setDateInput(formatted)
+    
+    // Parse DD/MM/YYYY format
+    if (formatted.length === 10 && formatted.split('/').length === 3) {
+      const [day, month, year] = formatted.split('/')
+      const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      
+      // Validate the date
+      if (!isNaN(parsedDate.getTime()) && 
+          parsedDate.getDate() === parseInt(day) &&
+          parsedDate.getMonth() === parseInt(month) - 1 &&
+          parsedDate.getFullYear() === parseInt(year)) {
         setDate(parsedDate)
+      } else {
+        setDate(undefined)
       }
+    } else {
+      setDate(undefined)
     }
   }
 
@@ -78,7 +110,7 @@ export default function CompleteProfile() {
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-
+    console.log('Submitting form with data:')
     if (!user) {
       console.error("No user session found");
       setIsLoading(false);
@@ -104,7 +136,21 @@ export default function CompleteProfile() {
     submitData.append("userRole", "customer") // Add the selected role
     submitData.append("profileImage", prefilledData.profileImageUrl || "")
 
+    //validate phoneNO
+    const phoneNo = formData.get("phoneNo") as string;
+    const phoneRegex = /^\d{10}$/; // exactly 10 digits
+    if (!phoneRegex.test(phoneNo)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Phone Number",
+        description: "Please enter a valid 10-digit phone number.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      
       const result = await CompleteOAuthProfileMember(submitData)
       
       // Check if user already exists
@@ -224,12 +270,14 @@ export default function CompleteProfile() {
                 <div className="space-y-2">
                   <Label className="text-gray-200">Date of Birth *</Label>
                   <Input
-                    type="date"
+                    type="text"
+                    placeholder="DD/MM/YYYY"
                     value={dateInput}
                     onChange={(e) => handleDateInputChange(e.target.value)}
-                    className="bg-gray-700/50 border-gray-600 text-white focus:border-red-500 focus:ring-red-500/20 [color-scheme:dark]"
+                    className="bg-gray-700/50 border-gray-600 text-white focus:border-red-500 focus:ring-red-500/20"
                     disabled={isLoading}
                     required
+                    maxLength={10}
                   />
                   {date && (
                     <p className="text-sm text-gray-400">
@@ -239,6 +287,11 @@ export default function CompleteProfile() {
                         month: 'long', 
                         day: 'numeric' 
                       })}
+                    </p>
+                  )}
+                  {dateInput && !date && dateInput.length === 10 && (
+                    <p className="text-sm text-red-500">
+                      Please enter a valid date in DD/MM/YYYY format
                     </p>
                   )}
                 </div>
