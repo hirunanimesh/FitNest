@@ -13,16 +13,41 @@ export async function createGym(gymData) {
   return data[0]; // Return first inserted row
 }
 
-export async function getallgyms(){
-        const { data, error } = await supabase
+export async function getallgyms(page = 1, limit = 12, search = '', location = ''){
+        let query = supabase
         .from('gym')
-        .select('*');
+        .select('*', { count: 'exact' });
+
+        // Add search filters
+        if (search) {
+          query = query.ilike('gym_name', `%${search}%`);
+        }
+
+        if (location) {
+          query = query.or(`address.ilike.%${location}%,location.ilike.%${location}%`);
+        }
+
+        // Add pagination
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+        
+        query = query.range(from, to);
+        
+        const { data, error, count } = await query;
         
         if (error) {
         throw new Error(error.message);
         }
         
-        return data; // Return all gyms
+        return {
+          data,
+          total: count,
+          page,
+          limit,
+          totalPages: Math.ceil(count / limit),
+          hasNext: page * limit < count,
+          hasPrev: page > 1
+        };
 }
 
 export async function getgymbyid(gymId) {

@@ -72,8 +72,8 @@ export default function HomePage() {
           </div>
         </section>
         <FAQSection />
-        <Footer />
-        
+        {/* <Footer /> */}
+
         {/* PWA Install Prompt */}
         <PWAInstallPrompt />
       </div>

@@ -15,7 +15,12 @@ export const addGym = async (req, res) => {
 
 export const getAllGyms = async (req,res)=>{
     try{
-        const gyms = await getallgyms();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const search = req.query.search || '';
+        const location = req.query.location || '';
+        
+        const gyms = await getallgyms(page, limit, search, location);
         res.status(200).json({ message: "Gyms retrieved successfully", gyms });       
     }catch(error){
         console.error("Error retrieving gyms:", error);
