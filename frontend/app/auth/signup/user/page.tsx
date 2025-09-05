@@ -30,12 +30,42 @@ export default function UserSignup() {
 
   // Handle date input changes
   const handleDateInputChange = (value: string) => {
-    setDateInput(value)
-    if (value) {
-      const parsedDate = new Date(value)
-      if (!isNaN(parsedDate.getTime())) {
+    // Allow only numbers and forward slashes
+    const formattedValue = value.replace(/[^\d/]/g, '')
+    
+    // Auto-format DD/MM/YYYY
+    let formatted = formattedValue
+    if (formattedValue.length >= 2 && formattedValue.indexOf('/') === -1) {
+      formatted = formattedValue.slice(0, 2) + '/' + formattedValue.slice(2)
+    }
+    if (formattedValue.length >= 5 && formattedValue.split('/').length === 2) {
+      const parts = formattedValue.split('/')
+      formatted = parts[0] + '/' + parts[1].slice(0, 2) + '/' + parts[1].slice(2)
+    }
+    
+    // Limit to DD/MM/YYYY format
+    if (formatted.length > 10) {
+      formatted = formatted.slice(0, 10)
+    }
+    
+    setDateInput(formatted)
+    
+    // Parse DD/MM/YYYY format
+    if (formatted.length === 10 && formatted.split('/').length === 3) {
+      const [day, month, year] = formatted.split('/')
+      const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      
+      // Validate the date
+      if (!isNaN(parsedDate.getTime()) && 
+          parsedDate.getDate() === parseInt(day) &&
+          parsedDate.getMonth() === parseInt(month) - 1 &&
+          parsedDate.getFullYear() === parseInt(year)) {
         setDate(parsedDate)
+      } else {
+        setDate(undefined)
       }
+    } else {
+      setDate(undefined)
     }
   }
 
@@ -65,6 +95,19 @@ export default function UserSignup() {
       return;
     }
     
+     // Phone number validation
+  const phoneNo = formData.get("phoneNo") as string;
+  const phoneRegex = /^\d{10}$/; // exactly 10 digits
+  if (!phoneRegex.test(phoneNo)) {
+    toast({
+      variant: "destructive",
+      title: "Invalid Phone Number",
+      description: "Phone number must contain exactly 10 digits.",
+    })
+    setIsLoading(false);
+    return;
+  }
+
     // Create a new FormData and add only the necessary fields
     const submitData = new FormData()
     
@@ -94,7 +137,7 @@ export default function UserSignup() {
       
       toast({
         title: "Registration Successful!",
-        description: "Your account has been created successfully. Redirecting to dashboard...",
+        description: "Your account has been created successfully. Redirecting to login...",
       })
       
       // Redirect after showing success message
@@ -284,12 +327,14 @@ export default function UserSignup() {
                         Date of Birth <span className="text-red-500">*</span>
                       </Label>
                       <Input
-                        type="date"
+                        type="text"
+                        placeholder="DD/MM/YYYY"
                         value={dateInput}
                         onChange={(e) => handleDateInputChange(e.target.value)}
-                        className="bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
+                        className="bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500"
                         disabled={isLoading}
                         required
+                        maxLength={10}
                       />
                       {date && (
                         <p className="text-sm text-gray-400">
@@ -299,6 +344,11 @@ export default function UserSignup() {
                             month: 'long', 
                             day: 'numeric' 
                           })}
+                        </p>
+                      )}
+                      {dateInput && !date && dateInput.length === 10 && (
+                        <p className="text-sm text-red-500">
+                          Please enter a valid date in DD/MM/YYYY format
                         </p>
                       )}
                     </div>

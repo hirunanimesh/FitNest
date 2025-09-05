@@ -180,6 +180,17 @@ export default function GymOwnerSignup() {
       if (password !== confirmPassword) {
         throw new Error("Password and confirm password should be same")
       }
+      //email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Email",
+          description: "Please enter a valid email address.",
+        })
+        setLoading(false)
+        return
+      }
 
       // Validate documents
       const validDocuments = documents.filter(doc => doc.file && doc.type.trim())

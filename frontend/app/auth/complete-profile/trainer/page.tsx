@@ -23,6 +23,7 @@ import {
 import { AppLogo } from "@/components/AppLogo"
 import { supabase } from "@/lib/supabase"
 import { CompleteOAuthProfileTrainer } from "@/lib/api"
+import {useToast} from "@/hooks/use-toast"
 
 interface DocumentEntry {
   id: string
@@ -47,6 +48,7 @@ export default function CompleteTrainerProfile() {
     email: "",
     profileImageUrl: ""
   })
+  const { toast } = useToast()
 
   useEffect(() => {
     const checkUserSession = async () => {
@@ -250,6 +252,17 @@ export default function CompleteTrainerProfile() {
       console.log("=== FormData Debug ===");
       for (let [key, value] of submitData.entries()) {
         console.log(key + ':', value);
+      }
+      //validate phone number
+      const phoneRegex = /^\d{10}$/; // exactly 10 digits
+      if (!phoneRegex.test(contactNo)) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Phone Number",
+          description: "Please enter a valid 10-digit phone number.",
+        });
+        setLoading(false);
+        return;
       }
 
       // Submit to your backend

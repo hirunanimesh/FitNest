@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import {useToast} from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -59,7 +60,8 @@ export default function CompleteGymProfile() {
     email: "",
     profileImageUrl: ""
   })
-
+  
+  const { toast } = useToast()
   useEffect(() => {
     const checkUserSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -241,6 +243,18 @@ export default function CompleteGymProfile() {
         throw new Error("Please add at least one verification document")
       }
 
+      //validate phone number (basic check)
+      const phoneRegex = /^\d{10}$/; // exactly 10 digits
+      if (!phoneRegex.test(contactNo)) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Phone Number",
+          description: "Please enter a valid 10-digit phone number.",
+        });
+        setLoading(false);
+        return;
+      }
+
       // Upload profile image
       const profileImageUrl = await uploadProfileImage()
 
@@ -314,6 +328,7 @@ export default function CompleteGymProfile() {
       // Check if the error response contains the already exists message
       if (err.response?.data?.alreadyExists) {
         setError("Your gym profile already exists! You are already registered. Please login instead.");
+        
       } else {
         setError(err.message || "Profile completion failed. Please try again.")
       }
@@ -474,7 +489,7 @@ export default function CompleteGymProfile() {
                             variant="outline"
                             size="sm"
                             onClick={openMapSelector}
-                            className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
+                            className="border-gray-600 text-black hover:bg-gray-300 hover:text-gray-600"
                           >
                             Change Location
                           </Button>
@@ -589,7 +604,7 @@ export default function CompleteGymProfile() {
                               <SelectTrigger className="bg-black/40 border-gray-600 text-white">
                                 <SelectValue placeholder="Select document type" />
                               </SelectTrigger>
-                              <SelectContent className="bg-gray-800 border-gray-600">
+                              <SelectContent className="bg-gray-800 border-gray-600 text-white">
                                 <SelectItem value="business-registration">Business Registration</SelectItem>
                                 <SelectItem value="business-license">Business License</SelectItem>
                                 <SelectItem value="tax-certificate">Tax Certificate</SelectItem>
@@ -630,7 +645,7 @@ export default function CompleteGymProfile() {
                       type="button"
                       variant="outline"
                       onClick={addDocumentEntry}
-                      className="w-full border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
+                      className="w-full border-gray-600 text-black hover:bg-gray-800 hover:text-white"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Another Document
