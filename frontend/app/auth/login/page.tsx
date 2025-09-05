@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { LoginUser } from "@/lib/api"
 import { PublicRoute } from "@/components/PublicRoute"
+import { useToast } from "@/hooks/use-toast"
 // Removed unused TIMEOUT import
 
 export default function LoginPage() {
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Check if user is coming back from OAuth
@@ -168,6 +170,11 @@ export default function LoginPage() {
           userRole = await determineUserRole(data.user.id);
           console.log("Determined role from database:", userRole);
         }
+        toast({
+          title: "Login Successful",
+          description: "You have successfully logged in.\nRedirecting to your dashboard...",
+          duration: 3000,
+        });
 
         // Redirect based on user role
         redirectBasedOnRole(userRole);
