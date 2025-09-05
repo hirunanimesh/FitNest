@@ -96,21 +96,4 @@ export async function addsession(sessionData) {
     return data[0];
   }
 
-  export async function uploadSessionImage(fileBuffer, userId) {
-  try {
-    // Upload image to Cloudinary
-    const cloudinaryResult = await uploadImage(
-      fileBuffer,
-      "fitnest/profile-updates",
-      `profile_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    );
-    
-    return {
-      success: true,
-      imageUrl: cloudinaryResult.secure_url,
-      publicId: cloudinaryResult.public_id
-    };
-  } catch (error) {
-    throw new Error(`Failed to upload image: ${error.message}`);
-  }
-}
+  
