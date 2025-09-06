@@ -3,7 +3,11 @@ const config = require('../config');
 
 const serviceHealth = {
   auth: false,
-  gym: false
+  gym: false,
+  payment: false,
+  user: false,
+  trainer: false,
+  admin: false
 };
 
 const checkServiceHealth = async (serviceName, url) => {
@@ -36,6 +40,7 @@ const startHealthChecks = () => {
     checkServiceHealth('payment',config.services.payment)
     checkServiceHealth('user', config.services.user);
     checkServiceHealth('trainer', config.services.trainer);
+    checkServiceHealth('admin', config.services.admin);
   }, 2000);
 
   // Periodic health checks
@@ -45,6 +50,7 @@ const startHealthChecks = () => {
     checkServiceHealth('payment',config.services.payment)
     checkServiceHealth('user', config.services.user);
     checkServiceHealth('trainer', config.services.trainer);
+    checkServiceHealth('admin', config.services.admin);
   }, 30000);
 };
 
