@@ -66,6 +66,23 @@ const GymProfile: React.FC = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
+    // Fetch user subscriptions - FIXED: Added proper dependency array
+    useEffect(() => {
+        const fetchMySubscriptions = async () => {
+            try {
+                const customer_id = await getUserProfileId();
+                if (customer_id) {
+                    const MyPlans = await GetUserSubscriptions(customer_id);
+                    setMyPlans(MyPlans.planIds || []);
+                }
+            } catch (error) {
+                console.error('Failed to fetch user subscriptions:', error);
+                setMyPlans([]);
+            }
+        };
+        fetchMySubscriptions();
+    }, [getUserProfileId]); // Added dependency array
+
     // Handle async data fetching
     useEffect(() => {
         if (!gymId || isNaN(Number(gymId))) {
@@ -185,15 +202,8 @@ const GymProfile: React.FC = () => {
             }
         };
 
-        const fetchMySubscriptions = async () => {
-            const customer_id = await getUserProfileId();
-            const MyPlans = await GetUserSubscriptions(customer_id);
-            setMyPlans(MyPlans.planIds);
-        };
-
         getSession();
         fetchGymDetails();
-        fetchMySubscriptions();
         fetchGymPlans();
     }, [gymId]);
 
@@ -235,13 +245,8 @@ const GymProfile: React.FC = () => {
             toast.dismiss('subscription-loading');
 
             if (result.success && result.url) {
-                setSuccessMessage('Redirecting to payment gateway');
-                toast.success('Success!', {
-                    description: 'Opening secure payment gateway in a new tab.',
-                    duration: 3000,
-                });
+                // Redirect immediately to payment gateway
                 window.location.assign(result.url);
-                setTimeout(() => setSuccessMessage(''), 3000);
             } else {
                 let errorMessage = 'Subscription failed';
                 let errorDescription = result.error || 'Unable to process your subscription request.';
@@ -608,6 +613,7 @@ const GymProfile: React.FC = () => {
                                                     disabled
                                                     className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 text-lg rounded-xl opacity-80"
                                                 >
+                                                    <CheckCircle className="w-5 h-5 mr-2" />
                                                     Subscribed
                                                 </Button>
                                             ) : (

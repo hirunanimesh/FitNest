@@ -1,6 +1,7 @@
 import { kafka } from "../config/Kafka.js";
 import createPlan from "../controllers/stripeController/create-plan.js";
 import { deletePlanData } from "../controllers/mongoController/add-plan-data.js";
+import updateGymPlanPrice from "../controllers/stripeController/update-gymplan-price.js";
 
 // Consumer for plan created
 export const GymPlanCreatedConsumer = async () => {
@@ -48,3 +49,28 @@ export const GymPlanDeletedConsumer = async () => {
     },
   });
 };
+
+
+export const GymPlanPriceUpdatedConsumer = async () => {
+  const consumer = kafka.consumer({ groupId: "payment-service-price-updated" });
+
+  await consumer.connect();
+  await consumer.subscribe({ topic: "gym_plan_updated", fromBeginning: true });
+
+  await consumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      try {
+        const payload = JSON.parse(message.value.toString());
+        const { planId, price, duration } = payload;
+
+        console.log("Received event:", payload);
+        await updateGymPlanPrice(planId, price, duration);
+
+        // Call your updateGymPlanPrice function here
+        // await updateGymPlanPrice(planId, price, duration);
+      } catch (err) {
+        console.error("Failed to process message:", err);
+      }
+    },
+  });
+}
