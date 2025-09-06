@@ -1,6 +1,24 @@
 import { supabase } from '../database/supabase.js'
 import qs from 'querystring'
 
+// Helper: given an ISO-like string, return { date: 'YYYY-MM-DD', time: 'HH:MM:SS' }
+function extractDateAndTime(s) {
+  if (!s) return { date: null, time: null }
+  const str = String(s)
+  if (str.includes('T')) {
+    const [d, t] = str.split('T')
+    // strip timezone offsets (Z, +hh:mm, -hh:mm)
+    const timeOnly = (t || '').split(/[Z+-]/)[0]
+    const parts = timeOnly.split(':')
+    const hh = String(parts[0] || '0').padStart(2, '0')
+    const mm = String(parts[1] || '0').padStart(2, '0')
+    const ss = String(parts[2] || '00').padStart(2, '0')
+    return { date: d, time: `${hh}:${mm}:${ss}` }
+  }
+  // date-only
+  return { date: str, time: null }
+}
+
 export function buildOauthUrl(userId) {
   const clientId = process.env.GOOGLE_CLIENT_ID
   const redirectUri = `${process.env.BACKEND_URL || ''}/google/callback`
@@ -133,10 +151,13 @@ export async function saveOrUpdateEventsForUser(userId, events) {
 
   const results = []
   for (const ev of events) {
-    const taskDate = ev.start ? ev.start.split('T')[0] : null
+    const { date: taskDate, time: startTime } = extractDateAndTime(ev.start)
+    const { time: endTime } = extractDateAndTime(ev.end)
     const payload = {
       google_event_id: ev.google_event_id,
       task_date: taskDate,
+      start: startTime,
+      end: endTime,
       task: ev.title,
       customer_id: customerId,
       description: ev.description || null,
@@ -188,18 +209,23 @@ export async function saveOrUpdateEventsForUser(userId, events) {
   // Return events for the user
   // Attempt to select including color; if column doesn't exist, fall back to select without color
     try {
-    const { data: all, error } = await supabase.from('calendar').select('calendar_id, task, task_date, color, description').eq('customer_id', customerId)
-    if (error) throw error
-    return (all || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: r.color, description: r.description }))
-  } catch (err) {
-    // if color/description column missing, retry without them
-    if (String(err.message).toLowerCase().includes('column') && (String(err.message).toLowerCase().includes('color') || String(err.message).toLowerCase().includes('description'))) {
-      const { data: all2, error: e2 } = await supabase.from('calendar').select('calendar_id, task, task_date').eq('customer_id', customerId)
-      if (e2) throw e2
-      return (all2 || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: null, description: null }))
+      const { data: all, error } = await supabase.from('calendar').select('calendar_id, task, task_date, start, "end", color, description').eq('customer_id', customerId)
+      if (error) throw error
+      return (all || []).map(r => {
+        // reconstruct a client-friendly start/end (prefer full ISO-like string when time exists)
+        const start = r.start ? `${r.task_date}T${r.start}` : r.task_date
+        const end = r.end ? `${r.task_date}T${r.end}` : r.task_date
+        return ({ id: r.calendar_id, title: r.task, start, end, color: r.color, description: r.description })
+      })
+    } catch (err) {
+      // if color/description/start/end column missing, retry with minimal set
+      if (String(err.message).toLowerCase().includes('column')) {
+        const { data: all2, error: e2 } = await supabase.from('calendar').select('calendar_id, task, task_date').eq('customer_id', customerId)
+        if (e2) throw e2
+        return (all2 || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: null, description: null }))
+      }
+      throw err
     }
-    throw err
-  }
 }
 
 export async function getEventsForUser(userId) {
@@ -214,14 +240,18 @@ export async function getEventsForUser(userId) {
   customerId = cust.id
   }
   try {
-    const { data, error } = await supabase.from('calendar').select('calendar_id, task, task_date, color').eq('customer_id', customerId)
+    const { data, error } = await supabase.from('calendar').select('calendar_id, task, task_date, start, "end", color, description').eq('customer_id', customerId)
     if (error) throw error
-    return (data || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: r.color }))
+    return (data || []).map(r => {
+      const start = r.start ? `${r.task_date}T${r.start}` : r.task_date
+      const end = r.end ? `${r.task_date}T${r.end}` : r.task_date
+      return { id: r.calendar_id, title: r.task, start, end, color: r.color, description: r.description }
+    })
   } catch (err) {
-    if (String(err.message).toLowerCase().includes('column') && String(err.message).toLowerCase().includes('color')) {
+    if (String(err.message).toLowerCase().includes('column')) {
       const { data, error } = await supabase.from('calendar').select('calendar_id, task, task_date').eq('customer_id', customerId)
       if (error) throw error
-      return (data || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: null }))
+      return (data || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: null, description: null }))
     }
     throw err
   }
@@ -245,9 +275,12 @@ export async function saveOrCreateEventForUser(userId, payload) {
   // Store task_date using the exact string provided by client. This preserves the
   // wall-clock time the user entered (e.g. '2025-09-03T13:00') and prevents
   // unintended timezone shifts when the client re-renders the event.
-  const taskDate = payload.start ? String(payload.start) : null
+  const { date: taskDate, time: startTime } = extractDateAndTime(payload.start)
+  const { time: endTime } = extractDateAndTime(payload.end)
   const row = {
     task_date: taskDate,
+    start: startTime,
+    end: endTime,
     task: payload.title || payload.summary || 'No title',
     customer_id: customerId,
     description: payload.description || null,
@@ -258,15 +291,17 @@ export async function saveOrCreateEventForUser(userId, payload) {
   let inserted
   try {
     // Select only known columns to avoid schema-cache/wildcard issues
-    const r = await supabase.from('calendar').insert([row]).select('calendar_id, task, task_date, customer_id, google_event_id, color, description').single()
+  const r = await supabase.from('calendar').insert([row]).select('calendar_id, task, task_date, start, "end", customer_id, google_event_id, color, description').single()
     if (r.error) throw r.error
     inserted = r.data
+    console.log('[calendar] inserted local row', { calendar_id: inserted?.calendar_id, task_date: inserted?.task_date })
   } catch (err) {
     if (String(err.message).toLowerCase().includes('column') && String(err.message).toLowerCase().includes('color')) {
       delete row.color
-      const r2 = await supabase.from('calendar').insert([row]).select('calendar_id, task, task_date, customer_id, google_event_id, description').single()
+  const r2 = await supabase.from('calendar').insert([row]).select('calendar_id, task, task_date, start, "end", customer_id, google_event_id, description').single()
       if (r2.error) throw r2.error
       inserted = r2.data
+      console.log('[calendar] inserted local row (retry no-color)', { calendar_id: inserted?.calendar_id, task_date: inserted?.task_date })
     } else throw err
   }
 
@@ -333,9 +368,36 @@ export async function saveOrCreateEventForUser(userId, payload) {
         }
         if (json && json.id) {
           // update local row with google_event_id (explicit select)
-          const { data: upd, error: updErr } = await supabase.from('calendar').update({ google_event_id: json.id }).eq('calendar_id', inserted.calendar_id).select('calendar_id, task, task_date, customer_id, google_event_id, color, description').single()
-          if (updErr) console.error('failed update google_event_id', updErr)
-          inserted.google_event_id = json.id
+          try {
+            if (inserted && inserted.calendar_id) {
+              const { data: upd, error: updErr } = await supabase.from('calendar').update({ google_event_id: json.id }).eq('calendar_id', inserted.calendar_id).select('calendar_id, task, task_date, start, "end", customer_id, google_event_id, color, description').single()
+              if (updErr) console.error('failed update google_event_id', updErr)
+              else inserted = upd
+            } else {
+              // Insert may not have succeeded earlier; attempt to upsert by google_event_id
+              const up = {
+                google_event_id: json.id,
+                task_date: row.task_date,
+                start: row.start,
+                end: row.end,
+                task: row.task,
+                customer_id: row.customer_id,
+                description: row.description,
+                color: row.color
+              }
+              const { data: upData, error: upErr } = await supabase.from('calendar').upsert(up, { onConflict: 'google_event_id' }).select('calendar_id, task, task_date, start, "end", customer_id, google_event_id, color, description')
+              if (upErr) console.error('fallback upsert failed', upErr)
+              else {
+                // upsert returns array
+                inserted = Array.isArray(upData) ? upData[0] : upData
+                console.log('[calendar] fallback upsert created row', { calendar_id: inserted?.calendar_id })
+              }
+            }
+            // record google id on returned object if present
+            if (inserted) inserted.google_event_id = json.id
+          } catch (uerr) {
+            console.error('error while setting google_event_id locally', uerr)
+          }
         } else {
           console.error('google returned no id for created event', attempt.res.status, attempt.bodyJson || attempt.bodyText)
         }
@@ -387,10 +449,16 @@ export async function updateEventForUser(calendarId, payload) {
   if (payload.start) {
   // Preserve the exact string provided by the client for task_date so the
   // stored value matches the user's wall-clock input and avoids TZ shifts.
-  updates.task_date = String(payload.start)
+  const { date: taskDate, time: startTime } = extractDateAndTime(payload.start)
+  updates.task_date = taskDate
+  if (startTime !== null) updates.start = startTime
+  }
+  if (payload.end !== undefined) {
+    const { time: endTime } = extractDateAndTime(payload.end)
+    if (endTime !== null) updates.end = endTime
   }
 
-  const { data: upd, error: updErr } = await supabase.from('calendar').update(updates).eq('calendar_id', calendarId).select('calendar_id, task, task_date, customer_id, google_event_id, color, description').single()
+  const { data: upd, error: updErr } = await supabase.from('calendar').update(updates).eq('calendar_id', calendarId).select('calendar_id, task, task_date, start, "end", customer_id, google_event_id, color, description').single()
   if (updErr) {
     // If update failed because color column missing, retry without color
     if (String(updErr.message).toLowerCase().includes('column') && String(updErr.message).toLowerCase().includes('color')) {
@@ -463,7 +531,7 @@ export async function deleteEventForUser(calendarId) {
   // delete local row and delete Google event if present
   // Use maybeSingle so missing rows don't throw — delete should be idempotent
   // Use explicit column list to avoid wildcard-related schema cache lookups
-  const { data: existing, error: selErr } = await supabase.from('calendar').select('calendar_id, task, task_date, customer_id, google_event_id, color, description').eq('calendar_id', calendarId).maybeSingle()
+  const { data: existing, error: selErr } = await supabase.from('calendar').select('calendar_id, task, task_date, start, "end", customer_id, google_event_id, color, description').eq('calendar_id', calendarId).maybeSingle()
   if (selErr) throw selErr
   if (!existing) {
     // Nothing to delete locally — treat as success (idempotent)

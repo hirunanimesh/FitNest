@@ -168,47 +168,7 @@ const AddTask: React.FC<Props> = ({
           let parsed: any = null
           try { parsed = await res.json() } catch (e) { /* not JSON */ }
           const bodyText = parsed && (parsed.message || parsed.error) ? (parsed.message || parsed.error) : (await res.text().catch(() => '<no body>'))
-
-          if (res.status === 404 && (parsed?.error === 'not_found' || String(bodyText).toLowerCase().includes('not found'))) {
-            const postUrl = `${base}/calendar/create/${userId}`
-            const createRes = await fetch(postUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-            })
-            if (!createRes.ok) {
-              let p: any = null
-              try { p = await createRes.json() } catch (e) {}
-              const t = p && (p.message || p.error) ? (p.message || p.error) : (await createRes.text().catch(() => '<no body>'))
-              throw new Error(`create fallback failed: ${t}`)
-            }
-            const saved = await createRes.json()
-            const newEvent: EventShape = {
-              id: String(saved.id || `${Date.now()}`),
-              title: saved.title || payload.title,
-              start: saved.start || payload.start,
-              end: saved.end || payload.end,
-              backgroundColor: taskColor,
-              color: taskColor,
-              description: saved.description || payload.description || '',
-              google_event_id: saved.google_event_id || null,
-              allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
-              extendedProps: { description: saved.description || payload.description || '', rawStart: saved.start || payload.start, rawEnd: saved.end || payload.end }
-            }
-            setEvents(prev => {
-              const eid = editingEvent ? String(editingEvent.id) : ''
-              const egid = editingEvent ? String(editingEvent.google_event_id || '') : ''
-              const filtered = prev.filter(ev => {
-                const evId = String((ev as any).id || '')
-                const evGid = String((ev as any).google_event_id || '')
-                return !(evId === eid || (egid && evGid === egid))
-              })
-              return dedupeEvents([...filtered, newEvent])
-            })
-            setEditingEvent(null)
-            return
-          }
-
+          // Do NOT fallback to create here. Save in edit mode must only update existing event.
           throw new Error(`update failed: ${bodyText}`)
         }
 
@@ -519,7 +479,7 @@ const AddTask: React.FC<Props> = ({
                 <DialogFooter className="p-0 mt-2">
                   <div className="flex items-center justify-end gap-3">
                     <Button type="button" variant="outline" className='bg-gray-800' onClick={() => { setIsTaskDialogOpen(false); setViewingEvent(null); setEditingEvent(null); }} >Cancel</Button>
-                    <Button type="submit">Save Task</Button>
+                    <Button type="submit">{editingEvent ? 'Update Task' : 'Save Task'}</Button>
                   </div>
                 </DialogFooter>
               </form>

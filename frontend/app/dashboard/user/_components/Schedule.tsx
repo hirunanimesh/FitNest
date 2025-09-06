@@ -80,6 +80,10 @@ const Schedule: React.FC = () => {
 
   const dedupeEvents = (list: Event[]) => dedupeEventsUtil(list)
 
+  // No custom "more" modal: we'll use FullCalendar's native popover.
+
+  // Use FullCalendar's built-in more/popover; no custom handler.
+
   useEffect(() => {
     // Re-run when `user` becomes available (login) so buttons and events load correctly
     (async () => {
@@ -367,6 +371,37 @@ const Schedule: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey)
   }, [isTaskDialogOpen, viewingEvent, editingEvent])
 
+  // When FullCalendar opens the native small popover for "+N more", it
+  // injects a DOM node with class `.fc-popover` and a header/title element
+  // containing the full verbose date (e.g. "September 29 2025"). We prefer
+  // to show only the day number ("29") per design. Use a MutationObserver
+  // to watch for popovers and shorten the title when it appears.
+  useEffect(() => {
+    const observer = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        for (const node of Array.from(m.addedNodes)) {
+          try {
+            const el = node as HTMLElement
+            if (!el || !el.querySelector) continue
+            const pop = el.matches && el.matches('.fc-popover') ? el : el.querySelector('.fc-popover') as HTMLElement
+            if (pop) {
+              const title = pop.querySelector('.fc-popover-title') as HTMLElement | null
+              if (title && title.innerText) {
+                // extract last number group (day) from the title text
+                const txt = title.innerText
+                const mday = txt.match(/(\d{1,2})/) || []
+                if (mday && mday[1]) title.innerText = mday[1]
+              }
+            }
+          } catch (e) { /* ignore */ }
+        }
+      }
+    })
+
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [])
+
   const handleDialogOpenChange = (open: boolean) => {
     setIsTaskDialogOpen(open)
     if (!open) {
@@ -397,6 +432,7 @@ const Schedule: React.FC = () => {
 
   return (
     <div>
+  {/* Rely on FullCalendar's built-in small popover for "more" links */}
       <style jsx global>{styles}</style>
       <h2>User Schedule</h2>
       <AddTask
@@ -432,6 +468,8 @@ const Schedule: React.FC = () => {
           eventClick={handleEventClick}
           dateClick={handleDateClick}
           eventContent={renderEventContent}
+          // limit number of visible events per day cell and use custom more link click
+          dayMaxEventRows={2}
           contentHeight="auto"
           headerToolbar={{
             left: 'prev,next today',

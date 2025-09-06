@@ -9,44 +9,53 @@ const styles = `
 /*
   Global CSS for Schedule component
 
-  Affected areas:
-  - .fc* selectors: FullCalendar visual styling (grid, headers, events)
-  - .calendar-shell: wrapper around the calendar (background, border, shadow)
-  - .color-picker: the color input used in Add Task dialog
-  - Dialog card styles are inherited from existing UI components; this file
-    only targets calendar and event visuals.
-*/
-
-/* Base color tweaks */
-.fc-timegrid-slot-label,
-.fc-list-event-time,
-.fc-daygrid-event .fc-event-time,
-.fc-timegrid-axis-cushion {
-  color: #bdbdbd !important;
-}
-
-/* Full calendar background: pure black to reveal gutters between tiles */
-.calendar-shell {
-  background: black;
-  padding: 2rem 1.25rem;
-  border-radius: 14px;
-  position: relative;
-  z-index: 1;
-  box-shadow:
-    0 8px 30px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.05),
-    0 0 15px rgba(0, 180, 255, 0.4),   /* outer glow */
-    0 0 30px rgba(0, 180, 255, 0.3);   /* extended glow */
-}
-
-/* add a shiny animated gradient border */
-.calendar-shell::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  padding: 2px; /* thickness of shine */
-  background: linear-gradient(135deg,
+  .fc-popover {
+    background: transparent !important; /* underlying bg removed; body/list provide visuals */
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+  }
+  .fc-popover .fc-popover-body {
+    padding: 0 !important; /* remove gap between header and list */
+    background: transparent !important;
+  }
+  .fc-popover .fc-popover-header,
+  .fc-popover .fc-popover-title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important; /* center the number */
+    color: #e6e6e6 !important;
+    font-weight: 700 !important;
+    font-size: 1.2rem !important;
+    padding: 10px 12px !important;
+    margin: 0 !important; /* remove gap between number and tasks */
+    text-align: center !important;
+    background: linear-gradient(180deg, #252525, #1a1a1a) !important; /* header bg */
+  }
+  .fc-popover .fc-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important; /* larger gap between tasks */
+    margin: 0 !important;
+    padding: 10px !important; /* inner padding so items don't touch popover edges */
+    background: linear-gradient(180deg, #252525, #1a1a1a) !important; /* make list share header bg */
+  }
+  .fc-popover .fc-list-item {
+    /* full-bleed rectangle background matching header */
+    background: transparent !important; /* list provides bg; items are transparent rectangles */
+    border-radius: 0 !important; /* full rectangle */
+    padding: 8px 12px !important;
+    cursor: pointer !important; /* hand pointer */
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+  .fc-popover .fc-list-item + .fc-list-item {
+    margin-top: 0 !important; /* gaps handled by .fc-list gap */
+  }
     rgba(255, 0, 51, 0.9),
     rgba(255,0,180,0.9),
     rgba(255, 0, 51, 0.9));
@@ -153,6 +162,21 @@ const styles = `
   box-shadow: none !important;
 }
 
+/* Make calendar event tiles show pointer cursor and a subtle hover lift */
+.fc-daygrid-event,
+.fc-daygrid-event .fc-event-main-frame,
+.fc-daygrid-event .fc-event-title,
+.fc-event,
+.fc-list-event {
+  cursor: pointer !important;
+  transition: transform 0.08s ease, box-shadow 0.12s ease !important;
+}
+.fc-daygrid-event:hover,
+.fc-daygrid-event:focus,
+.fc-event:hover {
+  transform: translateY(-2px) !important;
+}
+
 /* ensure event title text is tighter */
 .fc-daygrid-event .fc-event-title,
 .fc-daygrid-dot-event .fc-event-title {
@@ -209,6 +233,117 @@ const styles = `
 
 /* nudge day-number spacing slightly so events have more room */
 .fc-daygrid-day-number { margin: 4px auto 6px auto; }
+
+/*
+  Native FullCalendar "+N more" popover styling
+
+  Center the numeric day header, remove the gap between header and tasks,
+  increase gap between tasks, and make each task a full-bleed rectangle
+  with the same background as the header so the popover reads as a single
+  card. Rounded corners are applied to the outer popover and the last
+  item to create a single-card appearance.
+*/
+.fc-popover {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+.fc-popover .fc-popover-body {
+  padding: 0 !important; /* remove gap between header and list */
+}
+.fc-popover .fc-popover-header,
+.fc-popover .fc-popover-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important; /* center the number */
+  color: #e6e6e6 !important;
+  font-weight: 700 !important;
+  font-size: 1.2rem !important;
+  padding: 10px 12px !important;
+  margin: 0 !important; /* remove gap between number and tasks */
+  text-align: center !important;
+  background: linear-gradient(180deg, #252525, #1a1a1a) !important; /* header bg */
+}
+
+/* Position the popover close "X" at the top-right corner */
+.fc-popover .fc-popover-close,
+.fc-popover .fc-close,
+.fc-popover .fc-close-btn,
+.fc-popover .fc-button.fc-button-close,
+.fc-popover .fc-popover .fc-close {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  left: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  padding: 4px 6px !important;
+  background: transparent !important;
+  color: #cfcfcf !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  z-index: 60 !important;
+}
+.fc-popover .fc-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important; /* larger gap between tasks */
+  margin: 0 !important;
+  padding: 10px !important; /* inner padding so items don't touch popover edges */
+  background: linear-gradient(180deg, #252525, #1a1a1a) !important; /* share header bg */
+}
+.fc-popover .fc-list-item {
+  /* each task is a full rectangle matching the popover background */
+  background: linear-gradient(180deg, #252525, #1a1a1a) !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important; /* hand pointer */
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+.fc-popover .fc-list-item:hover,
+.fc-popover .fc-list-item:focus {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.6) !important;
+}
+.fc-popover .fc-list-item .fc-list-item-main {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+.fc-popover .fc-list-item .fc-list-item-title {
+  flex: 1 1 auto !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+  color: #e6e6e6 !important;
+  font-size: 0.92rem !important;
+}
+.fc-popover .fc-list-item .fc-list-item-time {
+  flex: 0 0 auto !important;
+  color: #cfcfcf !important;
+  font-size: 0.85rem !important;
+}
+
+/* If FullCalendar adds a color indicator as an inline element, make sure
+   the main tile background still looks good by making that indicator small */
+.fc-popover .fc-list-item .fc-event-dot,
+.fc-popover .fc-list-item .fc-list-event-dot {
+  width: 8px !important;
+  height: 8px !important;
+  margin-right: 8px !important;
+}
+
+/* round bottom corners on the last item so the popover looks like a single card */
+.fc-popover .fc-list-item:last-child {
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+}
 `
 
 export default styles
