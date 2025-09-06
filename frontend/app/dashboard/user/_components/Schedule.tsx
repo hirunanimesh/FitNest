@@ -1,16 +1,14 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext'
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import AddTask from './AddTask'
+import styles from './Schedule.styles'
+import { mapServerList as mapServerListUtil, dedupeEvents as dedupeEventsUtil } from './calendarUtils'
 import { Button } from "@/components/ui/button";
-import './calendar-overrides.css';
-import './color-picker.css';
-
 
 // Custom event rendering for color
 function renderEventContent(eventInfo: any) {
@@ -22,17 +20,32 @@ function renderEventContent(eventInfo: any) {
         borderRadius: 4,
         color: '#fff',
         border: `2px solid ${color}`,
-        fontWeight: 500,
+        fontWeight: 400,
         boxShadow: `0 2px 8px ${color}55`,
         width: '100%',
         height: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 0
+        padding: '3px 3px',
+        overflow: 'hidden'
       }}
     >
-      {eventInfo.event.title}
+      <div style={{
+        width: '100%',
+        // allow up to 2 lines then clamp
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'normal',
+        textAlign: 'center',
+        lineHeight: '0.95rem',
+        fontSize: '0.72rem',
+        letterSpacing: '-0.25px',
+        fontWeight: 400
+      }}>{eventInfo.event.title}</div>
     </div>
   );
 }
@@ -43,132 +56,383 @@ interface Event {
   start: string;
   end: string;
   backgroundColor: string;
+  color?: string;
+  description?: string | null;
+  extendedProps?: { description?: string | null };
+  allDay?: boolean;
 }
 
 const Schedule: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDate, setTaskDate] = useState('');
-  const [taskTime, setTaskTime] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [taskColor, setTaskColor] = useState('#ef4444');
+  const [taskDescription, setTaskDescription] = useState('');
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-  // ...existing code...
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
+  const [loadingSync, setLoadingSync] = useState(false);
+  const { user } = useAuth()
 
-  const handleSaveTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (taskTitle && taskDate) {
-      let startDate = taskDate;
-      let endDate = taskDate;
-      if (taskTime) {
-        startDate += `T${taskTime}`;
-        endDate += `T${taskTime}`;
+  const dedupeEvents = (list: Event[]) => dedupeEventsUtil(list)
+
+  useEffect(() => {
+    // Re-run when `user` becomes available (login) so buttons and events load correctly
+    (async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+        const userId = user?.id
+        if (!userId) {
+          setGoogleConnected(false)
+          return
+        }
+
+        const statusRes = await fetch(`${base}/calendar/status/${userId}`)
+        if (statusRes.ok) {
+          const json = await statusRes.json();
+          setGoogleConnected(Boolean(json.connected));
+        } else {
+          console.warn('calendar status check returned non-ok', statusRes.status)
+          setGoogleConnected(false);
+        }
+
+        const eventsRes = await fetch(`${base}/calendar/events/${userId}`)
+          if (eventsRes.ok) {
+          const serverEvents = await eventsRes.json();
+          if (Array.isArray(serverEvents)) {
+            const mappedServer = mapServerListUtil(serverEvents, '#28375cff')
+            // Merge server results with any existing client-side events instead of clobbering them.
+            // Keep server as authoritative for items it returns, but preserve local-only/Google-only
+            // events that the server hasn't persisted yet (they'll have no matching id/google_event_id).
+            setEvents(prev => {
+              // Build quick lookup of server keys
+              const serverIds = new Set(mappedServer.map(s => String(s.id || '')))
+              const serverGids = new Set(mappedServer.map(s => String(s.google_event_id || '')))
+              // Keep previous events that are not represented in server results
+              const leftover = prev.filter(p => {
+                const pid = String((p as any).id || '')
+                const pgid = String((p as any).google_event_id || '')
+                const raw = (p as any).extendedProps?.rawStart || p.start || ''
+                const title = p.title || ''
+                // If prev has an id and server also returned that id -> skip (server authoritative)
+                if (pid && serverIds.has(pid)) return false
+                // If prev has google_event_id and server returned that -> skip
+                if (pgid && serverGids.has(pgid)) return false
+                // If prev has no server id but matches server by rawStart+title, consider it replaced
+                const matchesServer = mappedServer.find(s => {
+                  const sRaw = (s as any).extendedProps?.rawStart || s.start || ''
+                  const sTitle = s.title || ''
+                  return sRaw && sTitle && sRaw === raw && sTitle === title
+                })
+                if (matchesServer) return false
+                return true
+              })
+              return dedupeEvents([...mappedServer, ...leftover])
+            })
+          }
+        } else {
+          console.warn('calendar events fetch returned non-ok', eventsRes.status)
+        }
+      } catch (err) {
+        console.error('calendar status/events check failed', err)
+        setGoogleConnected(false);
       }
-      const newEvent: Event = {
-        id: `${Date.now()}`,
-        title: taskTitle,
-        start: startDate,
-        end: endDate,
-        backgroundColor: taskColor,
-      };
-      setEvents([...events, newEvent]);
-      setTaskTitle('');
-      setTaskDate('');
-      setTaskTime('');
-      setTaskColor('')
-      setIsTaskDialogOpen(false);
+    })();
+  }, [user]);
+
+  const connectGoogleCalendar = async () => {
+    try {
+      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+      const userId = user?.id
+      if (!userId) return alert('You must be signed in to connect Google Calendar')
+      const res = await fetch(`${base}/google/oauth-url/${userId}`)
+      if (!res.ok) throw new Error('Failed to get oauth url');
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch (err) {
+      console.error('Google connect failed', err);
+      alert('Unable to start Google OAuth. Check console for details.');
     }
   };
 
-  // ...existing code...
+  const syncGoogleCalendar = async () => {
+    const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+    const userId = user?.id
+    if (!userId) {
+      alert('You must be signed in to sync')
+      return
+    }
+
+    setLoadingSync(true)
+    try {
+      const res = await fetch(`${base}/calendar/sync/${userId}`, { method: 'POST' })
+      if (!res.ok) {
+        const text = await res.text().catch(() => 'no body')
+        console.error('calendar sync failed response:', res.status, text)
+        throw new Error(`Sync failed: ${res.status} ${text}`)
+      }
+
+      const synced = await res.json().catch(() => null)
+      // Accept either a direct array or a wrapped object like { events: [...] }
+      const items = Array.isArray(synced) ? synced : (synced && Array.isArray(synced.events) ? synced.events : null)
+      if (!items) {
+        console.warn('sync returned unexpected shape', synced)
+        throw new Error('Sync returned unexpected response shape')
+      }
+
+  const mapped = mapServerListUtil(items, '#28375cff')
+
+      // Merge synced server events with any existing local events conservatively
+  setEvents(prev => {
+        const serverIds = new Set(mapped.map((s: any) => String(s.id || '')))
+        const serverGids = new Set(mapped.map((s: any) => String(s.google_event_id || '')))
+        const leftover = prev.filter(p => {
+          const pid = String((p as any).id || '')
+          const pgid = String((p as any).google_event_id || '')
+          const raw = (p as any).extendedProps?.rawStart || p.start || ''
+          const title = p.title || ''
+          if (pid && serverIds.has(pid)) return false
+          if (pgid && serverGids.has(pgid)) return false
+          const matchesServer = mapped.find((s: any) => {
+            const sRaw = (s as any).extendedProps?.rawStart || s.start || ''
+            const sTitle = s.title || ''
+            return sRaw && sTitle && sRaw === raw && sTitle === title
+          })
+          if (matchesServer) return false
+          return true
+        })
+        return dedupeEvents([...mapped, ...leftover])
+      })
+
+      // If the sync endpoint returned Google events but they don't appear
+      // persisted via `/calendar/events/:userId` on refresh, attempt to persist
+      // any items that lack a DB id but include a google_event_id. This is a
+      // defensive fallback for backends that return transient Google data.
+      try {
+        const toPersist = mapped.filter((m: any) => !m.id && m.google_event_id)
+        if (toPersist.length > 0) {
+          // POST each item (best-effort). Include google_event_id to help server dedupe/upsert.
+          await Promise.allSettled(toPersist.map((it: any) => {
+            const body = {
+              title: it.title,
+              start: it.start,
+              end: it.end,
+              description: it.description || null,
+              color: it.backgroundColor || it.color || '#ef4444',
+              google_event_id: it.google_event_id
+            }
+            return fetch(`${base}/calendar/create/${userId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body)
+            })
+          }))
+
+          // Refresh authoritative events from server after persistence attempts
+          try {
+            const fresh = await fetch(`${base}/calendar/events/${userId}`)
+            if (fresh.ok) {
+              const all = await fresh.json()
+              setEvents(mapServerListUtil(all, '#28375cff'))
+            }
+          } catch (e) { /* ignore refresh errors */ }
+        }
+      } catch (e) {
+        console.warn('persistence fallback after sync failed', e)
+      }
+
+      setGoogleConnected(true)
+    } catch (err) {
+      console.error('Sync failed', err)
+      alert('Sync failed. Check console for details.')
+    } finally {
+      setLoadingSync(false)
+    }
+  };
+
+  // Save handling moved to `AddTask` component. The dialog UI in this component
+  // delegates create/update/delete to `AddTask` to keep the logic in one place.
+
+  const handleEventClick = (clickInfo: any) => {
+    const ev = clickInfo.event;
+    // Prefer original rawStart/rawEnd if available (we store these in extendedProps)
+    const rawStart = (ev.extendedProps && (ev.extendedProps as any).rawStart) || ev.startStr || ''
+    const rawEnd = (ev.extendedProps && (ev.extendedProps as any).rawEnd) || ev.endStr || ''
+
+    const splitIso = (iso: string) => {
+      if (!iso) return { date: '', time: '' }
+      if (iso.length === 10) return { date: iso, time: '' }
+      // If iso contains timezone marker (Z or +/-) rely on Date parsing for accurate local time
+      if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(iso)) {
+        try {
+          const d = new Date(iso)
+          const date = d.toISOString().slice(0,10)
+          const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          return { date, time }
+        } catch (e) { return { date: '', time: '' } }
+      }
+      // No timezone info: treat as local wall-clock (YYYY-MM-DDTHH:MM(:SS)?)
+      const [d, t] = iso.split('T')
+      const time = (t || '').slice(0,5)
+      return { date: d || '', time }
+    }
+    const s = splitIso(rawStart)
+    const e = splitIso(rawEnd)
+    const viewed: Event = {
+      id: String(ev.id),
+      title: ev.title,
+      start: rawStart || ev.startStr || '',
+      end: rawEnd || ev.endStr || '',
+      backgroundColor: ev.backgroundColor || taskColor,
+      description: ev.extendedProps?.description || ''
+    }
+    setViewingEvent(viewed);
+    setTaskTitle(ev.title || '');
+    setTaskDate(s.date);
+    setStartTime(s.time);
+    setEndTime(e.time);
+    setTaskDescription(ev.extendedProps?.description || '');
+    setTaskColor(ev.backgroundColor || taskColor);
+    setIsEditing(false);
+    setIsTaskDialogOpen(true);
+  }
+
+  const handleDateClick = (dateClickInfo: any) => {
+    try {
+      document.querySelectorAll('.fc-day-selected').forEach(el => el.classList.remove('fc-day-selected'));
+      const dayEl = dateClickInfo.dayEl || (dateClickInfo.jsEvent && (dateClickInfo.jsEvent.target as HTMLElement).closest('.fc-daygrid-day'));
+      if (dayEl) {
+        dayEl.classList.add('fc-day-selected');
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  const enableEditMode = () => {
+    if (!viewingEvent) return;
+    setEditingEvent(viewingEvent);
+    setIsEditing(true);
+  }
+
+  const handleDeleteEvent = async () => {
+    try {
+      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+      const idToDelete = editingEvent?.id || viewingEvent?.id
+      if (!idToDelete) return alert('No event selected to delete')
+      const res = await fetch(`${base}/calendar/${idToDelete}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        console.error('delete event failed', res.status, txt)
+        alert('Failed to delete event')
+        return
+      }
+
+      setEvents(prev => prev.filter(ev => ev.id !== String(idToDelete)))
+      setEditingEvent(null)
+      setViewingEvent(null)
+      setIsTaskDialogOpen(false)
+    } catch (err) {
+      console.error('delete failed', err)
+      alert('Failed to delete event')
+    }
+  }
+
+  useEffect(() => {
+    if (!isTaskDialogOpen) return
+    const onKey = (ev: KeyboardEvent) => {
+      try {
+        const target = ev.target as HTMLElement | null
+        const tag = target && target.tagName ? target.tagName.toLowerCase() : ''
+        const isEditable = tag === 'input' || tag === 'textarea' || (target && target.isContentEditable)
+        if (isEditable) return
+      } catch (e) {
+        // ignore
+      }
+
+      if (ev.key === 'e' || ev.key === 'E') {
+        ev.preventDefault()
+        enableEditMode()
+      }
+      if (ev.key === 'Delete') {
+        ev.preventDefault()
+        handleDeleteEvent()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isTaskDialogOpen, viewingEvent, editingEvent])
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsTaskDialogOpen(open)
+    if (!open) {
+      setViewingEvent(null)
+      setEditingEvent(null)
+      setIsEditing(false)
+      setTaskTitle('')
+      setTaskDate('')
+      setStartTime('')
+      setEndTime('')
+      setTaskDescription('')
+      setTaskColor('#ef4444')
+    }
+  }
+
+  const openAddTask = () => {
+    setViewingEvent(null)
+    setEditingEvent(null)
+    setIsEditing(false)
+    setTaskTitle('')
+    setTaskDate('')
+    setStartTime('')
+    setEndTime('')
+    setTaskDescription('')
+    setTaskColor('#ef4444')
+    setIsTaskDialogOpen(true)
+  }
 
   return (
     <div>
+      <style jsx global>{styles}</style>
       <h2>User Schedule</h2>
-      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
-        <DialogTrigger asChild>
-          <Button type="button" className="bg-red-500 text-white font-semibold ml-12 mb-4" onClick={() => setIsTaskDialogOpen(true)}>
-            Add Task
+      <AddTask
+        isTaskDialogOpen={isTaskDialogOpen}
+        setIsTaskDialogOpen={setIsTaskDialogOpen}
+        viewingEvent={viewingEvent}
+        setViewingEvent={setViewingEvent}
+        editingEvent={editingEvent}
+        setEditingEvent={setEditingEvent}
+        setEvents={setEvents}
+      />
+      <div className="ml-16 mb-4 flex items-center gap-3">
+        {googleConnected === null ? (
+          <span className="text-sm text-gray-400">Checking Google Calendar connection...</span>
+        ) : googleConnected ? (
+          <>
+            <Button type="button" onClick={syncGoogleCalendar} disabled={loadingSync}>
+              {loadingSync ? 'Syncing...' : 'Sync Google Calendar'}
+            </Button>
+            <span className="text-sm text-gray-300">Connected</span>
+          </>
+        ) : (
+          <Button type="button" onClick={connectGoogleCalendar} className="bg-blue-600 text-white">
+            Connect Google Calendar
           </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px] bg-gray-900 text-gray-200">
-          <DialogHeader>
-            <DialogTitle>Add Task</DialogTitle>
-            <DialogDescription>
-              Add a new task to your schedule.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSaveTask} className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="task_title">Title</Label>
-              <Input
-                className='bg-gray-800'
-                id="task_title"
-                type="text"
-                placeholder="Task Title"
-                value={taskTitle}
-                onChange={e => setTaskTitle(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex gap-4">
-              <div className="space-y-2 flex-1">
-                <Label htmlFor="task_date">Date</Label>
-                <Input
-                  className='bg-gray-800'
-                  id="task_date"
-                  type="date"
-                  value={taskDate}
-                  onChange={e => setTaskDate(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2 flex-1">
-                <Label htmlFor="task_time">Time</Label>
-                <Input
-                  className='bg-gray-800'
-                  id="task_time"
-                  type="time"
-                  value={taskTime}
-                  onChange={e => setTaskTime(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Label htmlFor="task_color" className="whitespace-nowrap">Color</Label>
-              <input
-                id="task_color"
-                type="color"
-                value={taskColor}
-                onChange={e => setTaskColor(e.target.value)}
-                className="color-picker w-8 h-8 p-0 rounded-full border-none"
-                style={{ boxShadow: `0 0 0 4px ${taskColor}33` }}
-                title="Choose event color"
-              />
-            </div>
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className='bg-gray-800'
-                onClick={() => setIsTaskDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">
-                Save Task
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-      <div style={{ height: 600, marginLeft: '2rem', marginRight: '2rem', backgroundColor: '#192024', borderRadius: 8 }}>
+        )}
+      </div>
+      <div className="calendar-shell" style={{ marginLeft: '2rem', marginRight: '2rem', backgroundColor: '#211f1dff', borderRadius: 8 }}>
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
           events={events}
+          eventClick={handleEventClick}
+          dateClick={handleDateClick}
           eventContent={renderEventContent}
-          height="100%"
+          contentHeight="auto"
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',

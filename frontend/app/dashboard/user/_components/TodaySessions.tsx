@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Video } from "lucide-react";
-
 interface Session {
   id: number;
   title: string;
@@ -84,7 +83,7 @@ const TodaySessions = () => {
             <Card 
               key={session.id} 
               className={`bg-gray-900 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500 ${
-                selectedSession === session.id.toString() ? "ring-2 ring-red-500" : ""
+                selectedSession === session.id.toString() ? "shine-red" : ""
               }`}
             >
               <CardHeader>

@@ -190,10 +190,14 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
+      // Request Google Calendar scopes here so user grants calendar access during sign-in.
+      // NOTE: adjust scopes as needed; include offline access and prompt=consent to request a refresh token.
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/login`,
+          // request calendar events scope in addition to basic openid/profile/email
+          scopes: 'openid profile email https://www.googleapis.com/auth/calendar.events',
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
