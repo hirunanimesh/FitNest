@@ -1,11 +1,12 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext'
+import { mapServerList as mapServerListUtil, mapUpdatedToEvent as mapUpdatedToEventUtil, dedupeEvents as dedupeEventsUtil } from './calendarUtils'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Save, X, ImagePlus } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 interface EventShape {
   id: string;
   title: string;
@@ -41,6 +42,11 @@ const AddTask: React.FC<Props> = ({
   setEvents,
 }) => {
   const { user } = useAuth()
+
+  // use shared helpers
+  const mapServerList = (list: any[], fallbackColor = '#ef4444') => mapServerListUtil(list, fallbackColor)
+  const mapUpdatedToEvent = (upd: any): EventShape => mapUpdatedToEventUtil(upd, taskTitle, taskColor)
+  const dedupeEvents = (list: EventShape[]) => dedupeEventsUtil(list)
 
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDate, setTaskDate] = useState('');
@@ -90,22 +96,20 @@ const AddTask: React.FC<Props> = ({
     e.preventDefault();
     if (!taskTitle || !taskDate) return
 
-    // Build ISO instants from date + time (convert local wall-clock time to UTC ISO string)
-    let startIso: string | null = null
-    let endIso: string | null = null
+    // Build ISO-like strings while preserving the exact wall-clock strings entered by the user.
+    const normalizeTime = (t: string) => t ? (t.includes(':') ? `${t}:00` : `${t}:00`) : null
+    const startTimeNormalized = normalizeTime(startTime)
+    const endTimeNormalized = normalizeTime(endTime)
 
-    if (startTime) {
-      const startTimeNormalized = startTime.includes(':') ? `${startTime}:00` : `${startTime}:00`;
-      // Preserve the exact local wall-clock string the user entered.
+    let startIso: string
+    let endIso: string | null
+
+    if (startTimeNormalized) {
       startIso = `${taskDate}T${startTimeNormalized}`
-
-      if (endTime) {
-        const endTimeNormalized = endTime.includes(':') ? `${endTime}:00` : `${endTime}:00`;
+      if (endTimeNormalized) {
         endIso = `${taskDate}T${endTimeNormalized}`
       } else {
-        // default 1 hour duration calculated using the client's local clock,
-        // then formatted back to a local YYYY-MM-DDTHH:mm:00 string so we keep
-        // the user's wall-clock times rather than converting to UTC.
+        // default 1 hour duration using local wall-clock
         const startLocal = new Date(`${taskDate}T${startTimeNormalized}`)
         const endLocal = new Date(startLocal.getTime() + 60 * 60 * 1000)
         const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:00`
@@ -134,159 +138,135 @@ const AddTask: React.FC<Props> = ({
       if (!userId) return alert('You must be signed in to add tasks')
 
       if (editingEvent) {
-        const putUrl = `${base}/calendar/${editingEvent.id}`
-        // Debug: show the outgoing update request URL and payload in browser console
-        console.debug('[AddTask] PUT', putUrl, payload)
-        const res = await fetch(putUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
+        const patchUrl = `${base}/calendar/${editingEvent.id}`
+
+        // Build a minimal PATCH body: include only fields that changed compared
+        // to the existing `editingEvent`. If nothing changed, send an empty
+        // PATCH (no body) to support servers that treat PATCH without body as
+        // a valid update (e.g., touch/update metadata).
+        const existingStart = editingEvent.extendedProps?.rawStart || editingEvent.start || ''
+        const existingEnd = editingEvent.extendedProps?.rawEnd || editingEvent.end || ''
+        const changed: any = {}
+        if ((payload.title || '') !== (editingEvent.title || '')) changed.title = payload.title
+        if ((payload.description || '') !== (editingEvent.description || editingEvent.extendedProps?.description || '')) changed.description = payload.description
+        if ((payload.color || '') !== (editingEvent.backgroundColor || editingEvent.color || '')) changed.color = payload.color
+        if ((payload.start || '') !== existingStart) changed.start = payload.start
+        // treat null/undefined end as removal; include when differing
+        if ((payload.end || '') !== (existingEnd || '')) changed.end = payload.end
+
+        const fetchOpts: any = { method: 'PATCH' }
+        if (Object.keys(changed).length > 0) {
+          fetchOpts.headers = { 'Content-Type': 'application/json' }
+          fetchOpts.body = JSON.stringify(changed)
+        }
+
+        // outgoing update request (minimal or empty body)
+        const res = await fetch(patchUrl, fetchOpts)
+
         if (!res.ok) {
           // Prefer structured JSON error when available
           let parsed: any = null
           try { parsed = await res.json() } catch (e) { /* not JSON */ }
           const bodyText = parsed && (parsed.message || parsed.error) ? (parsed.message || parsed.error) : (await res.text().catch(() => '<no body>'))
 
-          // If the server says the calendar row wasn't found (404) the client may be
-          // editing an event whose id is stale or came from Google; attempt to create
-          // a new event instead of failing so the user's edit is preserved.
           if (res.status === 404 && (parsed?.error === 'not_found' || String(bodyText).toLowerCase().includes('not found'))) {
-            try {
-              const postUrl = `${base}/calendar/create/${userId}`
-              console.debug('[AddTask] PUT returned not_found, falling back to POST', postUrl, payload)
-              const createRes = await fetch(postUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-              })
-              if (!createRes.ok) {
-                let p: any = null
-                try { p = await createRes.json() } catch (e) {}
-                const t = p && (p.message || p.error) ? (p.message || p.error) : (await createRes.text().catch(() => '<no body>'))
-                throw new Error(`create fallback failed: ${t}`)
-              }
-              const saved = await createRes.json()
-              const newEvent: EventShape = {
-                id: String(saved.id || `${Date.now()}`),
-                title: saved.title || payload.title,
-                start: saved.start || payload.start,
-                end: saved.end || payload.end,
-                backgroundColor: taskColor,
-                color: taskColor,
-                description: saved.description || payload.description || '',
-                google_event_id: saved.google_event_id || null,
-                allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
-                extendedProps: { description: saved.description || payload.description || '', rawStart: saved.start || payload.start, rawEnd: saved.end || payload.end }
-              }
-              setEvents(prev => {
-                // remove any existing event that matches the editingEvent by id or google_event_id
-                const eid = editingEvent ? String(editingEvent.id) : ''
-                const egid = editingEvent ? String(editingEvent.google_event_id || '') : ''
-                const filtered = prev.filter(ev => {
-                  const evId = String((ev as any).id || '')
-                  const evGid = String((ev as any).google_event_id || '')
-                  return !(evId === eid || (egid && evGid === egid))
-                })
-                return [...filtered, newEvent]
-              })
-              setEditingEvent(null)
-              // finish gracefully
-              return
-            } catch (e) {
-              // fall through to throwing the original error below
-              console.error('create fallback failed', e)
+            const postUrl = `${base}/calendar/create/${userId}`
+            const createRes = await fetch(postUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            })
+            if (!createRes.ok) {
+              let p: any = null
+              try { p = await createRes.json() } catch (e) {}
+              const t = p && (p.message || p.error) ? (p.message || p.error) : (await createRes.text().catch(() => '<no body>'))
+              throw new Error(`create fallback failed: ${t}`)
             }
+            const saved = await createRes.json()
+            const newEvent: EventShape = {
+              id: String(saved.id || `${Date.now()}`),
+              title: saved.title || payload.title,
+              start: saved.start || payload.start,
+              end: saved.end || payload.end,
+              backgroundColor: taskColor,
+              color: taskColor,
+              description: saved.description || payload.description || '',
+              google_event_id: saved.google_event_id || null,
+              allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
+              extendedProps: { description: saved.description || payload.description || '', rawStart: saved.start || payload.start, rawEnd: saved.end || payload.end }
+            }
+            setEvents(prev => {
+              const eid = editingEvent ? String(editingEvent.id) : ''
+              const egid = editingEvent ? String(editingEvent.google_event_id || '') : ''
+              const filtered = prev.filter(ev => {
+                const evId = String((ev as any).id || '')
+                const evGid = String((ev as any).google_event_id || '')
+                return !(evId === eid || (egid && evGid === egid))
+              })
+              return dedupeEvents([...filtered, newEvent])
+            })
+            setEditingEvent(null)
+            return
           }
 
           throw new Error(`update failed: ${bodyText}`)
         }
+
+        // Success: parse updated row and map to frontend shape
         let updated: any = null
         try {
           updated = await res.json()
         } catch (e) {
-          const txt = await res.text().catch(() => null)
-          console.warn('update returned non-JSON response', txt)
-          updated = null
-        }
-        // Defensive mapping: backend may return different shapes (normalized or raw supabase row).
-        const mapUpdatedToEvent = (upd: any) => {
-          if (!upd) return null
-          const id = String(upd.id || upd.calendar_id || editingEvent.id)
-          const title = upd.title || upd.task || payload.title
-          const start = upd.start || upd.task_date || payload.start
-          const end = upd.end || upd.task_date || payload.end
-          const color = upd.color || upd.backgroundColor || payload.color || taskColor
-          const description = (upd.description !== undefined ? upd.description : payload.description) || ''
-          return {
-            id,
-            title,
-            start,
-            end,
-            backgroundColor: color,
-            color,
-            description,
-            // keep google_event_id if the backend returns it so clients can match
-            google_event_id: upd.google_event_id || null,
-            // mark as all-day if start is a date-only string -> prevents timezone shifts
-            allDay: typeof start === 'string' && !String(start).includes('T'),
-            extendedProps: { description, rawStart: start, rawEnd: end }
-          }
+          // If server returned non-JSON, fallback to refetching events
+          try {
+            const r = await fetch(`${base}/calendar/events/${userId}`)
+            if (r.ok) {
+              const all = await r.json()
+              setEvents(mapServerList(all, taskColor))
+              setEditingEvent(null)
+              return
+            }
+          } catch (e2) { /* ignore */ }
+          throw new Error('update returned non-JSON response')
         }
 
         const mapped = mapUpdatedToEvent(updated)
         if (mapped) {
-          // Replace the matching event. Match by calendar id OR google_event_id OR the editingEvent id
           setEvents(prev => {
-            let replaced = false
             const mappedId = String(mapped.id || '')
             const mappedGoogleId = String(mapped.google_event_id || '')
-            const updated = prev.map(ev => {
+            const editingId = String(editingEvent?.id || '')
+            const editingGid = String(editingEvent?.google_event_id || '')
+            const mappedRaw = mapped.extendedProps?.rawStart || mapped.start || ''
+            const mappedTitle = mapped.title || ''
+            const filtered = prev.filter(ev => {
               const evId = String((ev as any).id || '')
-              const evGoogleId = String((ev as any).google_event_id || '')
-              const matchesCalendarId = evId === mappedId
-              const matchesGoogleId = mappedGoogleId ? evGoogleId === mappedGoogleId : false
-              const matchesEditingId = editingEvent ? evId === String(editingEvent.id) : false
-              if (matchesCalendarId || matchesGoogleId || matchesEditingId) {
-                replaced = true
-                return mapped
-              }
-              return ev
+              const evGid = String((ev as any).google_event_id || '')
+              const evRaw = (ev as any).extendedProps?.rawStart || (ev as any).start || ''
+              const evTitle = (ev as any).title || ''
+              if (evId && (evId === mappedId || evId === editingId)) return false
+              if (evGid && (evGid === mappedGoogleId || evGid === editingGid)) return false
+              if (evRaw && evTitle && mappedRaw && mappedTitle && evRaw === mappedRaw && evTitle === mappedTitle) return false
+              return true
             })
-            if (!replaced) {
-              // If nothing matched, append the updated event to avoid losing it
-              updated.push(mapped)
-            }
-            return updated
+            return dedupeEvents([...filtered, mapped])
           })
           setEditingEvent(null)
         } else {
           // Fallback: refetch all events for the user to avoid accidental deletion
           try {
-            const userId = user?.id
             if (userId) {
               const r = await fetch(`${base}/calendar/events/${userId}`)
               if (r.ok) {
                 const all = await r.json()
-                // Map server shape to EventShape used in frontend
-                const mappedAll = (all || []).map((it: any) => ({
-                  id: String(it.id || it.calendar_id),
-                  title: it.title || it.task,
-                  start: it.start || it.task_date,
-                  end: it.end || it.task_date,
-                  backgroundColor: it.color || it.backgroundColor || taskColor,
-                  color: it.color || taskColor,
-                  description: it.description || '' ,
-                  extendedProps: { description: it.description || '' }
-                }))
-                setEvents(mappedAll)
+                setEvents(mapServerList(all, taskColor))
               }
             }
           } catch (e) { console.error('failed to refetch events after update', e) }
         }
       } else {
         const postUrl = `${base}/calendar/create/${userId}`
-        console.debug('[AddTask] POST', postUrl, payload)
+  // outgoing create request
         const res = await fetch(postUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -306,20 +286,48 @@ const AddTask: React.FC<Props> = ({
           console.warn('create returned non-JSON response', txt)
           saved = { id: `${Date.now()}`, title: payload.title, start: payload.start, end: payload.end, description: payload.description, google_event_id: null }
         }
-        const newEvent: EventShape = {
-          id: String(saved.id || `${Date.now()}`),
-          title: saved.title || payload.title,
-          start: saved.start || payload.start,
-          end: saved.end || payload.end,
-          backgroundColor: taskColor,
-          color: taskColor,
-          description: saved.description || payload.description || '',
-          google_event_id: saved.google_event_id || null,
-          // allDay true when start is date-only
-          allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
-          extendedProps: { description: saved.description || payload.description || '', rawStart: saved.start || payload.start, rawEnd: saved.end || payload.end }
+        // If server didn't provide an id for the saved row, re-fetch events from server
+        if (!saved || !saved.id) {
+          try {
+            const r = await fetch(`${base}/calendar/events/${userId}`)
+            if (r.ok) {
+              const all = await r.json()
+              setEvents(mapServerList(all, taskColor))
+            }
+          } catch (e) { console.error('failed to refetch events after create', e) }
+        } else {
+          const newEvent: EventShape = {
+            id: String(saved.id || `${Date.now()}`),
+            title: saved.title || payload.title,
+            start: saved.start || payload.start,
+            end: saved.end || payload.end,
+            backgroundColor: taskColor,
+            color: taskColor,
+            description: saved.description || payload.description || '',
+            google_event_id: saved.google_event_id || null,
+            // allDay true when start is date-only
+            allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
+            extendedProps: { description: saved.description || payload.description || '', rawStart: saved.start || payload.start, rawEnd: saved.end || payload.end }
+          }
+          setEvents(prev => {
+            // remove any existing matches before adding to avoid duplicates
+            const newId = String(newEvent.id || '')
+            const newGid = String(newEvent.google_event_id || '')
+            const newRaw = newEvent.extendedProps?.rawStart || newEvent.start || ''
+            const newTitle = newEvent.title || ''
+            const filtered = prev.filter(ev => {
+              const evId = String((ev as any).id || '')
+              const evGid = String((ev as any).google_event_id || '')
+              const evRaw = (ev as any).extendedProps?.rawStart || (ev as any).start || ''
+              const evTitle = (ev as any).title || ''
+              if (evId && newId && evId === newId) return false
+              if (evGid && newGid && evGid === newGid) return false
+              if (evRaw && evTitle && newRaw && newTitle && evRaw === newRaw && evTitle === newTitle) return false
+              return true
+            })
+            return dedupeEvents([...filtered, newEvent])
+          })
         }
-        setEvents(prev => [...prev, newEvent])
       }
     } catch (err: any) {
       console.error('save task failed', err)
@@ -342,7 +350,6 @@ const AddTask: React.FC<Props> = ({
       const idToDelete = editingEvent?.id || viewingEvent?.id
       if (!idToDelete) return alert('No event selected to delete')
   const deleteUrl = `${base}/calendar/${idToDelete}`
-  console.debug('[AddTask] DELETE', deleteUrl)
   const res = await fetch(deleteUrl, { method: 'DELETE' })
       if (!res.ok) {
         let parsed: any = null

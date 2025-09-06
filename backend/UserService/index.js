@@ -33,7 +33,7 @@ app.get('/calendar/status/:userId', calendarStatus)
 app.get('/calendar/events/:userId', getCalendarEvents)
 app.post('/calendar/sync/:userId', syncCalendar)
 app.post('/calendar/create/:userId', createCalendarEvent)
-app.put('/calendar/:calendarId', updateCalendarEvent)
+app.patch('/calendar/:calendarId', updateCalendarEvent)
 app.delete('/calendar/:calendarId', deleteCalendarEvent)
 // Dev-only debug route to view stored tokens (do not enable in production)
 if (process.env.NODE_ENV !== 'production') {

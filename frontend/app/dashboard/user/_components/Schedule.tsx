@@ -7,6 +7,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import AddTask from './AddTask'
 import styles from './Schedule.styles'
+import { mapServerList as mapServerListUtil, dedupeEvents as dedupeEventsUtil } from './calendarUtils'
 import { Button } from "@/components/ui/button";
 
 // Custom event rendering for color
@@ -77,7 +78,10 @@ const Schedule: React.FC = () => {
   const [loadingSync, setLoadingSync] = useState(false);
   const { user } = useAuth()
 
+  const dedupeEvents = (list: Event[]) => dedupeEventsUtil(list)
+
   useEffect(() => {
+    // Re-run when `user` becomes available (login) so buttons and events load correctly
     (async () => {
       try {
         const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
@@ -92,30 +96,53 @@ const Schedule: React.FC = () => {
           const json = await statusRes.json();
           setGoogleConnected(Boolean(json.connected));
         } else {
+          console.warn('calendar status check returned non-ok', statusRes.status)
           setGoogleConnected(false);
         }
 
         const eventsRes = await fetch(`${base}/calendar/events/${userId}`)
-        if (eventsRes.ok) {
+          if (eventsRes.ok) {
           const serverEvents = await eventsRes.json();
-          if (Array.isArray(serverEvents)) setEvents(serverEvents.map((ev: any) => ({
-            id: String(ev.id || ev.calendar_id || ev.calendarId || ev.calendar_id),
-            title: ev.title || ev.task || '',
-            start: ev.start || ev.task_date || ev.start_ts || '',
-            end: ev.end || ev.end_ts || ev.task_date || '',
-            // mark as allDay when start is a date-only string (no 'T')
-            allDay: typeof (ev.start || ev.task_date) === 'string' && !String(ev.start || ev.task_date).includes('T'),
-            backgroundColor: ev.backgroundColor || ev.color || '#28375cff',
-            color: ev.color || ev.backgroundColor || '#1a2e84ff',
-            extendedProps: { description: ev.description || null, rawStart: ev.start || ev.task_date || ev.start_ts || '', rawEnd: ev.end || ev.end_ts || '' }
-          })));
+          if (Array.isArray(serverEvents)) {
+            const mappedServer = mapServerListUtil(serverEvents, '#28375cff')
+            // Merge server results with any existing client-side events instead of clobbering them.
+            // Keep server as authoritative for items it returns, but preserve local-only/Google-only
+            // events that the server hasn't persisted yet (they'll have no matching id/google_event_id).
+            setEvents(prev => {
+              // Build quick lookup of server keys
+              const serverIds = new Set(mappedServer.map(s => String(s.id || '')))
+              const serverGids = new Set(mappedServer.map(s => String(s.google_event_id || '')))
+              // Keep previous events that are not represented in server results
+              const leftover = prev.filter(p => {
+                const pid = String((p as any).id || '')
+                const pgid = String((p as any).google_event_id || '')
+                const raw = (p as any).extendedProps?.rawStart || p.start || ''
+                const title = p.title || ''
+                // If prev has an id and server also returned that id -> skip (server authoritative)
+                if (pid && serverIds.has(pid)) return false
+                // If prev has google_event_id and server returned that -> skip
+                if (pgid && serverGids.has(pgid)) return false
+                // If prev has no server id but matches server by rawStart+title, consider it replaced
+                const matchesServer = mappedServer.find(s => {
+                  const sRaw = (s as any).extendedProps?.rawStart || s.start || ''
+                  const sTitle = s.title || ''
+                  return sRaw && sTitle && sRaw === raw && sTitle === title
+                })
+                if (matchesServer) return false
+                return true
+              })
+              return dedupeEvents([...mappedServer, ...leftover])
+            })
+          }
+        } else {
+          console.warn('calendar events fetch returned non-ok', eventsRes.status)
         }
       } catch (err) {
         console.error('calendar status/events check failed', err)
         setGoogleConnected(false);
       }
     })();
-  }, []);
+  }, [user]);
 
   const connectGoogleCalendar = async () => {
     try {
@@ -133,135 +160,102 @@ const Schedule: React.FC = () => {
   };
 
   const syncGoogleCalendar = async () => {
-    setLoadingSync(true);
+    const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+    const userId = user?.id
+    if (!userId) {
+      alert('You must be signed in to sync')
+      return
+    }
+
+    setLoadingSync(true)
     try {
-      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
-      const userId = user?.id
-      if (!userId) return alert('You must be signed in to sync')
-      const res = await fetch(`${base}/calendar/sync/${userId}`, { method: 'POST' });
+      const res = await fetch(`${base}/calendar/sync/${userId}`, { method: 'POST' })
       if (!res.ok) {
         const text = await res.text().catch(() => 'no body')
         console.error('calendar sync failed response:', res.status, text)
         throw new Error(`Sync failed: ${res.status} ${text}`)
       }
-      const synced = await res.json();
-    if (Array.isArray(synced)) {
-          const mapped = synced.map((ev: any) => ({
-          id: String(ev.id || ev.calendar_id || ev.calendarId || ''),
-          title: ev.title || ev.task || '',
-      start: ev.start || ev.task_date || ev.start_ts || '',
-      end: ev.end || ev.end_ts || ev.task_date || '',
-      allDay: typeof (ev.start || ev.task_date) === 'string' && !String(ev.start || ev.task_date).includes('T'),
-          backgroundColor: ev.backgroundColor || ev.color || '#28375cff',
-          color: ev.color || ev.backgroundColor || '#1a2e84ff',
-          extendedProps: { description: ev.description || null, rawStart: ev.start || ev.task_date || ev.start_ts || '', rawEnd: ev.end || ev.end_ts || '' }
-        }))
-        setEvents(mapped);
-      }
-      setGoogleConnected(true);
-    } catch (err) {
-      console.error('Sync failed', err);
-      alert('Sync failed. Check console for details.');
-    } finally {
-      setLoadingSync(false);
-    }
-  };
 
-  const handleSaveTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (taskTitle && taskDate) {
-      let startDate = taskDate;
-      let endDate = taskDate;
-      if (startTime) {
-        const startTimeNormalized = startTime.includes(':') ? `${startTime}:00` : `${startTime}:00`;
-        startDate = `${taskDate}T${startTimeNormalized}`;
-        if (endTime) {
-          const endTimeNormalized = endTime.includes(':') ? `${endTime}:00` : `${endTime}:00`;
-          endDate = `${taskDate}T${endTimeNormalized}`;
-        } else {
-          const [h, m] = startTime.split(':');
-          let endHour = (parseInt(h || '0', 10) + 1).toString().padStart(2, '0');
-          endDate = `${taskDate}T${endHour}:${m || '00'}:00`;
-        }
+      const synced = await res.json().catch(() => null)
+      // Accept either a direct array or a wrapped object like { events: [...] }
+      const items = Array.isArray(synced) ? synced : (synced && Array.isArray(synced.events) ? synced.events : null)
+      if (!items) {
+        console.warn('sync returned unexpected shape', synced)
+        throw new Error('Sync returned unexpected response shape')
       }
 
-      const payload = {
-        title: taskTitle,
-        start: startDate,
-        end: endDate,
-        description: taskDescription || '',
-        color: taskColor
-      };
+  const mapped = mapServerListUtil(items, '#28375cff')
 
-      (async () => {
-        try {
-          const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
-          const userId = user?.id
-          if (!userId) return alert('You must be signed in to add tasks')
-          if (editingEvent) {
-            const res = await fetch(`${base}/calendar/${editingEvent.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            })
-            if (!res.ok) {
-              const txt = await res.text().catch(() => '')
-              console.error('update event failed', res.status, txt)
-              alert('Failed to update event')
-              return
+      // Merge synced server events with any existing local events conservatively
+  setEvents(prev => {
+        const serverIds = new Set(mapped.map((s: any) => String(s.id || '')))
+        const serverGids = new Set(mapped.map((s: any) => String(s.google_event_id || '')))
+        const leftover = prev.filter(p => {
+          const pid = String((p as any).id || '')
+          const pgid = String((p as any).google_event_id || '')
+          const raw = (p as any).extendedProps?.rawStart || p.start || ''
+          const title = p.title || ''
+          if (pid && serverIds.has(pid)) return false
+          if (pgid && serverGids.has(pgid)) return false
+          const matchesServer = mapped.find((s: any) => {
+            const sRaw = (s as any).extendedProps?.rawStart || s.start || ''
+            const sTitle = s.title || ''
+            return sRaw && sTitle && sRaw === raw && sTitle === title
+          })
+          if (matchesServer) return false
+          return true
+        })
+        return dedupeEvents([...mapped, ...leftover])
+      })
+
+      // If the sync endpoint returned Google events but they don't appear
+      // persisted via `/calendar/events/:userId` on refresh, attempt to persist
+      // any items that lack a DB id but include a google_event_id. This is a
+      // defensive fallback for backends that return transient Google data.
+      try {
+        const toPersist = mapped.filter((m: any) => !m.id && m.google_event_id)
+        if (toPersist.length > 0) {
+          // POST each item (best-effort). Include google_event_id to help server dedupe/upsert.
+          await Promise.allSettled(toPersist.map((it: any) => {
+            const body = {
+              title: it.title,
+              start: it.start,
+              end: it.end,
+              description: it.description || null,
+              color: it.backgroundColor || it.color || '#ef4444',
+              google_event_id: it.google_event_id
             }
-            const updated = await res.json()
-            setEvents(prev => prev.map(ev => ev.id === String(editingEvent.id) ? ({
-              id: String(updated.id || editingEvent.id),
-              title: updated.title || payload.title,
-              start: updated.start || payload.start,
-              end: updated.end || payload.end,
-              backgroundColor: updated.color || payload.color || taskColor,
-              description: updated.description || payload.description || '',
-              extendedProps: { description: updated.description || payload.description || '', rawStart: updated.start || payload.start, rawEnd: updated.end || payload.end }
-            }) : ev))
-            setEditingEvent(null)
-          } else {
-            const res = await fetch(`${base}/calendar/create/${userId}`, {
+            return fetch(`${base}/calendar/create/${userId}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
+              body: JSON.stringify(body)
             })
-            if (!res.ok) {
-              const txt = await res.text().catch(() => '')
-              console.error('create event failed', res.status, txt)
-              alert('Failed to save event')
-              return
+          }))
+
+          // Refresh authoritative events from server after persistence attempts
+          try {
+            const fresh = await fetch(`${base}/calendar/events/${userId}`)
+            if (fresh.ok) {
+              const all = await fresh.json()
+              setEvents(mapServerListUtil(all, '#28375cff'))
             }
-            const saved = await res.json()
-            const newEvent: Event = {
-              id: String(saved.id || `${Date.now()}`),
-              title: saved.title,
-              start: saved.start,
-              end: saved.end,
-              backgroundColor: taskColor,
-              color: taskColor,
-              description: saved.description || payload.description || '',
-              allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
-              extendedProps: { description: saved.description || payload.description || '' }
-            }
-            setEvents(prev => [...prev, newEvent])
-          }
-        } catch (err) {
-          console.error('save task failed', err)
-          alert('Failed to save task')
-        } finally {
-          setTaskTitle('')
-          setTaskDate('')
-          setStartTime('')
-          setEndTime('')
-          setTaskDescription('')
-          setTaskColor('#ef4444')
-          setIsTaskDialogOpen(false)
+          } catch (e) { /* ignore refresh errors */ }
         }
-      })()
+      } catch (e) {
+        console.warn('persistence fallback after sync failed', e)
+      }
+
+      setGoogleConnected(true)
+    } catch (err) {
+      console.error('Sync failed', err)
+      alert('Sync failed. Check console for details.')
+    } finally {
+      setLoadingSync(false)
     }
   };
+
+  // Save handling moved to `AddTask` component. The dialog UI in this component
+  // delegates create/update/delete to `AddTask` to keep the logic in one place.
 
   const handleEventClick = (clickInfo: any) => {
     const ev = clickInfo.event;
