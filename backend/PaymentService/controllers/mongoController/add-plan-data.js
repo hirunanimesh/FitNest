@@ -26,6 +26,22 @@ async function deletePlanData (plan_id){
     .catch(err => console.error('❌ Delete error:', err));
 }
 
+async function updatePlanPrice({plan_id,new_price_id}) {
+    try {
+        const updatedPlan = await StripePlanData.findOneAndUpdate(
+            { plan_id },
+            { price_id: new_price_id },
+            { new: true }
+        );
+        console.log('📦 Plan updated:', updatedPlan);
+        return updatedPlan;
+    } catch (err) {
+        console.error('❌ Update error:', err);
+        throw err;
+    }
+}
+
+
 
 async function findStripeCustomerId ({customer_id}){
     
@@ -92,4 +108,5 @@ async function findCustomerByStripeId({stripe_customer_id}){
     return customer;
 }
 
-export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData, findStripePriceId,findPlansByProductId,findPlansByPlanIds,findCustomerByStripeId};
+export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData, 
+    findStripePriceId,findPlansByProductId,findPlansByPlanIds,findCustomerByStripeId,updatePlanPrice};

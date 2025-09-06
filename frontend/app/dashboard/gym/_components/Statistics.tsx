@@ -91,6 +91,9 @@ const Statistics: React.FC = () => {
             )
           );
         }
+        if(response.data?.monthlyRevenue !== undefined){
+          localStorage.setItem('monthlyRevenues', JSON.stringify(response.data.monthlyRevenue));
+        }
           console.log('Trainers count fetched:', response.data.trainers_count);
         }else{
           console.log('No revenue data received');

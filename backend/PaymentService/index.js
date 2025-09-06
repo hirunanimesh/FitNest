@@ -12,7 +12,7 @@ import connectDatabase from './database/mongo.js';
 import getConnectedAccountPayments from './controllers/stripeController/get-connected-account-payments.js';
 import oneTimePayment from './controllers/stripeController/one-time-payment.js';
 import getCurrentMonthRevenue from './controllers/stripeController/get-monthly-revenue.js';
-import { GymPlanCreatedConsumer, GymPlanDeletedConsumer } from './kafka/Consumer.js';
+import { GymPlanCreatedConsumer, GymPlanDeletedConsumer, GymPlanPriceUpdatedConsumer } from './kafka/Consumer.js';
 import cancelSubscription from './controllers/stripeController/cancel-subscription.js';
 import getCustomersByGymPlans from './controllers/stripeController/get-customer-ids.js';
 
@@ -39,6 +39,7 @@ app.use('/getgymcustomerids',getCustomersByGymPlans)
 
 GymPlanCreatedConsumer()
 GymPlanDeletedConsumer()
+GymPlanPriceUpdatedConsumer()
 
 
 app.listen(process.env.PORT || 3003, () => {

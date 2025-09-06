@@ -390,7 +390,7 @@ export default function SearchPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-red-500 focus:ring-red-500 rounded-xl py-6 text-lg"
           />
-          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+          {view==="gyms" && <Select value={selectedLocation} onValueChange={setSelectedLocation}>
             <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white focus:border-red-500 focus:ring-red-500 rounded-xl py-6">
               <SelectValue placeholder="Select Location" />
             </SelectTrigger>
@@ -428,15 +428,15 @@ export default function SearchPage() {
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
-          <Button
+          </Select>}
+          {view==="gyms" && <Button
             onClick={handleFindNearMe}
             disabled={isLoadingMapData}
             className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl py-6 font-semibold text-lg shadow-lg shadow-red-500/25 transition-all duration-300 hover:scale-105"
           >
             <MapPin className="mr-2 h-5 w-5" />
             {isLoadingMapData ? "Loading..." : "Find Near Me"}
-          </Button>
+          </Button>}
         </div>
 
         {/* Loading State */}

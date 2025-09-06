@@ -1,5 +1,5 @@
-import { GymPlanCreateProducer, GymPlanDeleteProducer } from "../kafka/Producer.js";
-import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers,getOneDayGyms , getOtherGyms } from "../services/plans.service.js";
+import { GymPlanCreateProducer, GymPlanDeleteProducer, GymPlanPriceUpdateProducer } from "../kafka/Producer.js";
+import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers,getOneDayGyms , getOtherGyms, getgymplanbyplanid } from "../services/plans.service.js";
 
 
 export const addGymPlan = async (req, res) => {
@@ -47,8 +47,13 @@ export const getGymPlanByGymId = async (req, res) => {
 export const updateGymPlan = async (req, res) => {
     const { gymPlanId } = req.params;
     try {
+        const oldPlan = await getgymplanbyplanid(gymPlanId);
         const updatedGymPlan = await updategymplan(gymPlanId, req.body);
         if (updatedGymPlan) {
+            if(oldPlan.price !== updatedGymPlan.price){
+                await GymPlanPriceUpdateProducer(gymPlanId,updatedGymPlan.price,updatedGymPlan.duration) 
+                console.log("Price changed, send to kafka")
+            }
             res.status(200).json({ message: "Gym plan updated successfully", updatedGymPlan });
         } else {
             res.status(404).json({ message: "Gym plan not found" });
