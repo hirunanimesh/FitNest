@@ -134,13 +134,81 @@ const AddTask: React.FC<Props> = ({
       if (!userId) return alert('You must be signed in to add tasks')
 
       if (editingEvent) {
-        const res = await fetch(`${base}/calendar/${editingEvent.id}`, {
+        const putUrl = `${base}/calendar/${editingEvent.id}`
+        // Debug: show the outgoing update request URL and payload in browser console
+        console.debug('[AddTask] PUT', putUrl, payload)
+        const res = await fetch(putUrl, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         })
-        if (!res.ok) throw new Error('update failed')
-        const updated = await res.json()
+        if (!res.ok) {
+          // Prefer structured JSON error when available
+          let parsed: any = null
+          try { parsed = await res.json() } catch (e) { /* not JSON */ }
+          const bodyText = parsed && (parsed.message || parsed.error) ? (parsed.message || parsed.error) : (await res.text().catch(() => '<no body>'))
+
+          // If the server says the calendar row wasn't found (404) the client may be
+          // editing an event whose id is stale or came from Google; attempt to create
+          // a new event instead of failing so the user's edit is preserved.
+          if (res.status === 404 && (parsed?.error === 'not_found' || String(bodyText).toLowerCase().includes('not found'))) {
+            try {
+              const postUrl = `${base}/calendar/create/${userId}`
+              console.debug('[AddTask] PUT returned not_found, falling back to POST', postUrl, payload)
+              const createRes = await fetch(postUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              })
+              if (!createRes.ok) {
+                let p: any = null
+                try { p = await createRes.json() } catch (e) {}
+                const t = p && (p.message || p.error) ? (p.message || p.error) : (await createRes.text().catch(() => '<no body>'))
+                throw new Error(`create fallback failed: ${t}`)
+              }
+              const saved = await createRes.json()
+              const newEvent: EventShape = {
+                id: String(saved.id || `${Date.now()}`),
+                title: saved.title || payload.title,
+                start: saved.start || payload.start,
+                end: saved.end || payload.end,
+                backgroundColor: taskColor,
+                color: taskColor,
+                description: saved.description || payload.description || '',
+                google_event_id: saved.google_event_id || null,
+                allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
+                extendedProps: { description: saved.description || payload.description || '', rawStart: saved.start || payload.start, rawEnd: saved.end || payload.end }
+              }
+              setEvents(prev => {
+                // remove any existing event that matches the editingEvent by id or google_event_id
+                const eid = editingEvent ? String(editingEvent.id) : ''
+                const egid = editingEvent ? String(editingEvent.google_event_id || '') : ''
+                const filtered = prev.filter(ev => {
+                  const evId = String((ev as any).id || '')
+                  const evGid = String((ev as any).google_event_id || '')
+                  return !(evId === eid || (egid && evGid === egid))
+                })
+                return [...filtered, newEvent]
+              })
+              setEditingEvent(null)
+              // finish gracefully
+              return
+            } catch (e) {
+              // fall through to throwing the original error below
+              console.error('create fallback failed', e)
+            }
+          }
+
+          throw new Error(`update failed: ${bodyText}`)
+        }
+        let updated: any = null
+        try {
+          updated = await res.json()
+        } catch (e) {
+          const txt = await res.text().catch(() => null)
+          console.warn('update returned non-JSON response', txt)
+          updated = null
+        }
         // Defensive mapping: backend may return different shapes (normalized or raw supabase row).
         const mapUpdatedToEvent = (upd: any) => {
           if (!upd) return null
@@ -217,13 +285,27 @@ const AddTask: React.FC<Props> = ({
           } catch (e) { console.error('failed to refetch events after update', e) }
         }
       } else {
-        const res = await fetch(`${base}/calendar/create/${userId}`, {
+        const postUrl = `${base}/calendar/create/${userId}`
+        console.debug('[AddTask] POST', postUrl, payload)
+        const res = await fetch(postUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         })
-        if (!res.ok) throw new Error('create failed')
-        const saved = await res.json()
+        if (!res.ok) {
+          let parsed: any = null
+          try { parsed = await res.json() } catch (e) { /* not JSON */ }
+          const bodyText = parsed && (parsed.message || parsed.error) ? (parsed.message || parsed.error) : (await res.text().catch(() => '<no body>'))
+          throw new Error(`create failed: ${bodyText}`)
+        }
+        let saved: any = null
+        try {
+          saved = await res.json()
+        } catch (e) {
+          const txt = await res.text().catch(() => null)
+          console.warn('create returned non-JSON response', txt)
+          saved = { id: `${Date.now()}`, title: payload.title, start: payload.start, end: payload.end, description: payload.description, google_event_id: null }
+        }
         const newEvent: EventShape = {
           id: String(saved.id || `${Date.now()}`),
           title: saved.title || payload.title,
@@ -239,9 +321,9 @@ const AddTask: React.FC<Props> = ({
         }
         setEvents(prev => [...prev, newEvent])
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('save task failed', err)
-      alert('Failed to save task')
+      alert('Failed to save task: ' + (err && err.message ? err.message : String(err)))
     } finally {
       setTaskTitle('')
       setTaskDate('')
@@ -259,15 +341,22 @@ const AddTask: React.FC<Props> = ({
       const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
       const idToDelete = editingEvent?.id || viewingEvent?.id
       if (!idToDelete) return alert('No event selected to delete')
-      const res = await fetch(`${base}/calendar/${idToDelete}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('delete failed')
+  const deleteUrl = `${base}/calendar/${idToDelete}`
+  console.debug('[AddTask] DELETE', deleteUrl)
+  const res = await fetch(deleteUrl, { method: 'DELETE' })
+      if (!res.ok) {
+        let parsed: any = null
+        try { parsed = await res.json() } catch (e) { /* not JSON */ }
+        const bodyText = parsed && (parsed.message || parsed.error) ? (parsed.message || parsed.error) : (await res.text().catch(() => '<no body>'))
+        throw new Error(`delete failed: ${bodyText}`)
+      }
       setEvents(prev => prev.filter(ev => ev.id !== String(idToDelete)))
       setEditingEvent(null)
       setViewingEvent(null)
       setIsTaskDialogOpen(false)
-    } catch (err) {
+    } catch (err: any) {
       console.error('delete failed', err)
-      alert('Failed to delete event')
+      alert('Failed to delete event: ' + (err && err.message ? err.message : String(err)))
     }
   }
 
