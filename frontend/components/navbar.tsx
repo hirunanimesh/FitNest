@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle } from "@/components/ui/sheet"
 import { Menu, Dumbbell, X } from "lucide-react"
 import Link from "next/link"
 
@@ -83,6 +83,9 @@ export function Navbar() {
               side="right" 
               className="bg-gradient-to-b from-black via-gray-900 to-black border-l-2 border-red-500/30 w-full sm:w-96 backdrop-blur-xl"
             >
+              {/* Hidden title for accessibility */}
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              
               {/* Mobile Menu Header with Close Button */}
               <div className="flex items-center justify-between mb-12 pt-4">
                 <div className="flex items-center space-x-3">

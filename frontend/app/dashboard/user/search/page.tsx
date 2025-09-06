@@ -53,11 +53,10 @@ interface Trainer {
   profile_img?: string | null;
   expertise: string;
   contact_no?: string | null;
-  experience_years: number;
+  years_of_experience: number;
   email: string;
   skills: string | string[];
   bio: string;
-  year_of_experience: number;
   rating: number;
 }
 
@@ -340,9 +339,8 @@ export default function SearchPage() {
                 trainers
                   .filter((trainer) => {
                     const matchesName = trainer.trainer_name.toLowerCase().includes(searchQuery.toLowerCase());
-                    const matchesLocation =
-                      !selectedLocation || trainer.expertise.toLowerCase().includes(selectedLocation);
-                    return matchesName && matchesLocation;
+                    
+                    return matchesName ;
                   })
                   .map((trainer) => <TrainerCard key={trainer.id} trainer={trainer} />)}
             </div>
@@ -357,9 +355,8 @@ export default function SearchPage() {
             {view === "trainers" &&
               trainers.filter((trainer) => {
                 const matchesName = trainer.trainer_name.toLowerCase().includes(searchQuery.toLowerCase());
-                const matchesLocation =
-                  !selectedLocation || trainer.expertise.toLowerCase().includes(selectedLocation);
-                return matchesName && matchesLocation;
+               
+                return matchesName;
               }).length === 0 && (
                 <div className="text-center py-16">
                   <MapPin className="w-16 h-16 text-red-500 mx-auto" />

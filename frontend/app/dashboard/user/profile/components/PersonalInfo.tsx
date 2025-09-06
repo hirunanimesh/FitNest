@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, MapPinIcon, Camera, Edit3, X } from "lucide-react"
+import { Upload, MapPinIcon, Edit3, X } from "lucide-react"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
-import { UpdateUserDetails } from "@/lib/api"
+import { UpdateUserDetails, uploadToCloudinary } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
+
 interface PersonalInfoProps {
   userData: any
   setUserData: (data: any) => void
@@ -53,34 +54,6 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
       setFormattedDob("")
     }
   }, [userData.dateOfBirth])
-
-  // Real Cloudinary upload function - replace with your actual implementation
-  const uploadToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('upload_preset', 'your_upload_preset') // Replace with your preset
-    formData.append('folder', 'fitnest/customers')
-
-    try {
-      const response = await fetch(
-        'https://api.cloudinary.com/v1_1/dacknfqtw/image/upload', // Replace with your cloud name
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to upload image to Cloudinary')
-      }
-
-      const data = await response.json()
-      return data.secure_url // This will be in format like your example
-    } catch (error) {
-      console.error('Cloudinary upload error:', error)
-      throw new Error('Image upload failed')
-    }
-  }
 
   // Handle image file selection
   const handleImageSelect = useCallback((file: File) => {
@@ -158,25 +131,12 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
         return
       }
 
-      // Upload image to Cloudinary first
+      // Use imported uploadToCloudinary
       const imageUrl = await uploadToCloudinary(selectedImage)
-      console.log("Cloudinary URL received:", imageUrl)
       
-      // Update user profile with new image URL using regular object (not FormData)
-      const updateData = {
-        avatar: imageUrl  // This will be mapped to profile_img in the API
-      }
+      await UpdateUserDetails(customerId, { avatar: imageUrl })
       
-      // Debug logging
-      console.log("Customer ID:", customerId)
-      console.log("Update data being sent:", updateData)
-      
-      await UpdateUserDetails(customerId, updateData)
-      
-      // Update local state with the new Cloudinary URL
       setUserData({ ...userData, avatar: imageUrl })
-      
-      // Reset modal state
       setSelectedImage(null)
       setImagePreview("")
       setIsImageModalOpen(false)
@@ -187,12 +147,6 @@ export function PersonalInfo({ userData, setUserData, isEditing }: PersonalInfoP
       })
       
     } catch (error: any) {
-      console.error("Error uploading image:", error)
-      console.error("Error details:", {
-        message: error.message,
-        status: error.status,
-        response: error.response?.data
-      })
       toast({
         variant: "destructive",
         title: "Upload Failed",

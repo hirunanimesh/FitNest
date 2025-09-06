@@ -110,7 +110,7 @@ const UpcomingSessions = () => {
                   disabled={session.booked}
                   onClick={() => setSelectedSession(session.id.toString())}
                 >
-                  { "View Details"}
+                  { "Join Session"}
                 </Button>
               </CardContent>
             </Card>
