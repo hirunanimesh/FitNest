@@ -8,65 +8,74 @@
 const styles = `
 /*
   Global CSS for Schedule component
+*/
 
-  .fc-popover {
-    background: transparent !important; /* underlying bg removed; body/list provide visuals */
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 10px !important;
-    overflow: hidden !important;
-  }
-  .fc-popover .fc-popover-body {
-    padding: 0 !important; /* remove gap between header and list */
-    background: transparent !important;
-  }
-  .fc-popover .fc-popover-header,
-  .fc-popover .fc-popover-title {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important; /* center the number */
-    color: #e6e6e6 !important;
-    font-weight: 700 !important;
-    font-size: 1.2rem !important;
-    padding: 10px 12px !important;
-    margin: 0 !important; /* remove gap between number and tasks */
-    text-align: center !important;
-    background: linear-gradient(180deg, #252525, #1a1a1a) !important; /* header bg */
-  }
-  .fc-popover .fc-list {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important; /* larger gap between tasks */
-    margin: 0 !important;
-    padding: 10px !important; /* inner padding so items don't touch popover edges */
-    background: linear-gradient(180deg, #252525, #1a1a1a) !important; /* make list share header bg */
-  }
-  .fc-popover .fc-list-item {
-    /* full-bleed rectangle background matching header */
-    background: transparent !important; /* list provides bg; items are transparent rectangles */
-    border-radius: 0 !important; /* full rectangle */
-    padding: 8px 12px !important;
-    cursor: pointer !important; /* hand pointer */
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease !important;
-    box-shadow: none !important;
-    display: flex !important;
-    align-items: center !important;
-    width: 100% !important;
-  }
-  .fc-popover .fc-list-item + .fc-list-item {
-    margin-top: 0 !important; /* gaps handled by .fc-list gap */
-  }
+.fc-popover {
+  background: transparent !important; /* underlying bg removed; body/list provide visuals */
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+.fc-popover .fc-popover-body {
+  padding: 0 !important; /* remove gap between header and list */
+  background: transparent !important;
+}
+.fc-popover .fc-popover-header,
+.fc-popover .fc-popover-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important; /* center the number */
+  position: relative !important; /* allow shimmer pseudo-element */
+  color: #e6e6e6 !important;
+  font-weight: 700 !important;
+  font-size: 1.2rem !important;
+  padding: 10px 12px !important;
+  margin: 0 !important; /* remove gap between number and tasks */
+  text-align: center !important;
+  background: linear-gradient(180deg, #252525, #1a1a1a) !important; /* header bg */
+}
+.fc-popover .fc-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important; /* larger gap between tasks */
+  margin: 0 !important;
+  padding: 10px !important; /* inner padding so items don't touch popover edges */
+  background: linear-gradient(180deg, #252525, #1a1a1a) !important; /* make list share header bg */
+}
+.fc-popover .fc-list-item {
+  /* full-bleed rectangle background matching header */
+  background: transparent !important; /* list provides bg; items are transparent rectangles */
+  border-radius: 0 !important; /* full rectangle */
+  padding: 8px 12px !important;
+  cursor: pointer !important; /* hand pointer */
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+.fc-popover .fc-list-item + .fc-list-item {
+  margin-top: 0 !important; /* gaps handled by .fc-list gap */
+}
+
+/* Shimmer overlay for popover header - attach animated gradient to header */
+.fc-popover .fc-popover-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.06;
+  background: linear-gradient(90deg,
     rgba(255, 0, 51, 0.9),
-    rgba(255,0,180,0.9),
-    rgba(255, 0, 51, 0.9));
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
+    rgba(255, 0, 180, 0.9),
+    rgba(255, 0, 51, 0.9)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   animation: shineMove 4s linear infinite;
-  pointer-events: none;
-  z-index: -1;
 }
 
 @keyframes shineMove {
@@ -78,6 +87,13 @@ const styles = `
   background: transparent;
 }
 
+/* Visible red border around the whole calendar container */
+.calendar-shell {
+  position: relative;
+  border-radius: 8px;
+  border: 4px solid rgba(255, 0, 51, 0.22); /* visible red border */
+  box-shadow: 0 8px 24px rgba(199, 23, 105, 0.5), 0 0 24px rgba(199, 23, 105, 0.5) inset;
+}
 
 /* Remove default table borders so gutters show as black */
 .fc .fc-scrollgrid, .fc .fc-scrollgrid-section, .fc .fc-daygrid-body, .fc .fc-daygrid-body td, .fc-daygrid-day {
@@ -94,7 +110,7 @@ const styles = `
   justify-content: center;
   background: #666161ff;
   color: #cfcfcf !important;
-  padding: 6px 12px;
+  padding: 5px 14px;
   border-radius: 999px;
   margin: 4px 6px;
   font-weight: 600;
@@ -343,6 +359,42 @@ const styles = `
 .fc-popover .fc-list-item:last-child {
   border-bottom-left-radius: 8px !important;
   border-bottom-right-radius: 8px !important;
+}
+
+/*
+  Adjust FullCalendar "more" link appearance across views:
+  - hide the leading "+" character visually (keeps DOM text unchanged)
+  - center the link in the day cell
+  - use a muted gray text color
+  - force block layout and remove floats from FC defaults
+*/
+.fc-daygrid-more-link,
+.fc-timegrid-more-link,
+.fc-more-link {
+  display: block !important;
+  float: none !important; /* override FC float:left / right */
+  text-align: center !important;
+  margin: 6px auto 0 !important;
+  color: #9ca3af !important; /* muted gray */
+  font-weight: 600 !important;
+  background: transparent !important; /* remove any bg added by FC */
+  padding: 0 !important;
+}
+
+/* hide the leading plus sign while leaving the number and text visible */
+.fc-daygrid-more-link::first-letter,
+.fc-timegrid-more-link::first-letter,
+.fc-more-link::first-letter {
+  color: transparent !important;
+}
+
+/* also ensure inner link content is centered */
+.fc-daygrid-more-link-inner,
+.fc-timegrid-more-link-inner {
+  display: inline-block !important;
+  text-align: center !important;
+  width: 100% !important;
+  color: inherit !important;
 }
 `
 

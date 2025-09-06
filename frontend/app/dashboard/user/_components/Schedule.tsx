@@ -386,11 +386,36 @@ const Schedule: React.FC = () => {
             const pop = el.matches && el.matches('.fc-popover') ? el : el.querySelector('.fc-popover') as HTMLElement
             if (pop) {
               const title = pop.querySelector('.fc-popover-title') as HTMLElement | null
-              if (title && title.innerText) {
-                // extract last number group (day) from the title text
-                const txt = title.innerText
-                const mday = txt.match(/(\d{1,2})/) || []
-                if (mday && mday[1]) title.innerText = mday[1]
+              if (!title) continue
+
+              const shortenTitle = () => {
+                try {
+                  const txt = title.innerText || ''
+                  const mday = txt.match(/(\d{1,2})/) || []
+                  if (mday && mday[1] && title.innerText !== mday[1]) {
+                    // replace with the day number only
+                    title.innerText = mday[1]
+                  }
+                } catch (e) { /* ignore */ }
+              }
+
+              // Apply immediately
+              shortenTitle()
+
+              // If FullCalendar later updates the title (for example when
+              // interacting with items inside the popover), re-apply the
+              // shortened form. Attach a quick observer to this title node
+              // (only once per element) which will schedule shortenTitle on
+              // any text/child changes.
+              if (!(title as any).__shortenObserver) {
+                try {
+                  const tObs = new MutationObserver(() => {
+                    // schedule a microtask so we don't fight FC's updates
+                    setTimeout(shortenTitle, 0)
+                  })
+                  tObs.observe(title, { characterData: true, childList: true, subtree: true })
+                  ;(title as any).__shortenObserver = tObs
+                } catch (e) { /* ignore */ }
               }
             }
           } catch (e) { /* ignore */ }
@@ -399,7 +424,19 @@ const Schedule: React.FC = () => {
     })
 
     observer.observe(document.body, { childList: true, subtree: true })
-    return () => observer.disconnect()
+    return () => {
+      try { observer.disconnect() } catch (e) { /* ignore */ }
+      // also disconnect any per-title observers to avoid leaks
+      try {
+        document.querySelectorAll('.fc-popover .fc-popover-title').forEach(t => {
+          const el = t as any
+          if (el && el.__shortenObserver && typeof el.__shortenObserver.disconnect === 'function') {
+            try { el.__shortenObserver.disconnect() } catch (e) { /* ignore */ }
+            delete el.__shortenObserver
+          }
+        })
+      } catch (e) { /* ignore */ }
+    }
   }, [])
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -460,7 +497,7 @@ const Schedule: React.FC = () => {
           </Button>
         )}
       </div>
-      <div className="calendar-shell" style={{ marginLeft: '2rem', marginRight: '2rem', backgroundColor: '#211f1dff', borderRadius: 8 }}>
+  <div className="calendar-shell" style={{ marginLeft: '4.5rem', marginRight: '4.5rem', backgroundColor: '#211f1dff', borderRadius: 8 }}>
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
