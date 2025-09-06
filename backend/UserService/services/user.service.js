@@ -1,6 +1,4 @@
 import { supabase } from '../database/supabase.js';
-import { uploadImage } from '../config/cloudinary.js';
-
 
 export async function updateUserDetails(userId, userData) {
   const { data, error } = await supabase
@@ -76,21 +74,3 @@ export async function getLatestWeightById(userId) {
   return data[0]; // Array of all weight entries
 }
 
-export async function uploadProfileImage(fileBuffer, userId) {
-  try {
-    // Upload image to Cloudinary
-    const cloudinaryResult = await uploadImage(
-      fileBuffer,
-      "fitnest/profile-updates",
-      `profile_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    );
-    
-    return {
-      success: true,
-      imageUrl: cloudinaryResult.secure_url,
-      publicId: cloudinaryResult.public_id
-    };
-  } catch (error) {
-    throw new Error(`Failed to upload image: ${error.message}`);
-  }
-}

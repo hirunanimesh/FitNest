@@ -1,10 +1,6 @@
 import { supabase } from '../database/supabase.js'
 import qs from 'querystring'
 
-const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
-const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
-const CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
-
 export function buildOauthUrl(userId) {
   const clientId = process.env.GOOGLE_CLIENT_ID
   const redirectUri = `${process.env.BACKEND_URL || ''}/google/callback`
@@ -23,7 +19,7 @@ export function buildOauthUrl(userId) {
     prompt: 'consent',
     state: String(userId)
   }
-  return `${GOOGLE_AUTH_URL}?${qs.stringify(params)}`
+  return `${process.env.GOOGLE_AUTH_URL}?${qs.stringify(params)}`
 }
 
 export async function exchangeCodeForTokens(code) {
@@ -39,7 +35,7 @@ export async function exchangeCodeForTokens(code) {
     grant_type: 'authorization_code'
   }
 
-  const res = await fetch(GOOGLE_TOKEN_URL, {
+  const res = await fetch(process.env.GOOGLE_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: qs.stringify(body)
@@ -79,7 +75,7 @@ export async function refreshAccessToken(refreshToken) {
     grant_type: 'refresh_token'
   }
 
-  const res = await fetch(GOOGLE_TOKEN_URL, {
+  const res = await fetch(process.env.GOOGLE_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: qs.stringify(body)
@@ -99,7 +95,7 @@ export async function updateAccessTokenForUser(userId, accessToken, expiresIn) {
 }
 
 export async function fetchGoogleCalendarEvents(accessToken) {
-  const url = `${CALENDAR_EVENTS_URL}?singleEvents=true&orderBy=startTime&timeMin=${new Date().toISOString()}`
+  const url = `${process.env.CALENDAR_EVENTS_URL}?singleEvents=true&orderBy=startTime&timeMin=${new Date().toISOString()}`
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
   if (res.status === 401) {
     throw new Error('access token expired')
@@ -299,7 +295,7 @@ export async function saveOrCreateEventForUser(userId, payload) {
       // attempt to create, refresh token if 401. Log request/response bodies for debugging.
       const tryCreate = async (token) => {
         console.log('[google] creating event, body=', JSON.stringify(eventBody))
-        const r = await fetch(CALENDAR_EVENTS_URL, {
+        const r = await fetch(process.env.CALENDAR_EVENTS_URL, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(eventBody)
@@ -408,7 +404,7 @@ export async function updateEventForUser(calendarId, payload) {
         return body
       }
       const tryPatch = async (token) => {
-        const url = `${CALENDAR_EVENTS_URL}/${existing.google_event_id}`
+        const url = `${process.env.CALENDAR_EVENTS_URL}/${existing.google_event_id}`
         const r = await fetch(url, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(buildBody()) })
         const text = await r.text().catch(() => '')
         let parsed = null
@@ -452,7 +448,7 @@ export async function deleteEventForUser(calendarId) {
       if (tokens) {
         let accessToken = tokens.access_token
         const tryDel = async (token) => {
-          const url = `${CALENDAR_EVENTS_URL}/${existing.google_event_id}`
+          const url = `${process.env.CALENDAR_EVENTS_URL}/${existing.google_event_id}`
           const r = await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
           if (!r.ok) {
             const text = await r.text().catch(() => '')
