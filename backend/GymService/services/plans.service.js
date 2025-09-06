@@ -38,6 +38,22 @@ export async function addgymplan(gymPlanData) {
   
     return data;
   }
+
+  export async function getgymplanbyplanid(planId){
+    const { data, error } = await supabase
+      .from('Gym_plans')
+      .select('*')
+      .eq('plan_id', planId)
+      .single();
+
+      if(!data){
+        return null;
+      }
+    if (error) {
+        throw new Error(error.message);
+    }
+    return data;
+  }
   
   export async function getgymplanbygymid(gymId) {
     const { data, error } = await supabase

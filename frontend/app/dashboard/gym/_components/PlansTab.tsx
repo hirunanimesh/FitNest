@@ -497,9 +497,9 @@ const PlansTab: React.FC = () => {
               {currentPlan.plan_id ? 'Edit Plan' : 'Add New Plan'}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handlePlanSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Plan Name</Label>
+          <form onSubmit={handlePlanSubmit} className="space-y-4 ">
+            <div className="space-y-2 text-white">
+              <Label htmlFor="title" className='text-white'>Plan Name</Label>
               <Input
                 id="title"
                 value={currentPlan.title}
@@ -510,7 +510,7 @@ const PlansTab: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">Price</Label>
+              <Label htmlFor="price" className='text-white'>Price</Label>
               <Input
                 id="price"
                 type="number"
@@ -522,7 +522,7 @@ const PlansTab: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className='text-white'>Description</Label>
               <Input
                 id="description"
                 value={currentPlan.description}
@@ -532,7 +532,7 @@ const PlansTab: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="duration">Duration</Label>
+              <Label htmlFor="duration" className='text-white'>Duration</Label>
               <Select
                 onValueChange={(value) =>
                   setCurrentPlan({ ...currentPlan, duration: value })
@@ -552,7 +552,7 @@ const PlansTab: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Assign Trainers</Label>
+              <Label className='text-white'>Assign Trainers</Label>
               {loadingTrainers ? (
                 <div className="flex justify-center items-center h-16">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-b-4 border-red-500"></div>
@@ -589,7 +589,7 @@ const PlansTab: React.FC = () => {
               )}
             </div>
 
-            <DialogFooter className="flex justify-end space-x-2 mt-2">
+            <DialogFooter className="flex justify-end space-x-2 mt-2 text-black">
               <Button
                 type="button"
                 variant="outline"
