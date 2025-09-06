@@ -12,6 +12,7 @@ import {
   refreshAccessToken,
   updateAccessTokenForUser
 } from '../services/calendar.service.js';
+import { supabase } from '../database/supabase.js'
 
 export const getGoogleOauthUrl = async (req, res) => {
   const { userId } = req.params;
@@ -117,10 +118,28 @@ export const updateCalendarEvent = async (req, res) => {
   const { calendarId } = req.params
   const payload = req.body
   try {
-    const updated = await updateEventForUser(String(calendarId), payload)
+    // If caller passed a Google event id instead of the numeric local calendar_id,
+    // resolve it to the calendar_id so the update targets the right row.
+    let idToUse = String(calendarId)
+    if (!/^\d+$/.test(idToUse)) {
+      try {
+        const { data, error } = await supabase.from('calendar').select('calendar_id').eq('google_event_id', idToUse).single()
+        if (error || !data) {
+          return res.status(404).json({ error: 'not_found', message: 'calendar row not found for id' })
+        }
+        idToUse = String(data.calendar_id)
+      } catch (e) {
+        console.error('failed to resolve google_event_id to calendar_id', e)
+        return res.status(500).json({ error: 'resolve_failed', message: e.message })
+      }
+    }
+    const updated = await updateEventForUser(String(idToUse), payload)
     res.json(updated)
   } catch (err) {
     console.error('updateCalendarEvent error', err)
+    if (err && (err.code === 'GOOGLE_AUTH_REQUIRED' || String(err.message).toLowerCase().includes('google_auth_required'))) {
+      return res.status(401).json({ error: 'google_auth_required' })
+    }
     res.status(500).json({ error: 'update failed', message: err.message })
   }
 }

@@ -167,12 +167,15 @@ export async function saveOrUpdateEventsForUser(userId, events) {
   try {
     const incomingIds = events.map(e => e.google_event_id).filter(Boolean)
     if (incomingIds.length > 0) {
+      // Delete any local rows that were created from Google but are no longer present in Google.
+      // Only delete rows that have a non-null google_event_id and whose google_event_id is not in the
+      // incoming list. Previously this incorrectly filtered for NULL and removed local (non-Google) rows.
       const { error: delErr } = await supabase
         .from('calendar')
         .delete()
         .eq('customer_id', customerId)
         .not('google_event_id', 'in', `(${incomingIds.map(id => `'${id.replace(/'/g, "''")}'`).join(',')})`)
-        .is('google_event_id', null)
+        .not('google_event_id', 'is', null)
       if (delErr) console.error('delete stale google events failed', delErr)
     } else {
       // No incoming google events: remove any local rows that have a google_event_id (they were deleted in Google)
@@ -239,8 +242,10 @@ export async function saveOrCreateEventForUser(userId, payload) {
   }
 
   // Insert into local calendar table
-  // Store task_date as ISO date or full ISO datetime if time provided so we can return precise start times
-  const taskDate = payload.start ? (String(payload.start).includes('T') ? new Date(String(payload.start)).toISOString() : String(payload.start)) : null
+  // Store task_date using the exact string provided by client. This preserves the
+  // wall-clock time the user entered (e.g. '2025-09-03T13:00') and prevents
+  // unintended timezone shifts when the client re-renders the event.
+  const taskDate = payload.start ? String(payload.start) : null
   const row = {
     task_date: taskDate,
     task: payload.title || payload.summary || 'No title',
@@ -340,19 +345,28 @@ export async function saveOrCreateEventForUser(userId, payload) {
     console.error('create event google error', err)
   }
 
-  // Normalize start/end for the client response. If the payload included time (dateTime), return ISO strings
-  const normalizedStart = payload.start
-    ? (String(payload.start).includes('T') ? new Date(String(payload.start)).toISOString() : String(payload.start))
-    : null
-  const normalizedEnd = payload.end
-    ? (String(payload.end).includes('T') ? new Date(String(payload.end)).toISOString() : String(payload.end))
-    : (payload.start && String(payload.start).includes('T') ? new Date(new Date(String(payload.start)).getTime() + 60 * 60 * 1000).toISOString() : (payload.start ? String(payload.start) : null))
+  // Normalize start/end for the client response. Preserve the original string
+  // provided by the client for timed events to avoid timezone conversion.
+  const normalizedStart = payload.start ? String(payload.start) : null
+  let normalizedEnd = null
+  if (payload.end) {
+    normalizedEnd = String(payload.end)
+  } else if (payload.start && String(payload.start).includes('T')) {
+    // If no explicit end provided but start has time, default to +1 hour using
+    // local wall-clock arithmetic and format back to a YYYY-MM-DDTHH:mm:SS string.
+    const s = new Date(String(payload.start))
+    const e = new Date(s.getTime() + 60 * 60 * 1000)
+    const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:00`
+    normalizedEnd = fmt(e)
+  } else {
+    normalizedEnd = payload.start ? String(payload.start) : null
+  }
 
   return {
     id: inserted.calendar_id,
     title: inserted.task,
-    start: normalizedStart || inserted.task_date,
-    end: normalizedEnd || inserted.task_date,
+  start: normalizedStart || inserted.task_date,
+  end: normalizedEnd || inserted.task_date,
   google_event_id: inserted.google_event_id || null,
   color: inserted.color || null,
   description: inserted.description || null
@@ -371,7 +385,9 @@ export async function updateEventForUser(calendarId, payload) {
   if (payload.description !== undefined) updates.description = payload.description
   if (payload.color !== undefined) updates.color = payload.color
   if (payload.start) {
-    updates.task_date = String(payload.start).includes('T') ? new Date(String(payload.start)).toISOString() : String(payload.start)
+  // Preserve the exact string provided by the client for task_date so the
+  // stored value matches the user's wall-clock input and avoids TZ shifts.
+  updates.task_date = String(payload.start)
   }
 
   const { data: upd, error: updErr } = await supabase.from('calendar').update(updates).eq('calendar_id', calendarId).select('calendar_id, task, task_date, customer_id, google_event_id, color, description').single()
@@ -414,12 +430,27 @@ export async function updateEventForUser(calendarId, payload) {
       }
       let attempt = await tryPatch(accessToken)
       if (attempt.res.status === 401) {
-        const refreshed = await refreshAccessToken(tokens.refresh_token)
-        accessToken = refreshed.access_token
-        await updateAccessTokenForUser(String(cust.user_id), accessToken, refreshed.expires_in)
-        attempt = await tryPatch(accessToken)
+        try {
+          const refreshed = await refreshAccessToken(tokens.refresh_token)
+          accessToken = refreshed.access_token
+          await updateAccessTokenForUser(String(cust.user_id), accessToken, refreshed.expires_in)
+          attempt = await tryPatch(accessToken)
+        } catch (err) {
+          // If refresh fails, surface a clear error so controller can ask client to re-auth
+          console.error('failed to refresh access token during google patch', err)
+          const e = new Error('google_auth_required')
+          e.code = 'GOOGLE_AUTH_REQUIRED'
+          throw e
+        }
       }
-      if (!attempt.res.ok) console.error('google patch event failed', attempt.res.status)
+      if (!attempt.res.ok) {
+        console.error('google patch event failed', attempt.res.status)
+        if (attempt.res.status === 401) {
+          const e = new Error('google_auth_required')
+          e.code = 'GOOGLE_AUTH_REQUIRED'
+          throw e
+        }
+      }
     } catch (err) {
       console.error('failed to patch google event', err)
     }

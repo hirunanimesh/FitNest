@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import AddTask from '@/app/dashboard/user/_components/AddTask'
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,13 +22,6 @@ interface Task {
     customer_id: number;
 }
 
-interface TaskForm {
-    task_date: string;
-    task: string;
-    note: string;
-    customer_id: number;
-}
-
 const Calendar: React.FC = () => {
     const [isTaskDialogOpen, setIsTaskDialogOpen] = useState<boolean>(false);
     const [date, setDate] = useState<Date | undefined>(new Date());
@@ -42,13 +36,6 @@ const Calendar: React.FC = () => {
         return `${months[date.getMonth()]} ${date.getDate()}`;
     };
 
-    const [taskForm, setTaskForm] = useState<TaskForm>({
-        task_date: formatDate(new Date()),
-        task: "",
-        note: "",
-        customer_id: 1
-    });
-
     const [tasks, setTasks] = useState<Task[]>([
         { id: 1, task_date: formatDate(new Date()), task: "Morning workout", note: "HIIT session", type: "workout", customer_id: 1 },
         { id: 2, task_date: formatDate(new Date()), task: "Nutrition consultation", note: "Diet planning", type: "appointment", customer_id: 1 },
@@ -57,22 +44,7 @@ const Calendar: React.FC = () => {
         { id: 5, task_date: formatDate(new Date()), task: "Meal prep", note: "Weekly preparation", type: "appointment", customer_id: 1 }
     ]);
 
-    const handleTaskSubmit = (e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        const newTask: Task = {
-            id: Date.now(),
-            ...taskForm,
-            type: "workout" // Default type
-        };
-        setTasks((prev) => [...prev, newTask]);
-        setTaskForm({
-            task_date: formatDate(new Date()),
-            task: "",
-            note: "",
-            customer_id: 1
-        });
-        setIsTaskDialogOpen(false);
-    };
+    // Task creation is handled by the shared AddTask component; trainer keeps local tasks state
 
     return (
         <div className="min-h-screen p-4 bg-gray-800 rounded-lg">
@@ -130,62 +102,15 @@ const Calendar: React.FC = () => {
                                 <CardDescription className='text-gray-300'>Add and manage your fitness tasks</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button className="w-full" size="lg">
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Add New Task
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[500px]">
-                                        <DialogHeader>
-                                            <DialogTitle>Add New Task</DialogTitle>
-                                            <DialogDescription>
-                                                Create a new task for your fitness schedule.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <form onSubmit={handleTaskSubmit}>
-                                            <div className="grid gap-4 py-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="task_date">Date</Label>
-                                                    <Input
-                                                        id="task_date"
-                                                        type="date"
-                                                        value={taskForm.task_date}
-                                                        onChange={(e) => setTaskForm(prev => ({ ...prev, task_date: e.target.value }))}
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="task">Task Title</Label>
-                                                    <Input
-                                                        id="task"
-                                                        value={taskForm.task}
-                                                        onChange={(e) => setTaskForm(prev => ({ ...prev, task: e.target.value }))}
-                                                        placeholder="Enter task title"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="note">Notes</Label>
-                                                    <Textarea
-                                                        id="note"
-                                                        value={taskForm.note}
-                                                        onChange={(e) => setTaskForm(prev => ({ ...prev, note: e.target.value }))}
-                                                        placeholder="Add additional notes or details"
-                                                        rows={3}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <DialogFooter>
-                                                <Button type="button" variant="outline" onClick={() => setIsTaskDialogOpen(false)} formNoValidate>
-                                                    Cancel
-                                                </Button>
-                                                <Button type="button" onClick={handleTaskSubmit}>Add Task</Button>
-                                            </DialogFooter>
-                                            </form>
-                                    </DialogContent>
-                                </Dialog>
+                                <AddTask
+                                    isTaskDialogOpen={isTaskDialogOpen}
+                                    setIsTaskDialogOpen={setIsTaskDialogOpen}
+                                    viewingEvent={null}
+                                    setViewingEvent={() => { /* trainer view/edit not wired */ }}
+                                    editingEvent={null}
+                                    setEditingEvent={() => { /* trainer view/edit not wired */ }}
+                                    setEvents={setTasks as any}
+                                />
                             </CardContent>
                         </Card>
 
