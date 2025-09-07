@@ -37,8 +37,8 @@ const Progress = () => {
     return (
         <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-start">
-                <Card>
-                    <CardContent className="p-6 bg-black">
+                <Card className="bg-transparent">
+                    <CardContent className="p-6 bg-transparent">
                         <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
                             <div>
                                 <p className="text-sm text-muted-foreground text-blue-500">Weight</p>
@@ -51,8 +51,8 @@ const Progress = () => {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardContent className="p-6 bg-black">
+                <Card className="bg-transparent">
+                    <CardContent className="p-6 bg-transparent">
                         <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
                             <div>
                                 <p className="text-sm text-muted-foreground">Height</p>
@@ -65,8 +65,8 @@ const Progress = () => {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardContent className="p-6 bg-black">
+                <Card className="bg-transparent">
+                    <CardContent className="p-6 bg-transparent">
                     <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
                         <div>
                         <p className="text-sm text-muted-foreground">BMI</p>
