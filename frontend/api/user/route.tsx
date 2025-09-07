@@ -1,4 +1,5 @@
 import axios from "axios"
+import { pl } from "date-fns/locale";
 
 const Base_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3000';
 
@@ -81,6 +82,21 @@ export const GetUserSubscriptions = async (customerId:any) =>{
         return []
     }
     return planIds.data
+}
+
+export const GetMyPlansDetails = async (planIds:any[])=>{
+    const plans = await axios.post(`${Base_URL}/api/gym/getgymplandetails`,{
+        planIds:planIds
+    })
+    return plans.data
+}
+
+export const UnsubscribeGymPlan = async (planId:any, customerId:any) => {
+    const response = await axios.post(`${Base_URL}/api/payment/cancel-subscription`,{
+        planId,
+        customerId
+    })
+    return response.data
 }
 
 

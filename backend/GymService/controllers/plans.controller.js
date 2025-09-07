@@ -1,5 +1,5 @@
 import { GymPlanCreateProducer, GymPlanDeleteProducer, GymPlanPriceUpdateProducer } from "../kafka/Producer.js";
-import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers,getOneDayGyms , getOtherGyms, getgymplanbyplanid } from "../services/plans.service.js";
+import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers,getOneDayGyms , getOtherGyms, getgymplanbyplanid, getgymplandetails } from "../services/plans.service.js";
 
 
 export const addGymPlan = async (req, res) => {
@@ -168,3 +168,18 @@ export const GetOtherGyms = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
+
+export const GetGymPlanDetails = async (req,res)=>{
+    try{
+        const planIds = req.body;
+        console.log("Received plan IDs:", planIds.planIds.planIds);
+        const planDetails = await getgymplandetails(planIds.planIds.planIds);
+        if(planDetails){
+            res.status(200).json({ message: "Gym plan details retrieved successfully", planDetails });
+        }
+        
+    }catch(error){
+        console.error("Error retrieving gym plan details:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
