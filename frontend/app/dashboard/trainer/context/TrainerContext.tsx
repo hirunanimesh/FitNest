@@ -9,9 +9,6 @@ interface TrainerData {
   trainer_name: string;
   profile_img: string | null;
   contact_no: string | null;
-  address: string | null;
-  dateOfBirth: string;
-  gender: string | null;
   email: string;
   bio: string;
   years_of_experience: number;
@@ -19,6 +16,7 @@ interface TrainerData {
   verified: boolean;
   skills: string[];
   sessions?: any[];
+  plans?: any[];
 }
 
 interface TrainerContextType {
@@ -56,8 +54,12 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
       const [ sessionsResponse ] = await Promise.allSettled([
         axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getallsessionbytrainerid/${trainerId}`),
       ]);
+      const[plansResponse] = await Promise.allSettled([
+        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getallplansbytrainerid/${trainerId}`),
+      ]);
       
        let sessions: any[] = [];
+       let plans: any[] = [];
 
        // Process sessions data
     if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.session) {
@@ -66,6 +68,13 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
     } else {
       console.log("Sessions data request failed or no sessions found:", 
         sessionsResponse.status === 'rejected' ? sessionsResponse.reason : "No sessions data");
+    }
+    if (plansResponse.status === 'fulfilled' && (plansResponse.value.data?.plan || plansResponse.value.data?.plans)) {
+      plans = plansResponse.value.data.plan ?? plansResponse.value.data.plans;
+      console.log("Plans data fetched successfully:", plans);
+    } else {
+      console.log("Plans data request failed or no plans found:", 
+        plansResponse.status === 'rejected' ? plansResponse.reason : "No plans data");
     }
       // Get trainer profile data using the API function
       const trainerProfileData = await GetTrainerById(trainerId);
@@ -102,9 +111,8 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
               return [];
             })(),
             sessions: sessions,
-            dateOfBirth: trainer.dateOfBirth || trainer.dob || '',
-            gender: trainer.gender || '',
-            address: trainer.address || '',
+            plans: plans,
+            
           };
 
           setTrainerData(trainerData);
@@ -131,9 +139,8 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
           verified: false,
           skills: [],
           sessions: [],
-          dateOfBirth: "",
-          gender: "",
-          address: ""
+          plans: [],
+          
         };
         setTrainerData(fallbackData);
       }
