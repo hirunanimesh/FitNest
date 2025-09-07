@@ -12,7 +12,9 @@ import {
     searchDocuments, 
     getDocuments, 
     removeDocument, 
-    healthCheck 
+    healthCheck,
+    chat,
+    chatHealth 
 } from './controllers/admin.controller.js';
 import { testConnection } from './database/supabase.js';
 
@@ -39,6 +41,10 @@ app.post('/documents/upload', uploadDocuments);
 app.get('/documents/search', searchDocuments);
 app.get('/documents', getDocuments);
 app.delete('/documents/:id', removeDocument);
+
+// Chat routes
+app.post('/chat', chat);
+app.get('/chat/health', chatHealth);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -69,6 +75,8 @@ app.listen(PORT, async () => {
     console.log(`  GET  /documents/search - Search similar documents`);
     console.log(`  GET  /documents - Get all documents (paginated)`);
     console.log(`  DELETE /documents/:id - Delete a document`);
+    console.log(`  POST /chat - Chat with RAG-powered chatbot`);
+    console.log(`  GET  /chat/health - Check chat service health`);
     await testConnection();
 });
 

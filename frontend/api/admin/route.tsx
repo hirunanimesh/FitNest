@@ -33,3 +33,17 @@ export const DeleteDocument = async (documentId: string) => {
     const response = await axios.delete(`${Base_URL}/api/admin/documents/${documentId}`)
     return response
 }
+
+export const ChatWithAI = async (question: string) => {
+    console.log("in the chat API", { question })
+    const response = await axios.post(`${Base_URL}/api/admin/chat`, {
+        question
+    })
+    return response
+}
+
+export const GetChatHealth = async () => {
+    console.log("checking chat health")
+    const response = await axios.get(`${Base_URL}/api/admin/chat/health`)
+    return response
+}

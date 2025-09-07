@@ -41,6 +41,7 @@ async function generateRealEmbedding(text) {
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
     
     // Use the embedding model
+    console.log('generating real embedding');
     const model = genAI.getGenerativeModel({ model: 'embedding-001' });
     
     // Generate embedding

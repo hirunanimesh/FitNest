@@ -39,15 +39,13 @@ export async function uploadDocumentsToRAG(documents, metadata = []) {
         const documentsToInsert = validDocuments.map((content, index) => ({
             content: content,
             embedding: embeddings[index],
-            metadata: metadata[index] || {},
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            metadata: metadata[index] || {}
         }));
         
         // Insert documents one by one to handle potential conflicts better
         const insertedIds = [];
         const errors = [];
-        console.log('')
+       
         for (let i = 0; i < documentsToInsert.length; i++) {
             try {
                 const { data, error } = await supabase
@@ -106,7 +104,6 @@ export async function searchSimilarDocuments(query, limit = 5) {
         // Search for similar documents using Supabase's vector similarity
         const { data, error } = await supabase.rpc('match_documents', {
             query_embedding: queryEmbedding,
-            match_threshold: 0.7, // Adjust threshold as needed
             match_count: limit
         });
 

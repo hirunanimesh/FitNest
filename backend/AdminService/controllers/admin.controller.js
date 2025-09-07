@@ -4,6 +4,10 @@ import {
     getAllDocuments, 
     deleteDocument 
 } from '../services/document.service.js';
+import { 
+    processChatQuestion, 
+    getChatHealthStatus 
+} from '../services/chat.service.js';
 import Joi from 'joi';
 
 // Validation schemas
@@ -26,6 +30,10 @@ const searchDocumentsSchema = Joi.object({
 const paginationSchema = Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10)
+});
+
+const chatSchema = Joi.object({
+    question: Joi.string().min(1).max(1000).required()
 });
 
 /**
@@ -200,4 +208,76 @@ export async function healthCheck(req, res) {
         timestamp: new Date().toISOString(),
         service: 'AdminService'
     });
+}
+
+/**
+ * Process chat question using RAG
+ */
+export async function chat(req, res) {
+    console.log('Chat request received');
+    try {
+        // Validate request body
+        const { error, value } = chatSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid request data',
+                details: error.details
+            });
+        }
+
+        const { question } = value;
+
+        console.log(`Processing chat question: ${question}`);
+
+        // Process the chat question using RAG
+        const result = await processChatQuestion(question);
+
+        if (!result.success) {
+            return res.status(500).json({
+                success: false,
+                error: result.error,
+                answer: result.answer
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            answer: result.answer,
+            sources: result.sources,
+            similarity_scores: result.similarity_scores
+        });
+
+    } catch (error) {
+        console.error('Error in chat controller:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Chat processing failed',
+            answer: 'I apologize, but I encountered an error while processing your question. Please try again later.'
+        });
+    }
+}
+
+/**
+ * Get chat service health status
+ */
+export async function chatHealth(req, res) {
+    try {
+        const healthStatus = await getChatHealthStatus();
+        
+        const statusCode = healthStatus.ready ? 200 : 503;
+        
+        res.status(statusCode).json({
+            success: healthStatus.success,
+            ...healthStatus
+        });
+
+    } catch (error) {
+        console.error('Error in chatHealth controller:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            ready: false
+        });
+    }
 }

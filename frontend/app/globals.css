@@ -70,3 +70,79 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(0 84% 60%);
 }
+
+/* Chatbot custom animations and styles */
+.chatbot-bounce-1 {
+  animation: chatbot-bounce 1.4s infinite ease-in-out both;
+}
+
+.chatbot-bounce-2 {
+  animation: chatbot-bounce 1.4s infinite ease-in-out both;
+  animation-delay: 0.16s;
+}
+
+.chatbot-bounce-3 {
+  animation: chatbot-bounce 1.4s infinite ease-in-out both;
+  animation-delay: 0.32s;
+}
+
+@keyframes chatbot-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .chatbot-container {
+    width: calc(100vw - 2rem) !important;
+    height: calc(100vh - 2rem) !important;
+    bottom: 1rem !important;
+    right: 1rem !important;
+    max-height: calc(100vh - 2rem) !important;
+  }
+  
+  .chatbot-fab {
+    bottom: 1.5rem !important;
+    right: 1.5rem !important;
+  }
+}
+
+/* Smooth transitions */
+.chatbot-container {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chatbot-message {
+  transition: all 0.2s ease-in-out;
+}
+
+.chatbot-message:hover {
+  transform: translateY(-1px);
+}
+
+/* Custom scrollbar for chat messages */
+.chatbot-scrollarea {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground)) transparent;
+}
+
+.chatbot-scrollarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatbot-scrollarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatbot-scrollarea::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground));
+  border-radius: 3px;
+}
+
+.chatbot-scrollarea::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--foreground));
+}
