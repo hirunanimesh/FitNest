@@ -72,20 +72,25 @@ const TodaySessions = () => {
   }, []);
 
   return (
-    <section id="Today's Sessions" className=" bg-black">
+    <section id="Today's Sessions" className="bg-transparent">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold text-white mb-4">Today's Sessions</h3>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">Your scheduled workout sessions for today</p>
+          <h2 className="text-4xl md:text-5xl font-black text-white text-center mb-10">
+            <span className="bg-gradient-to-r from-blue-800 via-rose-400 to-blue-800 bg-clip-text text-transparent">Today's Sessions</span>
+          </h2>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {sessions.slice(0, 4).map((session) => (
-            <Card 
-              key={session.id} 
-              className={`bg-gray-900 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500 ${
-                selectedSession === session.id.toString() ? "ring-2 ring-red-500" : ""
-              }`}
+            <Card
+              key={session.id}
+              className={`relative bg-gray-900 border border-red-500 transition-all  group flex flex-col overflow-hidden
+                ${selectedSession === session.id.toString()
+                  ? "ring-4 ring-red-500 shadow-[0_0_24px_6px_rgba(239,68,68,0.8)] "
+                  : "shadow-[0_0_12px_2px_rgba(239,68,68,0.5)]"
+                }
+                hover:border-red-500 hover:shadow-2xl hover:-translate-y-2 hover:scale-105`}
+              style={{ boxShadow: selectedSession === session.id.toString() ? "0 0 24px 6px rgba(239,68,68,0.8), 0 0 40px 10px rgba(255,0,0,0.4)" : "0 0 12px 2px rgba(239,68,68,0.5)" }}
             >
               <CardHeader>
                 <img

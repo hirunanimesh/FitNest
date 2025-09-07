@@ -195,15 +195,19 @@ const Charts: React.FC = () => {
     };
 
     return (
-        <section id="Health Analytics" className="min-h-screen bg-black p-4">
+        <section id="Health Analytics" className="min-h-screen bg-transparent p-4">
                 
-                <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold text-white mb-4">Health Analytics</h3>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">Track your BMI and weight progress over time</p>
+                
+          <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-5xl font-black text-white text-center mb-8">
+            <span className="bg-gradient-to-r from-blue-800 via-rose-400 to-blue-800 bg-clip-text text-transparent">Health Analytics</span>
+          </h2>
         </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-black px-8">
+        
+       
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-transparent px-8">
                     {/* BMI Chart */}
-                    <Card className='bg-[#192024]'>
+                    <Card className='group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 flex flex-col overflow-hidden relative'>
                         <CardHeader >
                             <CardTitle className="flex items-center gap-2 text-white">
                                 <div className="w-3 h-3 bg-red-500 rounded-full "></div>
@@ -265,7 +269,7 @@ const Charts: React.FC = () => {
                     </Card>
 
                     {/* Weight Chart */}
-                    <Card className='bg-[#192024]'>
+                    <Card className='group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 flex flex-col overflow-hidden relative'>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <div>
                                 <CardTitle className="flex items-center gap-2 text-white">
