@@ -17,6 +17,7 @@ interface TrainerData {
   skills: string[];
   sessions?: any[];
   plans?: any[];
+  totalSessionCount?: number;
 }
 
 interface TrainerContextType {
@@ -61,10 +62,14 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
        let sessions: any[] = [];
        let plans: any[] = [];
 
-       // Process sessions data
-    if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.session) {
-      sessions = sessionsResponse.value.data.session;
-      console.log("Sessions data fetched successfully:", sessions);
+       let totalSessionCount = 0;
+
+if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.session) {
+  sessions = sessionsResponse.value.data.session.sessions || [];
+  totalSessionCount = sessionsResponse.value.data.session.totalCount || 0;
+  console.log("Sessions data fetched successfully:", sessions, "Total:", totalSessionCount);
+
+
     } else {
       console.log("Sessions data request failed or no sessions found:", 
         sessionsResponse.status === 'rejected' ? sessionsResponse.reason : "No sessions data");
@@ -112,6 +117,7 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
             })(),
             sessions: sessions,
             plans: plans,
+            totalSessionCount: totalSessionCount
             
           };
 

@@ -7,8 +7,6 @@ import UploadContent from "./_components/UploadContent";
 import Calendar from "./_components/Calendar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-
-
 const TrainerDashboard = () => {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -19,8 +17,6 @@ const TrainerDashboard = () => {
 
   if (!mounted) return null;
 
-  
-
   return (
     <ProtectedRoute allowedRoles={['trainer']}>
       <div className="space-y-6">
@@ -29,13 +25,7 @@ const TrainerDashboard = () => {
 
         {/* Calendar Component */}
         <Calendar/>
-
-        {/* trainer plans */}
-
-
-        {/* create Plan */}
        
-
         {/* Trainer Content */}
         <UploadContent/>
       </div>
