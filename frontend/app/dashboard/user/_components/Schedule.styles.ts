@@ -67,11 +67,7 @@ const styles = `
   pointer-events: none;
   z-index: 0;
   opacity: 0.06;
-  background: linear-gradient(90deg,
-    rgba(255, 0, 51, 0.9),
-    rgba(255, 0, 180, 0.9),
-    rgba(255, 0, 51, 0.9)
-  );
+  
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -90,9 +86,9 @@ const styles = `
 /* Visible red border around the whole calendar container */
 .calendar-shell {
   position: relative;
-  border-radius: 8px;
-  border: 4px solid rgba(255, 0, 51, 0.22); /* visible red border */
-  box-shadow: 0 8px 24px rgba(199, 23, 105, 0.5), 0 0 24px rgba(199, 23, 105, 0.5) inset;
+  border-radius: 4px;
+  border: 1px solid  rgba(255, 0, 51, 0.9); /* thinner red border */
+  box-shadow: 0 2px 0px  rgba(255, 0, 51, 0.7), 0 0 12px  rgba(255, 0, 51, 0.5) inset;
 }
 
 /* Remove default table borders so gutters show as black */
