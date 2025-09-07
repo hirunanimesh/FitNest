@@ -1,5 +1,4 @@
 export default {
-  preset: "default",
   testEnvironment: "node",
   collectCoverage: true,
   coverageDirectory: "coverage",
@@ -11,5 +10,7 @@ export default {
     "**/__tests__/**/*.test.js"
   ],
   verbose: true,
-  transform: {}
+  transform: {
+    "^.+\\.js$": "babel-jest"
+  }
 };
