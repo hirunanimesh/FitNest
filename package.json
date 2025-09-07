@@ -9,9 +9,10 @@
     "migration:push": "npx supabase db push",
     "migration:reset": "npx supabase db reset",
     "types:generate": "npx supabase gen types typescript --local",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+  "test": "jest",
+  "test:watch": "jest --watch",
+  "test:coverage": "jest --coverage",
+  "test:user": "jest --selectProjects \"UserService Tests\""
   },
   "keywords": [
     "supabase",
@@ -21,7 +22,7 @@
   "author": "FitNest Team",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.28.3",
+    "@babel/core": "^7.28.4",
     "@babel/preset-env": "^7.28.3",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.1.12",

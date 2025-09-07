@@ -30,6 +30,19 @@ module.exports = {
         "!backend/AuthService/superbaseClient.js"
       ]
     }
+    ,
+    {
+      displayName: "UserService Tests",
+      testMatch: ["<rootDir>/backend/UserService/**/__tests__/**/*.unit.test.js", "<rootDir>/backend/UserService/**/__tests__/**/*.test.js", "<rootDir>/backend/UserService/**/__tests__/**/*.js"],
+      testEnvironment: "node",
+      testTimeout: 30000,
+  setupFiles: ["<rootDir>/backend/UserService/test-setup.js"],
+      collectCoverageFrom: [
+        "backend/UserService/**/*.js",
+        "!backend/UserService/**/node_modules/**",
+        "!backend/UserService/**/__tests__/**"
+      ]
+    }
   ],
   collectCoverage: true,
   coverageDirectory: "coverage",
