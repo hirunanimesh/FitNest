@@ -1,0 +1,28 @@
+{
+  "name": "run-chat-tests",
+  "version": "1.0.0",
+  "description": "Test runner for chat-related unit tests",
+  "scripts": {
+    "test:chat": "jest --testPathPattern=chat --verbose --coverage --collectCoverageFrom='services/chat.service.js' --collectCoverageFrom='services/embedding.service.js' --collectCoverageFrom='controllers/admin.controller.js'",
+    "test:chat:watch": "jest --testPathPattern=chat --watch --verbose",
+    "test:chat:service": "jest __tests__/chat.service.test.js --verbose",
+    "test:chat:controller": "jest __tests__/chat.controller.test.js --verbose",
+    "test:chat:embedding": "jest __tests__/embedding.service.test.js --verbose",
+    "test:all": "jest --verbose --coverage"
+  },
+  "testEnvironment": "node",
+  "collectCoverageFrom": [
+    "services/chat.service.js",
+    "services/embedding.service.js",
+    "controllers/admin.controller.js"
+  ],
+  "coverageReporters": [
+    "text",
+    "lcov",
+    "html"
+  ],
+  "coverageDirectory": "coverage/chat-tests",
+  "testMatch": [
+    "**/__tests__/**/*.test.js"
+  ]
+}

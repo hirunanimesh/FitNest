@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Building2, FileCheck, MessageSquare, Users, LogOut, Menu, X } from "lucide-react"
+import { Building2, FileCheck, MessageSquare, Users, LogOut, Menu, X, FileText } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -36,6 +36,7 @@ export function AdminNavbar({
     { href: "/dashboard/admin/verifications", label: "Verifications", icon: FileCheck, badge: pendingVerifications },
     { href: "/dashboard/admin/inquiries", label: "User Inquiries", icon: MessageSquare },
     { href: "/dashboard/admin/trainers-gyms", label: "Trainers/Gyms", icon: Users },
+    { href: "/dashboard/admin/documents", label: "Documents", icon: FileText },
   ]
 
   const toggleMobileMenu = () => {

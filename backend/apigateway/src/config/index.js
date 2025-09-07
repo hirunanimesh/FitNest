@@ -9,6 +9,7 @@ module.exports = {
     payment: process.env.PAYMENT_SERVICE_URL || 'http://localhost:3003',
     user: process.env.USER_SERVICE_URL || 'http://localhost:3004',
     trainer: process.env.TRAINER_SERVICE_URL || 'http://localhost:3005',
+    admin: process.env.ADMIN_SERVICE_URL || 'http://localhost:3006',
   },
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:3010',

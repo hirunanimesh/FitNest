@@ -4,6 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Footer } from "@/components/footer"
+import Chatbot from "@/components/Chatbot"
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -78,6 +79,7 @@ html {
           {children}
           <Toaster />
           <Footer />
+          <Chatbot />
         </AuthProvider>
       </body>
     </html>
