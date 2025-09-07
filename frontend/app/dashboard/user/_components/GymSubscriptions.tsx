@@ -1,7 +1,7 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award } from 'lucide-react';
-
+import { Award, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Plan {
   id: number;
@@ -82,6 +82,12 @@ const GymSubscriptions = () => {
                                         {plan.description}
                                     </p>
                                 </CardContent>
+                                <Button
+                                    disabled
+                                    className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white font-bold py-4 text-lg rounded-xl opacity-80 "
+                                >
+                                    UnSubscribed
+                                </Button>
                             </Card>
                         );
                     })}
