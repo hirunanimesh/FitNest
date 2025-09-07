@@ -16,6 +16,7 @@ export default async function getSubscriptions(req, res) {
     try {
       const subscriptions = await stripe.subscriptions.list({
         customer: customer_id,
+        status:'active'
       });
   
       if (!subscriptions || subscriptions.data.length === 0) {
