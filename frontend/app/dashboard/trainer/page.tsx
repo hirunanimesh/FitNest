@@ -6,7 +6,7 @@ import Statistics from "./_components/Statistics";
 import UploadContent from "./_components/UploadContent";
 import Calendar from "./_components/Calendar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-
+import MembershipGyms from "./_components/MembershipGyms";
 const TrainerDashboard = () => {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -24,7 +24,7 @@ const TrainerDashboard = () => {
           <section className="bg-transparent rounded-2xl p-4">
             <Statistics />
           </section>
-
+           <MembershipGyms/>
           <section className="bg-transparent rounded-2xl p-4">
             <Calendar />
           </section>

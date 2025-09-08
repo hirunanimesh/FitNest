@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useTrainerData } from '../context/TrainerContext';
 import { UpdateTrainerDetails, uploadToCloudinary } from "@/lib/api";
+import TrainerDocuments from '../_components/TrainerDocuments';
 import axios from "axios";
 import { Edit3 } from "lucide-react";
 const TrainerProfile: React.FC = () => {
@@ -218,6 +219,8 @@ const TrainerProfile: React.FC = () => {
         >
           {isEditing ? 'Save Changes' : 'Edit Profile'}
         </Button>
+  {/* Documents preview placed under profile area. Editable when isEditing is true. */}
+  <TrainerDocuments editable={isEditing} />
       </div>
     
   </div>

@@ -396,6 +396,7 @@ export const UpdateTrainerDetails = async (trainerId, trainerData) => {
             if (trainerData.contact_no) payload.contact_no = trainerData.contact_no;
             if (trainerData.bio) payload.bio = trainerData.bio;
             if (trainerData.skills) payload.skills = trainerData.skills;
+            if (trainerData.documents) payload.documents = trainerData.documents;
             if (trainerData.profile_img) payload.profile_img = trainerData.profile_img;
             requestData = payload;
         }
@@ -545,6 +546,16 @@ export const DeletePlan = async (planId) => {
 export const GetTrainersGymplans = async (trainerId) => {
     try {
     const response = await axios.get(`${Base_URL}/api/trainer/getgymplanbytrainerid/${trainerId}`);
+    // return the API response data for the caller to use
+    return response.data;
+    } catch (error) {
+        console.error('Error deleting plan:', error);
+        throw error;
+    }
+};
+export const GetMembershipGyms = async (trainerId) => {
+    try {
+    const response = await axios.get(`${Base_URL}/api/trainer/getmembershipgyms/${trainerId}`);
     // return the API response data for the caller to use
     return response.data;
     } catch (error) {
