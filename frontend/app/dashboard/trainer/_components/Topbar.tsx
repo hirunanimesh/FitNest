@@ -1,16 +1,17 @@
 "use client"
 
-import React from "react";
+import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button"
-import { Dumbbell, LayoutDashboard, ChartNoAxesCombinedIcon, Tv2, User2 } from "lucide-react"
+import { Dumbbell, LayoutDashboard, ChartNoAxesCombinedIcon, Tv2, User2,LogOut } from "lucide-react"
 import Link from "next/link"
 import { useTrainerData } from '../context/TrainerContext'
 
 export default function TopBar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { trainerData } = useTrainerData();
   const router = useRouter();
   const pathname = usePathname();
@@ -25,7 +26,15 @@ export default function TopBar() {
     const normalizedHref = href.replace(/\/+$/, '');
     return normalizedPathname === normalizedHref;
   };
+const handleLogout = () => {
+    supabase.auth.signOut();
+    router.push("/auth/login");
+    setIsMobileMenuOpen(false);
+  };
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
   return (
     <>
       <header className="fixed top-0 z-50 w-full bg-gray-900 shadow-lg border-b-2 border-gray-800">
@@ -94,14 +103,13 @@ export default function TopBar() {
             </Link>
             
             <Button
-              onClick={() => {
-                supabase.auth.signOut();
-                router.push("/auth/login");
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors duration-200"
-            >
-              Logout
-            </Button>
+                onClick={handleLogout}
+                className="bg-gradient-to-r from-[#FB4141] to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-6 py-2 transition-all duration-300 shadow-lg hover:shadow-red-500/25"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            
           </nav>
         </div>
       </header>

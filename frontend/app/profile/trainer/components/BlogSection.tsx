@@ -25,10 +25,10 @@ const blogPosts = [
 
 export default function BlogSection() {
   return (
-    <section id="blog" className="py-20 bg-gray-800">
+  <section id="blog" className="py-20 bg-gradient-to-br from-gray-800 to-black">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold text-white mb-4">Latest Articles</h3>
+            <h3 className="text-3xl font-bold mb-4"><span className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent text-5xl md:text-5xl font-extrabold transform transition-transform duration-500 ease-out hover:-translate-y-1 hover:scale-105 text-bold">Latest Articles</span></h3>
           <p className="text-lg text-gray-300">Tips, insights, and motivation for your fitness journey</p>
         </div>
 
@@ -36,10 +36,10 @@ export default function BlogSection() {
           {blogPosts.map((post, index) => (
             <Card
               key={index}
-              className="hover:shadow-lg transition-shadow cursor-pointer bg-gray-900 border-gray-700"
+              className="bg-gray-900 border-gray-700 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 hover:shadow-2xl cursor-pointer group"
             >
               <CardContent className="p-6">
-                <div className="flex items-center justify-between text-sm text-red-500 mb-2">
+                <div className="flex items-center justify-between text-sm text-indigo-300 mb-2 transition-colors duration-300 group-hover:text-indigo-100">
                   <span>{post.date}</span>
                   <span>{post.readTime}</span>
                 </div>
