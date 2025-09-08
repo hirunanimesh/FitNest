@@ -11,7 +11,7 @@ import CreatePlan from './CreateSession';
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
-import { UpdateSessionDetails,DeleteSession } from "@/lib/api";
+import { UpdateSessionDetails,DeleteSession,uploadToCloudinary } from "@/lib/api";
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 
 interface Session {
@@ -267,16 +267,19 @@ export default function Plans() {
       <section id="sessions">
         <div className="container mx-auto px-4">
           <div className='flex flex-row justify-between'>
-            <h2 className="text-2xl font-semibold mb-4 text-white">Ongoing Sessions</h2>
+            <div className="flex-1 flex justify-center items-center">
+              <h2 className="text-4xl md:text-5xl font-black text-white text-center mb-10">
+                    <span className="bg-gradient-to-r from-dark-700 via-rose-400 to-black-600 bg-clip-text text-transparent">Ongoing Sessions</span></h2>
+            </div>
             <CreatePlan />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {sessions.map((session: Session) => (
-              <Card
-                key={session.session_id}
-                className="bg-gray-800 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500"
-              >
+              <div key={session.session_id} className="group relative p-2 rounded-xl">
+                {/* blurred red glow behind card */}
+                <div className="absolute inset-0 rounded-xl -m-1 bg-red-900/70 blur-lg opacity-80 transition-opacity duration-300 group-hover:opacity-100 z-0" aria-hidden />
+                <Card className="relative z-10 bg-gray-800 border-gray-700 transition-all duration-200 transform group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:border-red-500 group-hover:ring-1 group-hover:ring-red-600 group-hover:ring-offset-2 group-hover:ring-offset-slate-900">
                 <CardHeader>
                   <div className="relative">
                     <div
@@ -492,6 +495,7 @@ export default function Plans() {
                   </div>
                 </CardContent>
               </Card>
+              </div>
             ))}
           </div>
         </div>

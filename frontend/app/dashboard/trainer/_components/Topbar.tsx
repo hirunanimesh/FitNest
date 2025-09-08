@@ -37,16 +37,18 @@ const handleLogout = () => {
   };
   return (
     <>
-      <header className="fixed top-0 z-50 w-full bg-gray-900 shadow-lg border-b-2 border-gray-800">
+            <header className="fixed top-0 z-50 w-full bg-gradient-to-r from-black via-gray-900 to-black backdrop-blur-md border-b border-red-500/30 shadow-2xl">
         <div className="container flex h-16 items-center justify-between px-2">
           {/* Left side - Logo, greeting, and date */}
-          <div className="flex items-center space-x-6">
-            <Link href="/" className="flex items-center space-x-3 group">
-              <div className="p-2 bg-[#FB4141] rounded-lg group-hover:bg-[#e63636] transition-colors">
-                <Dumbbell className="h-6 w-6 text-white" />
-              </div>
-              <span className="font-bold text-2xl text-white">FitNest</span>
-            </Link>
+           <div className="flex items-center space-x-3 sm:space-x-6">
+              <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group">
+                <div className="p-1.5 sm:p-2 bg-gradient-to-br from-[#FB4141] to-red-600 rounded-lg group-hover:from-red-600 group-hover:to-[#FB4141] transition-all duration-300 shadow-lg">
+                  <Dumbbell className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <span className="font-bold text-xl sm:text-2xl text-white tracking-tight">
+                  Fit<span className="text-[#FB4141]">Nest</span>
+                </span>
+              </Link>
             <div className="flex flex-col">
               <h1 className="text-lg text-gray-400 font-semibold">
                 Hi, {trainerName}

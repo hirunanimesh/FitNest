@@ -393,26 +393,33 @@ const WorkoutAndDietPlans = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex flex-row justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-white">Workout & Diet Plans</h2>
-          <CreatePlan onAddPlan={handleAddPlan} />
-        </div>
+    <div className="p-6 bg-transparent min-h-screen">
+      <div className="max-w-5xl mx-auto px-4 ">
+        <h2 className="text-4xl md:text-5xl font-black text-white text-center  mt-12">
+          <span className="bg-gradient-to-r from-dark-700 via-rose-400 to-dark-600 bg-clip-text text-transparent mt-16">
+            Workout & Diet Plans
+          </span>
+        </h2>
+      </div>
+      <div className="flex justify-end mt-4 mb-4 ">
+        <CreatePlan onAddPlan={handleAddPlan} />
+      </div>
 
-        <div className="space-y-4">
-          {plans && plans.length > 0 ? (
-            plans.map((plan: any) => {
-              const planId = plan.id || plan.plan_id || 0;
-              const title = plan.title || plan.name || '';
-              const category = plan.category || 'workout';
-              const description = plan.description || plan.desc || '';
-              const imageSrc = plan.img_url || '/images/default.jpg';
-              const pdfUrl = plan.instruction_pdf || plan.instructionPdf || null;
+      <div className="space-y-4">
+        {plans && plans.length > 0 ? (
+          plans.map((plan: any) => {
+            const planId = plan.id || plan.plan_id || 0;
+            const title = plan.title || plan.name || '';
+            const category = plan.category || 'workout';
+            const description = plan.description || plan.desc || '';
+            const imageSrc = plan.img_url || '/images/default.jpg';
+            const pdfUrl = plan.instruction_pdf || plan.instructionPdf || null;
 
-              return (
-                <Card key={planId} className="flex items-center bg-gray-800 rounded-2xl shadow-md overflow-hidden">
-                  <img src={imageSrc || '/images/default.jpg'} alt={title} className="w-32 h-24 object-cover" />
+            return (
+              <div key={planId} className="relative rounded-2xl p-2 group">
+                <div className="absolute inset-0 -m-1 rounded-2xl bg-gray-800/60 blur-lg opacity-80 transition-opacity duration-300 group-hover:opacity-100 z-0" aria-hidden />
+                <Card className="relative z-10 flex items-center bg-gray-800 rounded-2xl shadow-md overflow-hidden transform transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:ring-2 group-hover:ring-gray-500">
+                  <img src={imageSrc || '/images/default.jpg'} alt={title} className="w-56 h-24  object-cover" />
                   <div className="flex justify-between items-center w-full px-4 py-3">
                     <div>
                       <h3 className="text-lg font-semibold text-white">
@@ -432,15 +439,15 @@ const WorkoutAndDietPlans = () => {
                     </div>
                   </div>
                 </Card>
-              );
-            })
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <p>{isLoading ? 'Loading plans...' : 'No plans available'}</p>
-              <p className="text-sm">Click "Add New Plan" to get started</p>
-            </div>
-          )}
-        </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p>{isLoading ? 'Loading plans...' : 'No plans available'}</p>
+            <p className="text-sm">Click "Add New Plan" to get started</p>
+          </div>
+        )}
       </div>
     </div>
   );

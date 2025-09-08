@@ -19,15 +19,20 @@ const TrainerDashboard = () => {
 
   return (
     <ProtectedRoute allowedRoles={['trainer']}>
-      <div className="space-y-6">
-        {/* display statistics */}
-        <Statistics/>
+      <div className="min-h-screen bg-gradient-to-b from-black via-slate-900 to-black/70 py-8">
+        <div className="container mx-auto px-4 space-y-6">
+          <section className="bg-gradient-to-r from-gray-900/60 to-transparent rounded-2xl p-4">
+            <Statistics />
+          </section>
 
-        {/* Calendar Component */}
-        <Calendar/>
-       
-        {/* Trainer Content */}
-        <UploadContent/>
+          <section className="bg-gradient-to-r from-black/60 via-gray-900/30 to-transparent rounded-2xl p-4">
+            <Calendar />
+          </section>
+
+          <section className="bg-gradient-to-r from-gray-800/50 to-transparent rounded-2xl p-4">
+            <UploadContent />
+          </section>
+        </div>
       </div>
     </ProtectedRoute>
   );

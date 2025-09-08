@@ -6,6 +6,7 @@ import { useState } from "react"
 import { useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { GetUserInfo } from "@/lib/api"
+import { useTrainerData } from "../context/TrainerContext";
 import axios from "axios"
 
 export default function ContactSection() {
@@ -15,6 +16,7 @@ export default function ContactSection() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [trainerId, setTrainerId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const { refreshTrainerData } = useTrainerData();
   
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -70,8 +72,13 @@ export default function ContactSection() {
         trainer_id: trainerId,
         
       });
-      setSubmitted(true)
-      setForm({ message: "" })
+  // show success message and clear the form
+  setSubmitted(true)
+  setForm({ message: "" })
+  // refresh trainer data so the new feedback appears without reload
+  try { await refreshTrainerData() } catch (e) { /* ignore refresh errors */ }
+  // hide success message after 2 seconds
+  setTimeout(() => setSubmitted(false), 2000)
     } catch {
       alert("Failed to send message. Please try again.")
     } finally {
