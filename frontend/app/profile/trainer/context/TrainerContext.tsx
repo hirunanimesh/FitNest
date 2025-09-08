@@ -66,9 +66,11 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
         console.error("Trainer data request failed:", trainerResponse.status === 'rejected' ? trainerResponse.reason : "No trainer data");
       }
 
-      // Process sessions data
-      if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.session) {
-        sessions = sessionsResponse.value.data.session;
+      // Process sessions data (handle both 'sessions' and legacy 'session' keys)
+      if (sessionsResponse.status === 'fulfilled') {
+        const resp = sessionsResponse.value.data || {};
+        // Backend uses 'sessions' (plural); older endpoints may return 'session'
+        sessions = resp.sessions ?? resp.session ?? [];
         console.log("Sessions data fetched successfully:", sessions);
       } else {
         console.log("Sessions data request failed or no sessions found:", sessionsResponse.status === 'rejected' ? sessionsResponse.reason : "No sessions data");
