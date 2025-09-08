@@ -396,7 +396,7 @@ const WorkoutAndDietPlans = () => {
     <div className="p-6 bg-transparent min-h-screen">
       <div className="max-w-5xl mx-auto px-4 ">
         <h2 className="text-4xl md:text-5xl font-black text-white text-center  mt-12">
-          <span className="bg-gradient-to-r from-dark-700 via-rose-400 to-dark-600 bg-clip-text text-transparent mt-16">
+          <span className="bg-gradient-to-r from-dark-700 via-rose-400 to-dark-700 bg-clip-text text-transparent mt-16">
             Workout & Diet Plans
           </span>
         </h2>

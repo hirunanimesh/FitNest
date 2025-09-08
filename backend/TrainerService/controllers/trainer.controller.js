@@ -1,4 +1,4 @@
-import { getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails } from '../services/trainer.service.js';
+import { getgymplanbytrainerid,getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails } from '../services/trainer.service.js';
 
 export const getallTrainers = async (req,res)=>{
     try{
@@ -57,4 +57,19 @@ export const getTrainerById = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
+export const getGymPlanByTrainerId = async (req, res) => {
+  try {
+    const gymplans = await getgymplanbytrainerid();
+
+    if (gymplans && gymplans.length > 0) {
+      res.status(200).json({ message: "GymPlans retrieved successfully", gymplans });
+    } else {
+      res.status(404).json({ message: "No Plans found" });
+    }
+
+  } catch (error) {
+    console.error("Error retrieving Gym Plans:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
 

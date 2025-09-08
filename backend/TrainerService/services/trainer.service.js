@@ -51,23 +51,29 @@ export async function gettrainerbyid(trainerId) {
         
         return data; // Return the trainer data
 }
-export async function gettrainerid(trainerId) {
-        const { data, error } = await supabase
-        .from('trainer')
-        .select('*')
-        .eq('id', trainerId)
-        .single(); // Fetch single trainer by ID
+export async function getgymplanbytrainerid(trainerId) {
+  const { data, error } = await supabase
+    .from("gym_plan_trainers")
+    .select(`
+      id,
+      trainer_id,
+      gym_plan_id,
+      Gym_plans (*)
+    `)
+    .eq("trainer_id", trainerId);
 
-        if(!data){
-                return null;
-        }
-        
-        if (error) {
-        throw new Error(error.message);
-        }
-        
-        return data; // Return the trainer data
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data || data.length === 0) {
+    return null; // No plans linked to this trainer
+  }
+
+  // Return only the plan details if you don’t care about link info
+  return data.map((row) => row.Gym_plans);
 }
+
 
 export async function updatetrainerdetails(trainerId, trainerData) {
   const { data, error } = await supabase

@@ -77,7 +77,7 @@ const TrainerProfile: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-900 text-white min-h-screen">
+    <div className="max-w-4xl mx-auto p-6 bg-transparent text-white min-h-screen">
       <div className="bg-gray-800 rounded-lg shadow-lg p-8">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
           <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-red-500 cursor-pointer">
