@@ -43,8 +43,7 @@ interface Document {
   id: string
   content: string
   metadata: any
-  created_at: string
-  updated_at: string
+  
 }
 
 interface DocumentFormData {
@@ -484,7 +483,6 @@ export default function DocumentsPage() {
                       <TableHead className="text-gray-300">Title</TableHead>
                       <TableHead className="text-gray-300">Category</TableHead>
                       <TableHead className="text-gray-300">Content Preview</TableHead>
-                      <TableHead className="text-gray-300">Created</TableHead>
                       <TableHead className="text-gray-300">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -502,12 +500,12 @@ export default function DocumentsPage() {
                         <TableCell className="text-gray-300 max-w-xs">
                           {truncateContent(doc.content)}
                         </TableCell>
-                        <TableCell className="text-gray-400 text-sm">
+                        {/* <TableCell className="text-gray-400 text-sm">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {formatDate(doc.created_at)}
                           </div>
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button
@@ -591,10 +589,10 @@ export default function DocumentsPage() {
                     {selectedDocument.metadata?.category || 'general'}
                   </Badge>
                 </div>
-                <div>
+                {/* <div>
                   <Label className="text-white">Created</Label>
                   <p className="text-gray-300 text-sm mt-1">{formatDate(selectedDocument.created_at)}</p>
-                </div>
+                </div> */}
               </div>
               
               {selectedDocument.metadata?.description && (
