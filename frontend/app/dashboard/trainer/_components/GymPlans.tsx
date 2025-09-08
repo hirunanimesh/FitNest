@@ -47,8 +47,8 @@ const GymPlans = () => {
        
             <div className="max-w-5xl mx-auto px-4">
                 <h2 className="text-4xl md:text-5xl font-black text-white text-center mb-10">
-                    <span className="bg-gradient-to-r from-blue-800 via-rose-400 to-blue-800 bg-clip-text text-transparent">
-                        Gym Subscriptions
+                    <span className="bg-gradient-to-r from-black-600 via-rose-400 to-black-600 bg-clip-text text-transparent">
+                        Assign Gym Plans
                     </span>
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

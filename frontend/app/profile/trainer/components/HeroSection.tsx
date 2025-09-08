@@ -65,8 +65,9 @@ export default function HeroSection() {
             <span className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent text-5xl font-extrabold  transform transition-transform duration-500 ease-out hover:-translate-y-1 hover:scale-105"> Build Strength.</span>
           
             <p className="mt-8 text-lg text-gray-300 mb-8 max-w-xl ">
-            Personalized training plans, nutrition coaching, and sustainable strategies to reach your best
-            self. Training that fits your schedule and lifestyle.
+              {trainerData?.bio
+                ? trainerData.bio
+                : "Personalized training plans, nutrition coaching, and sustainable strategies to reach your best self. Training that fits your schedule and lifestyle."}
             </p>
 
           <div className="flex items-center space-x-4">

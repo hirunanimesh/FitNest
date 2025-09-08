@@ -51,6 +51,23 @@ export async function gettrainerbyid(trainerId) {
         
         return data; // Return the trainer data
 }
+export async function gettrainerid(trainerId) {
+        const { data, error } = await supabase
+        .from('trainer')
+        .select('*')
+        .eq('id', trainerId)
+        .single(); // Fetch single trainer by ID
+
+        if(!data){
+                return null;
+        }
+        
+        if (error) {
+        throw new Error(error.message);
+        }
+        
+        return data; // Return the trainer data
+}
 
 export async function updatetrainerdetails(trainerId, trainerData) {
   const { data, error } = await supabase
