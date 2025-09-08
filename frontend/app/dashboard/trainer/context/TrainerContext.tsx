@@ -18,6 +18,7 @@ interface TrainerData {
   sessions?: any[];
   plans?: any[];
   totalSessionCount?: number;
+  totalPlanCount?: number;
 }
 
 interface TrainerContextType {
@@ -63,10 +64,11 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
        let plans: any[] = [];
 
        let totalSessionCount = 0;
+       let totalPlanCount = 0;
 
-if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.session) {
-  sessions = sessionsResponse.value.data.session.sessions || [];
-  totalSessionCount = sessionsResponse.value.data.session.totalCount || 0;
+if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.sessions) {
+  sessions = sessionsResponse.value.data.sessions;
+  totalSessionCount = sessionsResponse.value.data.totalCount || 0;
   console.log("Sessions data fetched successfully:", sessions, "Total:", totalSessionCount);
 
 
@@ -74,9 +76,11 @@ if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.sess
       console.log("Sessions data request failed or no sessions found:", 
         sessionsResponse.status === 'rejected' ? sessionsResponse.reason : "No sessions data");
     }
-    if (plansResponse.status === 'fulfilled' && (plansResponse.value.data?.plan || plansResponse.value.data?.plans)) {
-      plans = plansResponse.value.data.plan ?? plansResponse.value.data.plans;
-      console.log("Plans data fetched successfully:", plans);
+    if (plansResponse.status === 'fulfilled' && (plansResponse.value.data?.plans)) {
+      plans = plansResponse.value.data.plans;
+      totalPlanCount = plansResponse.value.data.totalCount || 0;
+      console.log("Plans data fetched successfully:", plans, "Total:", totalPlanCount);
+      
     } else {
       console.log("Plans data request failed or no plans found:", 
         plansResponse.status === 'rejected' ? plansResponse.reason : "No plans data");
@@ -117,7 +121,8 @@ if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.sess
             })(),
             sessions: sessions,
             plans: plans,
-            totalSessionCount: totalSessionCount
+            totalSessionCount: totalSessionCount,
+            totalPlanCount: totalPlanCount,
             
           };
 
