@@ -128,6 +128,7 @@ export async function searchDocuments(req, res) {
  */
 export async function getDocuments(req, res) {
     try {
+        console.log('Get documents request received');
         // Validate query parameters
         const { error, value } = paginationSchema.validate(req.query);
         if (error) {
@@ -139,7 +140,7 @@ export async function getDocuments(req, res) {
         }
 
         const { page, limit } = value;
-
+        
         console.log(`Fetching documents - Page: ${page}, Limit: ${limit}`);
 
         // Get documents
