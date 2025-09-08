@@ -542,3 +542,13 @@ export const DeletePlan = async (planId) => {
         throw error;
     }
 };
+export const GetTrainersGymplans = async (trainerId) => {
+    try {
+    const response = await axios.get(`${Base_URL}/api/trainer/getgymplanbytrainerid/${trainerId}`);
+    // return the API response data for the caller to use
+    return response.data;
+    } catch (error) {
+        console.error('Error deleting plan:', error);
+        throw error;
+    }
+};

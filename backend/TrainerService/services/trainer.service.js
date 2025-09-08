@@ -62,18 +62,32 @@ export async function getgymplanbytrainerid(trainerId) {
     `)
     .eq("trainer_id", trainerId);
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 
-  if (!data || data.length === 0) {
-    return null; // No plans linked to this trainer
-  }
+  if (!data || data.length === 0) return null;
 
-  // Return only the plan details if you don’t care about link info
   return data.map((row) => row.Gym_plans);
 }
+export async function getmembershipGyms(trainerId) {
+  // Validate input to avoid passing undefined to Supabase bigint filters
+  if (trainerId === undefined || trainerId === null) {
+    throw new Error('trainerId is required');
+  }
 
+  const id = Number(trainerId);
+  if (Number.isNaN(id)) {
+    throw new Error('trainerId must be a valid number');
+  }
+
+  const { data, error } = await supabase
+    .from('trainer_requests')
+    .select('*')
+    .eq('trainer_id', id);
+
+  if (error) throw new Error(error.message);
+
+  return (data && data.length > 0) ? data : null;
+}
 
 export async function updatetrainerdetails(trainerId, trainerData) {
   const { data, error } = await supabase
