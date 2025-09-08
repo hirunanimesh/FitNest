@@ -216,3 +216,42 @@ export const getOtherGyms = async () => {
         throw error;
     }
 };
+
+export const getgymplandetails = async (planIds) => {
+  try {
+    const { data, error } = await supabase
+      .from('Gym_plans')
+      .select(`
+        plan_id,
+        title,
+        price,
+        duration,
+        description,
+        gym_plan_trainers (
+          trainer:trainer_id (
+            id,
+            trainer_name,
+            profile_img,
+            trainer_plans (
+              id,
+              title,
+              description,
+              img_url,
+              instruction_pdf,
+              category
+            )
+          )
+        )
+      `)
+      .in('plan_id', planIds);
+
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error("Error fetching gym plan details:", err.message);
+    return [];
+  }
+};
+
+
+

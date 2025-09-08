@@ -39,7 +39,9 @@ export default async function getSubscriptionId(req, res) {
       return res.status(404).json({ error: "No subscription found for this plan." });
     }
 
-    const canceledSubscription = await stripe.subscriptions.del(subscription.id);
+    const canceledSubscription = await stripe.subscriptions.update(subscription.id,{
+      cancel_at_period_end: true,
+    });
 
     // Step 5: Return delection confirmation
     res.json({ canceled: true, subscriptionId: canceledSubscription.id });

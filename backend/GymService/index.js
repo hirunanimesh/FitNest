@@ -5,7 +5,7 @@ dotenv.config()
 
 
 import { addGym,approveTrainer,getAllGyms, getAllGymUsers, getGymById, getGymByUserId, getGymTrainerCount, getTotalGymMemberCount, getTrainers, updateGymDetails } from './controllers/gym.controller.js'
-import { addGymPlan, deleteGymPlan, getAllGymPlans, getGymPlanByGymId, getMemberCountPerPlan, updateGymPlan, assignTrainersToPlan, getPlanTrainers, updatePlanTrainers , GetOneDayGyms , GetOtherGyms} from './controllers/plans.controller.js'
+import { addGymPlan, deleteGymPlan, getAllGymPlans, getGymPlanByGymId, getMemberCountPerPlan, updateGymPlan, assignTrainersToPlan, getPlanTrainers, updatePlanTrainers , GetOneDayGyms , GetOtherGyms, GetGymPlanDetails} from './controllers/plans.controller.js'
 
 
 const app = express()
@@ -27,6 +27,7 @@ app.get('/getallgymplans',getAllGymPlans)
 app.get('/getgymplanbygymid/:gymId',getGymPlanByGymId)
 app.put('/updategymplan/:gymPlanId', updateGymPlan)
 app.delete('/deletegymplan/:gymPlanId',deleteGymPlan)
+app.post('/getgymplandetails',GetGymPlanDetails)
 
 // New routes for managing plan trainers
 app.post('/assign-trainers-to-plan', assignTrainersToPlan)
