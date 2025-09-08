@@ -78,20 +78,7 @@ export default function TopBar() {
               }`}></span>
             </Link>
 
-            <Link
-              href="/dashboard/trainer/analytics"
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group ${
-                isActive('/dashboard/trainer/analytics') 
-                  ? 'text-red-400' 
-                  : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              <ChartNoAxesCombinedIcon className="h-4 w-4" />
-              Analytics
-              <span className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-200 ${
-                isActive('/dashboard/trainer/analytics') ? 'w-full' : 'w-0 group-hover:w-full'
-              }`}></span>
-            </Link>
+            
         
             <Link href="/dashboard/trainer/profile">
               <Avatar className="cursor-pointer ring-2 ring-transparent hover:ring-red-500 transition-all duration-200">
