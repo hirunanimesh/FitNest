@@ -16,6 +16,7 @@ import {
   getTrainerById, 
   updateTrainerDetails,
   getFeedbackbyTrainerId,
+  bookSession,
   getGymPlanByTrainerId,
   getGymById 
  } from './controllers/trainer.controller.js'
@@ -50,8 +51,11 @@ app.get('/getallplansbytrainerid/:trainerId', getallplanByTrainerId);
 app.patch('/updateplan/:planId', updatePlan);
 app.delete('/deleteplan/:planId', deletePlan);
 
+app.post('/booksession',bookSession)
+
 app.get('/getgymplanbytrainerid/:trainerId',getGymPlanByTrainerId);
 app.get('/getmembershipgyms/:trainerId',getGymById);
+
 //api  for calendar function
 //get subscribe user
 const PORT = process.env.PORT || 3005
