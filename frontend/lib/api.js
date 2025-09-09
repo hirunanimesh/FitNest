@@ -342,7 +342,6 @@ export const UpdateSessionDetails = async (sessionId, sessionData) => {
             if (sessionData.description) payload.description = sessionData.description;
             if (sessionData.price) payload.price = sessionData.price;
             if (sessionData.duration) payload.duration = sessionData.duration;
-            if (sessionData.trainerId) payload.trainer_id = sessionData.trainerId;
             if (sessionData.zoom_link) payload.zoom_link = sessionData.zoom_link;
             if (sessionData.img_url) payload.img_url = sessionData.img_url; // <-- FIXED
             if (sessionData.time) payload.time = sessionData.time;
@@ -397,6 +396,7 @@ export const UpdateTrainerDetails = async (trainerId, trainerData) => {
             if (trainerData.contact_no) payload.contact_no = trainerData.contact_no;
             if (trainerData.bio) payload.bio = trainerData.bio;
             if (trainerData.skills) payload.skills = trainerData.skills;
+            if (trainerData.documents) payload.documents = trainerData.documents;
             if (trainerData.profile_img) payload.profile_img = trainerData.profile_img;
             requestData = payload;
         }
@@ -426,10 +426,15 @@ export const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", uploadPreset);
-
     try {
+        // Choose endpoint according to file type. Use 'image/upload' for images and 'raw/upload' for others (e.g., pdf).
+        const isImage = typeof file?.type === 'string' && file.type.startsWith('image');
+        const endpoint = isImage
+            ? `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
+            : `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`;
+
         const response = await axios.post(
-            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            endpoint,
             formData,
             {
                 headers: {
@@ -438,13 +443,123 @@ export const uploadToCloudinary = async (file) => {
                 timeout: 60000,
             }
         );
-        return response.data.secure_url;
+
+        // raw/upload returns 'secure_url' as well for raw files
+        return response.data.secure_url || response.data.url;
     } catch (error) {
-        console.error("Image upload error:", error);
+        console.error("Cloudinary upload error:", error);
         if (error.response?.data?.error?.message) {
             throw new Error(error.response.data.error.message);
         }
-        throw new Error("Image upload failed");
+        throw new Error("File upload failed");
     }
 }
+export const AddPlan = async (planData) => {
+    try {
+        const response = await axios.post(`${Base_URL}/api/trainer/addplan`, planData);
+        return response.data;
+    } catch (error) {
+        console.error("Error adding plan:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to create plan");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+export const UpdatePlan = async (planId, planData) => {
+    try {
+        const config = {};
+        let requestData;
 
+        // Check if planData is FormData (contains file) or regular object
+        if (planData instanceof FormData) {
+            // If there's an image file in the FormData, upload it and replace with img_url
+            const imgFile = planData.get('image') || planData.get('img') || planData.get('img_url') || planData.get('photo');
+            if (imgFile && typeof imgFile !== 'string') {
+                try {
+                    const uploadedUrl = await uploadToCloudinary(imgFile);
+                    planData.delete('image');
+                    planData.delete('img');
+                    planData.delete('photo');
+                    planData.set('img_url', uploadedUrl);
+                } catch (err) {
+                    console.error('Image upload failed in UpdatePlan:', err);
+                }
+            }
+
+            const pdfFile = planData.get('instructionPdf') || planData.get('instruction_pdf');
+            if (pdfFile && typeof pdfFile !== 'string') {
+                try {
+                    const pdfUrl = await uploadToCloudinary(pdfFile);
+                    planData.delete('instructionPdf');
+                    planData.delete('instruction_pdf');
+                    planData.set('instruction_pdf', pdfUrl);
+                } catch (err) {
+                    console.error('PDF upload failed in UpdatePlan:', err);
+                }
+            }
+            config.headers = {
+                'Content-Type': 'multipart/form-data',
+            };
+            requestData = planData;
+        } else {
+            // Map only relevant plan fields
+            const payload = {};
+            if (planData.title) payload.title = planData.title;
+            if (planData.description) payload.description = planData.description;
+            if (planData.img_url) payload.img_url = planData.img_url; 
+            // support both snake_case and camelCase keys for instruction PDF
+            if (planData.instruction_pdf) payload.instruction_pdf = planData.instruction_pdf;
+            
+            requestData = payload;
+        }
+
+        const response = await axios.patch(
+            `${Base_URL}/api/trainer/updateplan/${planId}`,
+            requestData,
+            config
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating plan details:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to update plan details");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+};
+export const DeletePlan = async (planId) => {
+    try {
+        await axios.delete(`${Base_URL}/api/trainer/deleteplan/${planId}`);
+        // Do not show toast here; handle it in the component
+    } catch (error) {
+        console.error('Error deleting plan:', error);
+        throw error;
+    }
+};
+export const GetTrainersGymplans = async (trainerId) => {
+    try {
+    const response = await axios.get(`${Base_URL}/api/trainer/getgymplanbytrainerid/${trainerId}`);
+    // return the API response data for the caller to use
+    return response.data;
+    } catch (error) {
+        console.error('Error deleting plan:', error);
+        throw error;
+    }
+};
+export const GetMembershipGyms = async (trainerId) => {
+    try {
+    const response = await axios.get(`${Base_URL}/api/trainer/getmembershipgyms/${trainerId}`);
+    // return the API response data for the caller to use
+    return response.data;
+    } catch (error) {
+        console.error('Error deleting plan:', error);
+        throw error;
+    }
+};

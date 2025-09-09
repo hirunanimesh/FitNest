@@ -14,7 +14,6 @@ export async function updateUserDetails(userId, userData) {
   return data[0]; // Return updated customer
 }
 
-
 export async function addWeight(weightData) {
     const { data, error } = await supabase
       .from('customer_progress')
@@ -27,7 +26,6 @@ export async function addWeight(weightData) {
   
     return data[0]; // Return first inserted weight
   }
-
 
   export async function getUserById(userId) {
           const { data, error } = await supabase
@@ -73,4 +71,3 @@ export async function getLatestWeightById(userId) {
 
   return data[0]; // Array of all weight entries
 }
-

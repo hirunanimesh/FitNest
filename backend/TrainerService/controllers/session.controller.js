@@ -25,7 +25,7 @@ export const getAllSession = async (req, res) => {
     const sessions = await getallsessions();
 
     if (sessions && sessions.length > 0) {
-      res.status(200).json({ message: "Trainer session retrieved successfully", sessions });
+      res.status(200).json({ message: "Trainer session retrieved successfully", sessions  });
     } else {
       res.status(404).json({ message: "No sessions found" });
     }
@@ -53,9 +53,9 @@ export const getSessionBySessionId = async (req, res) => {
 export const getallSessionByTrainerId = async (req, res) => {
     const { trainerId } = req.params;
     try {
-        const session = await getallsessionbytrainerid(trainerId)
-        if (session) {
-            res.status(200).json({ message: "Trainer Sessions retrieved successfully", session });
+        const { sessions, totalCount } = await getallsessionbytrainerid(trainerId)
+        if (sessions) {
+            res.status(200).json({ message: "Trainer Sessions retrieved successfully", sessions ,totalCount});
         } else {
             res.status(404).json({ message: "Trainer Sessions not found" });
         }

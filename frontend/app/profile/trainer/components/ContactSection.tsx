@@ -6,6 +6,7 @@ import { useState } from "react"
 import { useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { GetUserInfo } from "@/lib/api"
+import { useTrainerData } from "../context/TrainerContext";
 import axios from "axios"
 
 export default function ContactSection() {
@@ -15,6 +16,7 @@ export default function ContactSection() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [trainerId, setTrainerId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const { refreshTrainerData } = useTrainerData();
   
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -70,8 +72,13 @@ export default function ContactSection() {
         trainer_id: trainerId,
         
       });
-      setSubmitted(true)
-      setForm({ message: "" })
+  // show success message and clear the form
+  setSubmitted(true)
+  setForm({ message: "" })
+  // refresh trainer data so the new feedback appears without reload
+  try { await refreshTrainerData() } catch (e) { /* ignore refresh errors */ }
+  // hide success message after 2 seconds
+  setTimeout(() => setSubmitted(false), 2000)
     } catch {
       alert("Failed to send message. Please try again.")
     } finally {
@@ -80,35 +87,35 @@ export default function ContactSection() {
   }
 
   return (
-    <section id="contact" className="py-20 bg-gray-900">
+    <section id="contact" className="py-20 bg-gradient-to-br from-gray-800 to-black">
       <div className="container mx-auto px-4 max-w-lg">
-        <h3 className="text-3xl font-bold text-white mb-8 text-center">Send Feedback</h3>
+  <h3 className="text-5xl font-bold mb-8 text-center"><span className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent text-bold text-5xl">Send Feedback</span></h3>
         {submitted ? (
           <div className="bg-green-700 text-white p-6 rounded-md text-center">
             Thank you for your message! I'll get back to you shortly.
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 shadow-lg">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <Label htmlFor="message" className="text-gray-300">Message</Label>
+                <textarea
+                  name="message"
+                  id="message"
+                  value={form.message}
+                  onChange={handleChange}
+                  required
+                  placeholder="Write your message here..."
+                  className="w-full mt-1 p-3 rounded-md bg-gray-900 text-white border border-gray-700 resize-none"
+                  rows={5}
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="message" className="text-gray-300">Message</Label>
-              <textarea
-                name="message"
-                id="message"
-                value={form.message}
-                onChange={handleChange}
-                required
-                placeholder="Write your message here..."
-                className="w-full mt-1 p-2 rounded-md bg-gray-800 text-white border border-gray-700"
-                rows={5}
-              />
-            </div>
-
-            <Button type="submit" disabled={submitting} className="w-full bg-red-600 hover:bg-red-700">
-              {submitting ? "Sending..." : "Send Message"}
-            </Button>
-          </form>
+              <Button type="submit" disabled={submitting} className="w-full bg-red-600 hover:bg-red-700">
+                {submitting ? "Sending..." : "Send Message"}
+              </Button>
+            </form>
+          </div>
         )}
       </div>
     </section>
