@@ -53,9 +53,9 @@ export const getplanByplanId = async (req, res) => {
 export const getallplanByTrainerId = async (req, res) => {
     const { trainerId } = req.params;
     try {
-        const plan = await getallplanbytrainerid(trainerId)
-        if (plan) {
-            res.status(200).json({ message: "Trainer plans retrieved successfully", plan });
+        const { plans, totalCount } = await getallplanbytrainerid(trainerId)
+        if (plans) {
+            res.status(200).json({ message: "Trainer plans retrieved successfully", plans,totalCount });
         } else {
             res.status(404).json({ message: "Trainer plans not found" });
         }

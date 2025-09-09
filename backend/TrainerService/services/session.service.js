@@ -48,23 +48,25 @@ export async function addsession(sessionData) {
   }
 
   export async function getallsessionbytrainerid(trainerId) {
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from('trainer_sessions')
-      .select(`*,
+      .select(
+        `*,
         trainer(
           trainer_name,
           contact_no
-        )
-      `)
+        )`,
+        { count: 'exact' }
+      )
       .eq('trainer_id', trainerId);
 
-      if(!data){
-        return null;
-      }
-    if (error) {
-        throw new Error(error.message);
+    if (!data) {
+      return { sessions: [], totalCount: 0 };
     }
-    return data;
+    if (error) {
+      throw new Error(error.message);
+    }
+    return { sessions: data, totalCount: count };
   }
 
   export async function updatesession(sessionId, sessionData) {

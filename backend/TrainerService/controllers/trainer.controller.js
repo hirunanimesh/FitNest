@@ -1,4 +1,6 @@
-import { getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails, booksession } from '../services/trainer.service.js';
+
+import { getmembershipGyms,getgymplanbytrainerid,getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails ,booksession} from '../services/trainer.service.js';
+
 
 export const getallTrainers = async (req,res)=>{
     try{
@@ -57,6 +59,22 @@ export const getTrainerById = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
+export const getGymPlanByTrainerId = async (req, res) => {
+  try {
+        const trainerIdParam = req.params.trainerId;
+        const trainerId = Number(trainerIdParam);
+        if (!trainerIdParam || Number.isNaN(trainerId)) {
+            console.warn('Invalid trainerId param for getGymPlanByTrainerId:', trainerIdParam);
+            return res.status(400).json({ message: 'Invalid trainerId parameter' });
+        }
+        const gymplans = await getgymplanbytrainerid(trainerId);
+
+    if (gymplans && gymplans.length > 0) {
+      res.status(200).json({ message: "GymPlans retrieved successfully", gymplans });
+    } else {
+      res.status(404).json({ message: "No Plans found" });
+    }
+
 
 export const bookSession = async (req, res) => {
     const { sessionId, customerId } = req.body;
@@ -73,4 +91,25 @@ export const bookSession = async (req, res) => {
     }
   };
   
+
+  } catch (error) {
+    console.error("Error retrieving Gym Plans:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
+
+export const getGymById = async (req, res) => {
+    const { trainerId } = req.params;
+    try {
+        const gyms = await getmembershipGyms(trainerId);
+        if (gyms) {
+        res.status(200).json({ message: "Gyms retrieved successfully", gyms });
+        } else {
+        res.status(404).json({ message: "Gyms not found" });
+        }
+    } catch (error) {
+        console.error("Error retrieving gyms:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
 

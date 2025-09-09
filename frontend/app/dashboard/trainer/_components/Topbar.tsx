@@ -1,16 +1,17 @@
 "use client"
 
-import React from "react";
+import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button"
-import { Dumbbell, LayoutDashboard, ChartNoAxesCombinedIcon, Tv2, User2 } from "lucide-react"
+import { Dumbbell, LayoutDashboard, ChartNoAxesCombinedIcon, Tv2, User2,LogOut } from "lucide-react"
 import Link from "next/link"
 import { useTrainerData } from '../context/TrainerContext'
 
 export default function TopBar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { trainerData } = useTrainerData();
   const router = useRouter();
   const pathname = usePathname();
@@ -25,19 +26,29 @@ export default function TopBar() {
     const normalizedHref = href.replace(/\/+$/, '');
     return normalizedPathname === normalizedHref;
   };
+const handleLogout = () => {
+    supabase.auth.signOut();
+    router.push("/auth/login");
+    setIsMobileMenuOpen(false);
+  };
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
   return (
     <>
-      <header className="fixed top-0 z-50 w-full bg-gray-900 shadow-lg border-b-2 border-gray-800">
+            <header className="fixed top-0 z-50 w-full bg-gradient-to-r from-black via-gray-900 to-black backdrop-blur-md border-b border-red-500/30 shadow-2xl">
         <div className="container flex h-16 items-center justify-between px-2">
           {/* Left side - Logo, greeting, and date */}
-          <div className="flex items-center space-x-6">
-            <Link href="/" className="flex items-center space-x-3 group">
-              <div className="p-2 bg-[#FB4141] rounded-lg group-hover:bg-[#e63636] transition-colors">
-                <Dumbbell className="h-6 w-6 text-white" />
-              </div>
-              <span className="font-bold text-2xl text-white">FitNest</span>
-            </Link>
+           <div className="flex items-center space-x-3 sm:space-x-6">
+              <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group">
+                <div className="p-1.5 sm:p-2 bg-gradient-to-br from-[#FB4141] to-red-600 rounded-lg group-hover:from-red-600 group-hover:to-[#FB4141] transition-all duration-300 shadow-lg">
+                  <Dumbbell className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <span className="font-bold text-xl sm:text-2xl text-white tracking-tight">
+                  Fit<span className="text-[#FB4141]">Nest</span>
+                </span>
+              </Link>
             <div className="flex flex-col">
               <h1 className="text-lg text-gray-400 font-semibold">
                 Hi, {trainerName}
@@ -78,20 +89,7 @@ export default function TopBar() {
               }`}></span>
             </Link>
 
-            <Link
-              href="/dashboard/trainer/analytics"
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group ${
-                isActive('/dashboard/trainer/analytics') 
-                  ? 'text-red-400' 
-                  : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              <ChartNoAxesCombinedIcon className="h-4 w-4" />
-              Analytics
-              <span className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-200 ${
-                isActive('/dashboard/trainer/analytics') ? 'w-full' : 'w-0 group-hover:w-full'
-              }`}></span>
-            </Link>
+            
         
             <Link href="/dashboard/trainer/profile">
               <Avatar className="cursor-pointer ring-2 ring-transparent hover:ring-red-500 transition-all duration-200">
@@ -107,14 +105,13 @@ export default function TopBar() {
             </Link>
             
             <Button
-              onClick={() => {
-                supabase.auth.signOut();
-                router.push("/auth/login");
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors duration-200"
-            >
-              Logout
-            </Button>
+                onClick={handleLogout}
+                className="bg-gradient-to-r from-[#FB4141] to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-6 py-2 transition-all duration-300 shadow-lg hover:shadow-red-500/25"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            
           </nav>
         </div>
       </header>

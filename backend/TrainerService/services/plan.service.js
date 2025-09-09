@@ -48,18 +48,25 @@ export async function addplan(planData) {
   }
 
   export async function getallplanbytrainerid(trainerId) {
-    const { data, error } = await supabase
+    const { data, error,count } = await supabase
       .from('trainer_plans')
-      .select(`*`)
+      .select(
+        `*,
+        trainer(
+          trainer_name,
+          contact_no
+        )`,
+        { count: 'exact' }
+      )
       .eq('trainer_id', trainerId);
 
       if(!data){
-        return null;
+        return { plans: [], totalCount: 0 };
       }
     if (error) {
         throw new Error(error.message);
     }
-    return data;
+    return { plans: data, totalCount: count };
   }
 
   export async function updateplan(planId, planData) {

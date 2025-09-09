@@ -135,8 +135,7 @@ export async function getAllDocuments(page = 1, limit = 10) {
 
         const { data, error, count } = await supabase
             .from('documents')
-            .select('id, content, metadata, created_at, updated_at', { count: 'exact' })
-            .order('created_at', { ascending: false })
+            .select('id, content, metadata', { count: 'exact' })
             .range(offset, offset + limit - 1);
 
         if (error) {
