@@ -20,9 +20,7 @@ export default async function getSubscriptions(req, res) {
       });
   
       if (!subscriptions || subscriptions.data.length === 0) {
-        return res
-          .status(404)
-          .json({ error: "No subscriptions found for this customer." });
+        return res.json({ planIds: [] });
       }
   
       // Extract all product_ids
@@ -33,6 +31,10 @@ export default async function getSubscriptions(req, res) {
       const plans = await findPlansByProductId({ product_id: productIds });
 
       const planIds = plans.map(plan => plan.plan_id)
+
+      if (!planIds){
+        return res.json({ planIds: [] });
+      }
   
       res.json({ planIds });
     } catch (error) {

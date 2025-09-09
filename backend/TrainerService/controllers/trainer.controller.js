@@ -1,4 +1,4 @@
-import { getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails } from '../services/trainer.service.js';
+import { getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails, booksession } from '../services/trainer.service.js';
 
 export const getallTrainers = async (req,res)=>{
     try{
@@ -57,4 +57,20 @@ export const getTrainerById = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
+
+export const bookSession = async (req, res) => {
+    const { sessionId, customerId } = req.body;
+  
+    try {
+      const session = await booksession(sessionId, customerId);
+      if (session) {
+        res.status(200).json({ success: true, session });
+      } else {
+        res.status(404).json({ success: false, message: "Session not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  };
+  
 
