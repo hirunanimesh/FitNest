@@ -137,6 +137,19 @@ export async function booksession(sessionId, customerId) {
   return data;
 
 }
+
+export async function sendrequest(trainerId,gymId){
+  const { data, error } = await supabase
+  .from('trainer_requests')
+  .insert([{ trainer_id: trainerId, gym_id: gymId ,approved:false}])
+  .select()
+  .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
+}
  
 
 
