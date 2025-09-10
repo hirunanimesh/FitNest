@@ -29,9 +29,9 @@ const TrainerDashboard = () => {
             <Calendar />
           </section>
 
-          <section className="bg-gradient-to-r from-gray-800/50 to-transparent rounded-2xl p-4">
+          {/* <section className="bg-gradient-to-r from-gray-800/50 to-transparent rounded-2xl p-4">
             <UploadContent />
-          </section>
+          </section> */}
         </div>
       </div>
     </ProtectedRoute>

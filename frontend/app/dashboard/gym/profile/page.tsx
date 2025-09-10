@@ -1,14 +1,31 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Camera, MapPin, Phone, FileText, Edit3, Save, Shield, CheckCircle, X, Upload, Download, Clock, Loader2, Loader } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Camera, MapPin, Phone, FileText, Edit3, Save, Shield, CheckCircle, X, Upload, Download, Clock, Loader2, Loader, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { GetGymProfileData } from '@/lib/api';
 
+interface Document {
+  id: string;
+  type: string;
+  url: string;
+}
+
 const GymProfile = () => {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [gymProfileData, setGymProfileData] = useState({
+  const [gymProfileData, setGymProfileData] = useState<{
+    gym_name: string;
+    address: string;
+    operating_Hours: string;
+    contact_no: string;
+    description: string;
+    profile_img: string;
+    verified: boolean;
+    documents: Document[];
+  }>({
     gym_name: '',
     address: '',
     operating_Hours: '',
@@ -27,9 +44,9 @@ const GymProfile = () => {
     description: ''
   });
 
-  const [newProfileImage, setNewProfileImage] = useState(null);
-  const [newDocuments, setNewDocuments] = useState([]);
-  const [documentsToDelete, setDocumentsToDelete] = useState([]);
+  const [newProfileImage, setNewProfileImage] = useState<{ file: File; preview: string } | null>(null);
+  const [newDocuments, setNewDocuments] = useState<Array<{ id: string; file: File; type: string; isNew: boolean }>>([]);
+  const [documentsToDelete, setDocumentsToDelete] = useState<string[]>([]);
 
   const getSession = async () => {
     const { data, error } = await supabase.auth.getSession();
@@ -78,12 +95,12 @@ const GymProfile = () => {
     fetchData();
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleProfileImageChange = (e) => {
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setNewProfileImage({
@@ -93,9 +110,9 @@ const GymProfile = () => {
     }
   };
 
-  const handleDocumentChange = (e) => {
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newDocs = files.map(file => ({
+    const newDocs = files.map((file: File) => ({
       id: `temp_${Date.now()}_${Math.random()}`,
       file,
       type: file.name, // Using file name as type for simplicity; adjust if specific type is needed
@@ -104,15 +121,15 @@ const GymProfile = () => {
     setNewDocuments(prev => [...prev, ...newDocs]);
   };
 
-  const removeNewDocument = (docId) => {
+  const removeNewDocument = (docId: string) => {
     setNewDocuments(prev => prev.filter(doc => doc.id !== docId));
   };
 
-  const removeExistingDocument = (docId) => {
+  const removeExistingDocument = (docId: string) => {
     setDocumentsToDelete(prev => [...prev, docId]);
   };
 
-  const undoRemoveDocument = (docId) => {
+  const undoRemoveDocument = (docId: string) => {
     setDocumentsToDelete(prev => prev.filter(id => id !== docId));
   };
 
@@ -123,7 +140,14 @@ const GymProfile = () => {
       if (!userId) throw new Error("No user session found");
 
       // Initialize update data
-      const updateData = { ...formData };
+      const updateData: {
+        gym_name: string;
+        address: string;
+        operating_Hours: string;
+        contact_no: string;
+        description: string;
+        profile_img?: string;
+      } = { ...formData };
       
       // Handle profile image upload
       let profileImgUrl = gymProfileData.profile_img;
@@ -148,7 +172,7 @@ const GymProfile = () => {
       }
 
       // Handle document uploads
-      const uploadedDocs = [];
+      const uploadedDocs: Document[] = [];
       for (const doc of newDocuments) {
         const fileExt = doc.file.name.split('.').pop();
         const fileName = `${userId}/docs/${Date.now()}_${doc.type}`;
@@ -177,7 +201,7 @@ const GymProfile = () => {
         const filesToDelete = documentsToDelete.map(docId => {
           const doc = gymProfileData.documents.find(d => d.id === docId);
           return doc?.url.split('/').pop();
-        }).filter(Boolean);
+        }).filter((fileName): fileName is string => Boolean(fileName));
 
         await supabase.storage
           .from('gym-documents')
@@ -189,13 +213,8 @@ const GymProfile = () => {
         .from('gym_profiles')
         .upsert({
           user_id: userId,
-          ...updateData,
-          documents: [
-            ...gymProfileData.documents.filter(doc => !documentsToDelete.includes(doc.id)),
-            ...uploadedDocs
-          ],
-          updated_at: new Date().toISOString()
-        }, { onConflict: ['user_id'] });
+          ...updateData
+        } as any, { onConflict: 'user_id' });
 
       if (dbError) throw new Error(`Database update failed: ${dbError.message}`);
 
@@ -219,7 +238,8 @@ const GymProfile = () => {
       console.log("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert(`Failed to update profile: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to update profile: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -278,6 +298,16 @@ const GymProfile = () => {
         <div className="bg-gray-900/50 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-800 overflow-hidden mb-8">
           <div className="relative h-64 bg-gradient-to-r from-black via-gray-900 to-black">
             <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-transparent to-red-600/20"></div>
+            <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+              <Button
+                onClick={() => router.back()}
+                variant="outline"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-black/80 backdrop-blur-sm"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            </div>
             <div className="absolute bottom-6 left-6 text-white">
               <div className="flex items-center gap-4 mb-2">
                 <h1 className="text-4xl font-bold">{gymProfileData.gym_name || 'Gym Name'}</h1>
@@ -302,53 +332,59 @@ const GymProfile = () => {
                 <span>{gymProfileData.operating_Hours || 'Operating hours not set'}</span>
               </div>
             </div>
-            <div className="absolute right-5 bottom-5 flex gap-3">
-              {isEditing && (
+            <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+              {isEditing ? (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={cancelEdit}
+                    variant="outline"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700 px-3 py-2 text-sm bg-black/80 backdrop-blur-sm"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={toggleEdit}
+                    disabled={loading}
+                    className="bg-red-600 hover:bg-red-700 px-3 py-2 text-sm"
+                  >
+                    {loading ? (
+                      <Loader2 className='w-4 h-4'/>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : (
                 <Button
-                  onClick={cancelEdit}
-                  variant="outline"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  onClick={toggleEdit}
+                  disabled={loading}
+                  className="bg-red-600 hover:bg-red-700 px-3 py-2 text-sm"
                 >
-                  <X className="w-4 h-4" />
-                  Cancel
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Edit
                 </Button>
               )}
-              <Button
-                onClick={toggleEdit}
-                disabled={loading}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                {loading ? (
-                  <Loader2 className='justify-center'/>
-                ) : isEditing ? (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save Changes
-                  </>
-                ) : (
-                  <>
-                    <Edit3 className="w-4 h-4" />
-                    Edit Profile
-                  </>
-                )}
-              </Button>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           <div className="lg:col-span-1">
             <div className="bg-gray-900/50 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-800 p-6">
               <div className="flex flex-col items-center">
                 <div className="relative group">
                   <img
                     src={
-                      isEditing 
-                        ? (newProfileImage?.preview || gymProfileData.profile_img || '/api/placeholder/300/300') 
+                      isEditing
+                        ? (newProfileImage?.preview || gymProfileData.profile_img || '/api/placeholder/300/300')
                         : (gymProfileData.profile_img || '/api/placeholder/300/300')
                     }
                     alt="Gym Profile"
-                    className="w-64 h-64 rounded-2xl object-cover border-4 border-gray-700 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                    className="w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-2xl object-cover border-4 border-gray-700 shadow-xl group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-red-900/30 via-transparent to-transparent rounded-2xl"></div>
                   {isEditing && (
@@ -381,10 +417,10 @@ const GymProfile = () => {
                       name="gym_name"
                       value={formData.gym_name}
                       onChange={handleInputChange}
-                      className="w-full bg-black/60 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-all duration-300"
+                      className="w-full bg-black/60 border border-gray-700 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-all duration-300 text-sm sm:text-base"
                     />
                   ) : (
-                    <p className="text-xl font-semibold text-white bg-black/40 rounded-xl px-4 py-3 border border-gray-800">{gymProfileData.gym_name || 'Not set'}</p>
+                    <p className="text-lg sm:text-xl font-semibold text-white bg-black/40 rounded-xl px-3 sm:px-4 py-2 sm:py-3 border border-gray-800">{gymProfileData.gym_name || 'Not set'}</p>
                   )}
                 </div>
 
@@ -401,7 +437,7 @@ const GymProfile = () => {
                       className="w-full bg-black/60 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-all duration-300"
                     />
                   ) : (
-                    <p className="text-white bg-black/40 rounded-xl px-4 py-3 border border-gray-800">{gymProfileData.address || 'Not set'}</p>
+                    <p className="text-white bg-black/40 rounded-xl px-3 sm:px-4 py-2 sm:py-3 border border-gray-800">{gymProfileData.address || 'Not set'}</p>
                   )}
                 </div>
 
@@ -420,7 +456,7 @@ const GymProfile = () => {
                         placeholder="e.g., Mon-Fri 6AM-10PM, Sat-Sun 8AM-8PM"
                       />
                     ) : (
-                      <p className="text-white bg-black/40 rounded-xl px-4 py-3 border border-gray-800">{gymProfileData.operating_Hours || 'Not set'}</p>
+                      <p className="text-white bg-black/40 rounded-xl px-3 sm:px-4 py-2 sm:py-3 border border-gray-800">{gymProfileData.operating_Hours || 'Not set'}</p>
                     )}
                   </div>
 
@@ -437,7 +473,7 @@ const GymProfile = () => {
                         className="w-full bg-black/60 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-all duration-300"
                       />
                     ) : (
-                      <p className="text-white bg-black/40 rounded-xl px-4 py-3 border border-gray-800">{gymProfileData.contact_no || 'Not set'}</p>
+                      <p className="text-white bg-black/40 rounded-xl px-3 sm:px-4 py-2 sm:py-3 border border-gray-800">{gymProfileData.contact_no || 'Not set'}</p>
                     )}
                   </div>
                 </div>
@@ -454,11 +490,11 @@ const GymProfile = () => {
               value={formData.description}
               onChange={handleInputChange}
               rows={6}
-              className="w-full bg-black/60 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-all duration-300 resize-none"
+              className="w-full bg-black/60 border border-gray-700 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-all duration-300 resize-none text-sm sm:text-base"
               placeholder="Tell people about your gym..."
             />
           ) : (
-            <p className="text-white/90 text-lg leading-relaxed bg-black/40 rounded-xl px-6 py-4 border border-gray-800">
+            <p className="text-white/90 text-base sm:text-lg leading-relaxed bg-black/40 rounded-xl px-4 sm:px-6 py-3 sm:py-4 border border-gray-800">
               {gymProfileData.description || 'No description provided yet'}
             </p>
           )}
@@ -571,9 +607,9 @@ const GymProfile = () => {
           ) : (
             <div className="bg-black/40 rounded-xl px-6 py-4 border border-gray-800">
               {!gymProfileData.documents || gymProfileData.documents.length === 0 ? (
-                <span className="text-gray-500 italic">No documents uploaded yet</span>
+                <span className="text-gray-500 italic text-sm sm:text-base">No documents uploaded yet</span>
               ) : (
-                <span className="text-white">
+                <span className="text-white text-sm sm:text-base">
                   {gymProfileData.documents.length} document(s) uploaded
                 </span>
               )}

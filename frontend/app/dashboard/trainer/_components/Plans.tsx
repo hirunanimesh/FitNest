@@ -40,7 +40,67 @@ export default function Plans() {
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const sessions: Session[] = trainerData?.sessions || [];
+  // Dummy data for sessions
+  const dummySessions: Session[] = [
+    {
+      session_id: 1,
+      title: "Morning Yoga Session",
+      img_url: "/placeholder.svg",
+      price: 1500,
+      duration: "1 hr",
+      date: "2024-01-15",
+      time: "08:00",
+      description: "Start your day with energizing yoga poses and meditation.",
+      features: ["Full body stretch", "Breathing exercises", "Mindfulness"],
+      booked: false,
+      zoom_link: "https://zoom.us/j/123456789",
+      trainer: { trainer_name: "John Doe" }
+    },
+    {
+      session_id: 2,
+      title: "Strength Training",
+      img_url: "/placeholder.svg",
+      price: 2000,
+      duration: "1 hr 30 min",
+      date: "2024-01-16",
+      time: "10:00",
+      description: "Build muscle and strength with targeted exercises.",
+      features: ["Weight lifting", "Core workout", "Cardio burst"],
+      booked: true,
+      zoom_link: "https://zoom.us/j/987654321",
+      trainer: { trainer_name: "Jane Smith" }
+    },
+    {
+      session_id: 3,
+      title: "HIIT Cardio Blast",
+      img_url: "/placeholder.svg",
+      price: 1800,
+      duration: "45 min",
+      date: "2024-01-17",
+      time: "18:00",
+      description: "High-intensity interval training for maximum calorie burn.",
+      features: ["Interval training", "Jump rope", "Burpees"],
+      booked: false,
+      zoom_link: "https://zoom.us/j/456789123",
+      trainer: { trainer_name: "Mike Johnson" }
+    },
+    {
+      session_id: 4,
+      title: "Pilates Core Focus",
+      img_url: "/placeholder.svg",
+      price: 1600,
+      duration: "1 hr",
+      date: "2024-01-18",
+      time: "14:00",
+      description: "Strengthen your core with precision Pilates movements.",
+      features: ["Core stability", "Flexibility", "Balance"],
+      booked: false,
+      zoom_link: "https://zoom.us/j/789123456",
+      trainer: { trainer_name: "Sarah Wilson" }
+    }
+  ];
+
+  const sessions: Session[] = trainerData?.sessions?.length ? trainerData.sessions : dummySessions;
 
   // Delete confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -266,11 +326,18 @@ export default function Plans() {
       </Dialog>
       <section id="sessions">
         <div className="container mx-auto px-4">
-          <div className='flex flex-row justify-between'>
+          <div className='flex flex-row justify-between items-center'>
             <div className="flex-1 flex justify-center items-center">
-              <h2 className="text-4xl md:text-5xl font-black text-white text-center mb-10">
-                    <span className="bg-gradient-to-r from-dark-700 via-rose-400 to-black-600 bg-clip-text text-transparent">Ongoing Sessions</span></h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white text-center mb-6 md:mb-10">
+                    Ongoing Sessions</h2>
             </div>
+            <div className="ml-4 hidden sm:block">
+              <CreatePlan />
+            </div>
+          </div>
+          
+          {/* Mobile create button - shows below heading on small screens */}
+          <div className="flex justify-center mb-6 sm:hidden">
             <CreatePlan />
           </div>
 
@@ -279,64 +346,8 @@ export default function Plans() {
               <div key={session.session_id} className="group relative p-2 rounded-xl">
                 {/* blurred red glow behind card */}
                 <div className="absolute inset-0 rounded-xl -m-1 bg-red-900/70 blur-lg opacity-80 transition-opacity duration-300 group-hover:opacity-100 z-0" aria-hidden />
-                <Card className="relative z-10 bg-gray-800 border-gray-700 transition-all duration-200 transform group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:border-red-500 group-hover:ring-1 group-hover:ring-red-600 group-hover:ring-offset-2 group-hover:ring-offset-slate-900">
+                <Card className="relative z-10 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl shadow-lg transition-all duration-300 transform group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-red-500/20 group-hover:border-red-500/50 group-hover:ring-2 group-hover:ring-red-500/20 backdrop-blur-sm">
                 <CardHeader>
-                  <div className="relative">
-                    <div
-                      className={`w-full h-full rounded-md mb-2 overflow-hidden border-2 ${isDragging ? "border-blue-500" : "border-transparent"}`}
-                      onDragOver={isEditing(session.session_id) ? handleDragOver : undefined}
-                      onDragLeave={isEditing(session.session_id) ? handleDragLeave : undefined}
-                      onDrop={isEditing(session.session_id) ? handleDrop : undefined}
-                    >
-                      <img
-                        src={
-                          isEditing(session.session_id)
-                            ? imagePreview || editFormData.img_url || "/placeholder.svg"
-                            : session.img_url || "/placeholder.svg"
-                        }
-                        alt={session.title}
-                        className="w-full h-64 object-cover"
-                      />
-                    </div>
-                    {isEditing(session.session_id) && (
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="bg-gray-700 text-white border-gray-600 hover:bg-gray-800"
-                          onClick={() => fileInputRef.current?.click()}
-                          type="button"
-                          disabled={isUploadingImage}
-                        >
-                          <ImagePlus className="w-4 h-4 mr-2" />
-                          {isUploadingImage ? "Uploading..." : "Change Image"}
-                        </Button>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleFileInputChange}
-                          disabled={isUploadingImage}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Title Field */}
-                  <div className="flex items-center gap-2">
-                    <Label className="text-sm text-white min-w-[60px]">Title:</Label>
-                    {isEditing(session.session_id) ? (
-                      <Input
-                        value={editFormData.title || ''}
-                        onChange={(e) => handleInputChange('title', e.target.value)}
-                        className="bg-[#192024] text-white border-gray-600 flex-1"
-                      />
-                    ) : (
-                      <span className="text-sm text-white flex-1">{session.title}</span>
-                    )}
-                  </div>
-
                   {/* Price Field */}
                   <div className="flex items-center gap-2">
                     <Label className="text-sm text-white min-w-[60px]">Price:</Label>
@@ -405,6 +416,7 @@ export default function Plans() {
                       <span className="text-sm text-white flex-1">{session.time}</span>
                     )}
                   </div>
+
                   {/* Zoom Field */}
                   <div className="flex items-center gap-2">
                     <Label className="text-sm text-white min-w-[60px]">Zoom Link:</Label>
@@ -419,32 +431,9 @@ export default function Plans() {
                       <span className="text-sm text-white flex-1">{session.zoom_link}</span>
                     )}
                   </div>
-                  {/* Description Field */}
-                  <div className="flex items-start gap-2">
-                    <Label className="text-sm text-white min-w-[60px] pt-2">Description:</Label>
-                    {isEditing(session.session_id) ? (
-                      <Textarea
-                        value={editFormData.description || ''}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
-                        className="bg-[#192024] text-white border-gray-600 min-h-[60px] flex-1"
-                        rows={3}
-                      />
-                    ) : (
-                      <span className="text-sm text-white flex-1">{session.description}</span>
-                    )}
-                  </div>
                 </CardHeader>
-                
+
                 <CardContent>
-                  <ul className="space-y-2 mb-4">
-                    {session.features?.map((feature: string, index: number) => (
-                      <li key={index} className="text-sm text-gray-400 flex items-center">
-                        <div className="w-1.5 h-1.5 bg-red-600 rounded-full mr-2"></div>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  
                   {/* Action Buttons */}
                   <div className="flex gap-2 mt-4">
                     {isEditing(session.session_id) ? (
