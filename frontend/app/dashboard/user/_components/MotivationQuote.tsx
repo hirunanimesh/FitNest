@@ -37,15 +37,10 @@ export default function MotivationQuotes() {
 
   return (
     <p
-      className="text-5xl font-bold italic text-red-600 text-center"
+      className="text-5xl font-bold text-center text-gray-300"
       style={{
-        background: "linear-gradient(90deg, #f87171 25%, #fca5a5 50%, #f87171 75%)",
-        backgroundSize: "200% 100%",
-        backgroundClip: "text",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        animation: "shine 2s linear infinite",
         fontFamily: "monospace",
+        textShadow: "0 0 10px rgba(192, 192, 192, 0.5)",
       }}
     >
       {displayedText}

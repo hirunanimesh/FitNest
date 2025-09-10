@@ -195,25 +195,25 @@ const Charts: React.FC = () => {
     };
 
     return (
-        <section id="Health Analytics" className="min-h-screen bg-transparent p-4">
+        <section id="Health Analytics" className="bg-transparent p-2 sm:p-4 lg:p-6">
                 
                 
-          <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-5xl font-black text-white text-center mb-8">
+          <div className="text-center mb-4 sm:mb-6 lg:mb-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white text-center mb-4 sm:mb-6 lg:mb-8">
             <span className="bg-gradient-to-r from-blue-800 via-rose-400 to-blue-800 bg-clip-text text-transparent">Health Analytics</span>
           </h2>
         </div>
         
        
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-transparent px-8">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 bg-transparent px-2 sm:px-4 lg:px-6 xl:px-8">
                     {/* BMI Chart */}
-                    <Card className='group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 flex flex-col overflow-hidden relative'>
-                        <CardHeader >
-                            <CardTitle className="flex items-center gap-2 text-white">
-                                <div className="w-3 h-3 bg-red-500 rounded-full "></div>
+                    <Card className='group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 lg:hover:-translate-y-3 flex flex-col overflow-hidden relative'>
+                        <CardHeader className="p-3 sm:p-4 lg:p-6">
+                            <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base lg:text-lg">
+                                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
                                 BMI Variation
                             </CardTitle>
-                            <CardDescription className='text-white mb-4'>
+                            <CardDescription className='text-white text-xs sm:text-sm mb-2 sm:mb-4'>
                                 Body Mass Index tracking over time
                                 <br />
                                 <span className="text-xs text-gray-500">
@@ -221,46 +221,48 @@ const Charts: React.FC = () => {
                                 </span>
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={350}>
-                                <LineChart data={bmiData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CardContent className="p-3 sm:p-4 lg:p-6">
+                            <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px] lg:!h-[350px]">
+                                <LineChart data={bmiData} margin={{ top: 10, right: 15, left: 10, bottom: 5 }} className="sm:!mx-[20px] lg:!mx-[30px]">
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis 
                                         dataKey="day" 
-                                        tick={{ fontSize: 12 }}
+                                        tick={{ fontSize: 10 }}
+                                        className="sm:!text-xs lg:!text-sm"
                                         interval="preserveStartEnd"
                                     />
                                     <YAxis 
                                         domain={["dataMin - 0.5", "dataMax + 0.5"]} 
-                                        tick={{ fontSize: 12 }}
+                                        tick={{ fontSize: 10 }}
+                                        className="sm:!text-xs lg:!text-sm"
                                     />
                                     <Tooltip content={<CustomTooltip />} />
                                     <Line 
                                         type="monotone" 
                                         dataKey="bmi" 
                                         stroke="#ef4444" 
-                                        strokeWidth={3}
-                                        dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
-                                        activeDot={{ r: 6, stroke: '#dc2626', strokeWidth: 2 }}
+                                        strokeWidth={2}
+                                        dot={{ fill: '#ef4444', strokeWidth: 1, r: 3 }}
+                                        activeDot={{ r: 4, stroke: '#dc2626', strokeWidth: 2 }}
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
-                            <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                                <div className="p-2 bg-gray-700 rounded-lg">
-                                    <p className="text-xs text-gray-200">Average BMI</p>
-                                    <p className="text-sm font-semibold text-red-600">
+                            <div className="mt-2 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
+                                <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-[10px] sm:text-xs text-gray-200">Average BMI</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-red-600">
                                         {bmiData.length > 0 ? (bmiData.reduce((sum, d) => sum + d.bmi, 0) / bmiData.length).toFixed(1) : '0'}
                                     </p>
                                 </div>
-                                <div className="p-2 bg-gray-700 rounded-lg">
-                                    <p className="text-xs text-gray-200">Min BMI</p>
-                                    <p className="text-sm font-semibold text-green-600">
+                                <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-[10px] sm:text-xs text-gray-200">Min BMI</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-green-600">
                                         {bmiData.length > 0 ? Math.min(...bmiData.map(d => d.bmi)).toFixed(1) : '0'}
                                     </p>
                                 </div>
-                                <div className="p-2 bg-gray-700 rounded-lg">
-                                    <p className="text-xs text-gray-200">Max BMI</p>
-                                    <p className="text-sm font-semibold text-orange-600">
+                                <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-[10px] sm:text-xs text-gray-200">Max BMI</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-orange-600">
                                         {bmiData.length > 0 ? Math.max(...bmiData.map(d => d.bmi)).toFixed(1) : '0'}
                                     </p>
                                 </div>
@@ -269,14 +271,14 @@ const Charts: React.FC = () => {
                     </Card>
 
                     {/* Weight Chart */}
-                    <Card className='group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 flex flex-col overflow-hidden relative'>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <div>
-                                <CardTitle className="flex items-center gap-2 text-white">
-                                    <div className="w-3 h-3 bg-blue-500 rounded-full "></div>
+                    <Card className='group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 lg:hover:-translate-y-3 flex flex-col overflow-hidden relative'>
+                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2 p-3 sm:p-4 lg:p-6">
+                            <div className="flex-1 min-w-0">
+                                <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base lg:text-lg">
+                                    <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full"></div>
                                     Weight Variation
                                 </CardTitle>
-                                <CardDescription className='text-white'>
+                                <CardDescription className='text-white text-xs sm:text-sm'>
                                     Weight tracking over time
                                     <br />
                                     <span className="text-xs text-gray-500">
@@ -286,9 +288,10 @@ const Charts: React.FC = () => {
                             </div>
                             <Dialog open={isWeightDialogOpen} onOpenChange={setIsWeightDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button size="sm"  className="shrink-0 bg-red-500">
-                                        <Plus className="h-4 w-4 mr-1" />
-                                        Add Weight
+                                    <Button size="sm" className="shrink-0 bg-red-500 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                        <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                        <span className="hidden sm:inline">Add Weight</span>
+                                        <span className="sm:hidden">Add</span>
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent className="sm:max-w-[425px] bg-gray-900 text-gray-200">
@@ -360,47 +363,49 @@ const Charts: React.FC = () => {
                                 </DialogContent>
                             </Dialog>
                         </CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={350}>
-                                <LineChart data={weightData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CardContent className="p-3 sm:p-4 lg:p-6">
+                            <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px] lg:!h-[350px]">
+                                <LineChart data={weightData} margin={{ top: 10, right: 15, left: 10, bottom: 5 }} className="sm:!mx-[20px] lg:!mx-[30px]">
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis 
                                         dataKey="day" 
-                                        tick={{ fontSize: 12 }}
+                                        tick={{ fontSize: 10 }}
+                                        className="sm:!text-xs lg:!text-sm"
                                         interval="preserveStartEnd"
                                     />
                                     <YAxis 
                                         domain={["dataMin - 1", "dataMax + 1"]} 
-                                        tick={{ fontSize: 12 }}
+                                        tick={{ fontSize: 10 }}
+                                        className="sm:!text-xs lg:!text-sm"
                                     />
                                     <Tooltip content={<CustomTooltip />} />
                                     <Line 
                                         type="monotone" 
                                         dataKey="weight" 
                                         stroke="#3b82f6" 
-                                        strokeWidth={3}
-                                        dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                                        activeDot={{ r: 6, stroke: '#1e40af', strokeWidth: 2 }}
+                                        strokeWidth={2}
+                                        dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
+                                        activeDot={{ r: 4, stroke: '#1e40af', strokeWidth: 2 }}
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
-                            <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                                <div className="p-2 bg-gray-700 rounded-lg">
-                                    <p className="text-xs text-gray-200">Average Weight</p>
-                                    <p className="text-sm font-semibold text-blue-600">
+                            <div className="mt-2 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
+                                <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-[10px] sm:text-xs text-gray-200">Average Weight</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-blue-600">
                                         {weightData.length > 0 ? (weightData.reduce((sum, d) => sum + d.weight, 0) / weightData.length).toFixed(1) : '0'} kg
                                     </p>
                                 </div>
-                                <div className="p-2 bg-gray-700 rounded-lg">
-                                    <p className="text-xs text-gray-200">Weight Change</p>
-                                    <p className="text-sm font-semibold text-green-600">
+                                <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-[10px] sm:text-xs text-gray-200">Weight Change</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-green-600">
                                         {weightData.length > 1 ? 
                                             `${(weightData[weightData.length - 1].weight - weightData[0].weight).toFixed(1)} kg` : '0 kg'}
                                     </p>
                                 </div>
-                                <div className="p-2 bg-gray-700 rounded-lg">
-                                    <p className="text-xs text-gray-200">Goal Progress</p>
-                                    <p className="text-sm font-semibold text-purple-600">
+                                <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
+                                    <p className="text-[10px] sm:text-xs text-gray-200">Goal Progress</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-purple-600">
                                         {weightData.length > 1 && weightData[0].weight > weightData[weightData.length - 1].weight ? 
                                             '📉 Losing' : weightData.length > 1 && weightData[0].weight < weightData[weightData.length - 1].weight ? 
                                             '📈 Gaining' : '📊 Monitor'}

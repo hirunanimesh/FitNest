@@ -18,28 +18,56 @@ function UserDashboardContent() {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-gray-900">
-      {/* Main Content */}
-      <div className="flex-1 space-y-10 p-20">
-        {/* Motivation Quote */}
-        <MotivationQuotes />
+      {/* Desktop Layout */}
+      <div className="hidden lg:block lg:min-h-screen">
+        {/* Main Content */}
+        <div className="space-y-10 p-6 xl:p-20">
+          {/* Motivation Quote */}
+          <MotivationQuotes />
 
-        {/* Streak Card */}
-        <Progress  />
+          {/* Streak Card */}
+          <Progress />
 
-        {/* Today's Sessions */}
-        <TodaySessions  />
+          {/* Today's Sessions */}
+          {/* <TodaySessions /> */}
 
-        {/* Upcoming Sessions */}
-        <UpcomingSessions  />
+          {/* Upcoming Sessions */}
+          <UpcomingSessions />
 
-       <GymSubscriptions/>
+          <GymSubscriptions />
 
-        {/* Charts */}
-        <Charts />
+          {/* Charts */}
+          <Charts />
+
+          {/* Schedule - At bottom for desktop too */}
+          <Schedule />
+        </div>
       </div>
 
-      {/* Right Sidebar */}
-      <Schedule  />
+      {/* Mobile Layout */}
+      <div className="lg:hidden min-h-screen">
+        <div className="space-y-6 p-4 sm:p-6 pb-20">
+          {/* Motivation Quote */}
+          {/* <MotivationQuotes /> */}
+
+          {/* Streak Card */}
+          <Progress />
+
+          {/* Today's Sessions */}
+          {/* <TodaySessions /> */}
+
+          {/* Upcoming Sessions */}
+          <UpcomingSessions />
+
+          <GymSubscriptions />
+
+          {/* Charts */}
+          <Charts />
+
+          {/* Schedule - Last on Mobile */}
+          <Schedule />
+        </div>
+      </div>
     </div>
   );
 }
@@ -47,9 +75,13 @@ function UserDashboardContent() {
 export default function UserDashboard() {
   return (
     <ProtectedRoute allowedRoles={['customer']}>
-      <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-teal-900 via-slate-900 to-gray-900 py-16">
-        <div className="text-white">Loading...</div>
-      </div>}>
+      <Suspense fallback={
+        <div className="min-h-screen bg-gradient-to-br from-teal-900 via-slate-900 to-gray-900 py-16">
+          <div className="flex items-center justify-center h-full">
+            <div className="text-white text-lg sm:text-xl">Loading...</div>
+          </div>
+        </div>
+      }>
         <UserDashboardContent />
       </Suspense>
     </ProtectedRoute>
