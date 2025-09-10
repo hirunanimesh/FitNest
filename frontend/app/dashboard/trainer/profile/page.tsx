@@ -6,7 +6,9 @@ import { useTrainerData } from '../context/TrainerContext';
 import { UpdateTrainerDetails, uploadToCloudinary } from "@/lib/api";
 import TrainerDocuments from '../_components/TrainerDocuments';
 import axios from "axios";
-import { Edit3 } from "lucide-react";
+import { Edit3, ArrowLeft } from "lucide-react";
+import { useRouter } from 'next/navigation';
+
 const TrainerProfile: React.FC = () => {
   const { trainerData, refreshTrainerData } = useTrainerData();
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -16,6 +18,7 @@ const TrainerProfile: React.FC = () => {
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const router = useRouter();
 
   useEffect(() => {
     if (trainerData) {
@@ -25,6 +28,10 @@ const TrainerProfile: React.FC = () => {
       });
     }
   }, [trainerData]);
+
+  const handleBack = () => {
+    router.back();
+  };
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
@@ -79,35 +86,46 @@ const TrainerProfile: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-transparent text-white min-h-screen">
+      {/* Back Button */}
+      <div className="mb-6">
+        <Button
+          onClick={handleBack}
+          variant="outline"
+          className="flex items-center gap-2 bg-transparent border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-400 hover:text-red-300 transition-all duration-300 shadow-lg hover:shadow-red-500/25"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      </div>
+
       <div className="bg-gray-800 rounded-lg shadow-lg p-8">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
           <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-red-500 cursor-pointer">
-        <Image
-        src={imagePreview || editFormData.profileImage || "/placeholder.svg"}
-        alt="Profile"
-        fill
-        style={{ objectFit: "cover" }}
-        className="rounded-full"
-        />
+            <Image
+              src={imagePreview || editFormData.profileImage || "/placeholder.svg"}
+              alt="Profile"
+              fill
+              style={{ objectFit: "cover" }}
+              className="rounded-full"
+            />
 
+            {isEditing && (
+              <label
+                htmlFor="profileImageUpload"
+                className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+              >
+                <Edit3 className="h-8 w-8 text-white drop-shadow-lg" />
+              </label>
+            )}
 
-        {isEditing && (
-          <label
-            htmlFor="profileImageUpload"
-            className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 cursor-pointer"
-          >
-            <Edit3 className="h-8 w-8 text-white drop-shadow-lg" />
-          </label>
-        )}
-
-        {/* Hidden input */}
-        <input
-          id="profileImageUpload"
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleImageUpload}
-        />
+            {/* Hidden input */}
+            <input
+              id="profileImageUpload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+            />
           </div>
           <div className="flex-1 text-center md:text-left">
             {isEditing ? (
@@ -183,8 +201,7 @@ const TrainerProfile: React.FC = () => {
               <p className="text-gray-300">{trainerData?.years_of_experience} years</p>
             )}
           </div>
-          <div>
-           
+        </div>
 
         <div className="mt-6">
           <h2 className="text-xl font-semibold text-white">Skills</h2>
@@ -211,20 +228,17 @@ const TrainerProfile: React.FC = () => {
           )}
         </div>
 
-    </div>
-      </div>
         <Button
           onClick={isEditing ? handleSave : handleEditToggle}
-          className="mt-6 text-white font-semibold py-2 px-4 rounded"
+          className="mt-6 bg-gradient-to-r from-[#FB4141] to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-2 px-4 rounded transition-all duration-300 shadow-lg hover:shadow-red-500/25"
         >
           {isEditing ? 'Save Changes' : 'Edit Profile'}
         </Button>
-  {/* Documents preview placed under profile area. Editable when isEditing is true. */}
-  <TrainerDocuments editable={isEditing} />
-      </div>
-    
-  </div>
 
+        {/* Documents preview placed under profile area. Editable when isEditing is true. */}
+        <TrainerDocuments editable={isEditing} />
+      </div>
+    </div>
   );
 };
 

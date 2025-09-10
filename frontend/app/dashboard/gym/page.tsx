@@ -59,33 +59,33 @@ export default function GymDashboard() {
        <Statistics/>
 
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full bg-gray-700 text-white grid-cols-5 mb-5">
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
-            <TabsTrigger value="trainers">Trainers</TabsTrigger>
-            <TabsTrigger value="plans">Gym Plans</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsList className="grid w-full bg-gray-700 text-white grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-12 sm:mb-16 md:mb-10 gap-1">
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm bg-gray-600 hover:bg-gray-500 data-[state=active]:bg-white data-[state=active]:text-gray-900">Analytics</TabsTrigger>
+            <TabsTrigger value="members" className="text-xs sm:text-sm bg-gray-600 hover:bg-gray-500 data-[state=active]:bg-white data-[state=active]:text-gray-900">Members</TabsTrigger>
+            <TabsTrigger value="trainers" className="text-xs sm:text-sm bg-gray-600 hover:bg-gray-500 data-[state=active]:bg-white data-[state=active]:text-gray-900">Trainers</TabsTrigger>
+            <TabsTrigger value="plans" className="text-xs sm:text-sm bg-gray-600 hover:bg-gray-500 data-[state=active]:bg-white data-[state=active]:text-gray-900">Gym Plans</TabsTrigger>
+            <TabsTrigger value="payments" className="text-xs sm:text-sm bg-gray-600 hover:bg-gray-500 data-[state=active]:bg-white data-[state=active]:text-gray-900">Payments</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="analytics" className="grid grid-cols md:grid-cols-2 space-y-10 md:space-y-0 gap-5">
+          <TabsContent value="analytics" className="grid grid-cols md:grid-cols-2 space-y-10 md:space-y-0 gap-5 pt-4">
             <MonthlyRevenueChart/>
             <MonthlyMemberCountChart/>
           </TabsContent>
 
-          <TabsContent value="members" className="space-y-6">
+          <TabsContent value="members" className="space-y-6 pt-4">
             <MemberTab/>
 
           </TabsContent>
 
-          <TabsContent value="trainers" className="space-y-6">
+          <TabsContent value="trainers" className="space-y-6 pt-4">
             <TrainerTab/>
           </TabsContent>
 
-          <TabsContent value="plans" className="space-y-6">
+          <TabsContent value="plans" className="space-y-6 pt-4">
             <PlansTab/>
           </TabsContent>
 
-          <TabsContent value="payments" className="space-y-6">
+          <TabsContent value="payments" className="space-y-6 pt-4">
             <PaymentHistory/>
           </TabsContent>
         </Tabs>

@@ -74,7 +74,12 @@ export const getGymPlanByTrainerId = async (req, res) => {
     } else {
       res.status(404).json({ message: "No Plans found" });
     }
-
+  
+  } catch (error) {
+    console.error("Error retrieving Gym Plans:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
 
 export const bookSession = async (req, res) => {
     const { sessionId, customerId } = req.body;
@@ -90,13 +95,6 @@ export const bookSession = async (req, res) => {
       res.status(500).json({ success: false, message: error.message });
     }
   };
-  
-
-  } catch (error) {
-    console.error("Error retrieving Gym Plans:", error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
-  }
-};
 
 export const getGymById = async (req, res) => {
     const { trainerId } = req.params;
