@@ -139,18 +139,29 @@ export async function saveOrUpdateEventsForUser(userId, events) {
   // Map to calendar table fields: task_date, task, customer_id, note, google_event_id
   // Resolve numeric customer_id when a Supabase user_id (UUID) is provided
   if (!userId) throw new Error('missing userId')
+  console.log('[calendar.service] saveOrUpdateEventsForUser called', { userId, incomingCount: Array.isArray(events) ? events.length : 0 })
   let customerId
   if (/^\d+$/.test(String(userId))) {
     customerId = Number(userId)
   } else {
-  const { data: cust, error: custErr } = await supabase.from('customer').select('id').eq('user_id', userId).single()
-    if (custErr) throw custErr
-    if (!cust) throw new Error('no customer profile found for user')
-  customerId = cust.id
+    const { data: cust, error: custErr } = await supabase.from('customer').select('id').eq('user_id', userId).single()
+    if (custErr) {
+      console.error('[calendar.service] failed to resolve customer for user', { userId, error: custErr })
+      throw custErr
+    }
+    if (!cust) {
+      console.error('[calendar.service] no customer profile found for user', { userId })
+      throw new Error('no customer profile found for user')
+    }
+    customerId = cust.id
   }
 
+  console.log('[calendar.service] resolved customerId for user', { userId, customerId })
+
   const results = []
-  for (const ev of events) {
+  const upsertedGoogleIds = []
+  let upsertErrors = 0
+  for (const ev of (events || [])) {
     const { date: taskDate, time: startTime } = extractDateAndTime(ev.start)
     const { time: endTime } = extractDateAndTime(ev.end)
     const payload = {
@@ -165,67 +176,124 @@ export async function saveOrUpdateEventsForUser(userId, events) {
     }
     // Upsert by google_event_id. If color column missing, retry without color.
     try {
-      const { data, error } = await supabase.from('calendar').upsert(payload, { onConflict: 'google_event_id' })
+      console.log('[calendar.service] upserting google event', { google_event_id: payload.google_event_id, task_date: payload.task_date })
+      // Request the inserted/updated rows back so we can verify what was written
+      const { data, error } = await supabase.from('calendar').upsert(payload, { onConflict: 'google_event_id' }).select('calendar_id, google_event_id')
       if (error) {
         // if it's a column-not-found, retry without color
         if (String(error.message).toLowerCase().includes('column') && String(error.message).toLowerCase().includes('color')) {
+          console.warn('[calendar.service] upsert failed due to color column; retrying without color', { google_event_id: payload.google_event_id })
           delete payload.color
-          const { data: d2, error: e2 } = await supabase.from('calendar').upsert(payload, { onConflict: 'google_event_id' })
-          if (e2) console.error('upsert retry failed', e2)
-          results.push(d2)
+          const { data: d2, error: e2 } = await supabase.from('calendar').upsert(payload, { onConflict: 'google_event_id' }).select('calendar_id, google_event_id')
+          if (e2) {
+            console.error('[calendar.service] upsert retry failed', e2)
+            upsertErrors++
+            results.push(null)
+          } else {
+            results.push(d2)
+            // record upserted ids
+            if (Array.isArray(d2)) d2.forEach(r => r?.google_event_id && upsertedGoogleIds.push(r.google_event_id))
+          }
         } else {
-          console.error('upsert error', error)
+          console.error('[calendar.service] upsert error', error)
+          upsertErrors++
           results.push(null)
         }
-      } else results.push(data)
+      } else {
+        results.push(data)
+        // record upserted ids
+        if (Array.isArray(data)) data.forEach(r => r?.google_event_id && upsertedGoogleIds.push(r.google_event_id))
+        else if (data && data.google_event_id) upsertedGoogleIds.push(data.google_event_id)
+      }
     } catch (err) {
-      console.error('upsert threw', err)
+      console.error('[calendar.service] upsert threw', err)
+      upsertErrors++
       // push null to keep array length
       results.push(null)
     }
   }
+  // Summarize upsert results so we can tell if writes succeeded
+  try {
+    const uniqueUpserted = Array.from(new Set(upsertedGoogleIds.filter(Boolean)))
+    console.log('[calendar.service] upsert summary', { attempted: (events || []).length, upsertErrors, upserted: upsertedGoogleIds.length, uniqueUpsertedCount: uniqueUpserted.length })
+    if (uniqueUpserted.length > 0) {
+      console.log('[calendar.service] sample upserted google ids', uniqueUpserted.slice(0, 10))
+    }
+  } catch (e) {
+    console.warn('[calendar.service] failed to log upsert summary', e)
+  }
+
   // Delete any local rows that were previously created from Google but are no longer present in the fetched events.
   try {
-    const incomingIds = events.map(e => e.google_event_id).filter(Boolean)
+    const incomingIds = (events || []).map(e => e.google_event_id).filter(Boolean)
+    console.log('[calendar.service] cleanup stale google events - decision', { customerId, incomingCount: incomingIds.length, upserted: upsertedGoogleIds.length, upsertErrors })
+
     if (incomingIds.length > 0) {
-      // Delete any local rows that were created from Google but are no longer present in Google.
-      // Only delete rows that have a non-null google_event_id and whose google_event_id is not in the
-      // incoming list. Previously this incorrectly filtered for NULL and removed local (non-Google) rows.
-      const { error: delErr } = await supabase
+      // Inspect rows that would be removed (helpful for debugging accidental mass deletes)
+      try {
+        const { data: toDeletePreview, error: previewErr } = await supabase
+          .from('calendar')
+          .select('calendar_id, google_event_id')
+          .eq('customer_id', customerId)
+          .not('google_event_id', 'in', incomingIds)
+          .not('google_event_id', 'is', null)
+
+        if (previewErr) {
+          console.error('[calendar.service] preview select before delete failed', previewErr)
+        } else {
+          console.log('[calendar.service] rows that would be deleted count', { count: (toDeletePreview || []).length, sample: (toDeletePreview || []).slice(0,10) })
+        }
+      } catch (previewEx) {
+        console.error('[calendar.service] preview select threw', previewEx)
+      }
+
+      // Perform delete and request deleted rows back for logging
+      const { data: deletedRows, error: delErr } = await supabase
         .from('calendar')
         .delete()
         .eq('customer_id', customerId)
-        .not('google_event_id', 'in', `(${incomingIds.map(id => `'${id.replace(/'/g, "''")}'`).join(',')})`)
+        .not('google_event_id', 'in', incomingIds)
         .not('google_event_id', 'is', null)
-      if (delErr) console.error('delete stale google events failed', delErr)
+        .select('calendar_id, google_event_id')
+
+      if (delErr) console.error('[calendar.service] delete stale google events failed', delErr)
+      else console.log('[calendar.service] deleted stale google events count', { count: (deletedRows || []).length, sample: (deletedRows || []).slice(0,10) })
     } else {
       // No incoming google events: remove any local rows that have a google_event_id (they were deleted in Google)
-      const { error: e3 } = await supabase.from('calendar').delete().eq('customer_id', customerId).not('google_event_id', 'is', null)
-      if (e3) console.error('delete all stale google events failed', e3)
+      const { data: deletedAllRows, error: e3 } = await supabase.from('calendar').delete().eq('customer_id', customerId).not('google_event_id', 'is', null).select('calendar_id, google_event_id')
+      if (e3) console.error('[calendar.service] delete all stale google events failed', e3)
+      else console.log('[calendar.service] deleted all stale google events count', { count: (deletedAllRows || []).length, sample: (deletedAllRows || []).slice(0,10) })
     }
   } catch (err) {
-    console.error('cleanup stale google events failed', err)
+    console.error('[calendar.service] cleanup stale google events failed', err)
   }
+
   // Return events for the user
   // Attempt to select including color; if column doesn't exist, fall back to select without color
-    try {
-      const { data: all, error } = await supabase.from('calendar').select('calendar_id, task, task_date, start, "end", color, description').eq('customer_id', customerId)
-      if (error) throw error
-      return (all || []).map(r => {
-        // reconstruct a client-friendly start/end (prefer full ISO-like string when time exists)
-        const start = r.start ? `${r.task_date}T${r.start}` : r.task_date
-        const end = r.end ? `${r.task_date}T${r.end}` : r.task_date
-        return ({ id: r.calendar_id, title: r.task, start, end, color: r.color, description: r.description })
-      })
-    } catch (err) {
-      // if color/description/start/end column missing, retry with minimal set
-      if (String(err.message).toLowerCase().includes('column')) {
-        const { data: all2, error: e2 } = await supabase.from('calendar').select('calendar_id, task, task_date').eq('customer_id', customerId)
-        if (e2) throw e2
-        return (all2 || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: null, description: null }))
-      }
-      throw err
+  try {
+    console.log('[calendar.service] selecting calendar rows for customer', { customerId })
+    const { data: all, error } = await supabase.from('calendar').select('calendar_id, task, task_date, start, "end", color, description').eq('customer_id', customerId)
+    if (error) throw error
+    const mapped = (all || []).map(r => {
+      // reconstruct a client-friendly start/end (prefer full ISO-like string when time exists)
+      const start = r.start ? `${r.task_date}T${r.start}` : r.task_date
+      const end = r.end ? `${r.task_date}T${r.end}` : r.task_date
+      return ({ id: r.calendar_id, title: r.task, start, end, color: r.color, description: r.description })
+    })
+    console.log('[calendar.service] returning events count', { count: mapped.length })
+    return mapped
+  } catch (err) {
+    // if color/description/start/end column missing, retry with minimal set
+    if (String(err.message).toLowerCase().includes('column')) {
+      console.warn('[calendar.service] select failed due to missing column; retrying minimal select', { err: String(err.message) })
+      const { data: all2, error: e2 } = await supabase.from('calendar').select('calendar_id, task, task_date').eq('customer_id', customerId)
+      if (e2) throw e2
+      const mapped = (all2 || []).map(r => ({ id: r.calendar_id, title: r.task, start: r.task_date, end: r.task_date, color: null, description: null }))
+      console.log('[calendar.service] returning minimal events count', { count: mapped.length })
+      return mapped
     }
+    throw err
+  }
 }
 
 export async function getEventsForUser(userId) {
@@ -435,35 +503,63 @@ export async function saveOrCreateEventForUser(userId, payload) {
   }
 }
 
-export async function updateEventForUser(calendarId, payload) {
+export async function updateEventForUser(calendarIdOrGoogleId, payload) {
   // payload: { title?, start?, end?, description?, color? }
-  // update local row and, if it has google_event_id, patch Google event
-  // Avoid wildcard select to prevent schema cache mismatch; list known columns
-  const { data: existing, error: selErr } = await supabase.from('calendar').select('calendar_id, task, task_date, customer_id, google_event_id, color, description').eq('calendar_id', calendarId).single()
+  // Accept either a numeric calendar_id or a google_event_id string.
+  let calendarId = String(calendarIdOrGoogleId || '')
+  console.log('[calendar.service] updateEventForUser called with', calendarId, typeof calendarId)
+
+  // If caller passed a google_event_id, resolve to numeric calendar_id
+  if (!/^\d+$/.test(calendarId)) {
+    try {
+      const { data: resolved, error: resErr } = await supabase.from('calendar').select('calendar_id').eq('google_event_id', calendarId).maybeSingle()
+      if (resErr) throw resErr
+      if (!resolved) {
+        const e = new Error('calendar row not found for google_event_id')
+        e.code = 'NOT_FOUND'
+        throw e
+      }
+      calendarId = String(resolved.calendar_id)
+    } catch (e) {
+      console.error('[calendar.service] failed to resolve google_event_id to calendar_id', e)
+      throw e
+    }
+  }
+
+  // normalize to number for queries to avoid type mismatch between string/number
+  const numericCalendarId = Number(calendarId)
+
+  // select existing row using maybeSingle to avoid throws when missing
+  const { data: existing, error: selErr } = await supabase.from('calendar').select('calendar_id, task, task_date, customer_id, google_event_id, color, description').eq('calendar_id', numericCalendarId).maybeSingle()
   if (selErr) throw selErr
+  if (!existing) {
+    const e = new Error('calendar row not found')
+    e.code = 'NOT_FOUND'
+    throw e
+  }
 
   const updates = {}
   if (payload.title) updates.task = payload.title
   if (payload.description !== undefined) updates.description = payload.description
   if (payload.color !== undefined) updates.color = payload.color
   if (payload.start) {
-  // Preserve the exact string provided by the client for task_date so the
-  // stored value matches the user's wall-clock input and avoids TZ shifts.
-  const { date: taskDate, time: startTime } = extractDateAndTime(payload.start)
-  updates.task_date = taskDate
-  if (startTime !== null) updates.start = startTime
+    // Preserve the exact string provided by the client for task_date so the
+    // stored value matches the user's wall-clock input and avoids TZ shifts.
+    const { date: taskDate, time: startTime } = extractDateAndTime(payload.start)
+    updates.task_date = taskDate
+    if (startTime !== null) updates.start = startTime
   }
   if (payload.end !== undefined) {
     const { time: endTime } = extractDateAndTime(payload.end)
     if (endTime !== null) updates.end = endTime
   }
 
-  const { data: upd, error: updErr } = await supabase.from('calendar').update(updates).eq('calendar_id', calendarId).select('calendar_id, task, task_date, start, "end", customer_id, google_event_id, color, description').single()
+  const { data: upd, error: updErr } = await supabase.from('calendar').update(updates).eq('calendar_id', numericCalendarId).select('calendar_id, task, task_date, start, "end", customer_id, google_event_id, color, description').maybeSingle()
   if (updErr) {
     // If update failed because color column missing, retry without color
     if (String(updErr.message).toLowerCase().includes('column') && String(updErr.message).toLowerCase().includes('color')) {
       delete updates.color
-      const { data: upd2, error: updErr2 } = await supabase.from('calendar').update(updates).eq('calendar_id', calendarId).select('calendar_id, task, task_date, customer_id, google_event_id, description').single()
+      const { data: upd2, error: updErr2 } = await supabase.from('calendar').update(updates).eq('calendar_id', numericCalendarId).select('calendar_id, task, task_date, customer_id, google_event_id, description').maybeSingle()
       if (updErr2) throw updErr2
       return upd2
     }
@@ -548,19 +644,30 @@ export async function deleteEventForUser(calendarId) {
         let accessToken = tokens.access_token
         const tryDel = async (token) => {
           const url = `${process.env.CALENDAR_EVENTS_URL}/${existing.google_event_id}`
+          // Log the outgoing request (don't print raw token)
+          console.log('[google] delete event request', { url, forGoogleEventId: existing.google_event_id })
           const r = await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
-          if (!r.ok) {
-            const text = await r.text().catch(() => '')
+          const text = await r.text().catch(() => '')
+          // Log response for debugging; treat 404 as non-fatal (already deleted)
+          if (r.status === 404) {
+            console.log('[google] delete event - not found (404), treating as success', { google_event_id: existing.google_event_id })
+          } else if (!r.ok) {
             console.error('[google] delete event response', r.status, text)
+          } else {
+            console.log('[google] delete event success', { status: r.status, body: text })
           }
           return r
         }
         let r = await tryDel(accessToken)
         if (r.status === 401) {
-          const refreshed = await refreshAccessToken(tokens.refresh_token)
-          accessToken = refreshed.access_token
-          await updateAccessTokenForUser(String(cust.user_id), accessToken, refreshed.expires_in)
-          r = await tryDel(accessToken)
+          try {
+            const refreshed = await refreshAccessToken(tokens.refresh_token)
+            accessToken = refreshed.access_token
+            await updateAccessTokenForUser(String(cust.user_id), accessToken, refreshed.expires_in)
+            r = await tryDel(accessToken)
+          } catch (refreshErr) {
+            console.error('failed to refresh access token during google delete', refreshErr)
+          }
         }
       }
     } catch (err) {

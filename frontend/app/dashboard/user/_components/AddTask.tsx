@@ -219,10 +219,11 @@
                                 return
                               }
 
-                              let updated: any = null
+                              let parsed: any = null
                               try {
-                                updated = await res.json()
+                                parsed = await res.json()
                               } catch (e) {
+                                // Non-JSON response: refresh authoritative list
                                 try {
                                   const r = await fetch(`${base}/calendar/events/${userId}`)
                                   if (r.ok) {
@@ -235,38 +236,47 @@
                                 throw new Error('update returned non-JSON response')
                               }
 
-                              const mapped = mapUpdatedToEvent(updated)
-                              if (mapped) {
-                                setEvents(prev => {
-                                  const mappedId = String(mapped.id || '')
-                                  const mappedGoogleId = String(mapped.google_event_id || '')
-                                  const editingId = String(editingEvent?.id || '')
-                                  const editingGid = String(editingEvent?.google_event_id || '')
-                                  const mappedRaw = mapped.extendedProps?.rawStart || mapped.start || ''
-                                  const mappedTitle = mapped.title || ''
-                                  const filtered = prev.filter(ev => {
-                                    const evId = String((ev as any).id || '')
-                                    const evGid = String((ev as any).google_event_id || '')
-                                    const evRaw = (ev as any).extendedProps?.rawStart || (ev as any).start || ''
-                                    const evTitle = (ev as any).title || ''
-                                    if (evId && (evId === mappedId || evId === editingId)) return false
-                                    if (evGid && (evGid === mappedGoogleId || evGid === editingGid)) return false
-                                    if (evRaw && evTitle && mappedRaw && mappedTitle && evRaw === mappedRaw && evTitle === mappedTitle) return false
-                                    return true
-                                  })
-                                  return dedupeEvents([...filtered, mapped])
-                                })
+                              // Support two possible shapes from backend:
+                              // 1) { updated, events } - authoritative events list included
+                              // 2) updated (single row)
+                              if (parsed && parsed.events && Array.isArray(parsed.events)) {
+                                setEvents(mapServerList(parsed.events, taskColor))
                                 setEditingEvent(null)
                               } else {
-                                try {
-                                  if (userId) {
-                                    const r = await fetch(`${base}/calendar/events/${userId}`)
-                                    if (r.ok) {
-                                      const all = await r.json()
-                                      setEvents(mapServerList(all, taskColor))
+                                const updated = parsed && parsed.updated ? parsed.updated : parsed
+                                const mapped = mapUpdatedToEvent(updated)
+                                if (mapped) {
+                                  setEvents(prev => {
+                                    const mappedId = String(mapped.id || '')
+                                    const mappedGoogleId = String(mapped.google_event_id || '')
+                                    const editingId = String(editingEvent?.id || '')
+                                    const editingGid = String(editingEvent?.google_event_id || '')
+                                    const mappedRaw = mapped.extendedProps?.rawStart || mapped.start || ''
+                                    const mappedTitle = mapped.title || ''
+                                    const filtered = prev.filter(ev => {
+                                      const evId = String((ev as any).id || '')
+                                      const evGid = String((ev as any).google_event_id || '')
+                                      const evRaw = (ev as any).extendedProps?.rawStart || (ev as any).start || ''
+                                      const evTitle = (ev as any).title || ''
+                                      if (evId && (evId === mappedId || evId === editingId)) return false
+                                      if (evGid && (evGid === mappedGoogleId || evGid === editingGid)) return false
+                                      if (evRaw && evTitle && mappedRaw && mappedTitle && evRaw === mappedRaw && evTitle === mappedTitle) return false
+                                      return true
+                                    })
+                                    return dedupeEvents([...filtered, mapped])
+                                  })
+                                  setEditingEvent(null)
+                                } else {
+                                  try {
+                                    if (userId) {
+                                      const r = await fetch(`${base}/calendar/events/${userId}`)
+                                      if (r.ok) {
+                                        const all = await r.json()
+                                        setEvents(mapServerList(all, taskColor))
+                                      }
                                     }
-                                  }
-                                } catch (e) { console.error('failed to refetch events after update', e) }
+                                  } catch (e) { console.error('failed to refetch events after update', e) }
+                                }
                               }
                             } else {
                               const postUrl = `${base}/calendar/create/${userId}`
