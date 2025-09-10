@@ -223,16 +223,8 @@ const TrainerTab: React.FC = () => {
                                                             )}
                                                         </div>
                                                         <p className="text-sm text-gray-300 mb-2">{profile.email}</p>
-                                                        <div className="flex items-center space-x-4 mb-3">
+                                                        <div className="flex items-center mb-3">
                                                             <span className="text-sm text-gray-300">⭐ {profile.rating}</span>
-                                                            <span className="text-sm text-gray-300">{profile.years_of_experience} years</span>
-                                                        </div>
-                                                        <div className="flex flex-wrap gap-1 mb-3">
-                                                            {profile.skills.map((skill, index) => (
-                                                                <Badge key={index} variant="outline" className='text-white border-gray-500 text-xs'>
-                                                                    {skill}
-                                                                </Badge>
-                                                            ))}
                                                         </div>
                                                         {!profile.approved && (
                                                             <Button
@@ -261,7 +253,6 @@ const TrainerTab: React.FC = () => {
                                             <TableHead className='text-gray-300'>Name</TableHead>
                                             <TableHead className='text-gray-300 hidden lg:table-cell'>Contact</TableHead>
                                             <TableHead className='text-gray-300'>Status</TableHead>
-                                            <TableHead className='text-gray-300 hidden xl:table-cell'>Specialization</TableHead>
                                             <TableHead className='text-gray-300'>Rating</TableHead>
                                             <TableHead className='text-gray-300 hidden lg:table-cell'>Experience</TableHead>
                                             <TableHead className='text-gray-300'>Actions</TableHead>
@@ -289,20 +280,6 @@ const TrainerTab: React.FC = () => {
                                                     ) : (
                                                         <Badge variant="secondary" className='bg-yellow-600 hover:bg-yellow-700 text-xs text-white'>Not Verified</Badge>
                                                     )}
-                                                </TableCell>
-                                                <TableCell className="hidden xl:table-cell">
-                                                    <div className="flex flex-wrap gap-1 max-w-xs">
-                                                        {profile.skills.slice(0, 3).map((skill, index) => (
-                                                            <Badge key={index} variant="outline" className='text-white border-gray-500 text-xs'>
-                                                                {skill}
-                                                            </Badge>
-                                                        ))}
-                                                        {profile.skills.length > 3 && (
-                                                            <Badge variant="outline" className='text-gray-400 border-gray-500 text-xs'>
-                                                                +{profile.skills.length - 3}
-                                                            </Badge>
-                                                        )}
-                                                    </div>
                                                 </TableCell>
                                                 <TableCell className="text-gray-300 flex items-center">
                                                     <span className="text-yellow-400 mr-1">⭐</span>{profile.rating}

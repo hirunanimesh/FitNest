@@ -51,6 +51,7 @@ const CreateSession = () => {
         price_id_stripe: "",
       });
 
+
     // Set trainer ID when component mounts
     useEffect(() => {
         const setTrainerIdInForm = async () => {
@@ -64,11 +65,6 @@ const CreateSession = () => {
         };
         setTrainerIdInForm();
     }, [getUserProfileId]);
-
-    // Handle date input and create Date object for display
-    const handleDateInputChange = (value: string) => {
-        setSessionForm((prev) => ({ ...prev, date: value }));
-    };
 
     const date = sessionForm.date ? new Date(sessionForm.date) : null;
 
@@ -121,8 +117,7 @@ const CreateSession = () => {
                 img_url: sessionForm.img_url,
                 date: sessionForm.date,
                 booked: false,
-                product_id_stripe: sessionForm.product_id_stripe,
-                price_id_stripe: sessionForm.price_id_stripe,
+                
             };
 
             // Call backend API
@@ -137,12 +132,12 @@ const CreateSession = () => {
             setSessions((prev) => [...prev, newSession]);
 
             // Reset form
-            setSessionForm({ 
-                title: "", 
-                description: "", 
+            setSessionForm({
+                title: "",
+                description: "",
                 price: 0,
-                time: "", 
-                duration: "", 
+                time: "",
+                duration: "",
                 zoom_link: "",
                 img_url: "",
                 date: "",
@@ -255,42 +250,43 @@ const CreateSession = () => {
     <div>
        <Dialog open={isSessionDialogOpen} onOpenChange={setIsSessionDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <Plus className="h-4 w-4 mr-1" /> Create New Session
+                <Button size="sm" variant="outline" className="text-xs px-1 sm:px-2 md:px-3 h-7 sm:h-8 md:h-9 w-full sm:w-auto">
+                  <Plus className="h-3 w-3 mr-1" />
+                  Create New Session
                 </Button>
               </DialogTrigger>
-              <DialogContent className='bg-gray-800 text-white'>
+              <DialogContent className='bg-gray-800 text-white max-w-md sm:max-w-lg md:max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
                 <DialogHeader>
-                  <DialogTitle>Create New Session</DialogTitle>
+                  <DialogTitle className="text-lg sm:text-xl">Create New Session</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSessionSubmit}>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="title" className="text-right ">
+                  <div className="grid gap-3 sm:gap-4 py-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                      <Label htmlFor="title" className="text-left sm:text-right text-sm sm:text-base">
                         Title
                       </Label>
                       <Input
                         id="title"
                         value={sessionForm.title}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, title: e.target.value }))}
-                        className="col-span-3 bg-gray-800"
+                        className="col-span-1 sm:col-span-3 bg-gray-800 text-sm sm:text-base"
                         required
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="description" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                      <Label htmlFor="description" className="text-left sm:text-right text-sm sm:text-base">
                         Description
                       </Label>
                       <Input
                         id="description"
                         value={sessionForm.description}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, description: e.target.value }))}
-                        className="col-span-3 bg-gray-800"
+                        className="col-span-1 sm:col-span-3 bg-gray-800 text-sm sm:text-base"
                         required
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="price" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                      <Label htmlFor="price" className="text-left sm:text-right text-sm sm:text-base">
                         Price
                       </Label>
                       <Input
@@ -300,12 +296,12 @@ const CreateSession = () => {
                         min="0"
                         value={sessionForm.price}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                        className="col-span-3 bg-gray-800"
+                        className="col-span-1 sm:col-span-3 bg-gray-800 text-sm sm:text-base"
                         required
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="time" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                      <Label htmlFor="time" className="text-left sm:text-right text-sm sm:text-base">
                         Time
                       </Label>
                       <Input
@@ -313,44 +309,44 @@ const CreateSession = () => {
                         type="time"
                         value={sessionForm.time}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, time: e.target.value }))}
-                        className="col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
+                        className="col-span-1 sm:col-span-3 bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark] text-sm sm:text-base"
                         required
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="date" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                      <Label htmlFor="date" className="text-left sm:text-right text-sm sm:text-base">
                         Date <span className="text-red-500">*</span>
                       </Label>
-                      <div className="col-span-3 space-y-2">
+                      <div className="col-span-1 sm:col-span-3 space-y-2">
                         <Input
                           id="date"
                           type="date"
                           value={sessionForm.date}
-                          onChange={(e) => handleDateInputChange(e.target.value)}
-                          className="bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark]"
+                          onChange={(e) => setSessionForm((prev) => ({ ...prev, date: e.target.value }))}
+                          className="bg-gray-800 border-gray-700 text-white focus:border-red-500 focus:ring-red-500 [color-scheme:dark] text-sm sm:text-base"
                           required
                         />
                         {date && (
-                          <p className="text-sm text-gray-400">
-                            Selected: {date.toLocaleDateString('en-US', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
+                          <p className="text-xs sm:text-sm text-gray-400">
+                            Selected: {date.toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
                             })}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="duration" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                      <Label htmlFor="duration" className="text-left sm:text-right text-sm sm:text-base">
                         Duration
                       </Label>
                       <Select
                         value={sessionForm.duration}
                         onValueChange={(value) => setSessionForm((prev) => ({ ...prev, duration: value }))}
                       >
-                        <SelectTrigger className="col-span-3 bg-gray-800">
+                        <SelectTrigger className="col-span-1 sm:col-span-3 bg-gray-800 text-sm sm:text-base">
                           <SelectValue placeholder="Select duration" />
                         </SelectTrigger>
                         <SelectContent className='bg-gray-800 text-white'>
@@ -362,8 +358,8 @@ const CreateSession = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="zoom_link" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                      <Label htmlFor="zoom_link" className="text-left sm:text-right text-sm sm:text-base">
                         Zoom Link
                       </Label>
                       <Input
@@ -371,23 +367,23 @@ const CreateSession = () => {
                         type="url"
                         value={sessionForm.zoom_link}
                         onChange={(e) => setSessionForm((prev) => ({ ...prev, zoom_link: e.target.value }))}
-                        className="col-span-3 bg-gray-800"
+                        className="col-span-1 sm:col-span-3 bg-gray-800 text-sm sm:text-base"
                         placeholder="https://zoom.us/j/..."
                         required
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                      <Label className="text-left sm:text-right text-sm sm:text-base">
                         Session Image
                       </Label>
-                      <div className="col-span-3 space-y-3">
+                      <div className="col-span-1 sm:col-span-3 space-y-3">
                         {/* File Input */}
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                           <Input
                             type="file"
                             accept="image/*"
                             onChange={handleImageSelect}
-                            className="bg-gray-800"
+                            className="bg-gray-800 text-sm sm:text-base w-full sm:w-auto"
                           />
                           {selectedImage && !sessionForm.img_url && (
                             <Button
@@ -396,14 +392,15 @@ const CreateSession = () => {
                               disabled={isUploadingImage}
                               variant="outline"
                               size="sm"
-                              className='bg-green-700'
+                              className='bg-green-700 text-xs sm:text-sm'
                             >
                               {isUploadingImage ? (
                                 "Uploading..."
                               ) : (
                                 <>
-                                  <Upload className="h-4 w-4 mr-2 " />
-                                  Upload
+                                  <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                  <span className="hidden sm:inline">Upload</span>
+                                  <span className="sm:hidden">Upload</span>
                                 </>
                               )}
                             </Button>
@@ -414,8 +411,9 @@ const CreateSession = () => {
                               onClick={removeImage}
                               variant="outline"
                               size="sm"
+                              className="text-xs sm:text-sm"
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           )}
                         </div>
@@ -426,24 +424,25 @@ const CreateSession = () => {
                             <img
                               src={imagePreview}
                               alt="Preview"
-                              className="w-32 h-32 object-cover rounded-md border"
+                              className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-md border"
                             />
                           </div>
                         )}
 
                         {/* Success Message */}
                         {sessionForm.img_url && (
-                          <p className="text-green-500 text-sm">
+                          <p className="text-green-500 text-xs sm:text-sm">
                             ✓ Image uploaded successfully
                           </p>
                         )}
                       </div>
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button 
-                      type="submit" 
+                  <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                    <Button
+                      type="submit"
                       disabled={isCreatingSession || isUploadingImage}
+                      className="w-full sm:w-auto text-sm sm:text-base"
                     >
                       {isCreatingSession ? "Creating..." : "Create Session"}
                     </Button>
