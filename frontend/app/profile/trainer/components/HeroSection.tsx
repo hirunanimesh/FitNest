@@ -27,7 +27,7 @@ export default function HeroSection() {
       .filter(Boolean);
   })();
   return (
-    <section className="relative bg-gradient-to-br from-gray-800 to-black py-24 overflow-hidden">
+    <section className="relative bg-gradient-to-br from-gray-800 to-black py-11 overflow-hidden">
       {/* Decorative SVG background */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none -z-10 opacity-30"
