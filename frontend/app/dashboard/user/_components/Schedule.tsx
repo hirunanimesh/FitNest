@@ -471,7 +471,10 @@ const Schedule: React.FC = () => {
     <div>
   {/* Rely on FullCalendar's built-in small popover for "more" links */}
       <style jsx global>{styles}</style>
-      <h2>User Schedule</h2>
+      
+      <h2 className="text-4xl md:text-5xl font-black text-white text-center mb-4">
+            <span className="bg-gradient-to-r from-blue-800 via-rose-400 to-blue-800 bg-clip-text text-transparent">User Schedule</span>
+          </h2>
       <AddTask
         isTaskDialogOpen={isTaskDialogOpen}
         setIsTaskDialogOpen={setIsTaskDialogOpen}

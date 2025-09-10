@@ -27,7 +27,7 @@ export default function HeroSection() {
       .filter(Boolean);
   })();
   return (
-    <section className="relative bg-gradient-to-br from-gray-800 to-black py-24 overflow-hidden">
+    <section className="relative bg-gradient-to-br from-gray-800 to-black py-11 overflow-hidden">
       {/* Decorative SVG background */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none -z-10 opacity-30"
@@ -60,7 +60,7 @@ export default function HeroSection() {
       <div className="container mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div>
           
-          <h2 className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent text-5xl font-extrabold mb-6 md:text-5xl transform transition-transform duration-500 ease-out hover:-translate-y-1 hover:scale-105">
+          <h2 className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent text-5xl font-extrabold mb-6 md:text-5xl transform transition-transform duration-500 ease-out hover:-translate-y-1 hover:scale-105 mt-0">
             Transform Your Body.</h2>
             <span className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent text-5xl font-extrabold  transform transition-transform duration-500 ease-out hover:-translate-y-1 hover:scale-105"> Build Strength.</span>
           
@@ -115,7 +115,7 @@ export default function HeroSection() {
         </div>
 
         <div className="relative flex justify-center lg:justify-end">
-          <div className="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-gray-700 transform hover:scale-102 transition-transform duration-300">
+          <div className="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-gray-700 transform hover:scale-102 transition-transform duration-300 mt-0">
             <img
               src={trainerImgUrl || "/images/default-trainer.jpg"}
               alt="Trainer"

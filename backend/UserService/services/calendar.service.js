@@ -1,5 +1,6 @@
 import { supabase } from '../database/supabase.js'
 import qs from 'querystring'
+import { google } from 'googleapis'
 
 // Helper: given an ISO-like string, return { date: 'YYYY-MM-DD', time: 'HH:MM:SS' }
 function extractDateAndTime(s) {
@@ -159,12 +160,15 @@ export async function saveOrUpdateEventsForUser(userId, events) {
   console.log('[calendar.service] resolved customerId for user', { userId, customerId })
 
   const results = []
-  const upsertedGoogleIds = []
+  let upsertedGoogleIds = []
   let upsertErrors = 0
-  for (const ev of (events || [])) {
+
+  // Build rows for bulk upsert to avoid per-row race conditions and to
+  // receive all inserted/updated rows from Supabase in one call.
+  const rows = (events || []).map(ev => {
     const { date: taskDate, time: startTime } = extractDateAndTime(ev.start)
     const { time: endTime } = extractDateAndTime(ev.end)
-    const payload = {
+    return {
       google_event_id: ev.google_event_id,
       task_date: taskDate,
       start: startTime,
@@ -174,42 +178,40 @@ export async function saveOrUpdateEventsForUser(userId, events) {
       description: ev.description || null,
       color: ev.color || null
     }
-    // Upsert by google_event_id. If color column missing, retry without color.
+  })
+
+  if (rows.length > 0) {
     try {
-      console.log('[calendar.service] upserting google event', { google_event_id: payload.google_event_id, task_date: payload.task_date })
-      // Request the inserted/updated rows back so we can verify what was written
-      const { data, error } = await supabase.from('calendar').upsert(payload, { onConflict: 'google_event_id' }).select('calendar_id, google_event_id')
+      console.log('[calendar.service] attempting bulk upsert rows', { count: rows.length })
+      const { data, error } = await supabase.from('calendar').upsert(rows, { onConflict: 'google_event_id' }).select('calendar_id, google_event_id')
       if (error) {
-        // if it's a column-not-found, retry without color
+        // If error indicates unknown column (color), retry without color column
         if (String(error.message).toLowerCase().includes('column') && String(error.message).toLowerCase().includes('color')) {
-          console.warn('[calendar.service] upsert failed due to color column; retrying without color', { google_event_id: payload.google_event_id })
-          delete payload.color
-          const { data: d2, error: e2 } = await supabase.from('calendar').upsert(payload, { onConflict: 'google_event_id' }).select('calendar_id, google_event_id')
+          console.warn('[calendar.service] bulk upsert failed due to color column; retrying without color for all rows')
+          const rowsNoColor = rows.map(r => {
+            const copy = { ...r }
+            delete copy.color
+            return copy
+          })
+          const { data: d2, error: e2 } = await supabase.from('calendar').upsert(rowsNoColor, { onConflict: 'google_event_id' }).select('calendar_id, google_event_id')
           if (e2) {
-            console.error('[calendar.service] upsert retry failed', e2)
-            upsertErrors++
-            results.push(null)
+            console.error('[calendar.service] bulk upsert retry failed', e2)
+            upsertErrors = rows.length
           } else {
-            results.push(d2)
-            // record upserted ids
-            if (Array.isArray(d2)) d2.forEach(r => r?.google_event_id && upsertedGoogleIds.push(r.google_event_id))
+            upsertedGoogleIds = Array.isArray(d2) ? d2.map(r => r.google_event_id).filter(Boolean) : []
+            console.log('[calendar.service] bulk upsert retry succeeded', { upserted: upsertedGoogleIds.length })
           }
         } else {
-          console.error('[calendar.service] upsert error', error)
-          upsertErrors++
-          results.push(null)
+          console.error('[calendar.service] bulk upsert error', error)
+          upsertErrors = rows.length
         }
       } else {
-        results.push(data)
-        // record upserted ids
-        if (Array.isArray(data)) data.forEach(r => r?.google_event_id && upsertedGoogleIds.push(r.google_event_id))
-        else if (data && data.google_event_id) upsertedGoogleIds.push(data.google_event_id)
+        upsertedGoogleIds = Array.isArray(data) ? data.map(r => r.google_event_id).filter(Boolean) : []
+        console.log('[calendar.service] bulk upsert succeeded', { upserted: upsertedGoogleIds.length })
       }
     } catch (err) {
-      console.error('[calendar.service] upsert threw', err)
-      upsertErrors++
-      // push null to keep array length
-      results.push(null)
+      console.error('[calendar.service] bulk upsert threw', err)
+      upsertErrors = rows.length
     }
   }
   // Summarize upsert results so we can tell if writes succeeded
@@ -574,42 +576,58 @@ export async function updateEventForUser(calendarIdOrGoogleId, payload) {
       if (cErr || !cust) throw cErr || new Error('no customer')
       const tokens = await getTokensForUser(String(cust.user_id))
       if (!tokens) return upd
+
       let accessToken = tokens.access_token
+
+      // Build request body compatible with Google Calendar API
       const buildBody = () => {
         const body = {}
         if (payload.title) body.summary = payload.title
         if (payload.description !== undefined) body.description = payload.description
-        if (payload.start && payload.start.includes('T')) body.start = { dateTime: new Date(String(payload.start)).toISOString() }
-        if (payload.end && payload.end.includes('T')) body.end = { dateTime: new Date(String(payload.end)).toISOString() }
+        if (payload.start) {
+          if (String(payload.start).includes('T')) body.start = { dateTime: new Date(String(payload.start)).toISOString() }
+          else body.start = { date: String(payload.start) }
+        }
+        if (payload.end !== undefined) {
+          if (payload.end && String(payload.end).includes('T')) body.end = { dateTime: new Date(String(payload.end)).toISOString() }
+          else if (payload.end) body.end = { date: String(payload.end) }
+        }
         return body
       }
-      const tryPatch = async (token) => {
-        const url = `${process.env.CALENDAR_EVENTS_URL}/${existing.google_event_id}`
-        const r = await fetch(url, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(buildBody()) })
-        const text = await r.text().catch(() => '')
-        let parsed = null
-        try { parsed = JSON.parse(text) } catch (e) {}
-        if (!r.ok) console.error('[google] patch event response', r.status, parsed || text)
-        return { res: r, bodyJson: parsed, bodyText: text }
+
+      // Helper: use googleapis to patch event with the provided access token
+      const patchWithGoogleapis = async (token) => {
+        try {
+          const authClient = new google.auth.OAuth2()
+          authClient.setCredentials({ access_token: token })
+          const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary'
+          const calendar = google.calendar({ version: 'v3', auth: authClient })
+          const res = await calendar.events.patch({ calendarId, eventId: existing.google_event_id, requestBody: buildBody() })
+          return { ok: true, status: res.status || 200, data: res.data }
+        } catch (err) {
+          const status = err?.response?.status || null
+          return { ok: false, status, error: err }
+        }
       }
-      let attempt = await tryPatch(accessToken)
-      if (attempt.res.status === 401) {
+
+      let attempt = await patchWithGoogleapis(accessToken)
+      if (attempt && attempt.status === 401) {
         try {
           const refreshed = await refreshAccessToken(tokens.refresh_token)
           accessToken = refreshed.access_token
           await updateAccessTokenForUser(String(cust.user_id), accessToken, refreshed.expires_in)
-          attempt = await tryPatch(accessToken)
+          attempt = await patchWithGoogleapis(accessToken)
         } catch (err) {
-          // If refresh fails, surface a clear error so controller can ask client to re-auth
           console.error('failed to refresh access token during google patch', err)
           const e = new Error('google_auth_required')
           e.code = 'GOOGLE_AUTH_REQUIRED'
           throw e
         }
       }
-      if (!attempt.res.ok) {
-        console.error('google patch event failed', attempt.res.status)
-        if (attempt.res.status === 401) {
+
+      if (!attempt || !attempt.ok) {
+        console.error('google patch event failed', attempt && attempt.status, attempt && attempt.error)
+        if (attempt && attempt.status === 401) {
           const e = new Error('google_auth_required')
           e.code = 'GOOGLE_AUTH_REQUIRED'
           throw e
