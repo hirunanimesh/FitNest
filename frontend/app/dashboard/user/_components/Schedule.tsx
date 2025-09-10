@@ -10,45 +10,7 @@ import styles from './Schedule.styles'
 import { mapServerList as mapServerListUtil, dedupeEvents as dedupeEventsUtil } from './calendarUtils'
 import { Button } from "@/components/ui/button";
 
-// Custom event rendering for color
-function renderEventContent(eventInfo: any) {
-  const color = eventInfo.event.backgroundColor || '#ef4444';
-  return (
-    <div
-      style={{
-        backgroundColor: color,
-        borderRadius: 4,
-        color: '#fff',
-        border: `2px solid ${color}`,
-        fontWeight: 400,
-        boxShadow: `0 2px 8px ${color}55`,
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '3px 3px',
-        overflow: 'hidden'
-      }}
-    >
-      <div style={{
-        width: '100%',
-        // allow up to 2 lines then clamp
-        display: '-webkit-box',
-        WebkitLineClamp: 2,
-        WebkitBoxOrient: 'vertical',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'normal',
-        textAlign: 'center',
-        lineHeight: '0.95rem',
-        fontSize: '0.72rem',
-        letterSpacing: '-0.25px',
-        fontWeight: 400
-      }}>{eventInfo.event.title}</div>
-    </div>
-  );
-}
+// Note: renderEventContent moved into component to allow responsive sizing
 
 interface Event {
   id: string;
@@ -80,6 +42,17 @@ const Schedule: React.FC = () => {
   const { user } = useAuth()
 
   const dedupeEvents = (list: Event[]) => dedupeEventsUtil(list)
+
+  // Detect small screens (Pixel 7 ~ 412px width). Adjust rendering accordingly.
+  const [isSmallScreen, setIsSmallScreen] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 430px)')
+    const apply = (m: MediaQueryList | MediaQueryListEvent) => setIsSmallScreen(Boolean((m as any).matches))
+    apply(mq)
+    if (mq.addEventListener) mq.addEventListener('change', apply)
+    else mq.addListener(apply)
+    return () => { if (mq.removeEventListener) mq.removeEventListener('change', apply); else mq.removeListener(apply) }
+  }, [])
 
   // Centralized fetch helper used across effects and manual syncs. Returns mapped events.
   const fetchEvents = async (userId: string) => {
@@ -326,6 +299,87 @@ const Schedule: React.FC = () => {
     }
   }
 
+  // Helper to format event start/end into server-friendly ISO or date strings
+  const formatEventIso = (ev: any) => {
+    const start = ev.start
+    const end = ev.end
+    const fmt = (d: Date) => {
+      const iso = d.toISOString()
+      // prefer full ISO when time component present; otherwise date-only
+      return iso
+    }
+    return {
+      start: start ? fmt(new Date(start)) : null,
+      end: end ? fmt(new Date(end)) : null
+    }
+  }
+
+  // Persist drag/drop changes to server
+  const handleEventDrop = async (dropInfo: any) => {
+    const ev = dropInfo.event
+    const id = ev.id || (ev.extendedProps && ev.extendedProps.calendar_id)
+    if (!id) {
+      // no local id to update; open edit modal as fallback
+      setViewingEvent({ id: String(ev.id), title: ev.title, start: ev.startStr || '', end: ev.endStr || '', backgroundColor: ev.backgroundColor || taskColor } as Event)
+      setIsTaskDialogOpen(true)
+      return
+    }
+    const { start, end } = formatEventIso(ev)
+    try {
+      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+      const res = await fetch(`${base}/calendar/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start, end })
+      })
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        console.error('eventDrop persist failed', res.status, txt)
+        dropInfo.revert()
+        alert('Failed to move event. See console for details.')
+        return
+      }
+      // update local event in state
+      setEvents(prev => prev.map(ev0 => ev0.id === String(id) ? ({ ...ev0, start: start || ev0.start, end: end || ev0.end }) : ev0))
+    } catch (e) {
+      console.error('failed to persist event drop', e)
+      dropInfo.revert()
+      alert('Failed to move event. See console for details.')
+    }
+  }
+
+  // Persist resize changes to server
+  const handleEventResize = async (resizeInfo: any) => {
+    const ev = resizeInfo.event
+    const id = ev.id || (ev.extendedProps && ev.extendedProps.calendar_id)
+    if (!id) {
+      setViewingEvent({ id: String(ev.id), title: ev.title, start: ev.startStr || '', end: ev.endStr || '', backgroundColor: ev.backgroundColor || taskColor } as Event)
+      setIsTaskDialogOpen(true)
+      return
+    }
+    const { start, end } = formatEventIso(ev)
+    try {
+      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+      const res = await fetch(`${base}/calendar/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start, end })
+      })
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        console.error('eventResize persist failed', res.status, txt)
+        resizeInfo.revert()
+        alert('Failed to resize event. See console for details.')
+        return
+      }
+      setEvents(prev => prev.map(ev0 => ev0.id === String(id) ? ({ ...ev0, start: start || ev0.start, end: end || ev0.end }) : ev0))
+    } catch (e) {
+      console.error('failed to persist event resize', e)
+      resizeInfo.revert()
+      alert('Failed to resize event. See console for details.')
+    }
+  }
+
   const enableEditMode = () => {
     if (!viewingEvent) return;
     setEditingEvent(viewingEvent);
@@ -476,14 +530,56 @@ const Schedule: React.FC = () => {
     setIsTaskDialogOpen(true)
   }
 
+  // Render events with responsive styles
+  const renderEventContent = (eventInfo: any) => {
+    const color = eventInfo.event.backgroundColor || '#ef4444'
+    const lineClamp = isSmallScreen ? 1 : 2
+    const fontSize = isSmallScreen ? '0.64rem' : '0.72rem'
+    const padding = isSmallScreen ? '2px 6px' : '3px 6px'
+    return (
+      <div
+        style={{
+          backgroundColor: color,
+          borderRadius: 6,
+          color: '#fff',
+          border: `1px solid ${color}`,
+          fontWeight: 400,
+          boxShadow: `0 2px 6px ${color}55`,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding,
+          overflow: 'hidden'
+        }}
+      >
+        <div style={{
+          width: '100%',
+          display: '-webkit-box',
+          WebkitLineClamp: lineClamp,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'normal',
+          textAlign: 'center',
+          lineHeight: isSmallScreen ? '0.9rem' : '0.95rem',
+          fontSize,
+          letterSpacing: '-0.25px',
+          fontWeight: 400
+        }}>{eventInfo.event.title}</div>
+      </div>
+    )
+  }
+
   return (
     <div>
   {/* Rely on FullCalendar's built-in small popover for "more" links */}
       <style jsx global>{styles}</style>
       
-      <h2 className="text-4xl md:text-5xl font-black text-white text-center mb-4">
-            <span className="bg-gradient-to-r from-blue-800 via-rose-400 to-blue-800 bg-clip-text text-transparent">User Schedule</span>
-          </h2>
+
+            <h2 className="text-4xl md:text-5xl font-black text-center mb-10 text-gray-300">User Schedule</h2>
+          
       <AddTask
         isTaskDialogOpen={isTaskDialogOpen}
         setIsTaskDialogOpen={setIsTaskDialogOpen}
@@ -509,7 +605,7 @@ const Schedule: React.FC = () => {
           </Button>
         )}
       </div>
-  <div className="calendar-shell" style={{ marginLeft: '4.5rem', marginRight: '4.5rem', backgroundColor: '#211f1dff', borderRadius: 8 }}>
+  <div className="calendar-shell mx-4 sm:mx-16 bg-[#211f1dff] rounded-lg">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
@@ -517,13 +613,16 @@ const Schedule: React.FC = () => {
           eventClick={handleEventClick}
           dateClick={handleDateClick}
           eventContent={renderEventContent}
-          // limit number of visible events per day cell and use custom more link click
-          dayMaxEventRows={2}
+          editable={!isSmallScreen}
+          eventDrop={handleEventDrop}
+          eventResize={handleEventResize}
+          // limit number of visible events per day cell; on small screens show fewer rows
+          dayMaxEventRows={isSmallScreen ? 1 : 2}
           contentHeight="auto"
           headerToolbar={{
-            left: 'prev,next today',
+            left: isSmallScreen ? 'prev,next' : 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: isSmallScreen ? 'dayGridMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
           }}
         />
       </div>
