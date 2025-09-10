@@ -660,24 +660,31 @@ export async function deleteEventForUser(calendarId) {
       const tokens = await getTokensForUser(String(cust.user_id))
       if (tokens) {
         let accessToken = tokens.access_token
+        // Use googleapis to perform delete; this gives more consistent errors and handling
         const tryDel = async (token) => {
-          const url = `${process.env.CALENDAR_EVENTS_URL}/${existing.google_event_id}`
-          // Log the outgoing request (don't print raw token)
-          console.log('[google] delete event request', { url, forGoogleEventId: existing.google_event_id })
-          const r = await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
-          const text = await r.text().catch(() => '')
-          // Log response for debugging; treat 404 as non-fatal (already deleted)
-          if (r.status === 404) {
-            console.log('[google] delete event - not found (404), treating as success', { google_event_id: existing.google_event_id })
-          } else if (!r.ok) {
-            console.error('[google] delete event response', r.status, text)
-          } else {
-            console.log('[google] delete event success', { status: r.status, body: text })
+          try {
+            const authClient = new google.auth.OAuth2()
+            authClient.setCredentials({ access_token: token })
+            const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary'
+            const calendar = google.calendar({ version: 'v3', auth: authClient })
+            // google.calendar.events.delete returns empty on success; wrap for consistency
+            await calendar.events.delete({ calendarId, eventId: existing.google_event_id })
+            console.log('[google] delete event success', { google_event_id: existing.google_event_id })
+            return { ok: true, status: 204 }
+          } catch (err) {
+            const status = err?.response?.status || err?.code || null
+            // Treat 404 as success (already deleted in Google)
+            if (status === 404 || (err && String(err.message || '').toLowerCase().includes('not found'))) {
+              console.log('[google] delete event - not found (404), treating as success', { google_event_id: existing.google_event_id })
+              return { ok: true, status: 404 }
+            }
+            console.error('[google] delete event error', { status, error: err })
+            return { ok: false, status, error: err }
           }
-          return r
         }
+
         let r = await tryDel(accessToken)
-        if (r.status === 401) {
+        if (!r.ok && r.status === 401) {
           try {
             const refreshed = await refreshAccessToken(tokens.refresh_token)
             accessToken = refreshed.access_token
