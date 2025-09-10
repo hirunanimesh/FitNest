@@ -32,6 +32,23 @@ module.exports = {
     }
     ,
     {
+      displayName: "TrainerService Tests",
+      testMatch: [
+        "<rootDir>/backend/TrainerService/**/__tests__/**/*.unit.test.js",
+        "<rootDir>/backend/TrainerService/**/__tests__/**/*.test.js",
+        "<rootDir>/backend/TrainerService/**/__tests__/**/*.js"
+      ],
+      testEnvironment: "node",
+      testTimeout: 30000,
+      setupFilesAfterEnv: ["<rootDir>/backend/TrainerService/test-setup.js"],
+      collectCoverageFrom: [
+        "backend/TrainerService/**/*.js",
+        "!backend/TrainerService/**/node_modules/**",
+        "!backend/TrainerService/**/__tests__/**"
+      ]
+    }
+    ,
+    {
       displayName: "UserService Tests",
       testMatch: ["<rootDir>/backend/UserService/**/__tests__/**/*.unit.test.js", "<rootDir>/backend/UserService/**/__tests__/**/*.test.js", "<rootDir>/backend/UserService/**/__tests__/**/*.js"],
       testEnvironment: "node",
