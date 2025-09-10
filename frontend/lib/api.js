@@ -194,9 +194,18 @@ export const GetGymProfileData = async(id) =>{
         }
         return response.data
     }catch(error){
-        console.error("Error fetching gym data",error)
+        // If the gym is not found, return null so callers can render a placeholder
+        const status = error?.response?.status;
+        if (status === 404) {
+            console.debug(`Gym profile not found for id=${id} (404)`);
+            return null;
+        }
+        console.error("Error fetching gym data", error);
+        // Re-throw other errors so callers can handle or surface them
+        throw error;
     }
 }
+
 export const GetCustomerById = async (customerId) => {
     try {
         const response = await axios.get(`${Base_URL}/api/user/getuserbyid/${customerId}`);
