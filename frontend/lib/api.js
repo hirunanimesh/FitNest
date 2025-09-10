@@ -572,3 +572,24 @@ export const GetMembershipGyms = async (trainerId) => {
         throw error;
     }
 };
+
+
+export const SendRequestToGym = async (trainerId, gymId) => {
+    try {
+        console.log("Sending request to gym:",  trainerId, gymId );
+        const response = await axios.post(`${Base_URL}/api/trainer/sendrequesttogym`, {
+            trainer_id: trainerId,
+            gym_id: gymId
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error sending request to gym:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to send request to gym");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+}

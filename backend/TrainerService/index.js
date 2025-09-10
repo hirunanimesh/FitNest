@@ -18,7 +18,8 @@ import {
   getFeedbackbyTrainerId,
   bookSession,
   getGymPlanByTrainerId,
-  getGymById 
+  getGymById, 
+  sendRequest
  } from './controllers/trainer.controller.js'
 import {
   addplans,
@@ -55,6 +56,8 @@ app.post('/booksession',bookSession)
 
 app.get('/getgymplanbytrainerid/:trainerId',getGymPlanByTrainerId);
 app.get('/getmembershipgyms/:trainerId',getGymById);
+
+app.post('/sendrequesttogym',sendRequest)
 
 //api  for calendar function
 //get subscribe user

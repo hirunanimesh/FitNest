@@ -1,5 +1,5 @@
 
-import { getmembershipGyms,getgymplanbytrainerid,getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails ,booksession} from '../services/trainer.service.js';
+import { getmembershipGyms,getgymplanbytrainerid,getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails ,booksession, sendrequest} from '../services/trainer.service.js';
 
 
 export const getallTrainers = async (req,res)=>{
@@ -110,4 +110,20 @@ export const getGymById = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
+
+export const sendRequest = async (req,res)=>{
+  try{
+    const {trainer_id,gym_id}= req.body
+    console.log(trainer_id,gym_id)
+    const request = await sendrequest(trainer_id,gym_id)
+    if(request){
+      res.status(200).json({message:"Request sent successfully",request})
+    }
+    else{
+      res.status(400).json({message:"Request already sent"})
+    }
+    }catch(error){
+    console.error("Error sending request:", error);
+    }
+  }
 
