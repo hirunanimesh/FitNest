@@ -83,7 +83,7 @@ const Schedule: React.FC = () => {
 
   return (
     <div>
-      <h2>User Schedule</h2>
+      
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
         <DialogTrigger asChild>
           <Button type="button" className="bg-red-500 text-white font-semibold ml-12 mb-4" onClick={() => setIsTaskDialogOpen(true)}>
