@@ -24,7 +24,7 @@ const UpcomingSessions = () => {
       time: "9:00 AM",
       amount: "$18",
       image: "https://i.ibb.co/0R2WW6tx/1.webp",
-      duration: "60 min",
+      duration: "30 min",
     },
     {
       id: 2,
@@ -83,8 +83,8 @@ const UpcomingSessions = () => {
                 />
                 <CardDescription className="text-gray-400">with: {session.trainer}</CardDescription>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-red-400">{session.amount}</span>
-                  <span className="text-sm text-gray-400">{session.duration}</span>
+                  <span className="text-2xl font-bold text-red-400">{session.amount}</span></div>
+                  <div><span className="text-sm text-gray-400">Duraion: {session.duration}</span>
                 </div>
                 <div className="space-y-2 text-sm text-gray-400">
                   <div className="flex items-center space-x-2">
