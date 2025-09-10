@@ -35,52 +35,63 @@ const Progress = () => {
     };
 
     return (
-        <div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-start">
-                <Card className="bg-transparent">
-                    <CardContent className="p-6 bg-transparent">
-                        <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
-                            <div>
-                                <p className="text-sm text-muted-foreground text-blue-500">Weight</p>
-                                <p className="text-2xl font-bold text-blue-500">
-                                    {weightData} kg
+        <div className="w-full px-2 sm:px-4">
+            {/* Mobile: Single column, Tablet: 2 columns, Desktop: 3 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                
+                {/* Weight Card */}
+                <Card className="bg-transparent w-full h-full">
+                    <CardContent className="p-3 sm:p-4 lg:p-6 bg-transparent h-full">
+                        <div className="flex items-center justify-between p-4 sm:p-5 lg:p-6 border border-silver rounded-lg h-full min-h-[80px] sm:min-h-[90px] lg:min-h-[100px]">
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <p className="text-xs sm:text-sm text-red-500 mb-2">
+                                    Weight
+                                </p>
+                                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-500 truncate">
+                                    {weightData || "--"} kg
                                 </p>
                             </div>
-                            <Weight className="h-8 w-8 text-blue-500" />
+                            <Weight className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-red-500 flex-shrink-0 ml-2" />
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-transparent">
-                    <CardContent className="p-6 bg-transparent">
-                        <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Height</p>
-                                <p className="text-2xl font-bold text-green-500">
-                                    {heightData} cm
+                {/* Height Card */}
+                <Card className="bg-transparent w-full h-full">
+                    <CardContent className="p-3 sm:p-4 lg:p-6 bg-transparent h-full">
+                        <div className="flex items-center justify-between p-4 sm:p-5 lg:p-6 border border-silver rounded-lg h-full min-h-[80px] sm:min-h-[90px] lg:min-h-[100px]">
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <p className="text-xs sm:text-sm text-red-500 mb-2">
+                                    Height
+                                </p>
+                                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-500 truncate">
+                                    {heightData || "--"} cm
                                 </p>
                             </div>
-                            <Ruler className="h-8 w-8 text-green-500" />
+                            <Ruler className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-red-500 flex-shrink-0 ml-2" />
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-transparent">
-                    <CardContent className="p-6 bg-transparent">
-                    <div className="flex items-center justify-between p-4 border border-red-500 rounded-lg">
-                        <div>
-                        <p className="text-sm text-muted-foreground">BMI</p>
-                        <p className="text-2xl font-bold text-purple-500">
-                            {calculateBMI() || "--"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{getBMICategory()}</p>
+                {/* BMI Card */}
+                <Card className="bg-transparent w-full h-full">
+                    <CardContent className="p-3 sm:p-4 lg:p-6 bg-transparent h-full">
+                        <div className="flex items-center justify-between p-4 sm:p-5 lg:p-6 border border-silver rounded-lg h-full min-h-[80px] sm:min-h-[90px] lg:min-h-[100px]">
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <p className="text-xs sm:text-sm text-red-500 mb-2">
+                                    BMI ({getBMICategory()})
+                                </p>
+                                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-500 truncate">
+                                    {calculateBMI() || "--"}
+                                </p>
+                            </div>
+                            <Activity className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-red-500 flex-shrink-0 ml-2" />
                         </div>
-                        <Activity className="h-8 w-8 text-purple-500" />
-                    </div>
                     </CardContent>
                 </Card>   
-    </div>
-    </div>
-  )
+            </div>
+        </div>
+    )
 }
+
 export default Progress
