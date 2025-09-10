@@ -48,7 +48,31 @@ export const calendarStatus = async (req, res) => {
   const { userId } = req.params;
   try {
     const tokens = await getTokensForUser(String(userId));
-    res.json({ connected: Boolean(tokens && tokens.refresh_token) });
+    if (!tokens) return res.json({ connected: false });
+
+    const now = Math.floor(Date.now() / 1000);
+    // If we have an expires_at and it's in the future, consider connected
+    if (tokens.expires_at && Number(tokens.expires_at) > now) {
+      return res.json({ connected: true });
+    }
+
+    // If token is expired but we have a refresh token, try to refresh once
+    if (tokens.refresh_token) {
+      try {
+        const refreshed = await refreshAccessToken(tokens.refresh_token);
+        // store updated access token/expires
+        await updateAccessTokenForUser(String(userId), refreshed.access_token, refreshed.expires_in);
+        return res.json({ connected: true });
+      } catch (refreshErr) {
+        console.warn('[oauth] calendarStatus refresh failed', refreshErr);
+        return res.json({ connected: false });
+      }
+    }
+
+    // Fallback: if there is an access_token but no refresh token or expiry, treat as connected
+    if (tokens.access_token) return res.json({ connected: true });
+
+    return res.json({ connected: false });
   } catch (err) {
     console.error(err);
     res.status(500).json({ connected: false });

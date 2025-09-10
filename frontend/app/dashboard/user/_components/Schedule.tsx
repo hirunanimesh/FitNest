@@ -58,7 +58,8 @@ interface Event {
   backgroundColor: string;
   color?: string;
   description?: string | null;
-  extendedProps?: { description?: string | null };
+  extendedProps?: { description?: string | null; rawStart?: string; rawEnd?: string; google_event_id?: string };
+  google_event_id?: string | null;
   allDay?: boolean;
 }
 
@@ -79,6 +80,20 @@ const Schedule: React.FC = () => {
   const { user } = useAuth()
 
   const dedupeEvents = (list: Event[]) => dedupeEventsUtil(list)
+
+  // Centralized fetch helper used across effects and manual syncs. Returns mapped events.
+  const fetchEvents = async (userId: string) => {
+    const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+    try {
+      const r = await fetch(`${base}/calendar/events/${userId}`)
+      if (!r.ok) throw new Error('fetch events failed: ' + r.status)
+      const serverEvents = await r.json()
+      return mapServerListUtil(serverEvents, '#28375cff')
+    } catch (e) {
+      console.error('failed to fetch events', e)
+      return []
+    }
+  }
 
   // No custom "more" modal: we'll use FullCalendar's native popover.
 
@@ -104,42 +119,36 @@ const Schedule: React.FC = () => {
           setGoogleConnected(false);
         }
 
-        const eventsRes = await fetch(`${base}/calendar/events/${userId}`)
-          if (eventsRes.ok) {
-          const serverEvents = await eventsRes.json();
-          if (Array.isArray(serverEvents)) {
-            const mappedServer = mapServerListUtil(serverEvents, '#28375cff')
-            // Merge server results with any existing client-side events instead of clobbering them.
-            // Keep server as authoritative for items it returns, but preserve local-only/Google-only
-            // events that the server hasn't persisted yet (they'll have no matching id/google_event_id).
-            setEvents(prev => {
-              // Build quick lookup of server keys
-              const serverIds = new Set(mappedServer.map(s => String(s.id || '')))
-              const serverGids = new Set(mappedServer.map(s => String(s.google_event_id || '')))
-              // Keep previous events that are not represented in server results
-              const leftover = prev.filter(p => {
-                const pid = String((p as any).id || '')
-                const pgid = String((p as any).google_event_id || '')
-                const raw = (p as any).extendedProps?.rawStart || p.start || ''
-                const title = p.title || ''
-                // If prev has an id and server also returned that id -> skip (server authoritative)
-                if (pid && serverIds.has(pid)) return false
-                // If prev has google_event_id and server returned that -> skip
-                if (pgid && serverGids.has(pgid)) return false
-                // If prev has no server id but matches server by rawStart+title, consider it replaced
-                const matchesServer = mappedServer.find(s => {
-                  const sRaw = (s as any).extendedProps?.rawStart || s.start || ''
-                  const sTitle = s.title || ''
-                  return sRaw && sTitle && sRaw === raw && sTitle === title
-                })
-                if (matchesServer) return false
-                return true
+        const mappedServer = await fetchEvents(userId)
+        if (Array.isArray(mappedServer)) {
+          // Merge server results with any existing client-side events instead of clobbering them.
+          // Keep server as authoritative for items it returns, but preserve local-only/Google-only
+          // events that the server hasn't persisted yet (they'll have no matching id/google_event_id).
+          setEvents(prev => {
+            // Build quick lookup of server keys
+            const serverIds = new Set(mappedServer.map(s => String(s.id || '')))
+            const serverGids = new Set(mappedServer.map(s => String((s as any).google_event_id || '')))
+            // Keep previous events that are not represented in server results
+            const leftover = prev.filter(p => {
+              const pid = String((p as any).id || '')
+              const pgid = String((p as any).google_event_id || '')
+              const raw = (p as any).extendedProps?.rawStart || p.start || ''
+              const title = p.title || ''
+              // If prev has an id and server also returned that id -> skip (server authoritative)
+              if (pid && serverIds.has(pid)) return false
+              // If prev has google_event_id and server returned that -> skip
+              if (pgid && serverGids.has(pgid)) return false
+              // If prev has no server id but matches server by rawStart+title, consider it replaced
+              const matchesServer = mappedServer.find(s => {
+                const sRaw = (s as any).extendedProps?.rawStart || s.start || ''
+                const sTitle = s.title || ''
+                return sRaw && sTitle && sRaw === raw && sTitle === title
               })
-              return dedupeEvents([...mappedServer, ...leftover])
+              if (matchesServer) return false
+              return true
             })
-          }
-        } else {
-          console.warn('calendar events fetch returned non-ok', eventsRes.status)
+            return dedupeEvents([...mappedServer, ...leftover])
+          })
         }
       } catch (err) {
         console.error('calendar status/events check failed', err)

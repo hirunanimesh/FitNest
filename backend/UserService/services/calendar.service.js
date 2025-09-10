@@ -66,11 +66,35 @@ export async function exchangeCodeForTokens(code) {
 export async function saveTokensForUser(userId, tokens) {
   // tokens contains access_token, refresh_token, expires_in, scope, token_type, id_token
   // We'll upsert into a user_google_tokens table in Supabase. Create table if not present.
+  // Normalize expires_at to a UNIX timestamp in seconds. Google returns expires_in (seconds)
+  // but callers sometimes pass absolute timestamps or milliseconds; be defensive.
+  const nowSec = Math.floor(Date.now() / 1000)
+  let expires_at = null
+  try {
+    // Prefer expires_in (relative seconds) when present. Google returns expires_in as
+    // a relative number of seconds until the access token expires.
+    if (tokens && tokens.expires_in != null) {
+      const v = Number(tokens.expires_in)
+      if (Number.isFinite(v)) {
+        expires_at = nowSec + Math.floor(v)
+      }
+    } else if (tokens && tokens.expires_at != null) {
+      // If an absolute expires_at is provided, accept it. Convert milliseconds -> seconds
+      // when necessary (simple defensive check for very large values).
+      const v2 = Number(tokens.expires_at)
+      if (Number.isFinite(v2)) {
+        expires_at = v2 > 1e12 ? Math.floor(v2 / 1000) : Math.floor(v2)
+      }
+    }
+  } catch (e) {
+    console.warn('[oauth] failed to normalize expires value', e)
+    expires_at = null
+  }
   const payload = {
     user_id: userId,
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
-    expires_at: tokens.expires_in ? Math.floor(Date.now()/1000) + tokens.expires_in : null,
+    expires_at: expires_at,
     scope: tokens.scope
   }
   const { data, error } = await supabase.from('user_google_tokens').upsert(payload, { onConflict: 'user_id' }).select().single()
@@ -82,6 +106,66 @@ export async function getTokensForUser(userId) {
   const { data, error } = await supabase.from('user_google_tokens').select('*').eq('user_id', userId).single()
   if (error) return null
   return data
+}
+
+// Refresh tokens for a user using the stored refresh_token and persist the
+// updated access_token (and refresh_token if returned) with a correct expires_at.
+export async function refreshTokensForUser(userId) {
+  if (!userId) throw new Error('missing userId')
+  const tokens = await getTokensForUser(String(userId))
+  if (!tokens || !tokens.refresh_token) {
+    const e = new Error('no_refresh_token')
+    e.code = 'NO_REFRESH_TOKEN'
+    throw e
+  }
+
+  // Call Google's token endpoint to refresh
+  const refreshed = await refreshAccessToken(tokens.refresh_token)
+
+  // Build values to persist. Google may not return refresh_token on refresh.
+  const accessToken = refreshed.access_token
+  const expiresIn = refreshed.expires_in
+  const refreshToken = refreshed.refresh_token || tokens.refresh_token
+
+  // Compute expires_at as now + expires_in seconds (defensive)
+  const nowSec = Math.floor(Date.now() / 1000)
+  const expires_at = Number.isFinite(Number(expiresIn)) ? nowSec + Math.floor(Number(expiresIn)) : null
+
+  // Persist both access_token and refresh_token (if available) and expires_at
+  const payload = {
+    user_id: String(userId),
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    expires_at
+  }
+
+  const { data, error } = await supabase.from('user_google_tokens').upsert(payload, { onConflict: 'user_id' }).select().single()
+  if (error) throw error
+  return data
+}
+
+// Ensure a valid access token is available for the given user. Returns the
+// access token string or null if none available. Will attempt a refresh when
+// the token is missing or expires within 60 seconds.
+export async function ensureValidAccessToken(userId) {
+  if (!userId) return null
+  const tokens = await getTokensForUser(String(userId))
+  if (!tokens) return null
+
+  const nowSec = Math.floor(Date.now() / 1000)
+  // If expires_at present and comfortably in the future, return current token
+  if (tokens.expires_at && Number(tokens.expires_at) - nowSec > 60 && tokens.access_token) {
+    return tokens.access_token
+  }
+
+  // Otherwise attempt refresh
+  try {
+    const updated = await refreshTokensForUser(String(userId))
+    return updated.access_token || null
+  } catch (err) {
+    console.error('[oauth] failed to refresh tokens for user', { userId, error: err })
+    return null
+  }
 }
 
 export async function refreshAccessToken(refreshToken) {
@@ -107,7 +191,21 @@ export async function refreshAccessToken(refreshToken) {
 }
 
 export async function updateAccessTokenForUser(userId, accessToken, expiresIn) {
-  const expires_at = expiresIn ? Math.floor(Date.now() / 1000) + expiresIn : null
+  // expiresIn may be seconds (relative) or an absolute timestamp in seconds or ms. Normalize to unix seconds.
+  const nowSec = Math.floor(Date.now() / 1000)
+  let expires_at = null
+  try {
+    // Treat expiresIn as relative seconds when provided (Google's typical response).
+    if (expiresIn != null) {
+      const v = Number(expiresIn)
+      if (Number.isFinite(v)) {
+        expires_at = nowSec + Math.floor(v)
+      }
+    }
+  } catch (e) {
+    console.warn('[oauth] failed to normalize expiresIn', e)
+    expires_at = null
+  }
   const { data, error } = await supabase.from('user_google_tokens').upsert({ user_id: userId, access_token: accessToken, expires_at }, { onConflict: 'user_id' }).select().single()
   if (error) throw error
   return data
@@ -231,35 +329,46 @@ export async function saveOrUpdateEventsForUser(userId, events) {
     console.log('[calendar.service] cleanup stale google events - decision', { customerId, incomingCount: incomingIds.length, upserted: upsertedGoogleIds.length, upsertErrors })
 
     if (incomingIds.length > 0) {
-      // Inspect rows that would be removed (helpful for debugging accidental mass deletes)
+      // Safer strategy: fetch existing google_event_id rows for the customer,
+      // compute the difference client-side, and delete by numeric calendar_id in batches.
+      // This avoids building a very long PostgREST `not.in` filter which expects
+      // parentheses and can fail for long lists.
       try {
-        const { data: toDeletePreview, error: previewErr } = await supabase
+        const { data: existingRows, error: existingErr } = await supabase
           .from('calendar')
           .select('calendar_id, google_event_id')
           .eq('customer_id', customerId)
-          .not('google_event_id', 'in', incomingIds)
           .not('google_event_id', 'is', null)
 
-        if (previewErr) {
-          console.error('[calendar.service] preview select before delete failed', previewErr)
+        if (existingErr) {
+          console.error('[calendar.service] failed to fetch existing google rows for cleanup', existingErr)
         } else {
-          console.log('[calendar.service] rows that would be deleted count', { count: (toDeletePreview || []).length, sample: (toDeletePreview || []).slice(0,10) })
+          const incomingSet = new Set(incomingIds)
+          const toDeleteCalendarIds = (existingRows || []).filter(r => r.google_event_id && !incomingSet.has(r.google_event_id)).map(r => r.calendar_id)
+          console.log('[calendar.service] rows that would be deleted count', { count: toDeleteCalendarIds.length, sample: (toDeleteCalendarIds || []).slice(0,10) })
+
+          if (toDeleteCalendarIds.length > 0) {
+            const batchSize = 100
+            const deletedSamples = []
+            for (let i = 0; i < toDeleteCalendarIds.length; i += batchSize) {
+              const chunk = toDeleteCalendarIds.slice(i, i + batchSize)
+              try {
+                const { data: deletedRows, error: delErr } = await supabase.from('calendar').delete().in('calendar_id', chunk).select('calendar_id, google_event_id')
+                if (delErr) {
+                  console.error('[calendar.service] batch delete failed', { chunkSize: chunk.length, error: delErr })
+                } else {
+                  if (Array.isArray(deletedRows)) deletedSamples.push(...deletedRows.slice(0,5))
+                }
+              } catch (delEx) {
+                console.error('[calendar.service] batch delete threw', delEx)
+              }
+            }
+            console.log('[calendar.service] deleted stale google events count', { count: toDeleteCalendarIds.length, sample: deletedSamples.slice(0,10) })
+          }
         }
       } catch (previewEx) {
-        console.error('[calendar.service] preview select threw', previewEx)
+        console.error('[calendar.service] cleanup preview/select threw', previewEx)
       }
-
-      // Perform delete and request deleted rows back for logging
-      const { data: deletedRows, error: delErr } = await supabase
-        .from('calendar')
-        .delete()
-        .eq('customer_id', customerId)
-        .not('google_event_id', 'in', incomingIds)
-        .not('google_event_id', 'is', null)
-        .select('calendar_id, google_event_id')
-
-      if (delErr) console.error('[calendar.service] delete stale google events failed', delErr)
-      else console.log('[calendar.service] deleted stale google events count', { count: (deletedRows || []).length, sample: (deletedRows || []).slice(0,10) })
     } else {
       // No incoming google events: remove any local rows that have a google_event_id (they were deleted in Google)
       const { data: deletedAllRows, error: e3 } = await supabase.from('calendar').delete().eq('customer_id', customerId).not('google_event_id', 'is', null).select('calendar_id, google_event_id')
