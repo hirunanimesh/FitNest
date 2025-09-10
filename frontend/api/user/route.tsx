@@ -33,17 +33,27 @@ export const GetOtherGyms = async() => {
     }
 };
 
-export const SubscribeGymPlan = async (planId: any, customerId: any, email: any, user_id: any) => {
+export const SubscribeGymPlan = async (planId: any, customerId: any, email: any, user_id: any,duration:any) => {
     try {
-        const response = await axios.post(`${Base_URL}/api/payment/subscribe`, {
-            planId,
-            customer_id: customerId,
-            user_id,
-            email
-        });
-
-        // If we reach here, the request was successful
+        if(duration === "1 day"){
+            const response = await axios.post(`${Base_URL}/api/payment/onetimepayment`, {
+                planId,
+                customer_id: customerId,
+                user_id,
+                email
+            });
         return { success: true, url: response.data.url };
+
+        }else{
+            const response = await axios.post(`${Base_URL}/api/payment/subscribe`, {
+                planId,
+                customer_id: customerId,
+                user_id,
+                email
+            });
+            return { success: true, url: response.data.url };
+        }
+       
 
     } catch (error: any) {
         // Handle different types of errors

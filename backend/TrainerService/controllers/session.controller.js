@@ -1,3 +1,4 @@
+import { TrainerSessionCreateProducer } from "../kafka/Producer.js";
 import { 
     addsession, 
     deletesession, 
@@ -12,7 +13,9 @@ export const addSession = async (req, res) => {
     try {
         const session = await addsession(req.body);
         if (session) {
+            console.log("Session created:", session);
             res.status(200).json({ message: "Trainer session created successfully", session });
+            await TrainerSessionCreateProducer(session.session_id,session.price)
         }
     } catch (error) {
         console.error("Error creating session:", error);

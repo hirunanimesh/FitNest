@@ -207,7 +207,7 @@ const GymProfile: React.FC = () => {
         fetchGymPlans();
     }, [gymId]);
 
-    const handleSubscribe = async (planId: string) => {
+    const handleSubscribe = async (planId: string,duration:string) => {
         if (!email) {
             setSubscriptionErrorMessage('User email is not available yet');
             toast.error('Authentication Required', {
@@ -239,7 +239,8 @@ const GymProfile: React.FC = () => {
                 planId,
                 customer_id,
                 email,
-                gymData?.user_id
+                gymData?.user_id,
+                duration
             );
 
             toast.dismiss('subscription-loading');
@@ -618,7 +619,7 @@ const GymProfile: React.FC = () => {
                                                 </Button>
                                             ) : (
                                                 <Button
-                                                    onClick={() => handleSubscribe(plan.plan_id)}
+                                                    onClick={() => handleSubscribe(plan.plan_id,plan.duration)}
                                                     className={`w-full bg-gradient-to-r ${gradient} hover:shadow-xl hover:shadow-red-500/25 text-white font-bold py-4 text-lg rounded-xl transition-all duration-300 hover:scale-105 group-hover:shadow-2xl`}
                                                 >
                                                     Subscribe Now
