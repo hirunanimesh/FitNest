@@ -199,8 +199,8 @@ const Charts: React.FC = () => {
                 
                 
           <div className="text-center mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white text-center mb-4 sm:mb-6 lg:mb-8">
-            <span className="bg-gradient-to-r from-blue-800 via-rose-400 to-blue-800 bg-clip-text text-transparent">Health Analytics</span>
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-center mb-4 sm:mb-6 lg:mb-8 text-gray-300">
+            Health Analytics
           </h2>
         </div>
         
