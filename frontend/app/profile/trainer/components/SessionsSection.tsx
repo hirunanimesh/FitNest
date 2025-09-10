@@ -58,7 +58,11 @@ export default function SessionsSection() {
     <section id="sessions" className="py-20 bg-gray-800">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold text-white mb-4">Available Sessions</h3>
+          <h3 className="text-3xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent text-5xl md:text-5xl font-extrabold transform transition-transform duration-500 ease-out hover:-translate-y-1 hover:scale-105 text-bold">
+              Available Sessions</span>
+          </h3>
+         
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">
             Book individual training sessions tailored to your unique needs and schedule
           </p>
