@@ -3,11 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle,CardDescription } from "@/comp
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Video } from "lucide-react";
 import { useTrainerData } from '../context/TrainerContext';
+import { BookSession } from "@/api/user/route";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SessionsSection() {
   const { trainerData, isLoading, error } = useTrainerData();
 
   const sessions = trainerData?.sessions || [];
+  const {getUserProfileId} = useAuth();
 
   if (isLoading) {
     return (
@@ -35,65 +38,93 @@ export default function SessionsSection() {
     );
   }
 
+  const bookSession = async(sessionId:any) =>{
+    try{
+      const customerId = await getUserProfileId()
+      const response = await BookSession(sessionId,customerId);
+      console.log("Book session response:",customerId,sessionId);
+      if(response.success){
+        alert("Session booked successfully!");
+        // Optionally, refresh the sessions or update state to reflect the booked status
+      } else {
+        alert("Failed to book session: " + response.error);
+      }
+    }catch(error){
+      alert("An error occurred while booking the session: " + error);
+    }
+  }
+
   return (
-    <section id="sessions" className="py-20 bg-gradient-to-br from-gray-800 to-black">
+    <section id="sessions" className="py-20 bg-gray-800">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold mb-4"><span className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent text-3xl md:text-5xl font-extrabold transform transition-transform duration-500 ease-out hover:-translate-y-1 hover:scale-105 whitespace-nowrap text-bold">Available Sessions</span></h3>
+          <h3 className="text-3xl font-bold text-white mb-4">Available Sessions</h3>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">
             Book individual training sessions tailored to your unique needs and schedule
           </p>
-  </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {sessions.map((session: any) => (
             <Card
               key={session.session_id}
-                className="bg-gray-900 border-red-600 ring-2 ring-red-600/40 ring-offset-2 ring-offset-gray-900 shadow-lg transition-all duration-300 transform hover:scale-103 hover:-translate-y-1 hover:shadow-2xl group"
+              className="bg-gray-900 border-gray-700 transition-all duration-200 hover:shadow-lg hover:border-red-500 h-full flex flex-col"
             >
-              <CardHeader>
-                 <img
+              <CardHeader className="flex-shrink-0">
+                <div className="w-full h-48 mb-3 overflow-hidden rounded-md bg-gray-800">
+                  <img
                     src={session.img_url || "/placeholder.svg"}
                     alt={session.title}
-                    className="w-full h-40 object-cover rounded-md mb-2 transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-full object-cover"
                   />
-                <CardTitle className="text-lg text-white">{session.title}</CardTitle>
-                <CardDescription>with:  {session.trainer.trainer_name}</CardDescription>
+                </div>
+                <CardTitle className="text-lg text-white line-clamp-2">{session.title}</CardTitle>
+                <CardDescription className="line-clamp-1">with: {session.trainer.trainer_name}</CardDescription>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-indigo-400 transition-colors duration-200 group-hover:text-indigo-200">${session.price}</span>
+                  <span className="text-2xl font-bold text-red-400">${session.price}</span>
                   <span className="text-sm text-gray-400">{session.duration}</span>
                 </div>
                 <div className="space-y-2 text-sm text-gray-400">
                   <div className="flex items-center space-x-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>{session.date}</span>
+                    <Calendar className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{session.date}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Clock className="w-4 h-4" />
-                    <span>{session.time}</span>
+                    <Clock className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{session.time}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Video className="w-4 h-4" />
+                    <Video className="w-4 h-4 flex-shrink-0" />
                     <span>Zoom Session</span>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-        <p className="text-gray-300 text-sm mb-4 transition-opacity duration-200 group-hover:opacity-95">{session.description}</p>
-                <ul className="space-y-2 mb-4">
-                  {session.features?.map((feature: string, index: number) => (
-                    <li key={index} className="text-sm text-gray-400 flex items-center">
-          <div className="w-2 h-2 bg-teal-500 rounded-full mr-2 shadow-sm"></div>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+              <CardContent className="flex-1 flex flex-col">
+                <p className="text-gray-300 text-sm mb-4 flex-shrink-0 line-clamp-3">{session.description}</p>
+                <div className="flex-1">
+                  <ul className="space-y-2 mb-4">
+                    {session.features?.slice(0, 4).map((feature: string, index: number) => (
+                      <li key={index} className="text-sm text-gray-400 flex items-start">
+                        <div className="w-1.5 h-1.5 bg-red-600 rounded-full mr-2 mt-1.5 flex-shrink-0"></div>
+                        <span className="line-clamp-2">{feature}</span>
+                      </li>
+                    ))}
+                    {session.features?.length > 4 && (
+                      <li className="text-sm text-gray-500 italic">
+                        +{session.features.length - 4} more features
+                      </li>
+                    )}
+                  </ul>
+                </div>
                 <Button
-                  className={`w-full ${
+                  onClick={() => bookSession(session.session_id)}
+                  className={`w-full mt-auto ${
                     session.booked ? "bg-gray-600 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
                   }`}
                   disabled={session.booked}
                 >
                   {session.booked ? "Booked" : "Book Session"}
+                  
                 </Button>
               </CardContent>
             </Card>

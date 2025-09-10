@@ -503,6 +503,7 @@ const PlansTab: React.FC = () => {
               <Input
                 id="title"
                 value={currentPlan.title}
+                className='text-black'
                 onChange={(e) =>
                   setCurrentPlan({ ...currentPlan, title: e.target.value })
                 }

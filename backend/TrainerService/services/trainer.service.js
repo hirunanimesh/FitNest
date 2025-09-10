@@ -123,4 +123,20 @@ export async function getfeedbackbytrainerid(trainerId) {
   return data || null;
 }
 
+export async function booksession(sessionId, customerId) {
+  const { data, error } = await supabase
+  .from('trainer_sessions')
+  .update({ customer_id: customerId, booked: true })
+  .eq('session_id', sessionId)
+  .select()
+  .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
+
+}
+ 
+
 
