@@ -1,27 +1,59 @@
+
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTrainerData } from '@/app/dashboard/trainer/context/TrainerContext';
-import { GetMembershipGyms, GetGymProfileData } from '@/lib/api';
+import { GetMembershipGyms } from '@/lib/api';
 import GymCard from '@/components/GymCard';
+import { GetGymDetails } from '@/api/user/route';
+
+// Define interfaces for type safety
+interface GymRequest {
+  request_id?: string;
+  id?: string;
+  gym_id: number;
+  approved?: boolean;
+  requested_at?: string;
+}
+
+interface GymData {
+  gym_id: number;
+  gym_name: string;
+  profile_img?: string | null;
+  description?: string | null;
+  address: string;
+  location: string;
+  contact_no?: string | null;
+  rating?: number;
+  reviews?: number;
+  [key: string]: any; // Allow for additional properties
+}
 
 export default function MembershipGyms() {
   const { trainerData } = useTrainerData();
   const router = useRouter();
 
-  const [items, setItems] = useState<{ req: any; gym: any }[] | null>(null);
+  const [items, setItems] = useState<{ req: GymRequest; gym: GymData | null }[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Cache fetched items to avoid refetching on remount
-  const fetchedItems = useRef<{ req: any; gym: any }[] | null>(null);
+  const fetchedItems = useRef<{ req: GymRequest; gym: GymData | null }[] | null>(null);
 
   useEffect(() => {
     const fetchGyms = async () => {
-      if (!trainerData) return;
+      // Keep loading until trainerData is available
+      if (!trainerData) {
+        return; // Stay in loading state
+      }
+
       const trainerId = (trainerData as any)?.trainer_id || (trainerData as any)?.id;
-      if (!trainerId) return;
+      if (!trainerId) {
+        setError('Trainer ID not found');
+        setLoading(false);
+        return;
+      }
 
       // Use cached data if available
       if (fetchedItems.current) {
@@ -30,12 +62,11 @@ export default function MembershipGyms() {
         return;
       }
 
-      setLoading(true);
       setError(null);
 
       try {
         const res = await GetMembershipGyms(trainerId);
-        const data: any[] = Array.isArray(res)
+        const data: GymRequest[] = Array.isArray(res)
           ? res
           : Array.isArray(res?.gyms)
           ? res.gyms
@@ -45,22 +76,25 @@ export default function MembershipGyms() {
 
         if (data.length > 0) {
           const withProfiles = await Promise.all(
-            data.map(async (req: any) => {
+            data.map(async (req: GymRequest) => {
               try {
-                const gym = await GetGymProfileData(req.gym_id);
-                return { req, gym };
-              } catch {
+                const gymResponse = await GetGymDetails(req.gym_id);
+                const gymData = gymResponse?.data?.gym || null;
+                console.log('Fetched gym profile:', gymData);
+                return { req, gym: gymData };
+              } catch (error) {
+                console.error(`Failed to fetch gym profile for gym_id ${req.gym_id}:`, error);
                 return { req, gym: null };
               }
             })
           );
-          fetchedItems.current = withProfiles; // cache data
+          fetchedItems.current = withProfiles; // Cache data
           setItems(withProfiles);
         } else {
           setItems([]);
         }
       } catch (err: any) {
-        console.error('GetMembershipGyms error', err);
+        console.error('GetMembershipGyms error:', err);
         setError('Failed to load membership gyms.');
         setItems([]);
       } finally {
@@ -71,12 +105,30 @@ export default function MembershipGyms() {
     fetchGyms();
   }, [trainerData]);
 
-  if (loading)
-    return <div className="py-8 text-gray-400 text-center">Loading gyms...</div>;
-  if (error)
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900/20 to-slate-900 flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-red-500/30 rounded-full animate-spin border-t-red-500 mx-auto"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-rose-500/30 rounded-full animate-spin border-t-rose-500 m-auto animate-reverse"></div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold text-white">Loading Membership Gyms</h3>
+            <p className="text-slate-400">Fetching your gyms, please wait...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
     return <div className="py-8 text-red-500 text-center">{error}</div>;
-  if (!items || items.length === 0)
+  }
+
+  if (!items || items.length === 0) {
     return <div className="py-8 text-gray-400 text-center">No membership gyms found.</div>;
+  }
 
   return (
     <div>
@@ -87,12 +139,22 @@ export default function MembershipGyms() {
         {items.map(({ req, gym }) => {
           const key = req.request_id || req.id || req.gym_id;
           const gymProp =
-            gym || { gym_id: req.gym_id, gym_name: `Gym ${req.gym_id}`, profile_img: undefined };
+            gym || {
+              gym_id: req.gym_id,
+              gym_name: `Gym ${req.gym_id}`,
+              profile_img: undefined,
+              address: 'Address not available',
+              location: 'Location not available',
+              description: null,
+              contact_no: null,
+              rating: undefined,
+              reviews: undefined
+            };
           return (
             <div key={key} className="group relative">
               <GymCard
                 gym={gymProp}
-                onClick={() => router.push(`/dashboard/user/gym/${req.gym_id}`)}
+                onClick={() => router.push(`/profile/gym/${req.gym_id}`)}
               />
               <div className="absolute top-3 left-3">
                 {req.approved ? (
@@ -113,6 +175,17 @@ export default function MembershipGyms() {
           );
         })}
       </div>
+      <style jsx global>{`
+        @keyframes reverse {
+          from { transform: rotate(360deg); }
+          to { transform: rotate(0deg); }
+        }
+        .animate-reverse {
+          animation: reverse 2s linear infinite;
+        }
+      `}</style>
     </div>
   );
 }
+
+

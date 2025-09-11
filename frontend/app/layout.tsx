@@ -62,7 +62,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <script src="/register-sw-simple.js" defer></script>
         <script src="/pwa-diagnostic.js" defer></script>
@@ -74,7 +74,7 @@ html {
 }
         `}</style>
       </head>
-      <body>
+      <body className="bg-slate-900">
         <AuthProvider>
           {children}
           <Toaster />
