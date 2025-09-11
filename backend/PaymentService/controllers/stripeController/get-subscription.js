@@ -10,7 +10,7 @@ export default async function getSubscriptions(req, res) {
     if (customer) {
         customer_id = customer.stripe_customer_id
     } else {
-        return res.status(404).json({ error: "Customer not found." });
+        return res.status(200).json({ message: "Subscribe a plan" });
     }
   
     try {
