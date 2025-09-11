@@ -347,12 +347,9 @@ export const UpdateSessionDetails = async (sessionId, sessionData) => {
         } else {
             // Map only relevant session fields
             const payload = {};
-            if (sessionData.title) payload.title = sessionData.title;
-            if (sessionData.description) payload.description = sessionData.description;
             if (sessionData.price) payload.price = sessionData.price;
             if (sessionData.duration) payload.duration = sessionData.duration;
             if (sessionData.zoom_link) payload.zoom_link = sessionData.zoom_link;
-            if (sessionData.img_url) payload.img_url = sessionData.img_url; // <-- FIXED
             if (sessionData.time) payload.time = sessionData.time;
             if (sessionData.date) payload.date = sessionData.date;
             // Add other session fields as needed
