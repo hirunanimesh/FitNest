@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button"
-import { Dumbbell, LayoutDashboard, ChartNoAxesCombinedIcon, Tv2, User2, LogOut, Menu, X } from "lucide-react"
+import { Dumbbell, LayoutDashboard, ChartNoAxesCombinedIcon, Tv2, User2, LogOut, Menu, X, MapPin } from "lucide-react"
 import Link from "next/link"
 import { useTrainerData } from '../context/TrainerContext'
 
@@ -64,8 +64,8 @@ export default function TopBar() {
             <Link
               href="/dashboard/trainer"
               className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group ${
-                isActive('/dashboard/trainer') 
-                  ? 'text-red-400' 
+                isActive('/dashboard/trainer')
+                  ? 'text-red-400'
                   : 'text-gray-300 hover:text-white'
               }`}
             >
@@ -75,12 +75,27 @@ export default function TopBar() {
                 isActive('/dashboard/trainer') ? 'w-full' : 'w-0 group-hover:w-full'
               }`}></span>
             </Link>
-            
+
+            <Link
+              href="/dashboard/trainer/gyms"
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group ${
+                isActive('/dashboard/trainer/gyms')
+                  ? 'text-red-400'
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <MapPin className="h-4 w-4" />
+              Gyms
+              <span className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-200 ${
+                isActive('/dashboard/trainer/gyms') ? 'w-full' : 'w-0 group-hover:w-full'
+              }`}></span>
+            </Link>
+
             <Link
               href="/dashboard/trainer/plans"
               className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-200 relative group ${
-                isActive('/dashboard/trainer/plans') 
-                  ? 'text-red-400' 
+                isActive('/dashboard/trainer/plans')
+                  ? 'text-red-400'
                   : 'text-gray-300 hover:text-white'
               }`}
             >
@@ -150,6 +165,20 @@ export default function TopBar() {
               >
                 <LayoutDashboard className="h-5 w-5" />
                 Dashboard
+              </Link>
+
+              {/* Gyms Link */}
+              <Link
+                href="/dashboard/trainer/gyms"
+                onClick={closeMobileMenu}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-semibold uppercase tracking-wide transition-all duration-200 ${
+                  isActive('/dashboard/trainer/gyms')
+                    ? 'text-red-400 bg-red-500/10'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <MapPin className="h-5 w-5" />
+                Gyms
               </Link>
 
               {/* My Sessions Link */}

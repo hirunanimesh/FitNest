@@ -12,7 +12,9 @@
   "test": "jest",
   "test:watch": "jest --watch",
   "test:coverage": "jest --coverage",
-  "test:user": "jest --selectProjects \"UserService Tests\""
+  "test:user": "jest --selectProjects \"UserService Tests\",",
+  "test:auth": "jest --selectProjects \"AuthService Tests\",",
+  "test:trainer": "node --experimental-vm-modules node_modules/jest/bin/jest.js --selectProjects \"TrainerService Tests\" --colors -i"
   },
   "keywords": [
     "supabase",
