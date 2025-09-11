@@ -59,7 +59,7 @@ app.get('/getmembershipgyms/:trainerId',getGymById);
 
 app.post('/sendrequesttogym',sendRequest)
 
-//api  for calendar function
+
 //get subscribe user
 const PORT = process.env.PORT || 3005
 app.listen(PORT, () => {
