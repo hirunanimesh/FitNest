@@ -77,11 +77,25 @@ export const SubscribeGymPlan = async (planId: any, customerId: any, email: any,
 
 
 export const GetUserSubscriptions = async (customerId:any) =>{
-    const planIds = await axios.get(`${Base_URL}/api/payment/getsubscription/${customerId}`)
-    if(planIds.data.length === 0){
-        return []
+    try {
+        const res = await axios.get(`${Base_URL}/api/payment/getsubscription/${customerId}`);
+        const data = res.data;
+
+    // backend returns { planIds: [...] } or { error: '...' }
+    if (!data) return [];
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.planIds)) return data.planIds;
+
+        // fallback - no subscriptions
+        return [];
+    } catch (error:any) {
+        // Treat 404 (customer not found / no subscriptions) as empty list
+        if (error.response && error.response.status === 404) {
+            return [];
+        }
+        // rethrow other errors so callers can handle them/log
+        throw error;
     }
-    return planIds.data
 }
 
 export const GetMyPlansDetails = async (planIds:any[])=>{
