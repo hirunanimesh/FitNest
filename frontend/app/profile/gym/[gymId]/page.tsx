@@ -58,46 +58,40 @@ const GymProfile: React.FC = () => {
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [subscriptionErrorMessage, setSubscriptionErrorMessage] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
-    const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true); // New state for subscription loading
     const plansSectionRef = useRef<HTMLDivElement>(null);
     const [myPlans, setMyPlans] = useState<string[]>([]);
-    const [role, setRole] = useState<string>('');
+    const [role,setRole] = useState<string>('');
 
     // Scroll to top on page load
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
-    const getRole = async () => {
+    const getRole = async () =>{
         const session = await supabase.auth.getSession();
-        setRole(session.data.session?.user?.user_metadata?.role || '');
+        setRole(session.data.session?.user?.user_metadata?.role)
     }
 
-    // Fetch user subscriptions
+    // Fetch user subscriptions - FIXED: Added proper dependency array
     useEffect(() => {
         const fetchMySubscriptions = async () => {
-            setIsSubscriptionLoading(true); // Set loading state to true
             try {
                 const customer_id = await getUserProfileId();
                 if (customer_id) {
                     const MyPlans = await GetUserSubscriptions(customer_id);
                     setMyPlans(MyPlans.planIds || []);
-                } else {
-                    setMyPlans([]);
                 }
             } catch (error) {
                 console.error('Failed to fetch user subscriptions:', error);
                 setMyPlans([]);
-            } finally {
-                setIsSubscriptionLoading(false); // Set loading state to false when done
             }
         };
-
         getRole();
-        if (role === 'customer') {
+        if(role === 'customer'){
             fetchMySubscriptions();
         }
-    }, [getUserProfileId, role]); // Added role to dependency array to ensure subscription fetch after role is set
+        
+    }, [getUserProfileId]); // Added dependency array
 
     // Handle async data fetching
     useEffect(() => {
@@ -108,7 +102,6 @@ const GymProfile: React.FC = () => {
                 duration: 5000,
             });
             setIsLoading(false);
-            setIsSubscriptionLoading(false);
             return;
         }
 
@@ -128,7 +121,7 @@ const GymProfile: React.FC = () => {
                 if (response?.data?.gym) {
                     setGymData(response.data.gym);
                     parsedlocation = response.data.gym.location ? JSON.parse(response.data.gym.location) : null;
-                    setErrorMessage('');
+                    setErrorMessage(''); // Clear any previous error
                 } else {
                     setErrorMessage('Gym not found');
                     toast.info('Gym Not Found', {
@@ -166,7 +159,7 @@ const GymProfile: React.FC = () => {
                 const session = await supabase.auth.getSession();
                 if (session.data.session) {
                     setEmail(session.data.session.user.email || null);
-                    setErrorMessage('');
+                    setErrorMessage(''); // Clear any previous error
                 }
             } catch (error: any) {
                 setErrorMessage('Failed to retrieve user session');
@@ -185,7 +178,7 @@ const GymProfile: React.FC = () => {
                 const response = await GetGymPlans(gymId);
                 if (response?.data?.gymPlan) {
                     setSubscriptionPlans(response.data.gymPlan);
-                    setErrorMessage('');
+                    setErrorMessage(''); // Clear any previous error
                 } else {
                     setSubscriptionPlans([]);
                     setErrorMessage('No subscription plans found for this gym');
@@ -262,6 +255,7 @@ const GymProfile: React.FC = () => {
             toast.dismiss('subscription-loading');
 
             if (result.success && result.url) {
+                // Redirect immediately to payment gateway
                 window.location.assign(result.url);
             } else {
                 let errorMessage = 'Subscription failed';
@@ -308,7 +302,7 @@ const GymProfile: React.FC = () => {
     // Scroll to plans section
     const handleViewPlans = () => {
         if (plansSectionRef.current) {
-            const offset = 80;
+            const offset = 80; // Adjust for potential fixed header
             const elementPosition = plansSectionRef.current.getBoundingClientRect().top + window.pageYOffset;
             window.scrollTo({
                 top: elementPosition - offset,
@@ -346,6 +340,7 @@ const GymProfile: React.FC = () => {
         );
     }
 
+    // Default values if data is null or undefined
     const name = gymData.gym_name || 'Gym Name Not Available';
     const address = gymData.address || 'Address Not Available';
     const description = gymData.description || 'No description available for this gym.';
@@ -367,6 +362,7 @@ const GymProfile: React.FC = () => {
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900/20 to-slate-900">
             {/* Hero Section */}
             <div className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+                {/* Background with Parallax Effect */}
                 <div className="absolute inset-0">
                     <div 
                         className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 transition-transform duration-700 hover:scale-105"
@@ -378,10 +374,15 @@ const GymProfile: React.FC = () => {
                     <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 via-red-900/30 to-slate-900/90" />
                     <div className="absolute inset-0 bg-gradient-to-r from-red-900/10 to-rose-900/10" />
                 </div>
+
+                {/* Animated Background Elements */}
                 <div className="absolute top-20 left-10 w-72 h-72 bg-red-500/10 rounded-full blur-3xl animate-pulse"></div>
                 <div className="absolute bottom-20 right-10 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+
+                {/* Hero Content */}
                 <div className="relative z-10 text-center max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="space-y-8 animate-fade-in">
+                        {/* Gym Name and Verification */}
                         <div className="space-y-6">
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                                 <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-white leading-tight">
@@ -409,6 +410,8 @@ const GymProfile: React.FC = () => {
                                     )}
                                 </Badge>
                             </div>
+
+                            {/* Rating */}
                             <div className="flex items-center justify-center gap-6">
                                 <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-red-500/20">
                                     <div className="flex items-center gap-1">
@@ -421,9 +424,13 @@ const GymProfile: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Description */}
                         <p className="text-lg sm:text-xl text-white/90 max-w-4xl mx-auto leading-relaxed font-light">
                             {description}
                         </p>
+
+                        {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
                             <Button
                                 onClick={handleViewPlans}
@@ -437,13 +444,16 @@ const GymProfile: React.FC = () => {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16 ">
+                {/* Error Messages */}
                 {errorMessage && (
                     <Alert className="border-red-500/50 bg-red-500/10 backdrop-blur-sm text-red-100 shadow-lg">
                         <XCircle className="h-5 w-5 text-red-400" />
                         <AlertDescription className="text-red-200">{errorMessage}</AlertDescription>
                     </Alert>
                 )}
+
+                {/* Quick Info Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {[
                         { 
@@ -504,6 +514,8 @@ const GymProfile: React.FC = () => {
                         </Card>
                     ))}
                 </div>
+
+                {/* Map Section */}
                 <Card className="bg-white/5 backdrop-blur-sm border-white/10 overflow-hidden">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-3 text-2xl text-white">
@@ -536,6 +548,8 @@ const GymProfile: React.FC = () => {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Subscription Plans */}
                 <div ref={plansSectionRef} className="space-y-8">
                     <div className="text-center space-y-4">
                         <h2 className="text-4xl md:text-5xl font-black text-white">
@@ -547,6 +561,8 @@ const GymProfile: React.FC = () => {
                             Choose the perfect plan for your fitness journey and start transforming your life today
                         </p>
                     </div>
+
+                    {/* Success/Error Messages */}
                     {successMessage && (
                         <Alert className="border-green-500/50 bg-green-500/10 backdrop-blur-sm text-green-100 shadow-lg">
                             <CheckCircle className="h-5 w-5 text-green-400" />
@@ -559,6 +575,7 @@ const GymProfile: React.FC = () => {
                             <AlertDescription className="text-red-200">{subscriptionErrorMessage}</AlertDescription>
                         </Alert>
                     )}
+
                     {subscriptionPlans.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {subscriptionPlans.map((plan, index) => {
@@ -578,6 +595,7 @@ const GymProfile: React.FC = () => {
                                         className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 flex flex-col overflow-hidden relative"
                                     >
                                         <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+                                        
                                         <CardHeader className="relative text-center pb-6 space-y-4">
                                             <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-r ${gradient} flex items-center justify-center shadow-xl`}>
                                                 <Award className="w-8 h-8 text-white" />
@@ -595,35 +613,26 @@ const GymProfile: React.FC = () => {
                                                 </div>
                                             </div>
                                         </CardHeader>
+                                        
                                         <CardContent className="relative flex flex-col flex-grow space-y-6 p-6">
                                             <p className="text-slate-300 text-center leading-relaxed flex-grow group-hover:text-red-100 transition-colors">
                                                 {plan.description}
                                             </p>
-                                            {role === 'customer' ? (
-                                                isSubscriptionLoading ? (
-                                                    <Button
-                                                        disabled
-                                                        className="w-full bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold py-4 text-lg rounded-xl opacity-80"
-                                                    >
-                                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                                        Loading...
-                                                    </Button>
-                                                ) : isSubscribed ? (
-                                                    <Button
-                                                        disabled
-                                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 text-lg rounded-xl opacity-80"
-                                                    >
-                                                        <CheckCircle className="w-5 h-5 mr-2" />
-                                                        Subscribed
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        onClick={() => handleSubscribe(plan.plan_id)}
-                                                        className={`w-full bg-gradient-to-r ${gradient} hover:shadow-xl hover:shadow-red-500/25 text-white font-bold py-4 text-lg rounded-xl transition-all duration-300 hover:scale-105 group-hover:shadow-2xl`}
-                                                    >
-                                                        Subscribe Now
-                                                    </Button>
-                                                )
+                                                {isSubscribed ? (
+                                                <Button
+                                                    disabled
+                                                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 text-lg rounded-xl opacity-80"
+                                                >
+                                                    <CheckCircle className="w-5 h-5 mr-2" />
+                                                    Subscribed
+                                                </Button>
+                                            ) : role === 'customer' ? (
+                                                <Button
+                                                    onClick={() => handleSubscribe(plan.plan_id)}
+                                                    className={`w-full bg-gradient-to-r ${gradient} hover:shadow-xl hover:shadow-red-500/25 text-white font-bold py-4 text-lg rounded-xl transition-all duration-300 hover:scale-105 group-hover:shadow-2xl`}
+                                                >
+                                                    Subscribe Now
+                                                </Button>
                                             ) : null}
                                         </CardContent>
                                     </Card>
@@ -645,6 +654,8 @@ const GymProfile: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Custom Styles */}
             <style jsx global>{`
                 html {
                     scroll-behavior: smooth;
