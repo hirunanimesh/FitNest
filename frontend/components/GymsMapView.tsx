@@ -330,10 +330,26 @@ const GymsMapView: React.FC<GymsMapViewProps> = ({
               <span style="display: inline-block; padding: 2px 8px; font-size: 12px; border-radius: 4px; margin-bottom: 8px; background-color: ${markerColor}; color: white;">
                 ${gymData.planType === 'oneDay' ? 'One Day Plans Available' : 'Other Plans Available'}
               </span>
-              ${gymData.gym.profile_img ? `<img src="${gymData.gym.profile_img}" alt="${gymData.gym.gym_name || 'Gym'}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;">` : ''}
+              ${gymData.gym.profile_img 
+                ? `<a href="/dashboard/user/gym/${gymData.gym.gym_id}" >
+                    <img src="${gymData.gym.profile_img}" 
+                    alt="${gymData.gym.gym_name || 'Gym'}" 
+                    style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; cursor: pointer;">
+                    </a>`
+                : ''
+              }
               ${gymData.gym.address ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Address:</strong> ${gymData.gym.address}</p>` : ''}
               ${gymData.gym.contact_no ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Contact:</strong> ${gymData.gym.contact_no}</p>` : ''}
-            </div>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}" 
+              target="_blank" 
+              style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; text-decoration: none; font-size: 14px; font-weight: 500; color: #3b82f6;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l10 10-10 10L2 12 12 2zm0 3.5L5.5 12 12 18.5 18.5 12 12 5.5zm-1 3h2v3h3v2h-3v3h-2v-3H8v-2h3V8.5z"/>
+              </svg>
+              Directions
+            </a>
+
+              </div>
           `
           
           infoWindowRef.current.setContent(content)
