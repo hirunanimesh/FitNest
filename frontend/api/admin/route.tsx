@@ -47,3 +47,9 @@ export const GetChatHealth = async () => {
     const response = await axios.get(`${Base_URL}/api/admin/chat/health`)
     return response
 }
+
+
+export const MemberGrowth = async () =>{
+    const response = await axios.get(`${Base_URL}/api/admin/stats/member-growth`)
+    return response
+}

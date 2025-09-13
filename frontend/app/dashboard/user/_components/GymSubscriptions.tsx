@@ -122,7 +122,21 @@ const GymSubscriptions = () => {
         Gym Subscriptions
       </h2>
       {plans.length === 0 ? (
-        <div className="py-8 text-gray-400 text-center">No subscriptions found.</div>
+        <div className="min-h-[50vh] bg-gradient-to-br from-slate-900 via-red-900/20 to-slate-900 flex items-center justify-center">
+          <div className="text-center space-y-6">
+            <Award className="w-16 h-16 text-red-500 mx-auto" />
+            <h3 className="text-2xl font-semibold text-white">No Subscriptions Found</h3>
+            <p className="text-slate-300 max-w-md">
+              You currently have no active gym subscriptions. Explore our gyms and find the perfect plan to start your fitness journey!
+            </p>
+            <Button
+              className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-8 py-3 rounded-full font-semibold text-lg shadow-lg shadow-red-500/25 transition-all duration-300 hover:scale-105"
+              onClick={() => window.location.href = '/dashboard/user/search'}
+            >
+              Explore Gyms
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {plans.map((plan, index) => {
