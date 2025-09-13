@@ -9,6 +9,7 @@ import {
     getChatHealthStatus 
 } from '../services/chat.service.js';
 import Joi from 'joi';
+import AdminService from '../services/admin.service.js';
 
 // Validation schemas
 const uploadDocumentsSchema = Joi.object({
@@ -279,6 +280,26 @@ export async function chatHealth(req, res) {
             success: false,
             error: error.message,
             ready: false
+        });
+    }
+}
+
+//get member growth stats
+export async function getMemberGrowth(req, res) {
+    console.log('in the admin controller');
+    try {
+        const result = await AdminService.getMemberGrowthStats();
+        res.status(200).json({
+            success: true,
+            message: 'Member growth stats retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getMemberGrowth controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve member growth stats',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
         });
     }
 }

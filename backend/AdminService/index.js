@@ -14,7 +14,8 @@ import {
     removeDocument, 
     healthCheck,
     chat,
-    chatHealth 
+    chatHealth,
+    getMemberGrowth
 } from './controllers/admin.controller.js';
 import { testConnection } from './database/supabase.js';
 
@@ -45,6 +46,8 @@ app.delete('/documents/:id', removeDocument);
 // Chat routes
 app.post('/chat', chat);
 app.get('/chat/health', chatHealth);
+
+app.get('/stats/member-growth', getMemberGrowth); // New endpoint for member growth stats
 
 // Error handling middleware
 app.use((err, req, res, next) => {
