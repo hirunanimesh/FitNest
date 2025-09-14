@@ -63,4 +63,16 @@ export default class AdminService {
       throw new Error("Failed to retrieve gym verifications");
     }
 }
+  static async handleVerificationState(id, state) {
+    try{
+      const {data , error} = await supabase.from('verifications').update({verification_state: state}).eq('id', id).select();
+      if (error){
+        throw new Error(`Supabase error: ${error.message}`);
+      }
+      return data;
+    }catch (error) {
+      console.error("Error in handleVerificationState service:", error);
+      throw new Error("Failed to update verification state");
+    }
+  }
 }

@@ -343,3 +343,24 @@ export async function getGymVerifications(req, res) {
         });
     }
 }
+
+export async function handleVerificationState(req, res) {
+    console.log('in the handleVerificationState controller');
+    const { id, state } = req.params;
+
+    try {
+        const result = await AdminService.handleVerificationState(id, state);
+        res.status(200).json({
+            success: true,
+            message: 'Verification state updated successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in handleVerificationState controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update verification state',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
