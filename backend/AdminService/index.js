@@ -15,7 +15,9 @@ import {
     healthCheck,
     chat,
     chatHealth,
-    getMemberGrowth
+    getMemberGrowth,
+    getTrainerVerifications,
+    getGymVerifications
 } from './controllers/admin.controller.js';
 import { testConnection } from './database/supabase.js';
 
@@ -48,7 +50,8 @@ app.post('/chat', chat);
 app.get('/chat/health', chatHealth);
 
 app.get('/stats/member-growth', getMemberGrowth); // New endpoint for member growth stats
-
+app.get('/trainer-verifications', getTrainerVerifications); // New endpoint for trainer verifications
+app.get('/gym-verifications', getGymVerifications); // New endpoint for gym verifications
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
