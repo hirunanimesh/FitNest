@@ -90,14 +90,20 @@ export const rejectGymVerification = async (verificationId: string) => {
     return response
 }
 
-export const approveTrainerVerification = async (verificationId: string) => {
-    console.log("approving trainer verification", { verificationId })
-    const response = await axios.put(`${Base_URL}/api/admin/trainer-verifications/${verificationId}/approve`)
-    return response
-}
+// export const approveTrainerVerification = async (verificationId: string) => {
+//     console.log("approving trainer verification", { verificationId })
+//     const response = await axios.put(`${Base_URL}/api/admin/trainer-verifications/${verificationId}/approve`)
+//     return response
+// }
 
-export const rejectTrainerVerification = async (verificationId: string) => {
-    console.log("rejecting trainer verification", { verificationId })
-    const response = await axios.put(`${Base_URL}/api/admin/trainer-verifications/${verificationId}/reject`)
+// export const rejectTrainerVerification = async (verificationId: string) => {
+//     console.log("rejecting trainer verification", { verificationId })
+//     const response = await axios.put(`${Base_URL}/api/admin/trainer-verifications/${verificationId}/reject`)
+//     return response
+// }
+
+export const handleVerificationState = async (verificationId: string, state: 'Approved' | 'Rejected') => {
+    console.log(`changing verification state`, { verificationId, state })
+    const response = await axios.put(`${Base_URL}/api/admin/handle-verifications/${verificationId}/${state}`)
     return response
 }
