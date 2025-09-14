@@ -303,3 +303,43 @@ export async function getMemberGrowth(req, res) {
         });
     }
 }
+
+export async function getTrainerVerifications(req, res) {
+    console.log('in the getTrainerVerifications controller');
+    try {
+        const result = await AdminService.getTrainerVerifications();
+        console.log("result in controller",result)
+        res.status(200).json({
+            success: true,
+            message: 'Trainer verifications retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getTrainerVerifications controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve trainer verifications',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
+
+export async function getGymVerifications(req, res) {
+    console.log('in the getGymVerifications controller');
+    try {
+        const result = await AdminService.getGymVerifications();
+        console.log("result in controller",result)
+        res.status(200).json({
+            success: true,
+            message: 'Gym verifications retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getGymVerifications controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve gym verifications',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}

@@ -48,8 +48,56 @@ export const GetChatHealth = async () => {
     return response
 }
 
+export const MemberGrowth = async (startDate?: string, endDate?: string) => {
+    console.log("fetching member growth data", { startDate, endDate })
+    const params: any = {}
+    if (startDate) params.startDate = startDate
+    if (endDate) params.endDate = endDate
+    
+    const response = await axios.get(`${Base_URL}/api/admin/stats/member-growth`, {
+        params
+    })
+    return response
+}
 
-export const MemberGrowth = async () =>{
-    const response = await axios.get(`${Base_URL}/api/admin/stats/member-growth`)
+export const GetDashboardStats = async () => {
+    console.log("fetching dashboard stats")
+    const response = await axios.get(`${Base_URL}/api/admin/stats/dashboard`)
+    return response
+}
+
+export const GetTrainerVerifications = async () => {
+    console.log("fetching trainer verifications")
+    const response = await axios.get(`${Base_URL}/api/admin/trainer-verifications`)
+    return response
+}
+
+export const getGymVerifications = async () => {
+    console.log("fetching gym verifications")
+    const response = await axios.get(`${Base_URL}/api/admin/gym-verifications`)
+    return response
+}
+
+export const approveGymVerification = async (verificationId: string) => {
+    console.log("approving gym verification", { verificationId })
+    const response = await axios.put(`${Base_URL}/api/admin/gym-verifications/${verificationId}/approve`)
+    return response
+}
+
+export const rejectGymVerification = async (verificationId: string) => {
+    console.log("rejecting gym verification", { verificationId })
+    const response = await axios.put(`${Base_URL}/api/admin/gym-verifications/${verificationId}/reject`)
+    return response
+}
+
+export const approveTrainerVerification = async (verificationId: string) => {
+    console.log("approving trainer verification", { verificationId })
+    const response = await axios.put(`${Base_URL}/api/admin/trainer-verifications/${verificationId}/approve`)
+    return response
+}
+
+export const rejectTrainerVerification = async (verificationId: string) => {
+    console.log("rejecting trainer verification", { verificationId })
+    const response = await axios.put(`${Base_URL}/api/admin/trainer-verifications/${verificationId}/reject`)
     return response
 }
