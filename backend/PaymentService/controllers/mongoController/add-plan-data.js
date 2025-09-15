@@ -90,6 +90,11 @@ async function findStripePriceId ({planId}){
     return stripe_plan;
 }
 
+async function findstripeSessionPriceId({sessionId}){
+    const stripe_session = await StripeSession.findOne({session_id:sessionId})
+    return stripe_session;
+}
+
 async function findPlansByProductId({product_id}){
     const plans = await StripePlanData.find({
         product_id: { $in: product_id },
@@ -123,4 +128,4 @@ async function addSession({session_id,product_id,price_id}){
 }
 
 export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData, 
-    findStripePriceId,findPlansByProductId,findPlansByPlanIds,findCustomerByStripeId,updatePlanPrice,addSession};
+    findStripePriceId,findPlansByProductId,findPlansByPlanIds,findCustomerByStripeId,updatePlanPrice,addSession,findstripeSessionPriceId};

@@ -1,8 +1,8 @@
 import stripe from '../../lib/stripe.js';
-import { findStripeAccount, findStripeCustomerId, findStripePriceId, addStripeCustomer } from '../../controllers/mongoController/add-plan-data.js';
+import { findStripeAccount, findStripeCustomerId, findStripePriceId, addStripeCustomer, findstripeSessionPriceId } from '../../controllers/mongoController/add-plan-data.js';
 
-export default async function onetimePayment(req, res) {
-  const { planId, customer_id, user_id, email } = req.body;
+export default async function SessionPayment(req, res) {
+  const { sessionId, customer_id, user_id, email } = req.body;
 
   try {
     let customerId;
@@ -26,7 +26,7 @@ export default async function onetimePayment(req, res) {
     }
 
     // 2️⃣ Get Stripe price for this plan
-    const stripePrice = await findStripePriceId({ planId });
+    const stripePrice = await findstripeSessionPriceId({ sessionId });
     if (!stripePrice) {
       return res.status(200).json({ error: 'Price ID not found for this plan' });
     }

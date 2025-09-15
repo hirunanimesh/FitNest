@@ -15,6 +15,7 @@ import getCurrentMonthRevenue from './controllers/stripeController/get-monthly-r
 import { GymPlanCreatedConsumer, GymPlanDeletedConsumer, GymPlanPriceUpdatedConsumer, TrainerSessionCreatedConsumer } from './kafka/Consumer.js';
 import cancelSubscription from './controllers/stripeController/cancel-subscription.js';
 import getCustomersByGymPlans from './controllers/stripeController/get-customer-ids.js';
+import SessionPayment from './controllers/stripeController/session-payment.js';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/connectedaccountpayments/:userId',getConnectedAccountPayments)
 app.use('/onetimepayment',oneTimePayment)
 app.use('/monthlyrevenue/:userId',getCurrentMonthRevenue)
 app.use('/getgymcustomerids',getCustomersByGymPlans)
+app.use('/sessionpayment',SessionPayment)
 
 GymPlanCreatedConsumer()
 GymPlanDeletedConsumer()

@@ -110,11 +110,13 @@ export const UnsubscribeGymPlan = async (planId:any, customerId:any) => {
     return response.data
 }
 
-export const BookSession = async (sessionId:any, customerId:any)=>{
-    console.log("frontend api called", sessionId, customerId);
-    const response = await axios.post(`${Base_URL}/api/trainer/booksession`,{
+export const BookSession = async (sessionId:any, customerId:any,user_id:string,email:string)=>{
+    console.log("frontend api called", sessionId, customerId, user_id,email);
+    const response = await axios.post(`${Base_URL}/api/payment/sessionpayment`,{
         sessionId,
-        customerId
+        customer_id: customerId,
+        user_id,
+        email
     })
     return response.data
 }
