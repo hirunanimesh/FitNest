@@ -21,6 +21,7 @@ import { GetTrainerVerifications, getGymVerifications, handleVerificationState }
 interface VerificationRequest {
   id: string
   type: "gym" | "trainer"
+  entityId: number // gym_id or trainer_id from the API response
   applicantName: string
   applicantEmail: string
   applicantPhone: string
@@ -43,6 +44,7 @@ const transformGymData = (gymData: any[]): VerificationRequest[] => {
   return gymData.map((gym) => ({
     id: gym.id.toString(),
     type: "gym" as const,
+    entityId: gym.gym_id, // Extract gym_id from the response
     applicantName: gym.applicantname,
     applicantEmail: gym.applicant_email,
     applicantPhone: gym.applicantphone,
@@ -66,6 +68,7 @@ const transformTrainerData = (trainerData: any[]): VerificationRequest[] => {
   return trainerData.map((trainer) => ({
     id: trainer.id.toString(),
     type: "trainer" as const,
+    entityId: trainer.trainer_id, // Extract trainer_id from the response
     applicantName: trainer.applicantname,
     applicantEmail: trainer.applicant_email,
     applicantPhone: trainer.applicantphone,
@@ -120,7 +123,16 @@ export default function VerificationRequests() {
 
   const handleApprove = async (requestId: string, type: "gym" | "trainer") => {
     try {
-      await handleVerificationState(requestId, "Approved")
+      // Find the request to get the entityId
+      const requests = type === "gym" ? gymRequests : trainerRequests
+      const request = requests.find(req => req.id === requestId)
+      
+      if (!request) {
+        console.error("Request not found")
+        return
+      }
+
+      await handleVerificationState(requestId, "Approved", type, request.entityId)
       
       if (type === "gym") {
         setGymRequests((prev) => prev.map((req) => (req.id === requestId ? { ...req, status: "approved" as const } : req)))
@@ -135,7 +147,16 @@ export default function VerificationRequests() {
 
   const handleReject = async (requestId: string, type: "gym" | "trainer") => {
     try {
-      await handleVerificationState(requestId, "Rejected")
+      // Find the request to get the entityId
+      const requests = type === "gym" ? gymRequests : trainerRequests
+      const request = requests.find(req => req.id === requestId)
+      
+      if (!request) {
+        console.error("Request not found")
+        return
+      }
+
+      await handleVerificationState(requestId, "Rejected", type, request.entityId)
       
       if (type === "gym") {
         setGymRequests((prev) => prev.map((req) => (req.id === requestId ? { ...req, status: "rejected" as const } : req)))

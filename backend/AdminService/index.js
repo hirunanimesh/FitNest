@@ -53,7 +53,7 @@ app.get('/chat/health', chatHealth);
 app.get('/stats/member-growth', getMemberGrowth); // New endpoint for member growth stats
 app.get('/trainer-verifications', getTrainerVerifications); // New endpoint for trainer verifications
 app.get('/gym-verifications', getGymVerifications); // New endpoint for gym verifications
-app.put('/handle-verifications/:id/:state', handleVerificationState); // New endpoint to handle verification state changes
+app.put('/handle-verifications/:id/:state/:type/:entityId', handleVerificationState); // New endpoint to handle verification state changes
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);

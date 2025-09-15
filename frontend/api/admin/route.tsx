@@ -78,17 +78,17 @@ export const getGymVerifications = async () => {
     return response
 }
 
-export const approveGymVerification = async (verificationId: string) => {
-    console.log("approving gym verification", { verificationId })
-    const response = await axios.put(`${Base_URL}/api/admin/gym-verifications/${verificationId}/approve`)
-    return response
-}
+// export const approveGymVerification = async (verificationId: string) => {
+//     console.log("approving gym verification", { verificationId })
+//     const response = await axios.put(`${Base_URL}/api/admin/gym-verifications/${verificationId}/approve`)
+//     return response
+// }
 
-export const rejectGymVerification = async (verificationId: string) => {
-    console.log("rejecting gym verification", { verificationId })
-    const response = await axios.put(`${Base_URL}/api/admin/gym-verifications/${verificationId}/reject`)
-    return response
-}
+// export const rejectGymVerification = async (verificationId: string) => {
+//     console.log("rejecting gym verification", { verificationId })
+//     const response = await axios.put(`${Base_URL}/api/admin/gym-verifications/${verificationId}/reject`)
+//     return response
+// }
 
 // export const approveTrainerVerification = async (verificationId: string) => {
 //     console.log("approving trainer verification", { verificationId })
@@ -102,8 +102,8 @@ export const rejectGymVerification = async (verificationId: string) => {
 //     return response
 // }
 
-export const handleVerificationState = async (verificationId: string, state: 'Approved' | 'Rejected') => {
-    console.log(`changing verification state`, { verificationId, state })
-    const response = await axios.put(`${Base_URL}/api/admin/handle-verifications/${verificationId}/${state}`)
+export const handleVerificationState = async (verificationId: string, state: 'Approved' | 'Rejected', type: 'gym' | 'trainer', entityId: number) => {
+    console.log(`changing verification state`, { verificationId, state, type, entityId })
+    const response = await axios.put(`${Base_URL}/api/admin/handle-verifications/${verificationId}/${state}/${type}/${entityId}`)
     return response
 }

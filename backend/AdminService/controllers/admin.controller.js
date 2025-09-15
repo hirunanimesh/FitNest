@@ -346,10 +346,10 @@ export async function getGymVerifications(req, res) {
 
 export async function handleVerificationState(req, res) {
     console.log('in the handleVerificationState controller');
-    const { id, state } = req.params;
+    const { id, state, type, entityId } = req.params;
 
     try {
-        const result = await AdminService.handleVerificationState(id, state);
+        const result = await AdminService.handleVerificationState(id, state, type, entityId);
         res.status(200).json({
             success: true,
             message: 'Verification state updated successfully',
