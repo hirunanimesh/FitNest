@@ -234,7 +234,7 @@ export default function VerificationRequests() {
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedRequest(request)}
-                        className="border-gray-600 hover:bg-gray-700 text-gray-300"
+                        className="border-gray-600 hover:bg-gray-300 text-black"
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         View Documents

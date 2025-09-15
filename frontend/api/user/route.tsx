@@ -88,6 +88,7 @@ export const SubscribeGymPlan = async (planId: any, customerId: any, email: any,
 
 export const GetUserSubscriptions = async (customerId:any) =>{
     const planIds = await axios.get(`${Base_URL}/api/payment/getsubscription/${customerId}`)
+    console.log("plan ids", planIds.data);
     if(planIds.data.length === 0){
         return []
     }

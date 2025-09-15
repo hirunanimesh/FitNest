@@ -194,9 +194,18 @@ export const GetGymProfileData = async(id) =>{
         }
         return response.data
     }catch(error){
-        console.error("Error fetching gym data",error)
+        // If the gym is not found, return null so callers can render a placeholder
+        const status = error?.response?.status;
+        if (status === 404) {
+            console.debug(`Gym profile not found for id=${id} (404)`);
+            return null;
+        }
+        console.error("Error fetching gym data", error);
+        // Re-throw other errors so callers can handle or surface them
+        throw error;
     }
 }
+
 export const GetCustomerById = async (customerId) => {
     try {
         const response = await axios.get(`${Base_URL}/api/user/getuserbyid/${customerId}`);
@@ -338,12 +347,9 @@ export const UpdateSessionDetails = async (sessionId, sessionData) => {
         } else {
             // Map only relevant session fields
             const payload = {};
-            if (sessionData.title) payload.title = sessionData.title;
-            if (sessionData.description) payload.description = sessionData.description;
             if (sessionData.price) payload.price = sessionData.price;
             if (sessionData.duration) payload.duration = sessionData.duration;
             if (sessionData.zoom_link) payload.zoom_link = sessionData.zoom_link;
-            if (sessionData.img_url) payload.img_url = sessionData.img_url; // <-- FIXED
             if (sessionData.time) payload.time = sessionData.time;
             if (sessionData.date) payload.date = sessionData.date;
             // Add other session fields as needed
@@ -563,3 +569,24 @@ export const GetMembershipGyms = async (trainerId) => {
         throw error;
     }
 };
+
+
+export const SendRequestToGym = async (trainerId, gymId) => {
+    try {
+        console.log("Sending request to gym:",  trainerId, gymId );
+        const response = await axios.post(`${Base_URL}/api/trainer/sendrequesttogym`, {
+            trainer_id: trainerId,
+            gym_id: gymId
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error sending request to gym:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to send request to gym");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+}

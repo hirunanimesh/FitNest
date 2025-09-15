@@ -62,7 +62,7 @@ export async function getLatestWeightById(userId) {
     .from('customer_progress')
     .select('height,weight')
     .eq('customer_id', userId)
-    .order('created_at', { ascending: false })
+    .order('date', { ascending: false })
     .limit(1); // Get the latest weight entry
 
   if (error) {

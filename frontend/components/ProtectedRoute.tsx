@@ -40,6 +40,7 @@ export const ProtectedRoute = ({
   }
 
   // Fetch role whenever auth user changes (and on mount when not loading)
+  //set the freshrole 1
   useEffect(() => {
     if (loading) return
     if (!user) {

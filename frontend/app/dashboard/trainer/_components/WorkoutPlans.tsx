@@ -23,56 +23,7 @@ interface Plan {
 }
 
 // Fallback/mock for local dev, used only when TrainerContext has no plans
-const fallbackPlans: Plan[] = [
-  {
-    id: 1,
-    title: "Beginner Strength Training",
-    category: "workout",
-    description: "Perfect for beginners looking to build foundational strength with compound movements and proper form. Includes squats, deadlifts, bench press, and rows.",
-    instructionPdf: "https://example.com/beginner-strength.pdf",
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop"
-  },
-  {
-    id: 2,
-    title: "High-Intensity Cardio Blast",
-    category: "workout",
-    description: "Intense 30-minute cardio workout designed to maximize calorie burn and improve cardiovascular endurance. Features burpees, mountain climbers, and jump squats.",
-    instructionPdf: "https://example.com/cardio-blast.pdf",
-    image: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=400&h=300&fit=crop"
-  },
-  {
-    id: 3,
-    title: "Balanced Nutrition Plan",
-    category: "diet",
-    description: "Comprehensive 7-day meal plan focusing on balanced macronutrients for optimal health and performance. Includes breakfast, lunch, dinner, and snack options.",
-    instructionPdf: "https://example.com/balanced-nutrition.pdf",
-    image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&h=300&fit=crop"
-  },
-  {
-    id: 4,
-    title: "Advanced Muscle Building",
-    category: "workout",
-    description: "Advanced 12-week training program for experienced lifters aiming to maximize muscle growth and strength gains. Progressive overload with periodization.",
-    instructionPdf: "https://example.com/advanced-muscle.pdf",
-    image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&h=300&fit=crop"
-  },
-  {
-    id: 5,
-    title: "Weight Loss Accelerator",
-    category: "diet",
-    description: "Strategic calorie deficit plan combined with nutrient-dense foods to accelerate fat loss while preserving muscle. Includes meal prep guides and recipes.",
-    instructionPdf: "https://example.com/weight-loss.pdf",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop"
-  },
-  {
-    id: 6,
-    title: "Flexibility & Mobility",
-    category: "workout",
-    description: "Comprehensive stretching and mobility routine to improve flexibility, reduce injury risk, and enhance recovery. Perfect for active recovery days.",
-    instructionPdf: "https://example.com/flexibility.pdf",
-    image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=300&fit=crop"
-  }
-];
+
 
 // EditPlan component
 const EditPlan = ({
@@ -410,10 +361,8 @@ const CreatePlan = ({ onAddPlan }: { onAddPlan: (payload: any) => Promise<void> 
 // Main component
 const WorkoutAndDietPlans = () => {
   const { trainerData, refreshTrainerData, isLoading } = useTrainerData();
-
-  // For now, always use fallback plans for demo purposes
-  // Later: const plans: Plan[] = (trainerData && (trainerData as any).plans) || fallbackPlans;
-  const plans: Plan[] = fallbackPlans;
+  // Use plans from TrainerContext when available, otherwise show empty array while loading
+  const plans: Plan[] = (trainerData && (trainerData as any).plans) || [];
 
   const handleAddPlan = async (payload: any) => {
     try {

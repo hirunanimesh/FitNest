@@ -18,7 +18,8 @@ import {
   getFeedbackbyTrainerId,
   bookSession,
   getGymPlanByTrainerId,
-  getGymById 
+  getGymById, 
+  sendRequest
  } from './controllers/trainer.controller.js'
 import {
   addplans,
@@ -56,7 +57,9 @@ app.post('/booksession',bookSession)
 app.get('/getgymplanbytrainerid/:trainerId',getGymPlanByTrainerId);
 app.get('/getmembershipgyms/:trainerId',getGymById);
 
-//api  for calendar function
+app.post('/sendrequesttogym',sendRequest)
+
+
 //get subscribe user
 const PORT = process.env.PORT || 3005
 app.listen(PORT, () => {
