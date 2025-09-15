@@ -33,17 +33,27 @@ export const GetOtherGyms = async() => {
     }
 };
 
-export const SubscribeGymPlan = async (planId: any, customerId: any, email: any, user_id: any) => {
+export const SubscribeGymPlan = async (planId: any, customerId: any, email: any, user_id: any,duration:any) => {
     try {
-        const response = await axios.post(`${Base_URL}/api/payment/subscribe`, {
-            planId,
-            customer_id: customerId,
-            user_id,
-            email
-        });
-
-        // If we reach here, the request was successful
+        if(duration === "1 day"){
+            const response = await axios.post(`${Base_URL}/api/payment/onetimepayment`, {
+                planId,
+                customer_id: customerId,
+                user_id,
+                email
+            });
         return { success: true, url: response.data.url };
+
+        }else{
+            const response = await axios.post(`${Base_URL}/api/payment/subscribe`, {
+                planId,
+                customer_id: customerId,
+                user_id,
+                email
+            });
+            return { success: true, url: response.data.url };
+        }
+       
 
     } catch (error: any) {
         // Handle different types of errors
@@ -78,6 +88,7 @@ export const SubscribeGymPlan = async (planId: any, customerId: any, email: any,
 
 export const GetUserSubscriptions = async (customerId:any) =>{
     const planIds = await axios.get(`${Base_URL}/api/payment/getsubscription/${customerId}`)
+
     if(planIds.data.length === 0){
         return []
     }
@@ -99,11 +110,13 @@ export const UnsubscribeGymPlan = async (planId:any, customerId:any) => {
     return response.data
 }
 
-export const BookSession = async (sessionId:any, customerId:any)=>{
-    console.log("frontend api called", sessionId, customerId);
-    const response = await axios.post(`${Base_URL}/api/trainer/booksession`,{
+export const BookSession = async (sessionId:any, customerId:any,user_id:string,email:string)=>{
+    console.log("frontend api called", sessionId, customerId, user_id,email);
+    const response = await axios.post(`${Base_URL}/api/payment/sessionpayment`,{
         sessionId,
-        customerId
+        customer_id: customerId,
+        user_id,
+        email
     })
     return response.data
 }

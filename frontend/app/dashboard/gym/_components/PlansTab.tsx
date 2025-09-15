@@ -533,24 +533,25 @@ const PlansTab: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="duration" className='text-white'>Duration</Label>
+              <Label htmlFor="duration" className="text-white text-sm sm:text-base">Duration</Label>
               <Select
+                value={currentPlan.duration}
                 onValueChange={(value) =>
                   setCurrentPlan({ ...currentPlan, duration: value })
                 }
-                value={currentPlan.duration}
               >
-                <SelectTrigger>
+                <SelectTrigger className=" border-gray-600 text-black w-full text-sm sm:text-base">
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className=" border-gray-700">
+                  <SelectItem value="1 day">1 day</SelectItem>
+                  <SelectItem value="1 week">1 week</SelectItem>
                   <SelectItem value="1 month">1 month</SelectItem>
-                  <SelectItem value="3 months">3 months</SelectItem>
-                  <SelectItem value="6 months">6 months</SelectItem>
                   <SelectItem value="1 year">1 year</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
 
             <div className="space-y-2">
               <Label className='text-white'>Assign Trainers</Label>

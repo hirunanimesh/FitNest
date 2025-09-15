@@ -12,9 +12,10 @@ import connectDatabase from './database/mongo.js';
 import getConnectedAccountPayments from './controllers/stripeController/get-connected-account-payments.js';
 import oneTimePayment from './controllers/stripeController/one-time-payment.js';
 import getCurrentMonthRevenue from './controllers/stripeController/get-monthly-revenue.js';
-import { GymPlanCreatedConsumer, GymPlanDeletedConsumer, GymPlanPriceUpdatedConsumer } from './kafka/Consumer.js';
+import { GymPlanCreatedConsumer, GymPlanDeletedConsumer, GymPlanPriceUpdatedConsumer, TrainerSessionCreatedConsumer } from './kafka/Consumer.js';
 import cancelSubscription from './controllers/stripeController/cancel-subscription.js';
 import getCustomersByGymPlans from './controllers/stripeController/get-customer-ids.js';
+import SessionPayment from './controllers/stripeController/session-payment.js';
 
 dotenv.config();
 
@@ -36,10 +37,12 @@ app.use('/connectedaccountpayments/:userId',getConnectedAccountPayments)
 app.use('/onetimepayment',oneTimePayment)
 app.use('/monthlyrevenue/:userId',getCurrentMonthRevenue)
 app.use('/getgymcustomerids',getCustomersByGymPlans)
+app.use('/sessionpayment',SessionPayment)
 
 GymPlanCreatedConsumer()
 GymPlanDeletedConsumer()
 GymPlanPriceUpdatedConsumer()
+TrainerSessionCreatedConsumer()
 
 
 app.listen(process.env.PORT || 3003, () => {
