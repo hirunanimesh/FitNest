@@ -9,6 +9,7 @@ import {
     getChatHealthStatus 
 } from '../services/chat.service.js';
 import Joi from 'joi';
+import AdminService from '../services/admin.service.js';
 
 // Validation schemas
 const uploadDocumentsSchema = Joi.object({
@@ -279,6 +280,87 @@ export async function chatHealth(req, res) {
             success: false,
             error: error.message,
             ready: false
+        });
+    }
+}
+
+//get member growth stats
+export async function getMemberGrowth(req, res) {
+    console.log('in the admin controller');
+    try {
+        const result = await AdminService.getMemberGrowthStats();
+        res.status(200).json({
+            success: true,
+            message: 'Member growth stats retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getMemberGrowth controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve member growth stats',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
+
+export async function getTrainerVerifications(req, res) {
+    console.log('in the getTrainerVerifications controller');
+    try {
+        const result = await AdminService.getTrainerVerifications();
+        console.log("result in controller",result)
+        res.status(200).json({
+            success: true,
+            message: 'Trainer verifications retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getTrainerVerifications controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve trainer verifications',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
+
+export async function getGymVerifications(req, res) {
+    console.log('in the getGymVerifications controller');
+    try {
+        const result = await AdminService.getGymVerifications();
+        console.log("result in controller",result)
+        res.status(200).json({
+            success: true,
+            message: 'Gym verifications retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getGymVerifications controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve gym verifications',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
+
+export async function handleVerificationState(req, res) {
+    console.log('in the handleVerificationState controller');
+    const { id, state, type, entityId } = req.params;
+
+    try {
+        const result = await AdminService.handleVerificationState(id, state, type, entityId);
+        res.status(200).json({
+            success: true,
+            message: 'Verification state updated successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in handleVerificationState controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update verification state',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
         });
     }
 }

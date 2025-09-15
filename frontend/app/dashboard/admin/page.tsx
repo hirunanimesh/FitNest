@@ -23,7 +23,6 @@ function AdminDashboardPage() {
       
       {/* Charts Section */}
       <div className="px-6 pb-3">
-        <h2 className="text-xl font-semibold text-white mb-4">Analytics & Insights</h2>
         <DashboardCharts />
       </div>
     </div>
