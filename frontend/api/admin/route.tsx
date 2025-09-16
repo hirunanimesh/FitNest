@@ -62,7 +62,7 @@ export const MemberGrowth = async (startDate?: string, endDate?: string) => {
 
 export const GetDashboardStats = async () => {
     console.log("fetching dashboard stats")
-    const response = await axios.get(`${Base_URL}/api/admin/stats/dashboard`)
+    const response = await axios.get(`${Base_URL}/api/admin/dashboard/stats`)
     return response
 }
 
