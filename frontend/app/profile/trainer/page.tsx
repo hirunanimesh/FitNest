@@ -1,5 +1,6 @@
 //public page
 "use client"
+import { useSearchParams } from "next/navigation"
 import Header from "./components/Header"
 import HeroSection from "./components/HeroSection"
 import AboutSection from "./components/AboutSection"
@@ -15,12 +16,14 @@ import { UserDataProvider } from '../../dashboard/user/context/UserContext'
 
 function TrainerPageContent() {
   console.log("TrainerPage rendered"); // Debug log
+  const searchParams = useSearchParams()
+  const isAdminView = searchParams.get('adminView') === 'true'
 
   return (
     <TrainerDataProvider>
       <main className="bg-gray-900 min-h-screen text-gray-100">
       <UserDataProvider>
-        <TopBar />
+        {!isAdminView && <TopBar />}
       </UserDataProvider>
         <HeroSection />
       
