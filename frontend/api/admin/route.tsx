@@ -107,3 +107,25 @@ export const handleVerificationState = async (verificationId: string, state: 'Ap
     const response = await axios.put(`${Base_URL}/api/admin/handle-verifications/${verificationId}/${state}/${type}/${entityId}`)
     return response
 }
+
+export const fetchAllGyms = async (page: number = 1, limit: number = 12, search: string = '') => {
+    console.log("fetching all gyms", { page, limit, search })
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(search && { search })
+    })
+    const response = await axios.get(`${Base_URL}/api/gym/getallgyms?${params}`)
+    return response
+}
+
+export const fetchAllTrainers = async (page: number = 1, limit: number = 12, search: string = '') => {
+    console.log("fetching all trainers", { page, limit, search })
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(search && { search })
+    })
+    const response = await axios.get(`${Base_URL}/api/trainer/getalltrainers?${params}`)
+    return response
+}
