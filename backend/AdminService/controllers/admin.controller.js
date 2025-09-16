@@ -364,3 +364,22 @@ export async function handleVerificationState(req, res) {
         });
     }
 }
+
+export async function getDashboardStats(req,res){
+    console.log('in the getDashboardStats controller');
+    try {
+        const result = await AdminService.getDashboardStats();
+        res.status(200).json({
+            success: true,
+            message: 'Dashboard stats retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getDashboardStats controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve dashboard stats',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}

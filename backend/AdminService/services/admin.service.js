@@ -23,7 +23,7 @@ export default class AdminService {
 
   static async getDashboardStats() {
     try {
-      const { data, error } = await supabase.rpc('get_dashboard_stats');
+      const { data, error } = await supabase.rpc('get_admin_dashboard_stats_array');
       console.log("data",data)
 
       if (error) {
