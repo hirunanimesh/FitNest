@@ -237,11 +237,11 @@ export default function VerificationRequests() {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
-          <TabsTrigger value="gym" className="data-[state=active]:bg-gray-700">
+          <TabsTrigger value="gym" className="data-[state=active]:bg-gray-700 data-[state=active]:text-red-400 text-white">
             <Building2 className="w-4 h-4 mr-2" />
             Gym Verifications ({gymRequests.length})
           </TabsTrigger>
-          <TabsTrigger value="trainer" className="data-[state=active]:bg-gray-700">
+          <TabsTrigger value="trainer" className="data-[state=active]:bg-gray-700 data-[state=active]:text-red-400 text-white">
             <User className="w-4 h-4 mr-2" />
             Trainer Verifications ({trainerRequests.length})
           </TabsTrigger>
