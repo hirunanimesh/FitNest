@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Plus } from 'lucide-react';
+import { Edit, Trash2, Plus, Dumbbell } from 'lucide-react';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogTrigger,DialogFooter} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +21,64 @@ interface Plan {
   instructionPdf?: string;
   image: string;
 }
+
+// Skeleton loader component
+const PlanSkeleton = () => (
+  <div className="relative rounded-2xl p-2 group h-fit">
+    <div className="absolute inset-0 -m-1 rounded-2xl bg-gray-800/50 blur-lg opacity-60 z-0" aria-hidden />
+    <Card className="relative z-10 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl shadow-lg overflow-hidden backdrop-blur-sm h-full flex flex-col">
+      {/* Image skeleton */}
+      <div className="relative w-full h-48 flex-shrink-0 bg-gray-700 animate-pulse">
+        <div className="absolute top-3 right-3 w-20 h-6 bg-gray-600 rounded-full animate-pulse" />
+      </div>
+      
+      {/* Content skeleton */}
+      <div className="flex flex-col flex-1 p-4 sm:p-5">
+        <div className="flex-1">
+          {/* Title skeleton */}
+          <div className="h-6 bg-gray-600 rounded animate-pulse mb-3" />
+          <div className="h-4 bg-gray-600 rounded animate-pulse mb-2 w-3/4" />
+          
+          {/* Description skeleton */}
+          <div className="space-y-2 mb-4">
+            <div className="h-3 bg-gray-700 rounded animate-pulse" />
+            <div className="h-3 bg-gray-700 rounded animate-pulse w-5/6" />
+            <div className="h-3 bg-gray-700 rounded animate-pulse w-2/3" />
+          </div>
+        </div>
+        
+        {/* Action buttons skeleton */}
+        <div className="flex flex-col sm:flex-row gap-2 mt-auto pt-2">
+          <div className="h-8 bg-gray-600 rounded animate-pulse flex-1" />
+          <div className="h-8 bg-gray-600 rounded animate-pulse w-20" />
+        </div>
+      </div>
+    </Card>
+  </div>
+);
+
+// Loading state component
+const LoadingState = () => (
+  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+    {Array.from({ length: 6 }).map((_, index) => (
+      <PlanSkeleton key={index} />
+    ))}
+  </div>
+);
+
+// Empty state component
+const EmptyState = () => (
+  <div className="col-span-full flex flex-col items-center justify-center py-16 px-8">
+    <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-xl mb-6">
+      <Dumbbell className="w-12 h-12 text-white" />
+    </div>
+    <h3 className="text-2xl font-bold text-red-400 mb-4">No Plans Available</h3>
+    <p className="text-red-300 text-center max-w-md leading-relaxed mb-6">
+      You haven't created any workout or diet plans yet. Start building your training programs to help your clients achieve their fitness goals.
+    </p>
+    <p className="text-sm text-gray-400">Click "Add New Plan" to get started</p>
+  </div>
+);
 
 // Fallback/mock for local dev, used only when TrainerContext has no plans
 
@@ -411,10 +469,12 @@ const WorkoutAndDietPlans = () => {
           <CreatePlan onAddPlan={handleAddPlan} />
         </div>
 
-        {/* Grid layout for better responsiveness */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-        {plans && plans.length > 0 ? (
-          plans.map((plan: any) => {
+        {/* Content section with loading, empty, and data states */}
+        {isLoading ? (
+          <LoadingState />
+        ) : plans && plans.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            {plans.map((plan: any) => {
             const planId = plan.id || plan.plan_id || 0;
             const title = plan.title || plan.name || '';
             const category = plan.category || 'workout';
@@ -492,14 +552,11 @@ const WorkoutAndDietPlans = () => {
                 </Card>
               </div>
             );
-          })
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p>{isLoading ? 'Loading plans...' : 'No plans available'}</p>
-            <p className="text-sm">Click "Add New Plan" to get started</p>
+          })}
           </div>
+        ) : (
+          <EmptyState />
         )}
-        </div>
       </div>
     </div>
   );

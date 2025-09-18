@@ -72,7 +72,7 @@ export const getGymPlanByTrainerId = async (req, res) => {
     if (gymplans && gymplans.length > 0) {
       res.status(200).json({ message: "GymPlans retrieved successfully", gymplans });
     } else {
-      res.status(404).json({ message: "No Plans found" });
+      res.status(200).json({ message: "No Plans found" ,gymplans:[]  });
     }
   
   } catch (error) {
