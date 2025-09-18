@@ -177,7 +177,7 @@ export default function GymDashboard() {
   }, [mounted, hasCheckedStripe]);
 
   return (
-    <ProtectedRoute allowedRoles={['gym']}>
+    <ProtectedRoute allowedRoles={['gym','admin']}>
       <div className="min-h-screen bg-gray-900">
         <div className="container mx-auto p-6">
           {/* Stats Overview */}

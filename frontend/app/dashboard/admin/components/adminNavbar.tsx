@@ -7,24 +7,64 @@ import { Building2, FileCheck, MessageSquare, Users, LogOut, Menu, X, FileText }
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { GetTrainerVerifications, getGymVerifications } from "@/api/admin/route"
 
 interface AdminNavbarProps {
   adminName?: string
   adminAvatar?: string
   platformName?: string
-  pendingVerifications?: number
 }
 
 export function AdminNavbar({
   adminName = "Admin User",
   adminAvatar = "/admin-avatar.png",
   platformName = "FitPlatform",
-  pendingVerifications = 0,
 }: AdminNavbarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [pendingVerifications, setPendingVerifications] = useState(0)
+
+  // Fetch pending verifications count
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const [gymResponse, trainerResponse] = await Promise.all([
+          getGymVerifications(),
+          GetTrainerVerifications()
+        ])
+
+        let pendingCount = 0
+
+        if (gymResponse.data.success) {
+          const pendingGym = gymResponse.data.data.filter((gym: any) => 
+            gym.status.toLowerCase() === "pending"
+          ).length
+          pendingCount += pendingGym
+        }
+
+        if (trainerResponse.data.success) {
+          const pendingTrainer = trainerResponse.data.data.filter((trainer: any) => 
+            trainer.status.toLowerCase() === "pending"
+          ).length
+          pendingCount += pendingTrainer
+        }
+
+        setPendingVerifications(pendingCount)
+      } catch (error) {
+        console.error("Error fetching pending verifications:", error)
+        setPendingVerifications(0)
+      }
+    }
+
+    fetchPendingCount()
+    
+    // Refresh count every 30 seconds
+    const interval = setInterval(fetchPendingCount, 30000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   const handleLogout = () => {
     supabase.auth.signOut();
