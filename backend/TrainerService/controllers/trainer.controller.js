@@ -1,5 +1,5 @@
 
-import { getmembershipGyms,getgymplanbytrainerid,getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails ,booksession, sendrequest} from '../services/trainer.service.js';
+import { getmembershipGyms,getgymplanbytrainerid,getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails ,booksession, sendrequest, requestTrainerVerification} from '../services/trainer.service.js';
 
 
 export const getallTrainers = async (req,res)=>{
@@ -72,7 +72,7 @@ export const getGymPlanByTrainerId = async (req, res) => {
     if (gymplans && gymplans.length > 0) {
       res.status(200).json({ message: "GymPlans retrieved successfully", gymplans });
     } else {
-      res.status(404).json({ message: "No Plans found" });
+      res.status(200).json({ message: "No Plans found" ,gymplans:[]  });
     }
   
   } catch (error) {
@@ -126,4 +126,21 @@ export const sendRequest = async (req,res)=>{
     console.error("Error sending request:", error);
     }
   }
+
+export const requestVerification = async (req, res) => {
+  try {
+    const { trainer_id, type, status, email } = req.body;
+
+    if (!trainer_id || !type || !status || !email) {
+      return res.status(400).json({ message: "Missing required fields: trainer_id, type, status, email" });
+    }
+
+    const result = await requestTrainerVerification({ trainer_id, type, status, email });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error requesting verification:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+}
+
 
