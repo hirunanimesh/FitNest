@@ -6,8 +6,9 @@ import { useTrainerData } from '../context/TrainerContext';
 import { UpdateTrainerDetails, uploadToCloudinary } from "@/lib/api";
 import TrainerDocuments from '../_components/TrainerDocuments';
 import axios from "axios";
-import { Edit3, ArrowLeft } from "lucide-react";
+import { Edit3, ArrowLeft, Shield } from "lucide-react";
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 const TrainerProfile: React.FC = () => {
   const { trainerData, refreshTrainerData } = useTrainerData();
@@ -18,6 +19,8 @@ const TrainerProfile: React.FC = () => {
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [verifying, setVerifying] = useState<boolean>(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | null; text: string }>({ type: null, text: '' });
   const router = useRouter();
 
   useEffect(() => {
@@ -28,6 +31,7 @@ const TrainerProfile: React.FC = () => {
       });
     }
   }, [trainerData]);
+
 
   const handleBack = () => {
     router.back();
@@ -67,10 +71,10 @@ const TrainerProfile: React.FC = () => {
       if (selectedImage) {
         profileImageUrl = await uploadToCloudinary(selectedImage);
       }
-      const updatedData = { 
-        ...editFormData, 
+      const updatedData = {
+        ...editFormData,
         profile_img: profileImageUrl,
-        profileImage: profileImageUrl 
+        profileImage: profileImageUrl
       };
       if (trainerData) {
         await UpdateTrainerDetails(trainerData.trainer_id, updatedData);
@@ -83,6 +87,58 @@ const TrainerProfile: React.FC = () => {
       console.error("Error updating trainer profile:", error);
     }
   };
+
+  const handleVerify = async () => {
+    try {
+      setVerifying(true);
+      setMessage({ type: null, text: '' }); // Clear previous messages
+
+      // Get user email from Supabase auth if not available in trainerData
+      let email = trainerData?.email || '';
+      if (!email) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData.user?.email) {
+          throw new Error("Unable to get user email");
+        }
+        email = userData.user.email;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3000'}/api/trainer/request-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          trainer_id: trainerData?.trainer_id,
+          type: 'trainer',
+          status: 'Pending',
+          email: email
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Verification request failed');
+      }
+
+      setMessage({ type: 'success', text: result.message });
+      // Refresh trainer data to update verification status
+      await refreshTrainerData();
+    } catch (error) {
+      console.error("Error requesting verification:", error);
+
+      let errorMessage = 'Unknown error occurred';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      setMessage({ type: 'error', text: `Failed to request verification: ${errorMessage}` });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-transparent text-white min-h-screen">
@@ -98,7 +154,32 @@ const TrainerProfile: React.FC = () => {
         </Button>
       </div>
 
+
       <div className="bg-gray-800 rounded-lg shadow-lg p-8">
+        {/* Message Display */}
+        {message.type && (
+          <div className={`mb-6 p-4 rounded-xl border backdrop-blur-lg ${
+            message.type === 'success'
+              ? 'bg-green-900/20 border-green-700 text-green-300'
+              : 'bg-red-900/20 border-red-700 text-red-300'
+          }`}>
+            <div className="flex items-center gap-3">
+              {message.type === 'success' ? (
+                <Shield className="w-5 h-5 text-green-400" />
+              ) : (
+                <Shield className="w-5 h-5 text-red-400" />
+              )}
+              <span className="text-sm font-medium">{message.text}</span>
+              <button
+                onClick={() => setMessage({ type: null, text: '' })}
+                className="ml-auto text-gray-400 hover:text-white transition-colors"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
           <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-red-500 cursor-pointer">
             <Image
@@ -139,18 +220,32 @@ const TrainerProfile: React.FC = () => {
             ) : (
               <h1 className="text-3xl font-bold">{trainerData?.trainer_name}</h1>
             )}
-            <div className="flex items-center justify-center md:justify-start mt-2">
+            <div className="flex items-center justify-center md:justify-start mt-2 gap-4">
               <span className="text-yellow-400">★ {(() => {
                 if (trainerData?.rating === null || trainerData?.rating === undefined) return '4.5';
-                
+
                 const numRating = typeof trainerData.rating === 'string' ? parseFloat(trainerData.rating) : trainerData.rating;
-                
+
                 return !isNaN(numRating) && numRating >= 0 && numRating <= 5 ? numRating.toFixed(1) : '4.5';
               })()}/5</span>
-              {trainerData?.verified && (
-                <span className="ml-4 bg-green-500 text-white text-sm px-2 py-1 rounded-full">
+              {trainerData?.verified ? (
+                <span className="bg-green-500 text-white text-sm px-2 py-1 rounded-full">
                   Verified Trainer
                 </span>
+              ) : (
+                <Button
+                  onClick={handleVerify}
+                  disabled={verifying}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 px-3 py-1 text-xs"
+                >
+                  {verifying ? (
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                  ) : (
+                    <Shield className="w-3 h-3 mr-1" />
+                  )}
+                  {verifying ? 'Verifying...' : 'Verify Me'}
+                </Button>
               )}
             </div>
           </div>

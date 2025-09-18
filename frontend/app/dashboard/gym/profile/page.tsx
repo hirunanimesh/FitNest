@@ -5,6 +5,7 @@ import { Camera, MapPin, Phone, FileText, Edit3, Save, Shield, CheckCircle, X, U
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { GetGymProfileData } from '@/lib/api';
+import { RequestVerification } from '@/api/gym/route';
 
 interface Document {
   id: string;
@@ -17,6 +18,7 @@ const GymProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [gymProfileData, setGymProfileData] = useState<{
+    gym_id?: string;
     gym_name: string;
     address: string;
     operating_Hours: string;
@@ -47,6 +49,7 @@ const GymProfile = () => {
   const [newProfileImage, setNewProfileImage] = useState<{ file: File; preview: string } | null>(null);
   const [newDocuments, setNewDocuments] = useState<Array<{ id: string; file: File; type: string; isNew: boolean }>>([]);
   const [documentsToDelete, setDocumentsToDelete] = useState<string[]>([]);
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | null; text: string }>({ type: null, text: '' });
 
   const getSession = async () => {
     const { data, error } = await supabase.auth.getSession();
@@ -67,6 +70,7 @@ const GymProfile = () => {
           if (response && response.gym) {
             const gymData = response.gym;
             setGymProfileData({
+              gym_id: gymData.gym_id,
               gym_name: gymData.gym_name || '',
               address: gymData.address || '',
               operating_Hours: gymData.operating_Hours || '',
@@ -76,7 +80,7 @@ const GymProfile = () => {
               verified: gymData.verified || false,
               documents: Array.isArray(gymData.documents) ? gymData.documents : []
             });
-            
+
             setFormData({
               gym_name: gymData.gym_name || '',
               address: gymData.address || '',
@@ -94,6 +98,16 @@ const GymProfile = () => {
     };
     fetchData();
   }, []);
+
+  // Auto-clear messages after 5 seconds
+  useEffect(() => {
+    if (message.type) {
+      const timer = setTimeout(() => {
+        setMessage({ type: null, text: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -234,12 +248,13 @@ const GymProfile = () => {
       setNewDocuments([]);
       setDocumentsToDelete([]);
       setIsEditing(false);
-      
+
+      setMessage({ type: 'success', text: 'Profile updated successfully!' });
       console.log("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Failed to update profile: ${errorMessage}`);
+      setMessage({ type: 'error', text: `Failed to update profile: ${errorMessage}` });
     } finally {
       setLoading(false);
     }
@@ -277,6 +292,32 @@ const GymProfile = () => {
     setIsEditing(false);
   };
 
+  const handleVerify = async () => {
+    try {
+      setLoading(true);
+      setMessage({ type: null, text: '' }); // Clear previous messages
+
+      const userId = await getSession();
+      if (!userId) throw new Error("No user session found");
+
+      // Get user email from Supabase auth
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user?.email) {
+        throw new Error("Unable to get user email");
+      }
+
+      const result = await RequestVerification(gymProfileData.gym_id,userData.user.email)
+
+      setMessage({ type: 'success', text: result.message });
+    } catch (error) {
+      console.error("Error requesting verification:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setMessage({ type: 'error', text: `Failed to request verification: ${errorMessage}` });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading && !gymProfileData.gym_name) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -295,6 +336,30 @@ const GymProfile = () => {
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto p-6">
+        {/* Message Display */}
+        {message.type && (
+          <div className={`mb-6 p-4 rounded-xl border backdrop-blur-lg ${
+            message.type === 'success'
+              ? 'bg-green-900/20 border-green-700 text-green-300'
+              : 'bg-red-900/20 border-red-700 text-red-300'
+          }`}>
+            <div className="flex items-center gap-3">
+              {message.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 text-green-400" />
+              ) : (
+                <X className="w-5 h-5 text-red-400" />
+              )}
+              <span className="text-sm font-medium">{message.text}</span>
+              <button
+                onClick={() => setMessage({ type: null, text: '' })}
+                className="ml-auto text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="bg-gray-900/50 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-800 overflow-hidden mb-8">
           <div className="relative h-64 bg-gradient-to-r from-black via-gray-900 to-black">
             <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-transparent to-red-600/20"></div>
@@ -317,9 +382,26 @@ const GymProfile = () => {
                     <span className="text-sm font-semibold text-black">Verified</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 bg-red-400 backdrop-blur-sm px-3 py-1 rounded-full border border-red-800">
-                    <CheckCircle className="w-5 h-5 text-black" />
-                    <span className="text-sm font-semibold text-black">Not Verified</span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 bg-red-400 backdrop-blur-sm px-3 py-1 rounded-full border border-red-800">
+                      <CheckCircle className="w-5 h-5 text-black" />
+                      <span className="text-sm font-semibold text-black">Not Verified</span>
+                    </div>
+                    <Button
+                      onClick={handleVerify}
+                      disabled={loading}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm"
+                    >
+                      {loading ? (
+                        <Loader2 className='w-4 h-4 animate-spin' />
+                      ) : (
+                        <>
+                          <Shield className="w-4 h-4 mr-2" />
+                          Verify Me
+                        </>
+                      )}
+                    </Button>
                   </div>
                 )}
               </div>

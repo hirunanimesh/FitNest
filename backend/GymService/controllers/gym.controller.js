@@ -1,5 +1,5 @@
 // gym.controller.js
-import { approvetrainer, createGym,getallgyms, getAllGymUsersByIds, getgymbyid, getgymbyuserid, getgymtrainercount, getgymtrainers, gettotalmembercount, updategymdetails } from '../services/gym.service.js';
+import { approvetrainer, createGym,getallgyms, getAllGymUsersByIds, getgymbyid, getgymbyuserid, getgymtrainercount, getgymtrainers, gettotalmembercount, updategymdetails, requestGymVerification } from '../services/gym.service.js';
 
 export const addGym = async (req, res) => {
   try {
@@ -139,21 +139,37 @@ export const getAllGymUsers = async (req, res) => {
     console.log("Awooooooooooooooooo");
     const { customerIds } = req.body;
     console.log("Received customerIds:", customerIds);
-  
+
     if (!customerIds || !Array.isArray(customerIds) || customerIds.length === 0) {
       return res.status(400).json({ error: "customerIds must be a non-empty array" });
     }
-  
+
     try {
       const customers = await getAllGymUsersByIds(customerIds); // <-- FIXED
       if (!customers || customers.length === 0) {
         return res.status(404).json({ error: "No customers found for given IDs" });
       }
-  
+
       res.json({ customers });
     } catch (error) {
       res.status(500).json({ error: "Unexpected error", details: error.message });
     }
   };
+
+export const requestVerification = async (req, res) => {
+  try {
+    const { gym_id, type, status, email } = req.body;
+
+    if (!gym_id || !type || !status || !email) {
+      return res.status(400).json({ message: "Missing required fields: gym_id, type, status, email" });
+    }
+
+    const result = await requestGymVerification({ gym_id, type, status, email });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error requesting verification:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
   
 

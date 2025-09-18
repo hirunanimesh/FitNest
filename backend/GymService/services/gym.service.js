@@ -161,3 +161,47 @@ export async function getAllGymUsersByIds(customerIds) {
   }
   return data; // array of customer objects
 }
+
+export async function requestGymVerification(verificationData) {
+  const { gym_id, type, status, email } = verificationData;
+
+  // Check if a verification record already exists for this gym_id
+  const { data: existingRecord, error: checkError } = await supabase
+    .from('verifications')
+    .select('*')
+    .eq('customer_id', gym_id)
+    .single();
+
+  if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+    throw new Error(checkError.message);
+  }
+
+  if (existingRecord) {
+    // Record exists, check status
+    if (existingRecord.verification_state === 'Pending') {
+      return { message: 'Verification request already sent. Please wait for approval.' };
+    } else if (existingRecord.verification_state === 'Rejected') {
+      return { message: 'Your previous verification request was rejected. Please contact support.' };
+    } else if (existingRecord.verification_state === 'Approved') {
+      return { message: 'Your gym is already verified.' };
+    }
+  }
+
+  // No existing record, create new one
+  const { data, error } = await supabase
+    .from('verifications')
+    .insert([{
+      customer_id:gym_id,
+      type,
+      verification_state:status,
+      email,
+      created_at: new Date().toISOString()
+    }])
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { message: 'Verification request submitted successfully. You will be notified once reviewed.' };
+}
