@@ -17,6 +17,7 @@ interface Session {
   time: string;
   features?: string[];
   booked: boolean;
+  lock?: boolean;
 }
 
 interface TrainerData {
@@ -77,11 +78,13 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
 };
 
 export default function SessionsSection(): JSX.Element {
-  const { trainerData, isLoading, error } = useTrainerData();
+  const { trainerData, isLoading, error, refreshTrainerData } = useTrainerData();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [bookingStates, setBookingStates] = useState<Record<string | number, boolean>>({});
 
-  const sessions: Session[] = (trainerData as TrainerData)?.sessions || [];
+  const allSessions: Session[] = (trainerData as TrainerData)?.sessions || [];
+  // Show only sessions that are not booked and not locked
+  const sessions: Session[] = allSessions.filter(s => !s.booked && !s.lock);
   const user_id: string = (trainerData as TrainerData)?.user_id;
   const { getUserProfileId } = useAuth();
 
@@ -145,7 +148,7 @@ export default function SessionsSection(): JSX.Element {
   };
 
   const bookSession = async (sessionId: string | number): Promise<void> => {
-    // Set loading state for this specific session
+    // Set booking state for this session to "loading"
     setBookingStates(prev => ({ ...prev, [sessionId]: true }));
 
     try {
@@ -170,10 +173,12 @@ export default function SessionsSection(): JSX.Element {
       showToast("Processing your booking request...", 'info');
 
       const response = await BookSession(sessionId, customerId, user_id, email);
-      console.log("Book session response:", customerId, sessionId, user_id, email);
+      console.log("Book session response:", response);
       
       if (response?.url) {
         showToast("Booking successful! Redirecting to payment...", 'success');
+        // Immediately refresh data to reflect locked state for other users
+        refreshTrainerData().catch(() => {});
         // Small delay to show success message before redirect
         setTimeout(() => {
           window.open(response.url, '_blank');
@@ -186,7 +191,7 @@ export default function SessionsSection(): JSX.Element {
       console.error("Error booking session:", error);
       showToast("A technical error occurred while processing your booking. Please try again.", 'error');
     } finally {
-      // Remove loading state for this session
+      // Reset booking state for this session
       setBookingStates(prev => ({ ...prev, [sessionId]: false }));
     }
   };
@@ -263,16 +268,20 @@ export default function SessionsSection(): JSX.Element {
                     <Button
                       onClick={() => bookSession(session.session_id)}
                       className={`w-full mt-auto ${
-                        session.booked 
-                          ? "bg-gray-600 cursor-not-allowed" 
+                        session.booked
+                          ? "bg-gray-600 cursor-not-allowed"
+                          : session.lock
+                          ? "bg-yellow-600 cursor-not-allowed"
                           : bookingStates[session.session_id]
                           ? "bg-blue-600 cursor-wait"
                           : "bg-red-600 hover:bg-red-700"
                       }`}
-                      disabled={session.booked || bookingStates[session.session_id]}
+                      disabled={session.booked || session.lock || bookingStates[session.session_id]}
                     >
-                      {session.booked 
-                        ? "Booked" 
+                      {session.booked
+                        ? "Booked"
+                        : session.lock
+                        ? "Locked"
                         : bookingStates[session.session_id]
                         ? (
                           <div className="flex items-center justify-center space-x-2">
@@ -280,8 +289,7 @@ export default function SessionsSection(): JSX.Element {
                             <span>Booking...</span>
                           </div>
                         )
-                        : "Book Session"
-                      }
+                        : "Book Session"}
                     </Button>
                   </CardContent>
                 </Card>
