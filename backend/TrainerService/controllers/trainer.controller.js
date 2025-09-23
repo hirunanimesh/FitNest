@@ -1,5 +1,5 @@
 
-import { getmembershipGyms,getgymplanbytrainerid,getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails ,booksession, sendrequest, requestTrainerVerification} from '../services/trainer.service.js';
+import { getmembershipGyms,getgymplanbytrainerid,getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails ,booksession, sendrequest, requestTrainerVerification, holdsession, releasesession} from '../services/trainer.service.js';
 
 
 export const getallTrainers = async (req,res)=>{
@@ -82,7 +82,11 @@ export const getGymPlanByTrainerId = async (req, res) => {
 };
 
 export const bookSession = async (req, res) => {
-    const { sessionId, customerId } = req.body;
+    const body = req.body || {};
+    const { sessionId, customerId } = body;
+    if (!sessionId || !customerId) {
+      return res.status(400).json({ success: false, message: 'sessionId and customerId are required' });
+    }
   
     try {
       const session = await booksession(sessionId, customerId);
@@ -95,6 +99,44 @@ export const bookSession = async (req, res) => {
       res.status(500).json({ success: false, message: error.message });
     }
   };
+
+// Place a hold (lock) on a session if it's not already booked
+export const holdSession = async (req, res) => {
+  const body = req.body || {};
+  const { sessionId, customerId } = body;
+  try {
+    if (!sessionId || !customerId) {
+      return res.status(400).json({ success: false, message: 'sessionId and customerId are required' });
+    }
+    const locked = await holdsession(sessionId, customerId);
+    if (!locked) {
+      return res.status(409).json({ success: false, message: 'Session is already booked' });
+    }
+    return res.status(200).json({ success: true, session: locked });
+  } catch (error) {
+    console.error('Error holding session:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Release a held/locked session
+export const releaseSession = async (req, res) => {
+  const body = req.body || {};
+  const { sessionId } = body;
+  try {
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'sessionId is required' });
+    }
+    const released = await releasesession(sessionId);
+    if (!released) {
+      return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+    return res.status(200).json({ success: true, session: released });
+  } catch (error) {
+    console.error('Error releasing session:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export const getGymById = async (req, res) => {
     const { trainerId } = req.params;

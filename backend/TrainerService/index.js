@@ -20,7 +20,9 @@ import {
   getGymPlanByTrainerId,
   getGymById,
   sendRequest,
-  requestVerification
+  requestVerification,
+  holdSession,
+  releaseSession
   } from './controllers/trainer.controller.js'
 import {
   addplans,
@@ -54,6 +56,8 @@ app.patch('/updateplan/:planId', updatePlan);
 app.delete('/deleteplan/:planId', deletePlan);
 
 app.post('/booksession',bookSession)
+app.post('/holdsession', holdSession)
+app.post('/releasesession', releaseSession)
 
 app.get('/getgymplanbytrainerid/:trainerId',getGymPlanByTrainerId);
 app.get('/getmembershipgyms/:trainerId',getGymById);

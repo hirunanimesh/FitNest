@@ -126,7 +126,7 @@ export async function getfeedbackbytrainerid(trainerId) {
 export async function booksession(sessionId, customerId) {
   const { data, error } = await supabase
   .from('trainer_sessions')
-  .update({ customer_id: customerId, booked: true })
+  .update({ customer_id: customerId, booked: true, lock: false })
   .eq('session_id', sessionId)
   .select()
   .single();
@@ -136,6 +136,45 @@ export async function booksession(sessionId, customerId) {
   }
   return data;
 
+}
+
+// Atomically place a hold on a session if it's not already booked
+export async function holdsession(sessionId, customerId) {
+  const { data, error } = await supabase
+    .from('trainer_sessions')
+    // place a lock only if not already locked or booked
+    .update({ customer_id: customerId, lock: true })
+    .eq('session_id', sessionId)
+    .eq('booked', false)
+    .eq('lock', false)
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // If no rows updated, someone else already booked/holding it
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  return data[0];
+}
+
+// Release a held session (set booked=false and clear customer)
+export async function releasesession(sessionId) {
+  const { data, error } = await supabase
+    .from('trainer_sessions')
+    // release only the lock; do not mark as booked
+    .update({ customer_id: null, lock: false })
+    .eq('session_id', sessionId)
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data && data[0] ? data[0] : null;
 }
 export async function sendrequest(trainerId,gymId){
   const { data, error } = await supabase

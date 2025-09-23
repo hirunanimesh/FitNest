@@ -20,6 +20,7 @@ interface Session {
   product_id_stripe?: string;
   price_id_stripe?: string;
   booked: boolean;
+  lock?: boolean;
   users: string[];
 }
 
@@ -37,6 +38,7 @@ const CreateSession = () => {
     date: "",
     trainer_id: 1,
     booked: false,
+    lock: false,
     product_id_stripe: "",
     price_id_stripe: "",
   });
@@ -89,6 +91,7 @@ const CreateSession = () => {
         zoom_link: sessionForm.zoom_link,
         date: sessionForm.date,
         booked: false,
+        lock: false,
       };
 
       const response = await AddSession(sessionData);
@@ -108,6 +111,7 @@ const CreateSession = () => {
         date: "",
         trainer_id: trainerId,
         booked: false,
+        lock: false,
         product_id_stripe: "",
         price_id_stripe: "",
       });

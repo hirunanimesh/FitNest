@@ -16,6 +16,9 @@ import { GymPlanCreatedConsumer, GymPlanDeletedConsumer, GymPlanPriceUpdatedCons
 import cancelSubscription from './controllers/stripeController/cancel-subscription.js';
 import getCustomersByGymPlans from './controllers/stripeController/get-customer-ids.js';
 import SessionPayment from './controllers/stripeController/session-payment.js';
+import releaseSessionHandler from './controllers/stripeController/release-session.js';
+import stripeWebhook from './controllers/stripeController/webhook.js';
+import successSessionHandler from './controllers/stripeController/success-session.js';
 
 dotenv.config();
 
@@ -37,7 +40,12 @@ app.use('/connectedaccountpayments/:userId',getConnectedAccountPayments)
 app.use('/onetimepayment',oneTimePayment)
 app.use('/monthlyrevenue/:userId',getCurrentMonthRevenue)
 app.use('/getgymcustomerids',getCustomersByGymPlans)
-app.use('/sessionpayment',SessionPayment)
+app.post('/sessionpayment', SessionPayment)
+// cancel handler to release holds and redirect
+app.get('/sessionpayment/cancel', releaseSessionHandler)
+// success handler to finalize booking and redirect
+app.get('/sessionpayment/success', successSessionHandler)
+app.post('/webhook', stripeWebhook)
 
 GymPlanCreatedConsumer()
 GymPlanDeletedConsumer()

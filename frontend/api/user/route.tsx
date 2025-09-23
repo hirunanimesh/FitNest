@@ -122,3 +122,8 @@ export const BookSession = async (sessionId:any, customerId:any,user_id:string,e
 }
 
 
+export const GetUserSessions = async (customerId:any)=>{
+    const response = await axios.get(`${Base_URL}/api/user/mysessions/${customerId}`)
+    return response.data
+}
+
