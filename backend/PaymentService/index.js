@@ -15,6 +15,7 @@ import getCurrentMonthRevenue from './controllers/stripeController/get-monthly-r
 import { GymPlanCreatedConsumer, GymPlanDeletedConsumer, GymPlanPriceUpdatedConsumer, TrainerSessionCreatedConsumer } from './kafka/Consumer.js';
 import cancelSubscription from './controllers/stripeController/cancel-subscription.js';
 import getCustomersByGymPlans from './controllers/stripeController/get-customer-ids.js';
+import getMonthlyMembers from './controllers/stripeController/get-monthly-members.js';
 import SessionPayment from './controllers/stripeController/session-payment.js';
 import releaseSessionHandler from './controllers/stripeController/release-session.js';
 import stripeWebhook from './controllers/stripeController/webhook.js';
@@ -40,6 +41,7 @@ app.use('/connectedaccountpayments/:userId',getConnectedAccountPayments)
 app.use('/onetimepayment',oneTimePayment)
 app.use('/monthlyrevenue/:userId',getCurrentMonthRevenue)
 app.use('/getgymcustomerids',getCustomersByGymPlans)
+app.post('/monthlymembers', getMonthlyMembers)
 app.post('/sessionpayment', SessionPayment)
 // cancel handler to release holds and redirect
 app.get('/sessionpayment/cancel', releaseSessionHandler)

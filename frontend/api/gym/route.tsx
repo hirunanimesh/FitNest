@@ -120,3 +120,10 @@ export const RequestVerification = async(gym_id:any,email:string) => {
 
       return result;
 }
+
+export const GetMonthlyMembers = async(gymPlans:any[])=>{
+    const response = await axios.post(`${Base_URL}/api/payment/monthlymembers`,{
+        gymPlans
+    })
+    return response
+}
