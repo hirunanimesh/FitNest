@@ -8,34 +8,29 @@ import { SendFeedback } from "@/lib/api"
 type Props = {
   show?: boolean
   onClose?: () => void
-  trainerId?: string | number | null
+  trainerId?: string | null
   customerId?: string | null
 }
 
-export default function FeedbackModel({ show, onClose, trainerId: propTrainerId, customerId: customerIdProp }: Props) {
+export default function FeedbackModel({ show, onClose, trainerId: trainerIdProp, customerId: customerIdProp }: Props) {
   const [form, setForm] = useState({ message: "" })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [trainerId, setTrainerId] = useState<number | null>(null)
+  const [trainerId, setTrainerId] = useState<string | null>(null)
   const [customerId, setCustomerId] = useState<string | null>(null)
   const { refreshTrainerData } = useTrainerData()
 
   useEffect(() => {
-    // If trainerId passed as prop, use it; otherwise try to parse from URL (legacy behavior)
-    if (propTrainerId) {
-      const id = typeof propTrainerId === "string" ? parseInt(propTrainerId, 10) : propTrainerId
-      setTrainerId(id ?? null)
-    } else {
-      const params = new URLSearchParams(window.location.search)
-      const id = params.get("id")
-      setTrainerId(id ? parseInt(id, 10) : null)
-    }
+
+    if (trainerIdProp) {
+      setTrainerId(trainerIdProp)
+    } 
 
     // Use customerId supplied by parent (ContactSection). If not provided, customerId will remain null.
     if (customerIdProp) {
       setCustomerId(customerIdProp)
     }
-  }, [propTrainerId, customerIdProp])
+  }, [trainerIdProp, customerIdProp])
 
   function handleChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm({ ...form, [e.target.name]: e.target.value })

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react"
 import FeedbackModel from "./FeedbackModel"
 import ReportModal from "./ReportModal"
+import { useTrainerData } from "../context/TrainerContext";
 import { supabase } from "@/lib/supabase"
 import { GetUserInfo } from "@/lib/api"
 
@@ -15,8 +16,9 @@ export default function ContactSection({ trainerId }: Props) {
   const [profileId, setProfileId] = useState<string | null>(null)
   const [customerId, setCustomerId] = useState<string | null>(null)
 
-  // ensure trainerId is available as string for FeedbackModel (it accepts string or number)
-  const trainerIdStr = trainerId ? String(trainerId) : undefined
+  // prefer trainer id from context when available
+  const { trainerData } = useTrainerData();
+  const contextTrainerId = trainerData?.id;
 
   useEffect(() => {
     async function fetchUserInfo() {
@@ -64,7 +66,7 @@ export default function ContactSection({ trainerId }: Props) {
           <button
             aria-label="Open feedback"
             onClick={() => setShowFeedback(true)}
-            className="flex items-center gap-3 px-4 py-2 rounded-full bg-blue-900/60 text-gray-200 hover:bg-gray-900/80 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="flex items-center gap-3 px-4 py-2 rounded-full bg-blue-900/60 text-gray-200 hover:bg-blue-900/80 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
@@ -91,13 +93,18 @@ export default function ContactSection({ trainerId }: Props) {
 
       {/* Use the existing FeedbackModel and ReportModal components */}
       {showFeedback && (
-        <FeedbackModel show={showFeedback} onClose={() => setShowFeedback(false)} trainerId={trainerIdStr} customerId={customerId} />
+        <FeedbackModel
+          show={showFeedback}
+          onClose={() => setShowFeedback(false)}
+          trainerId={contextTrainerId }
+          customerId={customerId}
+        />
       )}
 
       <ReportModal
         show={showReport}
         onClose={() => setShowReport(false)}
-        trainerId={trainerId ? parseInt(trainerId, 10) : undefined}
+        trainerId={contextTrainerId}
         customerId={customerId}
       />
     </section>
