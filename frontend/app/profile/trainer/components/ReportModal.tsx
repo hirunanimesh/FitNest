@@ -47,12 +47,12 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/60" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
 
-      <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-lg z-10">
+      <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-lg z-50">
         <div className="mb-4 text-center relative">
           <h4 className="text-2xl text-gray-900 dark:text-white font-semibold">Report</h4>
-          <button aria-label="Close report form" onClick={onClose} className="absolute right-0 top-0 text-gray-500 hover:text-gray-900 p-2">✕</button>
+          <button aria-label="Close report form" onClick={onClose} className="absolute right-0 top-0 text-gray-800 dark:text-gray-200 p-2">✕</button>
         </div>
 
         {!submitted ? (
@@ -73,7 +73,7 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
                     key={t}
                     type="button"
                     onClick={() => setType(t)}
-                    className={`px-3 py-1 rounded-full border ${form.report_type === t ? 'bg-red-100 text-red-700 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200'} dark:bg-gray-700 dark:text-gray-200`}
+                    className={`px-3 py-1 rounded-full border ${form.report_type === t ? 'bg-red-200 text-red-700 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200'} dark:bg-gray-700 dark:text-gray-200`}
                   >
                     {t}
                   </button>
