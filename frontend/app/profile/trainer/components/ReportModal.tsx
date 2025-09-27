@@ -59,7 +59,7 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <p className="text-gray-700 dark:text-gray-300">Why are you reporting this Trainer?</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Your report is anonymous.Reports are kept confidential and help us maintain a safe and respectful community.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Your report is anonymous. Reports are kept confidential and help us maintain a safe and respectful community.</p>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {[
@@ -73,7 +73,8 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
                     key={t}
                     type="button"
                     onClick={() => setType(t)}
-                    className={`px-3 py-1 rounded-full border ${form.report_type === t ? 'bg-red-200 text-red-700 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200'} dark:bg-gray-700 dark:text-gray-200`}
+                    aria-pressed={form.report_type === t}
+                    className={`px-3 py-1 rounded-full border transition-colors duration-150  ${form.report_type === t ? 'bg-red-200 text-red-700 border-red-200 ' : 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-200'}`}
                   >
                     {t}
                   </button>

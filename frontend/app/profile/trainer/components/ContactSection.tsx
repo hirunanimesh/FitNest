@@ -64,7 +64,7 @@ export default function ContactSection({ trainerId }: Props) {
           <button
             aria-label="Open feedback"
             onClick={() => setShowFeedback(true)}
-            className="flex items-center gap-3 px-4 py-2 rounded-full bg-blue-900/60 text-gray-200 hover:bg-gray-900/80 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="flex items-center gap-3 px-4 py-2 rounded-full bg-blue-900/60 text-gray-200 hover:bg-blue-900/80 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
