@@ -9,7 +9,7 @@ type Props = {
   show?: boolean
   onClose?: () => void
   trainerId?: string | null
-  customerId?: string | null
+  customerId?: number | null
 }
 
 export default function FeedbackModel({ show, onClose, trainerId: trainerIdProp, customerId: customerIdProp }: Props) {
@@ -17,7 +17,7 @@ export default function FeedbackModel({ show, onClose, trainerId: trainerIdProp,
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [trainerId, setTrainerId] = useState<string | null>(null)
-  const [customerId, setCustomerId] = useState<string | null>(null)
+  const [customerId, setCustomerId] = useState<number | null>(null)
   const { refreshTrainerData } = useTrainerData()
 
   useEffect(() => {

@@ -612,14 +612,14 @@ export const SendFeedback = async (trainerId, userId, feedback) => {
         throw error;
     }
 }
-export const AddReport = async (customerId, targetId, report) => {
+export const AddReport = async (customerId, targetId, targetType,report) => {
     try {
         // reporterId can be a trainer id or a gym id depending on context
         // `report` should be an object: { report_type, subject, description }
         const payload = {
             reporter_id: customerId,
             target_id: targetId,
-            target_type: report?.target_type,
+            target_type: targetType,
             report_type: report?.report_type,
             subject: report?.subject,
             description: report?.description,
