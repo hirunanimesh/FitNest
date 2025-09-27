@@ -7,11 +7,12 @@ import { AddReport } from "@/lib/api"
 type Props = {
   show?: boolean
   onClose?: () => void
-  trainerId?: string | null
-  customerId?: string | null
+  targetId?: string | null
+  customerId?: number | null
+  targetType?: "Trainer" | "Gym" 
 }
 
-export default function ReportModal({ show, onClose, trainerId, customerId }: Props) {
+export default function ReportModal({ show, onClose, targetId, customerId,targetType}: Props) {
   const [form, setForm] = useState({ report_type: "", subject: "", description: "" })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -21,7 +22,8 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
     setSubmitted(false)
   }
 }, [show])
-  if (typeof show !== "undefined" && !show) return null
+  if (!show) return null
+
 
   function setType(type: string) {
     setForm((s) => ({ ...s, report_type: type }))
@@ -35,8 +37,7 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
     e.preventDefault()
     setSubmitting(true)
     try {
-      await AddReport(customerId ?? null, trainerId ?? null, {
-        target_type: "Trainer",
+      await AddReport(customerId ?? null, targetId ?? null, targetType,{
         report_type: form.report_type,
         subject: form.subject,
         description: form.description,
@@ -94,7 +95,7 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <p className="text-gray-300">Why are you reporting this Trainer?</p>
+            <p className="text-gray-300">Why are you reporting this {targetType}?</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Your report is anonymous. Reports are kept confidential and help us maintain a safe community.
             </p>
