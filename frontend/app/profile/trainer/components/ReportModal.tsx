@@ -7,7 +7,7 @@ import { AddReport } from "@/lib/api"
 type Props = {
   show: boolean
   onClose: () => void
-  trainerId?: number | null
+  trainerId?: string | null
   customerId?: string | null
 }
 
@@ -31,7 +31,8 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
     setSubmitting(true)
     try {
       // use centralized API helper
-      await AddReport(trainerId ?? null, customerId ?? null, {
+      await AddReport(customerId ?? null, trainerId ?? null, {
+        target_type: "Trainer",
         report_type: form.report_type,
         subject: form.subject,
         description: form.description,
@@ -74,7 +75,8 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
                     type="button"
                     onClick={() => setType(t)}
                     aria-pressed={form.report_type === t}
-                    className={`px-3 py-1 rounded-full border transition-colors duration-150  ${form.report_type === t ? 'bg-red-200 text-red-700 border-red-200 ' : 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-200'}`}
+                    className={`px-3 py-1 rounded-full border transition-colors duration-150  
+                      ${form.report_type === t ? 'bg-red-200 text-red-700 border-red-200 ' : 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-200'}`}
                   >
                     {t}
                   </button>
@@ -108,7 +110,7 @@ export default function ReportModal({ show, onClose, trainerId, customerId }: Pr
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Thank you for submitting a report</h3>
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">We take reports seriously and after a thorough review, our support team will get back to you.</p>
-              <button onClick={onClose} className="text-indigo-600 hover:underline">Close this window</button>
+              
             </div>
           </div>
         )}

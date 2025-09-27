@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react"
 import FeedbackModel from "./FeedbackModel"
 import ReportModal from "./ReportModal"
+import { useTrainerData } from "../context/TrainerContext";
 import { supabase } from "@/lib/supabase"
 import { GetUserInfo } from "@/lib/api"
 
@@ -15,8 +16,9 @@ export default function ContactSection({ trainerId }: Props) {
   const [profileId, setProfileId] = useState<string | null>(null)
   const [customerId, setCustomerId] = useState<string | null>(null)
 
-  // ensure trainerId is available as string for FeedbackModel (it accepts string or number)
-  const trainerIdStr = trainerId ? String(trainerId) : undefined
+  // prefer trainer id from context when available
+  const { trainerData } = useTrainerData();
+  const contextTrainerId = trainerData?.id;
 
   useEffect(() => {
     async function fetchUserInfo() {
@@ -91,13 +93,18 @@ export default function ContactSection({ trainerId }: Props) {
 
       {/* Use the existing FeedbackModel and ReportModal components */}
       {showFeedback && (
-        <FeedbackModel show={showFeedback} onClose={() => setShowFeedback(false)} trainerId={trainerIdStr} customerId={customerId} />
+        <FeedbackModel
+          show={showFeedback}
+          onClose={() => setShowFeedback(false)}
+          trainerId={contextTrainerId }
+          customerId={customerId}
+        />
       )}
 
       <ReportModal
         show={showReport}
         onClose={() => setShowReport(false)}
-        trainerId={trainerId ? parseInt(trainerId, 10) : undefined}
+        trainerId={contextTrainerId}
         customerId={customerId}
       />
     </section>

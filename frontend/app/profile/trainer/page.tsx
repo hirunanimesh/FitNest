@@ -1,11 +1,8 @@
 //public page
 "use client"
 import { useSearchParams } from "next/navigation"
-import Header from "./components/Header"
 import HeroSection from "./components/HeroSection"
-import AboutSection from "./components/AboutSection"
 import SessionsSection from "./components/SessionsSection"
-import TestimonialsSection from "./components/Feedback"
 import BlogSection from "./components/BlogSection"
 import ContactSection from "./components/ContactSection"
 import { Suspense } from "react"
