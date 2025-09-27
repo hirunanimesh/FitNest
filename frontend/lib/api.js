@@ -589,4 +589,51 @@ export const SendRequestToGym = async (trainerId, gymId) => {
         }
         throw error;
     }
+};
+
+export const SendFeedback = async (trainerId, userId, feedback) => {
+    try {
+        // userId and feedback are required for sending feedback
+        const payload = {
+            user_id: userId,
+            feedback,
+            trainer_id: trainerId,
+        }
+        const response = await axios.post(`${Base_URL}/api/user/addfeedback`, payload);
+        return response.data;
+    } catch (error) {
+        console.error("Error sending feedback to trainer:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to send feedback to trainer");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+}
+export const AddReport = async (reporterId, customerId, report) => {
+    try {
+        // reporterId can be a trainer id or a gym id depending on context
+        // `report` should be an object: { report_type, subject, description }
+        const payload = {
+            user_id: customerId,
+            reporter_id: reporterId,
+            report_type: report?.report_type,
+            subject: report?.subject,
+            description: report?.description,
+        };
+
+        const response = await axios.post(`${Base_URL}/api/user/addreport`, payload);
+        return response.data;
+    } catch (error) {
+        console.error("Error sending Report:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to send report");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
 }
