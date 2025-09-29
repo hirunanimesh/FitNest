@@ -305,10 +305,10 @@ export async function getMemberGrowth(req, res) {
 }
 
 export async function getTrainerVerifications(req, res) {
-    console.log('in the getTrainerVerifications controller');
+    
     try {
         const result = await AdminService.getTrainerVerifications();
-        console.log("result in controller",result)
+   
         res.status(200).json({
             success: true,
             message: 'Trainer verifications retrieved successfully',
@@ -325,10 +325,10 @@ export async function getTrainerVerifications(req, res) {
 }
 
 export async function getGymVerifications(req, res) {
-    console.log('in the getGymVerifications controller');
+    
     try {
         const result = await AdminService.getGymVerifications();
-        console.log("result in controller",result)
+        
         res.status(200).json({
             success: true,
             message: 'Gym verifications retrieved successfully',
