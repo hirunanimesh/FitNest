@@ -197,7 +197,9 @@ const UpcomingSessions = () => {
                 </p>
               </div>
               <div className="mt-6">
-                <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-2 rounded-full transition-all duration-300 shadow-lg hover:shadow-red-500/25">
+                <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-2 rounded-full transition-all duration-300 shadow-lg hover:shadow-red-500/25"
+                onClick={() => window.location.href = 'user/search'}
+                >
                   Browse Trainers
                 </Button>
               </div>
