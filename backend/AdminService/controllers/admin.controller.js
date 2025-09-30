@@ -412,17 +412,44 @@ export async function getuserinquiries(req,res){
         });
     }
 };
-export const updateinquirydetails = async (req, res) => {
-    const { inquiryId } = req.params;
-    try {
-        const updatedInquiry = await AdminService.updateUserInquiries(inquiryId, req.body);
-        if (updatedInquiry) {
-            res.status(200).json({ message: "inquiry updated successfully", updatedInquiry });
-        } else {
-            res.status(404).json({ message: "inquiry not found" });
-        }
-    } catch (error) {
-        console.error("Error updating inquiry:", error);
-        res.status(500).json({ message: "Internal server error", error: error.message });
+export async function updateinquirydetails(req, res) {
+    // Support multiple ways callers might send the id: /:inquiryId, /:id or in the request body
+    let inquiryId = req.params?.inquiryId ?? req.params?.id ?? req.body?.inquiryId ?? req.body?.id;
+
+    // Normalize common accidental string values
+    if (inquiryId === 'undefined') inquiryId = undefined;
+
+    // Convert numeric strings to Number to avoid DB bigint parsing errors
+    if (typeof inquiryId === 'string' && /^\d+$/.test(inquiryId)) {
+        inquiryId = Number(inquiryId);
     }
-};
+
+    if (!inquiryId) {
+        console.warn('updateinquirydetails called without inquiryId', { params: req.params, body: req.body })
+        return res.status(400).json({ success: false, message: 'inquiryId is required' });
+    }
+
+    const updatePayload = req.body || {};
+    if (Object.keys(updatePayload).length === 0) {
+        console.warn('updateinquirydetails called with empty body', { inquiryId, params: req.params })
+        return res.status(400).json({ success: false, message: 'Request body is empty - nothing to update' });
+    }
+
+    // Diagnostic log: show what's coming in to help debug 500s from Supabase
+    console.log('updateinquirydetails called with', {
+        inquiryId,
+        inquiryIdType: typeof inquiryId,
+        updatePayload
+    })
+
+    try {
+        const updatedInquiry = await AdminService.updateUserInquiries(inquiryId, updatePayload);
+        if (updatedInquiry) {
+            return res.status(200).json({ success: true, message: 'Inquiry updated successfully', data: updatedInquiry });
+        }
+        return res.status(404).json({ success: false, message: 'Inquiry not found' });
+    } catch (error) {
+        console.error('Error updating inquiry:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error', error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong' });
+    }
+}

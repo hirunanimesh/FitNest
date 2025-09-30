@@ -137,7 +137,7 @@ export default class AdminService {
           throw new Error(error.message);
         }
       
-        // Also update trainer or gym table
+    // Also update trainer or gym table
       if (banned_data.type === 'trainer') {
         const { error: trainerError } = await supabase
           .from('trainer')
