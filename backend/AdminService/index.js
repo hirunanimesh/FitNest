@@ -19,7 +19,9 @@ import {
     getTrainerVerifications,
     getGymVerifications,
     handleVerificationState,
-    getDashboardStats
+    getDashboardStats,
+    getUserInquiries,
+    banneduser
 } from './controllers/admin.controller.js';
 import { testConnection } from './database/supabase.js';
 
@@ -53,10 +55,11 @@ app.get('/chat/health', chatHealth);
 
 app.get('/stats/member-growth', getMemberGrowth); // New endpoint for member growth stats
 app.get('/dashboard/stats', getDashboardStats); // New endpoint for dashboard stats
-
+app.get('/user-inquiries', getUserInquiries); // New endpoint for user inquiries
 app.get('/trainer-verifications', getTrainerVerifications); // New endpoint for trainer verifications
 app.get('/gym-verifications', getGymVerifications); // New endpoint for gym verifications
 app.put('/handle-verifications/:id/:state/:type/:entityId', handleVerificationState); // New endpoint to handle verification state changes
+app.post('/bannedusers', banneduser); // New endpoint to ban users
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);

@@ -111,4 +111,33 @@ export default class AdminService {
       throw new Error("Failed to update verification state");
     }
   }
+
+  static async  getUserInquiries() {
+      const { data, error } = await supabase
+        .from('Reports')
+        .select(`*`);  
+          
+        if(!data){
+          return null;
+        }
+      if (error) {
+        throw new Error(error.message);
+      }
+  
+      return data;
+    }
+
+    static async BannedUsers(banned_data) {
+        const { data, error } = await supabase
+          .from('banned')
+          .insert(banned_data)
+          .select();
+      
+        if (error) {
+          throw new Error(error.message);
+        }
+      
+        return data[0]; 
+      }
+    
 }

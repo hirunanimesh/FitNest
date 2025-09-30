@@ -308,7 +308,7 @@ export async function getTrainerVerifications(req, res) {
     console.log('in the getTrainerVerifications controller');
     try {
         const result = await AdminService.getTrainerVerifications();
-        console.log("result in controller",result)
+        //console.log("result in controller",result)
         res.status(200).json({
             success: true,
             message: 'Trainer verifications retrieved successfully',
@@ -328,7 +328,7 @@ export async function getGymVerifications(req, res) {
     console.log('in the getGymVerifications controller');
     try {
         const result = await AdminService.getGymVerifications();
-        console.log("result in controller",result)
+        //console.log("result in controller",result)
         res.status(200).json({
             success: true,
             message: 'Gym verifications retrieved successfully',
@@ -383,3 +383,33 @@ export async function getDashboardStats(req,res){
         });
     }
 }
+export async function getUserInquiries(req, res) {
+    console.log('in the getUserInquiries controller');
+    try {
+        const result = await AdminService.getUserInquiries();
+       
+        res.status(200).json({
+            success: true,
+            message: 'User inquiries retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in User inquiries controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve User inquiries',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+};
+export async function banneduser(req, res) {
+    try {
+        const id = await AdminService.BannedUsers(req.body);
+        if (id) {
+            res.status(200).json({ message: "user banned successfully",id });
+        }
+    } catch (error) {
+        console.error("Error happen:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};

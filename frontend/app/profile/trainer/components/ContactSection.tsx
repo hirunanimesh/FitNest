@@ -76,7 +76,7 @@ export default function ContactSection({ targetId }: Props) {
           onClose={() => setShowReport(false)}
           targetId={contextTrainerId}
           customerId={customerId}
-          targetType="Trainer"
+          targetType="trainer"
         />
       )}
     </section>
