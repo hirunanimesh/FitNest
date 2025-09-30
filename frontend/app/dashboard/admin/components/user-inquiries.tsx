@@ -4,20 +4,8 @@ import { useState, useEffect } from "react"
 import { GetUserInquiries } from "@/api/admin/route"
 import { GetGymDetails } from "@/api/user/route"
 import { GetCustomerById, GetTrainerById } from "@/lib/api"
-import {
-  AlertTriangle,
-  Ban,
-  Calendar,
-  Eye,
-  Filter,
-  MessageSquare,
-  Search,
-  Shield,
-  UserX,
-  Clock,
-  CheckCircle,
-} from "lucide-react"
-import { BannedUsers } from "@/api/admin/route"
+import {AlertTriangle,Ban,Calendar,Eye,Filter,MessageSquare,Search,Shield,UserX,Clock,CheckCircle} from "lucide-react"
+import {BannedUsers,handleVerificationState } from "@/api/admin/route"
 
 interface UserInquiry {
   id: string
@@ -115,6 +103,7 @@ export default function UserInquiries() {
 
     try {
       await BannedUsers(inquiry.bannedUserId, banReason)
+      
       setInquiries((prev) =>
         prev.map((i) =>
           i.id === inquiry.id ? { ...i, targetBanned: true, status: "resolved" } : i,

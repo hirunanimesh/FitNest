@@ -21,7 +21,8 @@ import {
     handleVerificationState,
     getDashboardStats,
     getuserinquiries,
-    banneduser
+    banneduser,
+    updateinquirydetails
 } from './controllers/admin.controller.js';
 import { testConnection } from './database/supabase.js';
 
@@ -60,6 +61,7 @@ app.get('/trainer-verifications', getTrainerVerifications); // New endpoint for 
 app.get('/gym-verifications', getGymVerifications); // New endpoint for gym verifications
 app.put('/handle-verifications/:id/:state/:type/:entityId', handleVerificationState); // New endpoint to handle verification state changes
 app.post('/bannedusers', banneduser); // New endpoint to ban users
+app.patch('/updateinquirydetails/:id', updateinquirydetails); // New endpoint to update inquiry details
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);

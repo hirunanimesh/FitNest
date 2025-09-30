@@ -137,7 +137,40 @@ export default class AdminService {
           throw new Error(error.message);
         }
       
-        return data[0]; 
+        // Also update trainer or gym table
+      if (banned_data.type === 'trainer') {
+        const { error: trainerError } = await supabase
+          .from('trainer')
+          .update({ verified: false })   // or verified: false / status: "banned"
+          .eq('user_id', banned_data.user_id);
+
+        if (trainerError) {
+          console.error('Error updating trainer banned state:', trainerError);
+        }
+      } else if (banned_data.type === 'gym') {
+        const { error: gymError } = await supabase
+          .from('gym')
+          .update({ verified: false })   
+          .eq('user_id', banned_data.user_id);
+
+        if (gymError) {
+          console.error('Error updating gym banned state:', gymError);
+        }
+      }
+
+      return data[0]; 
+    }
+  static async  updateUserInquiries(inquiryId, state) {
+      const { data, error } = await supabase
+        .from('Reports')
+        .update(state)
+        .eq('id', inquiryId)
+        .select();
+    
+      if (error) {
+        throw new Error(error.message);
       }
     
+      return data[0]; 
+    }
 }

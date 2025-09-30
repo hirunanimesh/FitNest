@@ -411,4 +411,18 @@ export async function getuserinquiries(req,res){
             error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
         });
     }
-}
+};
+export const updateinquirydetails = async (req, res) => {
+    const { inquiryId } = req.params;
+    try {
+        const updatedInquiry = await AdminService.updateUserInquiries(inquiryId, req.body);
+        if (updatedInquiry) {
+            res.status(200).json({ message: "inquiry updated successfully", updatedInquiry });
+        } else {
+            res.status(404).json({ message: "inquiry not found" });
+        }
+    } catch (error) {
+        console.error("Error updating inquiry:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
