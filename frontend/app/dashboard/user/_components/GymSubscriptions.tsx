@@ -131,7 +131,7 @@ const GymSubscriptions = () => {
             </p>
             <Button
               className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-8 py-3 rounded-full font-semibold text-lg shadow-lg shadow-red-500/25 transition-all duration-300 hover:scale-105"
-              onClick={() => window.location.href = '/gyms'}
+              onClick={() => window.location.href = 'user/search'}
             >
               Explore Gyms
             </Button>
