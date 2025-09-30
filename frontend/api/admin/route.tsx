@@ -134,10 +134,10 @@ export const GetUserInquiries = async () => {
     const response = await axios.get(`${Base_URL}/api/admin/user-inquiries`)
     return response
 }
-export const BannedUsers = async (user_Id: string,reason:string) => {
+export const BannedUsers = async (user_id: string,reason:string) => {
     console.log("banned user successfully")
     const response = await axios.post(`${Base_URL}/api/admin/bannedusers`,{
-        user_Id,reason
+        user_id,reason
     })
     return response
 }

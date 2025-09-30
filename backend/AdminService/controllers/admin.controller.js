@@ -383,3 +383,32 @@ export async function getDashboardStats(req,res){
         });
     }
 }
+export async function banneduser(req, res) {
+    try {
+        const data = await AdminService.BannedUsers(req.body);
+        if (data) {
+            res.status(200).json({ message: "Banned user successfully", data });
+        }
+    } catch (error) {
+        console.error("Error happen:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
+export async function getuserinquiries(req,res){
+    console.log('in the getUserInquiries controller');
+    try {
+        const result = await AdminService.getUserInquiries();
+        res.status(200).json({
+            success: true,
+            message: 'User inqueries retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getUserInquiries controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve user inqueries',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}

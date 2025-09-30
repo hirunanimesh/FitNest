@@ -1,10 +1,24 @@
+// ...existing code...
 "use client"
 import { useState, useEffect } from "react"
 import { GetUserInquiries } from "@/api/admin/route"
-import {GetGymDetails} from "@/api/user/route"
-import { GetCustomerById,GetTrainerById } from "@/lib/api"
-import {AlertTriangle,Ban,Calendar,Eye,Filter,MessageSquare,Search,Shield,UserX,Clock,CheckCircle} from "lucide-react"
+import { GetGymDetails } from "@/api/user/route"
+import { GetCustomerById, GetTrainerById } from "@/lib/api"
+import {
+  AlertTriangle,
+  Ban,
+  Calendar,
+  Eye,
+  Filter,
+  MessageSquare,
+  Search,
+  Shield,
+  UserX,
+  Clock,
+  CheckCircle,
+} from "lucide-react"
 import { BannedUsers } from "@/api/admin/route"
+
 interface UserInquiry {
   id: string
   reporterName: string
@@ -25,7 +39,7 @@ interface UserInquiry {
 }
 
 export default function UserInquiries() {
-  const [inquiries, setInquiries] = useState<any[]>([])
+  const [inquiries, setInquiries] = useState<UserInquiry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedInquiry, setSelectedInquiry] = useState<UserInquiry | null>(null)
@@ -35,88 +49,83 @@ export default function UserInquiries() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [banDialogOpen, setBanDialogOpen] = useState(false)
   const [banReason, setBanReason] = useState("")
-  //const [bannedUserId,setbannedUserId]=useState<string | null>(null)
+
   useEffect(() => {
-  const fetchInquiries = async () => {
-    try {
-      const response = await GetUserInquiries()
-      const apiInquiries = response.data.data ?? []
+    const fetchInquiries = async () => {
+      try {
+        const response = await GetUserInquiries()
+        const apiInquiries = response.data?.data ?? []
 
-      // Transform API data into UserInquiry format using only const
-      const mappedInquiries: UserInquiry[] = await Promise.all(
-      apiInquiries.map(async (item: any) => {
-        const userInfo = await GetCustomerById(item.reporter_id)
+        const mappedInquiries: UserInquiry[] = await Promise.all(
+          apiInquiries.map(async (item: any) => {
+            const userInfo = await GetCustomerById(item.reporter_id)
 
-        const reporterName = userInfo.user.first_name
-        const reporterEmail = userInfo?.email || ""
+            const reporterName = userInfo?.user?.first_name ?? ""
+            const reporterEmail = userInfo?.email ?? ""
 
-        let targetName = `${item.target_type} #${item.target_id}`
-        let targetAvatar: string | undefined = undefined
-        let bannedUserId: string | null = null // ✅ move outside scope
+            let targetName = `${item.target_type} #${item.target_id}`
+            let targetAvatar: string | undefined = undefined
+            let bannedUserId: string | null = null
 
-        if (item.target_type === "trainer") {
-          const restrainer = await GetTrainerById(item.target_id)
-          targetName = restrainer.trainer.trainer_name
-          targetAvatar = restrainer.trainer.profile_img
-          bannedUserId = restrainer.trainer.user_id // ✅ assign here
-        } else if (item.target_type === "gym") {
-          const res = await GetGymDetails(item.target_id)
-          targetName = res.data.gym.gym_name
-          targetAvatar = res.data.gym.profile_img
-          bannedUserId = res.data.gym.user_id // ✅ assign here
-        }
+            if (item.target_type === "trainer") {
+              const restrainer = await GetTrainerById(item.target_id)
+              targetName = restrainer?.trainer?.trainer_name ?? targetName
+              targetAvatar = restrainer?.trainer?.profile_img
+              bannedUserId = restrainer?.trainer?.user_id ?? null
+            } else if (item.target_type === "gym") {
+              const res = await GetGymDetails(item.target_id)
+              targetName = res?.data?.gym?.gym_name ?? targetName
+              targetAvatar = res?.data?.gym?.profile_img
+              bannedUserId = res?.data?.gym?.user_id ?? null
+            }
 
-        return {
-          id: String(item.id),
-          reporterName,
-          reporterEmail,
-          reporterAvatar: userInfo.user.profile_img,
-          targetName,
-          targetEmail: "",
-          targetAvatar,
-          targetType: item.target_type.toLowerCase(), // normalize
-          inquiryType: item.report_type,
-          subject: item.subject,
-          description: item.description,
-          submittedAt: item.created_at,
-          status: item.state.toLowerCase(),
-          priority: "medium",
-          targetBanned: false,
-          bannedUserId, // ✅ now correctly set
-        }
-      }),
-    )
-      setInquiries(mappedInquiries)
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch inquiries")
-    } finally {
-      setLoading(false)
+            return {
+              id: String(item.id),
+              reporterName,
+              reporterEmail,
+              reporterAvatar: userInfo?.user?.profile_img,
+              targetName,
+              targetEmail: "",
+              targetAvatar,
+              targetType: (item.target_type as string).toLowerCase() as "trainer" | "gym",
+              inquiryType: (item.report_type as string) || "Something Else",
+              subject: item.subject ?? "",
+              description: item.description ?? "",
+              submittedAt: item.created_at ?? new Date().toISOString(),
+              status: ((item.state as string) || "pending").toLowerCase() as UserInquiry["status"],
+              priority: "medium",
+              targetBanned: false,
+              bannedUserId,
+            }
+          }),
+        )
+        setInquiries(mappedInquiries)
+      } catch (err: any) {
+        setError(err?.message || "Failed to fetch inquiries")
+      } finally {
+        setLoading(false)
+      }
     }
-  }
 
-  fetchInquiries()
-}, [])
-
-
+    fetchInquiries()
+  }, [])
 
   const handleBanUser = async (inquiry: UserInquiry) => {
-  if (!inquiry.bannedUserId) return
+    if (!inquiry.bannedUserId) return
 
-  try {
-    await BannedUsers(inquiry.bannedUserId, banReason) // ✅ correct API call
-    setInquiries((prev) =>
-      prev.map((i) =>
-        i.id === inquiry.id
-          ? { ...i, targetBanned: true, status: "resolved"  }
-          : i,
-      ),
-    )
-    setBanDialogOpen(false)
-    setBanReason("")
-  } catch (err) {
-    console.error("Failed to ban user", err)
+    try {
+      await BannedUsers(inquiry.bannedUserId, banReason)
+      setInquiries((prev) =>
+        prev.map((i) =>
+          i.id === inquiry.id ? { ...i, targetBanned: true, status: "resolved" } : i,
+        ),
+      )
+      setBanDialogOpen(false)
+      setBanReason("")
+    } catch (err) {
+      console.error("Failed to ban user", err)
+    }
   }
-}
 
   const handleUpdateStatus = (inquiryId: string, newStatus: UserInquiry["status"]) => {
     setInquiries((prev) =>
@@ -166,12 +175,14 @@ export default function UserInquiries() {
     }
   }
 
-  // ✅ Apply filters
+  // Apply filters
   const filteredInquiries = inquiries.filter((inquiry) => {
+    const q = searchTerm.trim().toLowerCase()
     const matchesSearch =
-      inquiry.reporterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inquiry.targetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inquiry.subject.toLowerCase().includes(searchTerm.toLowerCase())
+      !q ||
+      inquiry.reporterName.toLowerCase().includes(q) ||
+      inquiry.targetName.toLowerCase().includes(q) ||
+      inquiry.subject.toLowerCase().includes(q)
     const matchesStatus = statusFilter === "all" || inquiry.status === statusFilter
     const matchesPriority = priorityFilter === "all" || inquiry.priority === priorityFilter
     return matchesSearch && matchesStatus && matchesPriority
@@ -184,8 +195,6 @@ export default function UserInquiries() {
   if (error) {
     return <div className="p-6 text-red-400">Error: {error}</div>
   }
-
-
 
   return (
     <div className="space-y-6 p-6 bg-gray-900 min-h-screen">
@@ -282,135 +291,110 @@ export default function UserInquiries() {
                 <option value="dismissed" className="bg-gray-800 text-white">Dismissed</option>
               </select>
             </div>
-            
           </div>
         </div>
       </div>
 
       {/* Inquiries List */}
-     <div className="space-y-4">
-  {filteredInquiries.map((inquiry) => (
-    <div key={inquiry.id} className="bg-gray-800 border-gray-700 border rounded-lg hover:bg-gray-750 transition-colors">
-      <div className="p-4 sm:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-          {/* Main content section */}
-          <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 flex-1">
-            {/* Icon - hidden on mobile for space */}
-            <div className="hidden sm:flex items-center gap-2 text-gray-300 flex-shrink-0">
-              {getInquiryTypeIcon(inquiry.inquiryType)}
-            </div>
+      <div className="space-y-4">
+        {filteredInquiries.map((inquiry) => (
+          <div key={inquiry.id} className="bg-gray-800 border-gray-700 border rounded-lg hover:bg-gray-750 transition-colors">
+            <div className="p-4 sm:p-6">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 flex-1">
+                  <div className="hidden sm:flex items-center gap-2 text-gray-300 flex-shrink-0">
+                    {getInquiryTypeIcon(inquiry.inquiryType)}
+                  </div>
 
-            <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
-              {/* Header with subject and badges */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                {/* Mobile: Show icon inline with subject */}
-                <div className="flex items-center gap-2 sm:hidden text-gray-300">
-                  {getInquiryTypeIcon(inquiry.inquiryType)}
-                  <h3 className="text-lg font-semibold text-white truncate">{inquiry.subject}</h3>
+                  <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                      <div className="flex items-center gap-2 sm:hidden text-gray-300">
+                        {getInquiryTypeIcon(inquiry.inquiryType)}
+                        <h3 className="text-lg font-semibold text-white truncate">{inquiry.subject}</h3>
+                      </div>
+
+                      <h3 className="hidden sm:block text-lg font-semibold text-white">{inquiry.subject}</h3>
+
+                      {inquiry.targetBanned && (
+                        <span className="bg-red-500/20 text-red-300 border-red-300/30 px-2 py-1 rounded-md text-xs border flex items-center gap-1">
+                          <Ban className="w-3 h-3" />
+                          Banned
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img src={inquiry.reporterAvatar} alt={inquiry.reporterName} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-white truncate">Reporter: {inquiry.reporterName}</p>
+                          <p className="text-xs text-gray-300 truncate">{inquiry.reporterEmail}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center text-red-300 text-xs font-medium flex-shrink-0">
+                          <img src={inquiry.targetAvatar} alt={inquiry.targetName} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-white truncate">Target: {inquiry.targetName}</p>
+                          <p className="text-xs text-gray-300 truncate">
+                            {inquiry.targetEmail} • {inquiry.targetType}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <Calendar className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{formatDate(inquiry.submittedAt)}</span>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Desktop: Subject only */}
-                <h3 className="hidden sm:block text-lg font-semibold text-white">{inquiry.subject}</h3>
-                
-                
-                
-                  {inquiry.targetBanned && (
-                    <span className="bg-red-500/20 text-red-300 border-red-300/30 px-2 py-1 rounded-md text-xs border flex items-center gap-1">
-                      <Ban className="w-3 h-3" />
-                      Banned
-                    </span>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-2 sm:gap-2 lg:gap-2 xl:gap-2 lg:ml-4 min-w-0 sm:min-w-fit">
+                  <button
+                    onClick={() => {
+                      setSelectedInquiry(inquiry)
+                      setDetailsDialogOpen(true)
+                    }}
+                    className="px-3 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-white text-sm flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
+                  >
+                    <Eye className="w-4 h-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">View Details</span>
+                    <span className="sm:hidden">Details</span>
+                  </button>
+
+                  <select
+                    value={inquiry.status}
+                    onChange={(e) => handleUpdateStatus(inquiry.id, e.target.value as UserInquiry["status"])}
+                    className="px-3 py-2 bg-gray-700 border-gray-600 border rounded text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-0"
+                  >
+                    <option value="pending" className="bg-gray-800 text-white">Pending</option>
+                    <option value="reviewed" className="bg-gray-800 text-white">Reviewed</option>
+                    <option value="resolved" className="bg-gray-800 text-white">Resolved</option>
+                    <option value="dismissed" className="bg-gray-800 text-white">Dismissed</option>
+                  </select>
+
+                  {!inquiry.targetBanned && (
+                    <button
+                      onClick={() => {
+                        setSelectedInquiry(inquiry)
+                        setBanDialogOpen(true)
+                      }}
+                      className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
+                    >
+                      <Ban className="w-4 h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Ban User</span>
+                      <span className="sm:hidden">Ban</span>
+                    </button>
                   )}
                 </div>
               </div>
-
-              {/* Reporter and Target info */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-                {/* Reporter */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <img
-                    src={inquiry.reporterAvatar} 
-                    alt={inquiry.reporterName}
-                    className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-white truncate">Reporter: {inquiry.reporterName}</p>
-                    <p className="text-xs text-gray-300 truncate">{inquiry.reporterEmail}</p>
-                  </div>
-                </div>
-
-                {/* Target */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center text-red-300 text-xs font-medium flex-shrink-0">
-                    <img
-                    src={inquiry.targetAvatar} 
-                    alt={inquiry.targetName}
-                    className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
-                  />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-white truncate">Target: {inquiry.targetName}</p>
-                    <p className="text-xs text-gray-300 truncate">
-                      {inquiry.targetEmail} • {inquiry.targetType}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Date */}
-              <div className="flex items-center gap-2 text-sm text-gray-300">
-                <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{formatDate(inquiry.submittedAt)}</span>
-              </div>
             </div>
           </div>
-
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-2 sm:gap-2 lg:gap-2 xl:gap-2 lg:ml-4 min-w-0 sm:min-w-fit">
-            {/* View Details button */}
-            <button
-              onClick={() => {
-                setSelectedInquiry(inquiry)
-                setDetailsDialogOpen(true)
-              }}
-              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-white text-sm flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
-            >
-              <Eye className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden sm:inline">View Details</span>
-              <span className="sm:hidden">Details</span>
-            </button>
-
-            {/* Status dropdown */}
-            <select
-              value={inquiry.status}
-              onChange={(e) => handleUpdateStatus(inquiry.id, e.target.value as UserInquiry["status"])}
-              className="px-3 py-2 bg-gray-700 border-gray-600 border rounded text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-0"
-            >
-              <option value="pending" className="bg-gray-800 text-white">Pending</option>
-              <option value="reviewed" className="bg-gray-800 text-white">Reviewed</option>
-              <option value="resolved" className="bg-gray-800 text-white">Resolved</option>
-              <option value="dismissed" className="bg-gray-800 text-white">Dismissed</option>
-            </select>
-
-            {/* Ban user button */}
-            {!inquiry.targetBanned && (
-              <button
-                onClick={() => {
-                  setSelectedInquiry(inquiry)
-                  setBanDialogOpen(true)
-                }}
-                className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
-              >
-                <Ban className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Ban User</span>
-                <span className="sm:hidden">Ban</span>
-              </button>
-            )}
-          </div>
-        </div>
+        ))}
       </div>
-   
-  ))}
-</div>
 
       {/* Details Dialog */}
       {detailsDialogOpen && selectedInquiry && (
@@ -435,7 +419,6 @@ export default function UserInquiries() {
                     {selectedInquiry.inquiryType.replace("_", " ")}
                   </p>
                 </div>
-                
               </div>
             </div>
             <div className="p-6 border-t border-gray-700 flex justify-end">
@@ -470,9 +453,7 @@ export default function UserInquiries() {
                   id="ban-reason"
                   placeholder="Enter the reason for banning this user..."
                   value={banReason}
-                  onChange={(e) => 
-                    setBanReason(e.target.value)
-                    }
+                  onChange={(e) => setBanReason(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
                   rows={3}
                 />
@@ -486,7 +467,7 @@ export default function UserInquiries() {
                 Cancel
               </button>
               <button
-                onClick={() => selectedInquiry && handleBanUser(selectedInquiry.id)}
+                onClick={() => selectedInquiry && handleBanUser(selectedInquiry)}
                 disabled={!banReason.trim()}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white rounded transition-colors"
               >
