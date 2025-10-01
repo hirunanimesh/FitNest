@@ -423,3 +423,73 @@ export async function getDashboardStats(req,res){
         });
     }
 }
+export async function banneduser(req, res) {
+    try {
+        const data = await AdminService.BannedUsers(req.body);
+        if (data) {
+            res.status(200).json({ message: "Banned user successfully", data });
+        }
+    } catch (error) {
+        console.error("Error happen:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
+export async function getuserinquiries(req,res){
+    console.log('in the getUserInquiries controller');
+    try {
+        const result = await AdminService.getUserInquiries();
+        res.status(200).json({
+            success: true,
+            message: 'User inqueries retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getUserInquiries controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve user inqueries',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+};
+export async function updateinquirydetails(req, res) {
+    // Support multiple ways callers might send the id: /:inquiryId, /:id or in the request body
+    let inquiryId = req.params?.inquiryId ?? req.params?.id ?? req.body?.inquiryId ?? req.body?.id;
+
+    // Normalize common accidental string values
+    if (inquiryId === 'undefined') inquiryId = undefined;
+
+    // Convert numeric strings to Number to avoid DB bigint parsing errors
+    if (typeof inquiryId === 'string' && /^\d+$/.test(inquiryId)) {
+        inquiryId = Number(inquiryId);
+    }
+
+    if (!inquiryId) {
+        console.warn('updateinquirydetails called without inquiryId', { params: req.params, body: req.body })
+        return res.status(400).json({ success: false, message: 'inquiryId is required' });
+    }
+
+    const updatePayload = req.body || {};
+    if (Object.keys(updatePayload).length === 0) {
+        console.warn('updateinquirydetails called with empty body', { inquiryId, params: req.params })
+        return res.status(400).json({ success: false, message: 'Request body is empty - nothing to update' });
+    }
+
+    // Diagnostic log: show what's coming in to help debug 500s from Supabase
+    console.log('updateinquirydetails called with', {
+        inquiryId,
+        inquiryIdType: typeof inquiryId,
+        updatePayload
+    })
+
+    try {
+        const updatedInquiry = await AdminService.updateUserInquiries(inquiryId, updatePayload);
+        if (updatedInquiry) {
+            return res.status(200).json({ success: true, message: 'Inquiry updated successfully', data: updatedInquiry });
+        }
+        return res.status(404).json({ success: false, message: 'Inquiry not found' });
+    } catch (error) {
+        console.error('Error updating inquiry:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error', error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong' });
+    }
+};

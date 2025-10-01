@@ -9,7 +9,7 @@ type Props = {
   onClose?: () => void
   targetId?: string | null
   customerId?: number | null
-  targetType?: "Trainer" | "Gym" 
+  targetType?: "trainer" | "gym" 
 }
 
 export default function ReportModal({ show, onClose, targetId, customerId,targetType}: Props) {

@@ -129,3 +129,33 @@ export const fetchAllTrainers = async (page: number = 1, limit: number = 12, sea
     const response = await axios.get(`${Base_URL}/api/trainer/getalltrainers?${params}`)
     return response
 }
+export const GetUserInquiries = async () => {
+    console.log("fetching user inquiries")
+    const response = await axios.get(`${Base_URL}/api/admin/user-inquiries`)
+    return response
+}
+export const BannedUsers = async (
+  user_id: string,
+  reason: string,
+  target_type: string,
+  inquiryId?: number
+) => {
+  console.log("banned user request", { user_id, reason, target_type, inquiryId })
+
+  const response = await axios.post(`${Base_URL}/api/admin/bannedusers`, {
+    user_id,
+    reason,
+    target_type,
+    inquiryId
+  })
+
+  return response
+}
+
+export const UpdateInquirystate = async (inquiry_id: number, status:string) => {
+    console.log("banned user successfully")
+    const response = await axios.patch(`${Base_URL}/api/admin/updateinquirydetails/${inquiry_id}`,{
+       status
+    })
+    return response
+}

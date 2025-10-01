@@ -669,7 +669,7 @@ const GymProfile: React.FC = () => {
                     onClose={() => setShowReport(false)}
                     targetId={gymId}
                     customerId={customerId}
-                    targetType="Gym"
+                    targetType="gym"
                     />
                 )}
                 </div>
