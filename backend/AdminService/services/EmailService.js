@@ -112,7 +112,7 @@ class EmailService {
 
                 <p>You can now log in to your dashboard and start managing your ${entityType} profile.</p>
                 
-                <a href="${process.env.FRONTEND_URL || 'https://fitnest.com'}/dashboard" class="cta-button">
+                <a href="${process.env.FRONTEND_URL || 'https://fitnest.com'}/dashboard/gym" class="cta-button">
                     Go to Dashboard
                 </a>
 
