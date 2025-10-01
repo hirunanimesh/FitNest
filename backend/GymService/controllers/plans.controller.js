@@ -1,13 +1,39 @@
 import { GymPlanCreateProducer, GymPlanDeleteProducer, GymPlanPriceUpdateProducer } from "../kafka/Producer.js";
 import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers,getOneDayGyms , getOtherGyms, getgymplanbyplanid, getgymplandetails } from "../services/plans.service.js";
+import GymPlanEmailService from "../services/GymPlanEmailService.js";
 
 
 export const addGymPlan = async (req, res) => {
     try {
         const gymPlan = await addgymplan(req.body);
+        console.log("Created Gym Plan:", gymPlan);
         if (gymPlan) {
             res.status(200).json({ message: "Gym plan created successfully", gymPlan });
-            await GymPlanCreateProducer(gymPlan.plan_id,gymPlan.title,gymPlan.price,gymPlan.duration)
+            await GymPlanCreateProducer(gymPlan.plan_id,gymPlan.title,gymPlan.price,gymPlan.duration);
+            
+            // Send email notification to gym owner
+            try {
+                const emailService = new GymPlanEmailService();
+                const ownerDetails = await emailService.getGymOwnerDetails(gymPlan.gym_id);
+                
+                if (ownerDetails && ownerDetails.ownerEmail) {
+                    console.log('Sending email to:', ownerDetails.ownerEmail);
+                    await emailService.sendPlanCreationEmail(
+                        ownerDetails.ownerEmail,
+                        ownerDetails.ownerName,
+                        ownerDetails.gymName,
+                        gymPlan.title,
+                        `$${gymPlan.price}`,
+                        gymPlan.duration
+                    );
+                    console.log('✅ Plan creation email sent successfully to gym owner');
+                } else {
+                    console.log('❌ Gym owner details not found or missing email');
+                }
+            } catch (emailError) {
+                console.error('❌ Failed to send plan creation email:', emailError);
+                // Don't fail the entire request if email fails
+            }
         }
     } catch (error) {
         console.error("Error creating gym plan:", error);
@@ -100,10 +126,54 @@ export const assignTrainersToPlan = async (req, res) => {
   try {
     const { plan_id, trainer_ids } = req.body;
     const result = await assigntrainerstoplan(plan_id, trainer_ids);
+    
     res.status(200).json({ 
       message: "Trainers assigned to plan successfully", 
       data: result 
     });
+
+    // Send email notifications to assigned trainers
+    try {
+      const emailService = new GymPlanEmailService();
+      
+      // Get plan details
+      const planDetails = await getgymplanbyplanid(plan_id);
+      if (!planDetails) {
+        console.error('Plan not found for email notification');
+        return;
+      }
+
+      // Get gym details
+      const ownerDetails = await emailService.getGymOwnerDetails(planDetails.gymid);
+      if (!ownerDetails) {
+        console.error('Gym details not found for email notification');
+        return;
+      }
+
+      // Get trainer details
+      console.log('Fetching trainer details for IDs:', trainer_ids);
+      const trainerDetails = await emailService.getTrainerDetails(trainer_ids);
+      
+      // Send email to each trainer
+      for (const trainer of trainerDetails) {
+        try {
+          await emailService.sendTrainerAssignmentEmail(
+            trainer.trainerEmail,
+            trainer.trainerName,
+            ownerDetails.gymName,
+            planDetails.title,
+            `$${planDetails.price}`,
+            `${planDetails.duration} days`
+          );
+          console.log(`Assignment email sent successfully to trainer: ${trainer.trainerName}`);
+        } catch (trainerEmailError) {
+          console.error(`Failed to send assignment email to trainer ${trainer.trainerName}:`, trainerEmailError);
+        }
+      }
+    } catch (emailError) {
+      console.error('Failed to send trainer assignment emails:', emailError);
+      // Don't fail the entire request if email fails
+    }
   } catch (error) {
     console.error("Error assigning trainers to plan:", error);
     res.status(500).json({ 
