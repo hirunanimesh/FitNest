@@ -146,7 +146,7 @@ export default class AdminService {
   }
 
   // 2️⃣ Update trainer or gym table (optional, e.g., mark verified false)
-  if (banned_data.type === 'trainer') {
+  if (banned_data.target_type === 'trainer') {
     const { error: trainerError } = await supabase
       .from('trainer')
       .update({ verified: false })  
@@ -155,7 +155,7 @@ export default class AdminService {
     if (trainerError) {
       console.error('Error updating trainer banned state:', trainerError);
     }
-  } else if (banned_data.type === 'gym') {
+  } else if (banned_data.target_type === 'gym') {
     const { error: gymError } = await supabase
       .from('gym')
       .update({ verified: false })  
