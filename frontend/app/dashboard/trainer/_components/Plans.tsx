@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { UpdateSessionDetails, DeleteSession } from "@/lib/api";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import VerifiedActions from '@/components/VerifiedActions';
 
 interface Session {
   session_id: number;
@@ -368,22 +369,26 @@ export default function Plans() {
                         </>
                       ) : (
                         <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(session)}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-                          >
-                            <Edit className="w-4 h-4 mr-2" /> Edit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openDeleteModal(session.session_id)}
-                            className="flex-1 bg-red-600 hover:bg-red-700 text-white border-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                          </Button>
+                          <VerifiedActions fallbackMessage="You need to be a verified trainer to edit sessions.">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(session)}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                            >
+                              <Edit className="w-4 h-4 mr-2" /> Edit
+                            </Button>
+                          </VerifiedActions>
+                          <VerifiedActions fallbackMessage="You need to be a verified trainer to delete sessions.">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openDeleteModal(session.session_id)}
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white border-red-600"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </Button>
+                          </VerifiedActions>
                         </>
                       )}
                     </div>

@@ -22,6 +22,7 @@ export default function TopBar() {
 
   // Check if current path matches the nav item
   const isActive = (href: string) => {
+    if (!pathname) return false;
     const normalizedPathname = pathname.replace(/\/+$/, '');
     const normalizedHref = href.replace(/\/+$/, '');
     return normalizedPathname === normalizedHref;
