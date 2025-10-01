@@ -10,6 +10,8 @@ import { GetGymDetails, GetGymPlans, GetUserSubscriptions, SubscribeGymPlan } fr
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import ReportButton from "@/components/ReportButton"  
+import ReportModal from "../../../../profile/components/ReportModal"
 
 // Define interfaces for TypeScript
 interface OperatingHours {
@@ -62,7 +64,8 @@ const GymProfile: React.FC = () => {
     const plansSectionRef = useRef<HTMLDivElement>(null);
     const [myPlans, setMyPlans] = useState<string[]>([]);
     const [role, setRole] = useState<string>('');
-
+    const [showReport, setShowReport] = useState(false)
+    const [customerId, setCustomerId] = useState<number | null>(null);
     // Scroll to top on page load
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -79,6 +82,7 @@ const GymProfile: React.FC = () => {
             setIsSubscriptionLoading(true); // Set loading state to true
             try {
                 const customer_id = await getUserProfileId();
+                setCustomerId(customer_id);
                 if (customer_id) {
                     const MyPlans = await GetUserSubscriptions(customer_id);
                     setMyPlans(MyPlans.planIds || []);
@@ -648,6 +652,28 @@ const GymProfile: React.FC = () => {
                     )}
                 </div>
             </div>
+            <section>
+                    {/* Report Section */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="flex justify-center">
+                    <ReportButton
+                    ariaLabel="Report gym"
+                    label="Report"
+                    onClick={() => setShowReport(true)}
+                    />
+                </div>
+
+                {showReport && (
+                    <ReportModal
+                    show={showReport}
+                    onClose={() => setShowReport(false)}
+                    targetId={gymId}
+                    customerId={customerId}
+                    targetType="gym"
+                    />
+                )}
+                </div>
+            </section> 
             <style jsx global>{`
                 html {
                     scroll-behavior: smooth;

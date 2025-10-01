@@ -87,4 +87,17 @@ export async function getUserSessions(customerId){
     throw new Error(error.message);
   }
   return data;
-}
+};
+
+export async function addReport(reportData) {
+    const { data, error } = await supabase
+      .from('Reports')
+      .insert(reportData)
+      .select();
+  
+    if (error) {
+      throw new Error(error.message);
+    }
+  
+    return data[0]; 
+  }

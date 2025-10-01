@@ -62,7 +62,7 @@ export const MemberGrowth = async (startDate?: string, endDate?: string) => {
 
 export const GetDashboardStats = async () => {
     console.log("fetching dashboard stats")
-    const response = await axios.get(`${Base_URL}/api/admin/stats/dashboard`)
+    const response = await axios.get(`${Base_URL}/api/admin/dashboard/stats`)
     return response
 }
 
@@ -105,5 +105,57 @@ export const getGymVerifications = async () => {
 export const handleVerificationState = async (verificationId: string, state: 'Approved' | 'Rejected', type: 'gym' | 'trainer', entityId: number) => {
     console.log(`changing verification state`, { verificationId, state, type, entityId })
     const response = await axios.put(`${Base_URL}/api/admin/handle-verifications/${verificationId}/${state}/${type}/${entityId}`)
+    return response
+}
+
+export const fetchAllGyms = async (page: number = 1, limit: number = 12, search: string = '') => {
+    console.log("fetching all gyms", { page, limit, search })
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(search && { search })
+    })
+    const response = await axios.get(`${Base_URL}/api/gym/getallgyms?${params}`)
+    return response
+}
+
+export const fetchAllTrainers = async (page: number = 1, limit: number = 12, search: string = '') => {
+    console.log("fetching all trainers", { page, limit, search })
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(search && { search })
+    })
+    const response = await axios.get(`${Base_URL}/api/trainer/getalltrainers?${params}`)
+    return response
+}
+export const GetUserInquiries = async () => {
+    console.log("fetching user inquiries")
+    const response = await axios.get(`${Base_URL}/api/admin/user-inquiries`)
+    return response
+}
+export const BannedUsers = async (
+  user_id: string,
+  reason: string,
+  target_type: string,
+  inquiryId?: number
+) => {
+  console.log("banned user request", { user_id, reason, target_type, inquiryId })
+
+  const response = await axios.post(`${Base_URL}/api/admin/bannedusers`, {
+    user_id,
+    reason,
+    target_type,
+    inquiryId
+  })
+
+  return response
+}
+
+export const UpdateInquirystate = async (inquiry_id: number, status:string) => {
+    console.log("banned user successfully")
+    const response = await axios.patch(`${Base_URL}/api/admin/updateinquirydetails/${inquiry_id}`,{
+       status
+    })
     return response
 }

@@ -23,7 +23,7 @@ export default class AdminService {
 
   static async getDashboardStats() {
     try {
-      const { data, error } = await supabase.rpc('get_dashboard_stats');
+      const { data, error } = await supabase.rpc('get_admin_dashboard_stats_array');
       console.log("data",data)
 
       if (error) {
@@ -65,6 +65,31 @@ export default class AdminService {
 }
   static async handleVerificationState(id, state, type, entityId) {
     try{
+      // First, get the verification details including user email
+      console.log('id, state, type, entityId',id, state, type, entityId)
+      // Convert id to number for comparison since URL params come as strings
+      const verificationId = parseInt(id, 10);
+      let verificationDetails = null;
+      if (type === 'gym') {
+        const { data: gymVerifications, error: gymError } = await supabase.rpc('get_gym_verifications');
+        console.log("gymVerifications",gymVerifications)
+        if (gymError) {
+          console.error('Error fetching gym verifications:', gymError);
+        } else {
+          verificationDetails = gymVerifications.find(v => v.id === verificationId);
+        }
+      } else if (type === 'trainer') {
+        const { data: trainerVerifications, error: trainerError } = await supabase.rpc('get_trainer_verifications');
+        console.log("trainerVerifications",trainerVerifications)
+        if (trainerError) {
+          console.error('Error fetching trainer verifications:', trainerError);
+        } else {
+          verificationDetails = trainerVerifications.find(v => v.id === verificationId);
+        }
+      }
+
+      console.log("verificationDetails",verificationDetails)
+
       // Update the verification state in the verifications table
       const {data , error} = await supabase.from('verifications').update({verification_state: state}).eq('id', id).select();
       if (error){
@@ -105,10 +130,103 @@ export default class AdminService {
       }
       // If rejected, we don't update the verified column (keep existing behavior)
 
-      return data;
+      // Return both the updated verification data and the user details for email notifications
+      return {
+        verificationUpdate: data,
+        userDetails: verificationDetails ? {
+          email: verificationDetails.applicant_email,
+          name: verificationDetails.applicantname,
+          entityName: type === 'gym' ? 'Gym' : 'Trainer', // We could get the actual gym/trainer name from related tables if needed
+          entityType: type
+        } : null
+      };
     }catch (error) {
       console.error("Error in handleVerificationState service:", error);
       throw new Error("Failed to update verification state");
     }
   }
+
+  static async  getUserInquiries() {
+      const { data, error } = await supabase
+        .from('Reports')
+        .select(`*`);  
+          
+        if(!data){
+          return null;
+        }
+      if (error) {
+        throw new Error(error.message);
+      }
+  
+      return data;
+    }
+
+    static async BannedUsers(banned_data) {
+  // only pick the fields that exist in the "banned" table
+  const bannedInsert = {
+    user_id: banned_data.user_id,
+    reason: banned_data.reason,
+    target_type: banned_data.target_type
+  }
+
+  // 1️⃣ Insert into banned table
+  const { data, error } = await supabase
+    .from('banned')
+    .insert(bannedInsert)
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // 2️⃣ Update trainer or gym table (optional, e.g., mark verified false)
+  if (banned_data.target_type === 'trainer') {
+    const { error: trainerError } = await supabase
+      .from('trainer')
+      .update({ verified: false })  
+      .eq('user_id', banned_data.user_id);
+
+    if (trainerError) {
+      console.error('Error updating trainer banned state:', trainerError);
+    }
+  } else if (banned_data.target_type === 'gym') {
+    const { error: gymError } = await supabase
+      .from('gym')
+      .update({ verified: false })  
+      .eq('user_id', banned_data.user_id);
+
+    if (gymError) {
+      console.error('Error updating gym banned state:', gymError);
+    }
+  }
+
+  // 3️⃣ Update the Reports table for this inquiry (use inquiryId separately)
+  if (banned_data.inquiryId) {
+    const { error: reportError } = await supabase
+      .from('Reports')
+      .update({ banned: true, status: 'resolved' })
+      .eq('id', Number(banned_data.inquiryId));
+
+    if (reportError) {
+      console.error('Error updating report banned state:', reportError);
+    }
+  }
+
+  return data[0]; 
+}
+
+
+  static async  updateUserInquiries(inquiryId, status) {
+      const { data, error } = await supabase
+        .from('Reports')
+        .update(status)
+        .eq('id', inquiryId)
+        .select();
+    
+      if (error) {
+        throw new Error(error.message);
+      }
+    
+      return data[0]; 
+    }
 }

@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { FileText, Eye, Check, X, Calendar, User, Building2, Phone, Mail, Download, Clock, MoreVertical, Filter } from "lucide-react"
+import { FileText, Eye, Check, X, Calendar, User, Building2, Phone, Mail, Download, Clock, MoreVertical, Filter, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,6 +93,8 @@ export default function VerificationRequests() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("gym")
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all")
+  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set())
+  const [rejectingIds, setRejectingIds] = useState<Set<string>>(new Set())
 
   // Load data from APIs
   useEffect(() => {
@@ -122,6 +124,9 @@ export default function VerificationRequests() {
   }, [])
 
   const handleApprove = async (requestId: string, type: "gym" | "trainer") => {
+    // Add to approving set
+    setApprovingIds(prev => new Set([...prev, requestId]))
+    
     try {
       // Find the request to get the entityId
       const requests = type === "gym" ? gymRequests : trainerRequests
@@ -142,10 +147,20 @@ export default function VerificationRequests() {
     } catch (error) {
       console.error("Error approving verification:", error)
       // You could add a toast notification here for error handling
+    } finally {
+      // Remove from approving set
+      setApprovingIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(requestId)
+        return newSet
+      })
     }
   }
 
   const handleReject = async (requestId: string, type: "gym" | "trainer") => {
+    // Add to rejecting set
+    setRejectingIds(prev => new Set([...prev, requestId]))
+    
     try {
       // Find the request to get the entityId
       const requests = type === "gym" ? gymRequests : trainerRequests
@@ -166,6 +181,13 @@ export default function VerificationRequests() {
     } catch (error) {
       console.error("Error rejecting verification:", error)
       // You could add a toast notification here for error handling
+    } finally {
+      // Remove from rejecting set
+      setRejectingIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(requestId)
+        return newSet
+      })
     }
   }
 
@@ -237,11 +259,11 @@ export default function VerificationRequests() {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
-          <TabsTrigger value="gym" className="data-[state=active]:bg-gray-700">
+          <TabsTrigger value="gym" className="data-[state=active]:bg-gray-700 data-[state=active]:text-red-400 text-white">
             <Building2 className="w-4 h-4 mr-2" />
             Gym Verifications ({gymRequests.length})
           </TabsTrigger>
-          <TabsTrigger value="trainer" className="data-[state=active]:bg-gray-700">
+          <TabsTrigger value="trainer" className="data-[state=active]:bg-gray-700 data-[state=active]:text-red-400 text-white">
             <User className="w-4 h-4 mr-2" />
             Trainer Verifications ({trainerRequests.length})
           </TabsTrigger>
@@ -452,19 +474,29 @@ export default function VerificationRequests() {
                             variant="default"
                             size="sm"
                             onClick={() => handleApprove(request.id, request.type)}
-                            className="bg-green-600 hover:bg-green-700 text-white"
+                            disabled={approvingIds.has(request.id) || rejectingIds.has(request.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                           >
-                            <Check className="w-4 h-4 mr-2" />
-                            Accept
+                            {approvingIds.has(request.id) ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Check className="w-4 h-4 mr-2" />
+                            )}
+                            {approvingIds.has(request.id) ? "Approving..." : "Accept"}
                           </Button>
                           <Button
                             variant="destructive"
                             size="sm"
                             onClick={() => handleReject(request.id, request.type)}
-                            className="bg-red-800 hover:bg-red-900 text-white"
+                            disabled={approvingIds.has(request.id) || rejectingIds.has(request.id)}
+                            className="bg-red-800 hover:bg-red-900 text-white disabled:opacity-50"
                           >
-                            <X className="w-4 h-4 mr-2" />
-                            Reject
+                            {rejectingIds.has(request.id) ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <X className="w-4 h-4 mr-2" />
+                            )}
+                            {rejectingIds.has(request.id) ? "Rejecting..." : "Reject"}
                           </Button>
                         </>
                       )}
@@ -524,17 +556,27 @@ export default function VerificationRequests() {
                             <>
                               <DropdownMenuItem
                                 onClick={() => handleApprove(request.id, request.type)}
-                                className="text-green-400 hover:bg-gray-700"
+                                disabled={approvingIds.has(request.id) || rejectingIds.has(request.id)}
+                                className="text-green-400 hover:bg-gray-700 disabled:opacity-50"
                               >
-                                <Check className="w-4 h-4 mr-2" />
-                                Accept
+                                {approvingIds.has(request.id) ? (
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Check className="w-4 h-4 mr-2" />
+                                )}
+                                {approvingIds.has(request.id) ? "Approving..." : "Accept"}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleReject(request.id, request.type)}
-                                className="text-red-400 hover:bg-gray-700"
+                                disabled={approvingIds.has(request.id) || rejectingIds.has(request.id)}
+                                className="text-red-400 hover:bg-gray-700 disabled:opacity-50"
                               >
-                                <X className="w-4 h-4 mr-2" />
-                                Reject
+                                {rejectingIds.has(request.id) ? (
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                  <X className="w-4 h-4 mr-2" />
+                                )}
+                                {rejectingIds.has(request.id) ? "Rejecting..." : "Reject"}
                               </DropdownMenuItem>
                             </>
                           )}
@@ -571,19 +613,29 @@ export default function VerificationRequests() {
                           variant="default"
                           size="sm"
                           onClick={() => handleApprove(request.id, request.type)}
-                          className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                          disabled={approvingIds.has(request.id) || rejectingIds.has(request.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white flex-1 disabled:opacity-50"
                         >
-                          <Check className="w-4 h-4 mr-2" />
-                          Accept
+                          {approvingIds.has(request.id) ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Check className="w-4 h-4 mr-2" />
+                          )}
+                          {approvingIds.has(request.id) ? "Approving..." : "Accept"}
                         </Button>
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => handleReject(request.id, request.type)}
-                          className="bg-red-800 hover:bg-red-900 text-white flex-1"
+                          disabled={approvingIds.has(request.id) || rejectingIds.has(request.id)}
+                          className="bg-red-800 hover:bg-red-900 text-white flex-1 disabled:opacity-50"
                         >
-                          <X className="w-4 h-4 mr-2" />
-                          Reject
+                          {rejectingIds.has(request.id) ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <X className="w-4 h-4 mr-2" />
+                          )}
+                          {rejectingIds.has(request.id) ? "Rejecting..." : "Reject"}
                         </Button>
                       </div>
                     )}

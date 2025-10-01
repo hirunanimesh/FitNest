@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useSearchParams } from 'next/navigation';
 
 interface TrainerData {
-  trainer_id: number;
+  id: string;
   user_id:string,
   trainer_name: string;
   profile_img?: string | null;

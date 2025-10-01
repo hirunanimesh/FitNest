@@ -3,7 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 
-import {addfeedback,getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails, getMySessions} from './controllers/user.controller.js'
+import {addfeedback,getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails, getMySessions, addreport} from './controllers/user.controller.js'
 
 const app = express()
 app.use(express.json())
@@ -16,7 +16,8 @@ app.get('/getweightbyid/:userId',getweightbyid)
 app.get('/getlatestweightbyid/:userId',getlatestweightbyid)
 app.post('/addfeedback',addfeedback)
 app.get('/mysessions/:customerId',getMySessions)
+app.post('/addreport',addreport)  
 app.listen(process.env.PORT || 3004,()=>{
-   
+ 
 })
 

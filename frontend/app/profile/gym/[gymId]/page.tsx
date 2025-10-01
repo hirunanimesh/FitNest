@@ -61,7 +61,7 @@ const GymProfile: React.FC = () => {
     const plansSectionRef = useRef<HTMLDivElement>(null);
     const [myPlans, setMyPlans] = useState<string[]>([]);
     const [role,setRole] = useState<string>('');
-
+    
     // Scroll to top on page load
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -77,6 +77,7 @@ const GymProfile: React.FC = () => {
         const fetchMySubscriptions = async () => {
             try {
                 const customer_id = await getUserProfileId();
+                
                 if (customer_id) {
                     const MyPlans = await GetUserSubscriptions(customer_id);
                     setMyPlans(MyPlans.planIds || []);
@@ -655,7 +656,7 @@ const GymProfile: React.FC = () => {
                     )}
                 </div>
             </div>
-
+                 
             {/* Custom Styles */}
             <style jsx global>{`
                 html {

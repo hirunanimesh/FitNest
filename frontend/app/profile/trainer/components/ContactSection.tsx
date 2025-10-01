@@ -1,123 +1,84 @@
 "use client"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useState } from "react"
-import { useEffect } from "react"
-import { supabase } from "@/lib/supabase"
-import { GetUserInfo } from "@/lib/api"
-import { useTrainerData } from "../context/TrainerContext";
-import axios from "axios"
+import React, { useState, useEffect } from "react"
+import FeedbackModel from "./FeedbackModel"
+import ReportModal from "../../components/ReportModal"
+import ReportButton from "@/components/ReportButton"  
+import { useTrainerData } from "../context/TrainerContext"
+import { useAuth } from "@/contexts/AuthContext"
 
-export default function ContactSection() {
-  const [form, setForm] = useState( {message: ""} )
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const [trainerId, setTrainerId] = useState<number | null>(null);
-  const [customerId, setCustomerId] = useState<string | null>(null);
-  const { refreshTrainerData } = useTrainerData();
-  
+type Props = {
+  targetId?: string
+}
+
+export default function ContactSection({ targetId }: Props) {
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [showReport, setShowReport] = useState(false)
+  const [customerId, setCustomerId] = useState<number | null>(null)
+
+  const { getUserProfileId } = useAuth()
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const id = params.get("id")
-    setTrainerId(id ? parseInt(id, 10) : null)
-
-    async function fetchUserInfo() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      const token = session?.access_token
-      if (!token) return
-
+    const fetchCustomerId = async () => {
       try {
-        const data = await GetUserInfo(token)
-        const profileId = data?.user?.id || null
-        setProfileId(profileId)
-        if (profileId) {
-          const { data: customerData, error } = await supabase
-            .from("customer")
-            .select("id")
-            .eq("user_id", profileId)
-            .single()
-
-          if (error || !customerData) {
-            setCustomerId(null)
-          } else {
-            setCustomerId(customerData.id)
-          }
-        }
-      } catch {
-        setProfileId(null)
-        setCustomerId(null)
+        const id = await getUserProfileId()
+        setCustomerId(id)
+      } catch (err) {
+        console.error("Failed to fetch customerId", err)
       }
     }
-    fetchUserInfo()
-  }, [])
 
-  
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+    fetchCustomerId()
+  }, [getUserProfileId])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSubmitting(true)
-
-    try {
-      // Replace with your contact API or service
-      await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/addfeedback`, {
-        user_id: customerId,
-        feedback: form.message,
-        trainer_id: trainerId,
-        
-      });
-  // show success message and clear the form
-  setSubmitted(true)
-  setForm({ message: "" })
-  // refresh trainer data so the new feedback appears without reload
-  try { await refreshTrainerData() } catch (e) { /* ignore refresh errors */ }
-  // hide success message after 2 seconds
-  setTimeout(() => setSubmitted(false), 2000)
-    } catch {
-      alert("Failed to send message. Please try again.")
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  // prefer trainer id from context when available
+  const { trainerData } = useTrainerData()
+  const contextTrainerId = trainerData?.id
 
   return (
-    <section id="contact" className="py-20 bg-gradient-to-br from-gray-800 to-black">
-      <div className="container mx-auto px-4 max-w-lg">
-  <h3 className="text-5xl font-bold mb-8 text-center"><span className="bg-gradient-to-r from-red-400 via-rose-400 to-pink-400 bg-clip-text text-transparent text-bold text-5xl">Send Feedback</span></h3>
-        {submitted ? (
-          <div className="bg-green-700 text-white p-6 rounded-md text-center">
-            Thank you for your message! I'll get back to you shortly.
-          </div>
-        ) : (
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 shadow-lg">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label htmlFor="message" className="text-gray-300">Message</Label>
-                <textarea
-                  name="message"
-                  id="message"
-                  value={form.message}
-                  onChange={handleChange}
-                  required
-                  placeholder="Write your message here..."
-                  className="w-full mt-1 p-3 rounded-md bg-gray-900 text-white border border-gray-700 resize-none"
-                  rows={5}
-                />
-              </div>
+    <section id="contact" className="py-5 bg-black">
+      <div className="container mx-auto px-4">
+        <div className="w-full flex justify-center">
+          <div className="flex gap-5 items-center">
+            {/* Feedback pill */}
+            <button
+              aria-label="Open feedback"
+              onClick={() => setShowFeedback(true)}
+              className="flex items-center gap-3 px-4 py-2 rounded-full bg-blue-900/60 text-gray-200 hover:bg-blue-900/80 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-sm">Feedback</span>
+            </button>
 
-              <Button type="submit" disabled={submitting} className="w-full bg-red-600 hover:bg-red-700">
-                {submitting ? "Sending..." : "Send Message"}
-              </Button>
-            </form>
+            <ReportButton
+              ariaLabel="Report trainer"
+              label="Report"
+              onClick={() => setShowReport(true)}
+            />
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Modals */}
+      {showFeedback && (
+        <FeedbackModel
+          show={showFeedback}
+          onClose={() => setShowFeedback(false)}
+          trainerId={contextTrainerId}
+          customerId={customerId}
+        />
+      )}
+
+      {showReport && (
+        <ReportModal
+          show={showReport}
+          onClose={() => setShowReport(false)}
+          targetId={contextTrainerId}
+          customerId={customerId}
+          targetType="trainer"
+        />
+      )}
     </section>
   )
 }
