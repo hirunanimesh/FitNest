@@ -6,21 +6,12 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from "recharts"
 import { TrendingUp, TrendingDown, DollarSign, Users, Download, Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
-import { MemberGrowth } from "@/api/admin/route"
+import { MemberGrowth, GetSystemRevenue } from "@/api/admin/route"
 import { transformMemberData, getDefaultDateRange, ChartMemberData, BackendMemberData } from "@/lib/chartUtils"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-const revenueData = [
-  { month: "Jan", revenue: 28500, subscriptions: 1140, avgRevenue: 25 },
-  { month: "Feb", revenue: 32100, subscriptions: 1284, avgRevenue: 25 },
-  { month: "Mar", revenue: 35800, subscriptions: 1432, avgRevenue: 25 },
-  { month: "Apr", revenue: 38900, subscriptions: 1556, avgRevenue: 25 },
-  { month: "May", revenue: 41200, subscriptions: 1648, avgRevenue: 25 },
-  { month: "Jun", revenue: 43800, subscriptions: 1752, avgRevenue: 25 },
-  { month: "Jul", revenue: 45600, subscriptions: 1824, avgRevenue: 25 },
-  { month: "Aug", revenue: 47892, subscriptions: 1924, avgRevenue: 25 },
-]
+// revenue data will be fetched dynamically
 
 const categoryData = [
   { category: "Premium", value: 45, revenue: 21500 },
@@ -68,11 +59,33 @@ export function DashboardCharts() {
 
   // Calculate current growth from real data
   const currentGrowth = memberData.length > 0 ? memberData[memberData.length - 1].growth : 0
-  const revenueGrowth = (
+  const [revenueData,setRevenueData] = useState<{month:string; revenue:number}[]>([])
+  const [revenueLoading,setRevenueLoading] = useState(true)
+  const [revenueError,setRevenueError] = useState<string|null>(null)
+
+  const fetchRevenue = async () => {
+    try {
+      setRevenueLoading(true)
+      setRevenueError(null)
+      const res = await GetSystemRevenue()
+      const r = res.data
+      if (!r || r.error) throw new Error(r.message||'Failed to load revenue')
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+      const arr = (r.monthlyRevenue||[]).map((val:number, idx:number)=>({ month: months[idx], revenue: val }))
+      setRevenueData(arr)
+    } catch(e:any) {
+      setRevenueError(e.message||'Failed to fetch revenue')
+    } finally {
+      setRevenueLoading(false)
+    }
+  }
+
+  useEffect(()=>{ fetchRevenue() },[])
+
+  const revenueGrowth = revenueData.length >= 2 ? (
     ((revenueData[revenueData.length - 1].revenue - revenueData[revenueData.length - 2].revenue) /
-      revenueData[revenueData.length - 2].revenue) *
-    100
-  ).toFixed(1)
+      (revenueData[revenueData.length - 2].revenue||1)) * 100
+  ).toFixed(1) : '0.0'
 
   const handleDownloadMemberChart = () => {
     // PDF generation logic will be implemented here
@@ -225,14 +238,27 @@ export function DashboardCharts() {
                   <DollarSign className="w-5 h-5 text-red-400" />
                   Monthly Revenue
                 </CardTitle>
-                <CardDescription className="text-gray-400">Revenue generated each month</CardDescription>
+                <CardDescription className="text-gray-400">Revenue generated each month (platform fees)</CardDescription>
               </div>
               <div className="flex items-center gap-1 text-sm">
-                <TrendingUp className="w-4 h-4 text-red-400" />
-                <span className="text-red-400">+{revenueGrowth}%</span>
+                {revenueLoading ? <Loader2 className="w-4 h-4 animate-spin text-red-400" /> : (
+                  <>
+                    <TrendingUp className="w-4 h-4 text-red-400" />
+                    <span className="text-red-400">+{revenueGrowth}%</span>
+                  </>
+                )}
               </div>
             </CardHeader>
             <CardContent>
+              {revenueError && (
+                <div className="h-[300px] flex items-center justify-center">
+                  <div className="text-center text-sm text-red-400">
+                    {revenueError}
+                    <Button variant="link" className="text-red-300 hover:text-red-200 p-0 ml-1" onClick={fetchRevenue}>Retry</Button>
+                  </div>
+                </div>
+              )}
+              {!revenueError && (
               <ChartContainer
                 config={{
                   revenue: {
@@ -243,6 +269,11 @@ export function DashboardCharts() {
                 className="h-[300px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
+                  {revenueLoading ? (
+                    <div className="flex items-center justify-center text-gray-400 text-sm">Loading revenue...</div>
+                  ) : revenueData.length === 0 ? (
+                    <div className="flex items-center justify-center text-gray-500 text-sm">No revenue data</div>
+                  ) : (
                   <BarChart data={revenueData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} />
@@ -255,8 +286,10 @@ export function DashboardCharts() {
                       className="hover:opacity-80 transition-opacity"
                     />
                   </BarChart>
+                  )}
                 </ResponsiveContainer>
               </ChartContainer>
+              )}
             </CardContent>
           </Card>
           <button

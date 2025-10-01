@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Users, Building2, UserCheck, CreditCard, Clock, DollarSign } from "lucide-react"
-import { GetDashboardStats } from "@/api/admin/route"
+import { GetDashboardStats, GetSystemRevenue } from "@/api/admin/route"
 
 interface DashboardStat {
   icon: string
@@ -35,13 +35,35 @@ export function DashboardStats() {
       try {
         setLoading(true)
         setError(null)
-        const response = await GetDashboardStats()
-        
-        if (response.data.success) {
-          setStats(response.data.data)
+        const [statsRes, revenueRes] = await Promise.all([
+          GetDashboardStats(),
+          GetSystemRevenue().catch(err => ({ data: { success:false, error:true }}))
+        ])
+
+        let loadedStats: DashboardStat[] = []
+        if (statsRes.data.success) {
+          loadedStats = statsRes.data.data
         } else {
-          setError("Failed to fetch dashboard stats")
+          setError(prev => prev || "Failed to fetch dashboard stats")
         }
+
+        if (revenueRes?.data && !revenueRes.data.error) {
+          const r = revenueRes.data
+          const currentMonthRevenue = r.currentMonthRevenue ?? 0
+          const monthName = new Date().toLocaleString('default',{ month:'short'})
+          // Prepend Total Revenue card
+          loadedStats.unshift({
+            icon: 'DollarSign',
+            color: 'text-red-400',
+            title: 'Total Revenue',
+            value: r.totalRevenue ?? 0,
+            change: r.yearTotalRevenue ? `YTD ${r.yearTotalRevenue.toLocaleString()}` : 'YTD 0',
+            changeType: 'positive'
+          })
+          // (Monthly revenue card removed per request)
+        }
+
+        setStats(loadedStats)
       } catch (error) {
         console.error("Error fetching dashboard stats:", error)
         setError("Error loading dashboard stats")

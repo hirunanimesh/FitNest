@@ -66,6 +66,13 @@ export const GetDashboardStats = async () => {
     return response
 }
 
+export const GetSystemRevenue = async () => {
+    console.log("fetching system revenue")
+    // Expecting the API gateway to proxy to payment service /getsystemrevenue
+    const response = await axios.get(`${Base_URL}/api/payment/getsystemrevenue`)
+    return response
+}
+
 export const GetTrainerVerifications = async () => {
     console.log("fetching trainer verifications")
     const response = await axios.get(`${Base_URL}/api/admin/trainer-verifications`)
