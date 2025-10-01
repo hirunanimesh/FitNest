@@ -93,7 +93,7 @@ export async function updatetrainerdetails(trainerId, trainerData) {
   const { data, error } = await supabase
     .from('trainer')
     .update(trainerData)
-    .eq('trainer_id', trainerId)
+    .eq('id', trainerId)
     .select();
 
   if (error) {
