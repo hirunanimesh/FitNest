@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from 'lucide-react';
+import VerifiedActions from '@/components/VerifiedActions';
 
 const UploadContent = () => {
     const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
@@ -26,11 +27,13 @@ const UploadContent = () => {
   return (
     <div>
       <Dialog open={isContentDialogOpen} onOpenChange={setIsContentDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <Plus className="h-4 w-4 mr-1" /> Upload Content
-                </Button>
-              </DialogTrigger>
+              <VerifiedActions fallbackMessage="You need to be a verified trainer to upload content.">
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <Plus className="h-4 w-4 mr-1" /> Upload Content
+                  </Button>
+                </DialogTrigger>
+              </VerifiedActions>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Upload Content</DialogTitle>

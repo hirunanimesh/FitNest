@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue} from '@/components/ui/select';
 import { useTrainerData } from '@/app/dashboard/trainer/context/TrainerContext';
 import { AddPlan, UpdatePlan, DeletePlan,uploadToCloudinary } from '@/lib/api';
+import VerifiedActions from '@/components/VerifiedActions';
 
 // Extend Plan interface
 interface Plan {
@@ -187,11 +188,13 @@ const EditPlan = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700">
-          <Edit className="h-4 w-4 mr-1" /> Edit
-        </Button>
-      </DialogTrigger>
+      <VerifiedActions fallbackMessage="You need to be a verified trainer to edit plans.">
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700">
+            <Edit className="h-4 w-4 mr-1" /> Edit
+          </Button>
+        </DialogTrigger>
+      </VerifiedActions>
       <DialogContent className="sm:max-w-[500px] text-white bg-gray-800">
         <DialogHeader>
           <DialogTitle>Edit Plan</DialogTitle>
@@ -358,12 +361,14 @@ const CreatePlan = ({ onAddPlan }: { onAddPlan: (payload: any) => Promise<void> 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Plan
-        </Button>
-      </DialogTrigger>
+      <VerifiedActions fallbackMessage="You need to be a verified trainer to create workout and diet plans.">
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Plan
+          </Button>
+        </DialogTrigger>
+      </VerifiedActions>
       <DialogContent className="sm:max-w-[500px] bg-gray-800 text-white border-gray-600 flex-1">
         <DialogHeader>
           <DialogTitle>Create New Plan</DialogTitle>
@@ -538,15 +543,17 @@ const WorkoutAndDietPlans = () => {
                     {/* Action buttons - always at bottom */}
                     <div className="flex flex-col sm:flex-row gap-2 mt-auto pt-2">
                       <EditPlan plan={plan} onUpdatePlan={handleUpdatePlan} />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700 transition-all duration-200 flex-1 sm:flex-none"
-                        onClick={() => handleDeletePlan(planId)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
+                      <VerifiedActions fallbackMessage="You need to be a verified trainer to delete plans.">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700 transition-all duration-200 flex-1 sm:flex-none"
+                          onClick={() => handleDeletePlan(planId)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </VerifiedActions>
                     </div>
                   </div>
                 </Card>

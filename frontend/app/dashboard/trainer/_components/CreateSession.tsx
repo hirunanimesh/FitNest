@@ -8,6 +8,7 @@ import { Plus } from 'lucide-react';
 import { AddSession } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
+import VerifiedActions from '@/components/VerifiedActions';
 
 interface Session {
   session_id?: number;
@@ -138,16 +139,18 @@ const CreateSession = () => {
   return (
     <div>
       <Dialog open={isSessionDialogOpen} onOpenChange={setIsSessionDialogOpen}>
-        <DialogTrigger asChild>
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-xs px-1 sm:px-2 md:px-3 h-7 sm:h-8 md:h-9 w-full sm:w-auto"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Create New Session
-          </Button>
-        </DialogTrigger>
+        <VerifiedActions fallbackMessage="You need to be a verified trainer to create sessions.">
+          <DialogTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs px-1 sm:px-2 md:px-3 h-7 sm:h-8 md:h-9 w-full sm:w-auto"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Create New Session
+            </Button>
+          </DialogTrigger>
+        </VerifiedActions>
         <DialogContent className='bg-gray-800 text-white max-w-md sm:max-w-lg md:max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl">Create New Session</DialogTitle>
