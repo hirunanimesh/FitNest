@@ -20,6 +20,7 @@ import SessionPayment from './controllers/stripeController/session-payment.js';
 import releaseSessionHandler from './controllers/stripeController/release-session.js';
 import stripeWebhook from './controllers/stripeController/webhook.js';
 import successSessionHandler from './controllers/stripeController/success-session.js';
+import systemRevenue from './controllers/stripeController/system-revenue.js';
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.get('/sessionpayment/cancel', releaseSessionHandler)
 // success handler to finalize booking and redirect
 app.get('/sessionpayment/success', successSessionHandler)
 app.post('/webhook', stripeWebhook)
+app.get('/getsystemrevenue',systemRevenue )
 
 GymPlanCreatedConsumer()
 GymPlanDeletedConsumer()
