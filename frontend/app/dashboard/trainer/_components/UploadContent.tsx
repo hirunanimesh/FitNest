@@ -27,13 +27,13 @@ const UploadContent = () => {
   return (
     <div>
       <Dialog open={isContentDialogOpen} onOpenChange={setIsContentDialogOpen}>
-              <DialogTrigger asChild>
-                <VerifiedActions fallbackMessage="You need to be a verified trainer to upload content.">
+              <VerifiedActions fallbackMessage="You need to be a verified trainer to upload content.">
+                <DialogTrigger asChild>
                   <Button size="sm" variant="outline">
                     <Plus className="h-4 w-4 mr-1" /> Upload Content
                   </Button>
-                </VerifiedActions>
-              </DialogTrigger>
+                </DialogTrigger>
+              </VerifiedActions>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Upload Content</DialogTitle>

@@ -139,8 +139,8 @@ const CreateSession = () => {
   return (
     <div>
       <Dialog open={isSessionDialogOpen} onOpenChange={setIsSessionDialogOpen}>
-        <DialogTrigger asChild>
-          <VerifiedActions fallbackMessage="You need to be a verified trainer to create sessions.">
+        <VerifiedActions fallbackMessage="You need to be a verified trainer to create sessions.">
+          <DialogTrigger asChild>
             <Button
               size="sm"
               variant="outline"
@@ -149,8 +149,8 @@ const CreateSession = () => {
               <Plus className="h-3 w-3 mr-1" />
               Create New Session
             </Button>
-          </VerifiedActions>
-        </DialogTrigger>
+          </DialogTrigger>
+        </VerifiedActions>
         <DialogContent className='bg-gray-800 text-white max-w-md sm:max-w-lg md:max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl">Create New Session</DialogTitle>

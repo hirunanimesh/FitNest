@@ -188,13 +188,13 @@ const EditPlan = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <VerifiedActions fallbackMessage="You need to be a verified trainer to edit plans.">
+      <VerifiedActions fallbackMessage="You need to be a verified trainer to edit plans.">
+        <DialogTrigger asChild>
           <Button size="sm" variant="outline" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700">
             <Edit className="h-4 w-4 mr-1" /> Edit
           </Button>
-        </VerifiedActions>
-      </DialogTrigger>
+        </DialogTrigger>
+      </VerifiedActions>
       <DialogContent className="sm:max-w-[500px] text-white bg-gray-800">
         <DialogHeader>
           <DialogTitle>Edit Plan</DialogTitle>
@@ -361,14 +361,14 @@ const CreatePlan = ({ onAddPlan }: { onAddPlan: (payload: any) => Promise<void> 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <VerifiedActions fallbackMessage="You need to be a verified trainer to create workout and diet plans.">
+      <VerifiedActions fallbackMessage="You need to be a verified trainer to create workout and diet plans.">
+        <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Plus className="h-4 w-4 mr-2" />
             Add New Plan
           </Button>
-        </VerifiedActions>
-      </DialogTrigger>
+        </DialogTrigger>
+      </VerifiedActions>
       <DialogContent className="sm:max-w-[500px] bg-gray-800 text-white border-gray-600 flex-1">
         <DialogHeader>
           <DialogTitle>Create New Plan</DialogTitle>
