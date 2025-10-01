@@ -132,7 +132,7 @@ export default class AdminService {
   const bannedInsert = {
     user_id: banned_data.user_id,
     reason: banned_data.reason,
-    type: banned_data.type
+    target_type: banned_data.target_type
   }
 
   // 1️⃣ Insert into banned table

@@ -103,8 +103,13 @@ export default function UserInquiries() {
   if (!inquiry.bannedUserId) return
 
   try {
-    // Pass inquiry.id so backend can mark inquiry as resolved
-    await BannedUsers(inquiry.bannedUserId, banReason, Number(inquiry.id))
+    // Pass inquiry.targetType so backend knows whether it's trainer or gym
+    await BannedUsers(
+      inquiry.bannedUserId,
+      banReason,
+      inquiry.targetType,
+      Number(inquiry.id)
+    )
 
     // Update frontend immediately
     setInquiries((prev) =>
@@ -118,7 +123,6 @@ export default function UserInquiries() {
     console.error("Failed to ban user", err)
   }
 }
-
 
   const handleUpdateStatus = async (inquiryId: string, newStatus: UserInquiry["status"]) => {
   try {
