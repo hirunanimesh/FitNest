@@ -10,6 +10,7 @@ import {
 } from '../services/chat.service.js';
 import Joi from 'joi';
 import AdminService from '../services/admin.service.js';
+import EmailService from '../services/EmailService.js';
 
 // Validation schemas
 const uploadDocumentsSchema = Joi.object({
@@ -349,11 +350,50 @@ export async function handleVerificationState(req, res) {
     const { id, state, type, entityId } = req.params;
 
     try {
+        // Update verification state and get user details
         const result = await AdminService.handleVerificationState(id, state, type, entityId);
+        
+        // Send email notification if user details are available
+        if (result.userDetails && result.userDetails.email) {
+            try {
+                const emailService = new EmailService();
+                const { email, name, entityName, entityType } = result.userDetails;
+                
+                if (state === 'Approved') {
+                    console.log(`Sending approval email to ${email} for ${entityType}`);
+                    await emailService.sendVerificationApprovedEmail(
+                        email, 
+                        name, 
+                        entityType, 
+                        entityName
+                    );
+                    console.log('Approval email sent successfully');
+                } else if (state === 'Rejected') {
+                    console.log(`Sending rejection email to ${email} for ${entityType}`);
+                    // You can add a reason parameter from req.body if needed
+                    const reason = req.body?.reason || null;
+                    await emailService.sendVerificationRejectedEmail(
+                        email, 
+                        name, 
+                        entityType, 
+                        entityName, 
+                        reason
+                    );
+                    console.log('Rejection email sent successfully');
+                }
+            } catch (emailError) {
+                console.error('Failed to send email notification:', emailError);
+                // Don't fail the entire request if email fails - just log the error
+                // The verification state update was successful
+            }
+        } else {
+            console.log('No user details available for email notification');
+        }
+
         res.status(200).json({
             success: true,
             message: 'Verification state updated successfully',
-            data: result
+            data: result.verificationUpdate
         });
     } catch (error) {
         console.error('Error in handleVerificationState controller:', error);
