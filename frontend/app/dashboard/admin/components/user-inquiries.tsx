@@ -83,7 +83,7 @@ export default function UserInquiries() {
               submittedAt: item.created_at ?? new Date().toISOString(),
               status: ((item.status as string) || "pending").toLowerCase() as UserInquiry["status"],
               priority: "medium",
-              targetBanned: false,
+              targetBanned: Boolean(item.banned),
               bannedUserId,
             }
           }),
