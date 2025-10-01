@@ -452,4 +452,4 @@ export async function updateinquirydetails(req, res) {
         console.error('Error updating inquiry:', error);
         return res.status(500).json({ success: false, message: 'Internal server error', error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong' });
     }
-}
+};

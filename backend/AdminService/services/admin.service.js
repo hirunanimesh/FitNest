@@ -128,42 +128,64 @@ export default class AdminService {
     }
 
     static async BannedUsers(banned_data) {
-        const { data, error } = await supabase
-          .from('banned')
-          .insert(banned_data)
-          .select();
-      
-        if (error) {
-          throw new Error(error.message);
-        }
-      
-    // Also update trainer or gym table
-      if (banned_data.type === 'trainer') {
-        const { error: trainerError } = await supabase
-          .from('trainer')
-          .update({ verified: false })   // or verified: false / status: "banned"
-          .eq('user_id', banned_data.user_id);
+  // only pick the fields that exist in the "banned" table
+  const bannedInsert = {
+    user_id: banned_data.user_id,
+    reason: banned_data.reason,
+    type: banned_data.type
+  }
 
-        if (trainerError) {
-          console.error('Error updating trainer banned state:', trainerError);
-        }
-      } else if (banned_data.type === 'gym') {
-        const { error: gymError } = await supabase
-          .from('gym')
-          .update({ verified: false })   
-          .eq('user_id', banned_data.user_id);
+  // 1️⃣ Insert into banned table
+  const { data, error } = await supabase
+    .from('banned')
+    .insert(bannedInsert)
+    .select();
 
-        if (gymError) {
-          console.error('Error updating gym banned state:', gymError);
-        }
-      }
+  if (error) {
+    throw new Error(error.message);
+  }
 
-      return data[0]; 
+  // 2️⃣ Update trainer or gym table (optional, e.g., mark verified false)
+  if (banned_data.type === 'trainer') {
+    const { error: trainerError } = await supabase
+      .from('trainer')
+      .update({ verified: false })  
+      .eq('user_id', banned_data.user_id);
+
+    if (trainerError) {
+      console.error('Error updating trainer banned state:', trainerError);
     }
-  static async  updateUserInquiries(inquiryId, state) {
+  } else if (banned_data.type === 'gym') {
+    const { error: gymError } = await supabase
+      .from('gym')
+      .update({ verified: false })  
+      .eq('user_id', banned_data.user_id);
+
+    if (gymError) {
+      console.error('Error updating gym banned state:', gymError);
+    }
+  }
+
+  // 3️⃣ Update the Reports table for this inquiry (use inquiryId separately)
+  if (banned_data.inquiryId) {
+    const { error: reportError } = await supabase
+      .from('Reports')
+      .update({ banned: true, status: 'resolved' })
+      .eq('id', Number(banned_data.inquiryId));
+
+    if (reportError) {
+      console.error('Error updating report banned state:', reportError);
+    }
+  }
+
+  return data[0]; 
+}
+
+
+  static async  updateUserInquiries(inquiryId, status) {
       const { data, error } = await supabase
         .from('Reports')
-        .update(state)
+        .update(status)
         .eq('id', inquiryId)
         .select();
     

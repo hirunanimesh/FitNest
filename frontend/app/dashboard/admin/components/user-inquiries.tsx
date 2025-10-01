@@ -65,6 +65,7 @@ export default function UserInquiries() {
               targetName = res?.data?.gym?.gym_name ?? targetName
               targetAvatar = res?.data?.gym?.profile_img
               bannedUserId = res?.data?.gym?.user_id ?? null
+              console.log("gym details", bannedUserId)
             }
 
             return {
@@ -80,7 +81,7 @@ export default function UserInquiries() {
               subject: item.subject ?? "",
               description: item.description ?? "",
               submittedAt: item.created_at ?? new Date().toISOString(),
-              status: ((item.state as string) || "pending").toLowerCase() as UserInquiry["status"],
+              status: ((item.status as string) || "pending").toLowerCase() as UserInquiry["status"],
               priority: "medium",
               targetBanned: false,
               bannedUserId,
@@ -99,22 +100,25 @@ export default function UserInquiries() {
   }, [])
 
   const handleBanUser = async (inquiry: UserInquiry) => {
-    if (!inquiry.bannedUserId) return
+  if (!inquiry.bannedUserId) return
 
-    try {
-      await BannedUsers(inquiry.bannedUserId, banReason)
-      
-      setInquiries((prev) =>
-        prev.map((i) =>
-          i.id === inquiry.id ? { ...i, targetBanned: true, status: "resolved" } : i,
-        ),
-      )
-      setBanDialogOpen(false)
-      setBanReason("")
-    } catch (err) {
-      console.error("Failed to ban user", err)
-    }
+  try {
+    // Pass inquiry.id so backend can mark inquiry as resolved
+    await BannedUsers(inquiry.bannedUserId, banReason, Number(inquiry.id))
+
+    // Update frontend immediately
+    setInquiries((prev) =>
+      prev.map((i) =>
+        i.id === inquiry.id ? { ...i, targetBanned: true, status: "resolved" } : i,
+      ),
+    )
+    setBanDialogOpen(false)
+    setBanReason("")
+  } catch (err) {
+    console.error("Failed to ban user", err)
   }
+}
+
 
   const handleUpdateStatus = async (inquiryId: string, newStatus: UserInquiry["status"]) => {
   try {
@@ -368,10 +372,10 @@ export default function UserInquiries() {
                     onChange={(e) => handleUpdateStatus(inquiry.id, e.target.value as UserInquiry["status"])}
                     className="px-3 py-2 bg-gray-700 border-gray-600 border rounded text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-0"
                   >
-                    <option value="Pending" className="bg-gray-800 text-white">Pending</option>
-                    <option value="Reviewed" className="bg-gray-800 text-white">Reviewed</option>
-                    <option value="Resolved" className="bg-gray-800 text-white">Resolved</option>
-                    <option value="Dismissed" className="bg-gray-800 text-white">Dismissed</option>
+                    <option value="pending" className="bg-gray-800 text-white">Pending</option>
+                    <option value="reviewed" className="bg-gray-800 text-white">Reviewed</option>
+                    <option value="resolved" className="bg-gray-800 text-white">Resolved</option>
+                    <option value="dismissed" className="bg-gray-800 text-white">Dismissed</option>
                   </select>
 
                   {!inquiry.targetBanned && (
