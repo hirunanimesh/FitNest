@@ -370,6 +370,167 @@ This is an automated message. Please do not reply to this email.
 If you have questions, contact us at support@fitnest.com
         `;
     }
+
+    /**
+     * Send promotional email to nearby customers about new gym plan
+     * @param {string} customerEmail - Customer's email
+     * @param {string} customerName - Customer's name
+     * @param {string} gymName - Name of the gym
+     * @param {string} planName - Name of the new plan
+     * @param {string} planPrice - Price of the plan
+     * @param {string} planDuration - Duration of the plan
+     * @param {number} distanceKm - Distance from customer to gym in km
+     */
+    async sendPromotionalEmail(customerEmail, customerName, gymName, planName, planPrice, planDuration, distanceKm) {
+        try {
+            console.log('Sending promotional email to:', customerEmail);
+
+            const msg = {
+                to: customerEmail,
+                from: this.fromEmail,
+                subject: `🏋️ New Gym Plan Alert - ${planName} at ${gymName} (Only ${distanceKm}km away!)`,
+                html: this.getPromotionalTemplate(customerName, gymName, planName, planPrice, planDuration, distanceKm),
+                text: this.getPromotionalText(customerName, gymName, planName, planPrice, planDuration, distanceKm)
+            };
+
+            const response = await sgMail.send(msg);
+            console.log('Promotional email sent successfully:', response[0].statusCode);
+            return { success: true, messageId: response[0].headers['x-message-id'] };
+        } catch (error) {
+            console.error('Error sending promotional email:', error);
+            if (error.response && error.response.body && error.response.body.errors) {
+                console.error('SendGrid detailed error:', JSON.stringify(error.response.body.errors, null, 2));
+            }
+            throw new Error(`Failed to send promotional email: ${error.message}`);
+        }
+    }
+
+    /**
+     * HTML template for promotional email
+     */
+    getPromotionalTemplate(customerName, gymName, planName, planPrice, planDuration, distanceKm) {
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>New Gym Plan Near You - FitNest</title>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                .promo-icon { font-size: 48px; margin-bottom: 20px; }
+                .plan-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff6b6b; }
+                .distance-badge { background: #2ecc71; color: white; padding: 8px 15px; border-radius: 20px; display: inline-block; margin: 10px 0; font-weight: bold; }
+                .price-highlight { font-size: 24px; color: #ff6b6b; font-weight: bold; }
+                .cta-button { display: inline-block; background: #ff6b6b; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; text-transform: uppercase; }
+                .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+                .benefits { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                .benefit-item { display: flex; align-items: center; margin: 10px 0; }
+                .benefit-icon { font-size: 20px; margin-right: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="promo-icon">🎯</div>
+                <h1>New Gym Plan Near You!</h1>
+                <p>Don't miss out on this amazing opportunity</p>
+            </div>
+            
+            <div class="content">
+                <h2>Hi ${customerName}!</h2>
+                
+                <p>Great news! <strong>${gymName}</strong> just launched a new fitness plan that's perfect for you, and it's super close to your location!</p>
+                
+                <div class="distance-badge">📍 Only ${distanceKm}km away from you!</div>
+                
+                <div class="plan-details">
+                    <h3>🏋️ ${planName}</h3>
+                    <div class="price-highlight">${planPrice}</div>
+                    <p><strong>Duration:</strong> ${planDuration}</p>
+                </div>
+                
+                <div class="benefits">
+                    <h3>Why choose this plan?</h3>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">💪</span>
+                        <span>Professional trainers and equipment</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">📍</span>
+                        <span>Conveniently located near you</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">⏰</span>
+                        <span>Flexible schedule options</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">🎯</span>
+                        <span>Achieve your fitness goals faster</span>
+                    </div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <a href="${process.env.FRONTEND_URL || 'https://fitnest.com'}/plans" class="cta-button">
+                        View Plan Details & Subscribe
+                    </a>
+                </div>
+                
+                <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                    <em>Limited time offer! Don't wait, start your fitness journey today.</em>
+                </p>
+            </div>
+            
+            <div class="footer">
+                <p>Best regards,<br>The FitNest Team</p>
+                <p>
+                    <a href="${process.env.FRONTEND_URL || 'https://fitnest.com'}/unsubscribe" style="color: #666;">Unsubscribe</a> | 
+                    <a href="${process.env.FRONTEND_URL || 'https://fitnest.com'}/contact" style="color: #666;">Contact Us</a>
+                </p>
+            </div>
+        </body>
+        </html>
+        `;
+    }
+
+    /**
+     * Plain text template for promotional email
+     */
+    getPromotionalText(customerName, gymName, planName, planPrice, planDuration, distanceKm) {
+        return `
+🎯 NEW GYM PLAN NEAR YOU!
+
+Hi ${customerName}!
+
+Great news! ${gymName} just launched a new fitness plan that's perfect for you, and it's super close to your location!
+
+📍 DISTANCE: Only ${distanceKm}km away from you!
+
+🏋️ PLAN DETAILS:
+Plan Name: ${planName}
+Price: ${planPrice}
+Duration: ${planDuration}
+
+Why choose this plan?
+💪 Professional trainers and equipment
+📍 Conveniently located near you
+⏰ Flexible schedule options
+🎯 Achieve your fitness goals faster
+
+Ready to get started?
+Visit: ${process.env.FRONTEND_URL || 'https://fitnest.com'}/plans
+
+Limited time offer! Don't wait, start your fitness journey today.
+
+Best regards,
+The FitNest Team
+
+---
+This is a promotional email. You can unsubscribe at any time.
+Visit: ${process.env.FRONTEND_URL || 'https://fitnest.com'}/unsubscribe
+        `;
+    }
 }
 
 export default GymPlanEmailService;
