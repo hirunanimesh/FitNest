@@ -4,9 +4,10 @@ export interface BackendMemberData {
 }
 
 export interface ChartMemberData {
-  month: string; // Format: "Sep"
+  month: string; // Short month label e.g. "Sep"
   members: number;
   growth: number;
+  dateKey: string; // Original YYYY-MM for filtering/recalc
 }
 
 /**
@@ -40,7 +41,8 @@ export const transformMemberData = (backendData: BackendMemberData[]): ChartMemb
     return {
       month: formatMonthName(item.month),
       members: item.user_count,
-      growth: growth
+      growth: growth,
+      dateKey: item.month
     };
   });
 };

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from "recharts"
@@ -58,7 +58,26 @@ export function DashboardCharts() {
   }
 
   // Calculate current growth from real data
-  const currentGrowth = memberData.length > 0 ? memberData[memberData.length - 1].growth : 0
+  // Filter member data locally (in case backend returns a superset) and recompute growth within the filtered window
+  const filteredMemberData = useMemo(()=>{
+    if (!dateRange.startDate || !dateRange.endDate) return memberData
+    // dateRange values are YYYY-MM
+    const start = new Date(dateRange.startDate + '-01')
+    const end = new Date(dateRange.endDate + '-01')
+    const within = memberData.filter(d => {
+      if(!('dateKey' in d)) return true // safety fallback
+      const dt = new Date((d as any).dateKey + '-01')
+      return dt >= start && dt <= end
+    })
+    // Recompute growth relative to previous item inside filtered range
+    return within.map((d, idx) => {
+      const prevMembers = idx>0 ? within[idx-1].members : d.members
+      const growth = prevMembers === 0 ? 0 : parseFloat(((d.members - prevMembers)/prevMembers*100).toFixed(1))
+      return { ...d, growth }
+    })
+  }, [memberData, dateRange.startDate, dateRange.endDate])
+
+  const currentGrowth = filteredMemberData.length > 0 ? filteredMemberData[filteredMemberData.length - 1].growth : 0
   const [revenueData,setRevenueData] = useState<{month:string; revenue:number}[]>([])
   const [revenueLoading,setRevenueLoading] = useState(true)
   const [revenueError,setRevenueError] = useState<string|null>(null)
@@ -82,19 +101,73 @@ export function DashboardCharts() {
 
   useEffect(()=>{ fetchRevenue() },[])
 
-  const revenueGrowth = revenueData.length >= 2 ? (
-    ((revenueData[revenueData.length - 1].revenue - revenueData[revenueData.length - 2].revenue) /
-      (revenueData[revenueData.length - 2].revenue||1)) * 100
+  // Apply the same date range filter to revenue data (local filtering)
+  const filteredRevenueData = useMemo(()=>{
+    if (!dateRange.startDate || !dateRange.endDate) return revenueData;
+    const start = new Date(dateRange.startDate);
+    const end = new Date(dateRange.endDate);
+    // Assume data is for current year only
+    return revenueData.filter(d => {
+      const monthIndex = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(d.month);
+      if (monthIndex === -1) return false;
+      const monthDate = new Date(new Date().getFullYear(), monthIndex, 1);
+      return monthDate >= start && monthDate <= end;
+    });
+  }, [revenueData, dateRange.startDate, dateRange.endDate]);
+
+  const revenueGrowth = filteredRevenueData.length >= 2 ? (
+    ((filteredRevenueData[filteredRevenueData.length - 1].revenue - filteredRevenueData[filteredRevenueData.length - 2].revenue) /
+      (filteredRevenueData[filteredRevenueData.length - 2].revenue||1)) * 100
   ).toFixed(1) : '0.0'
 
-  const handleDownloadMemberChart = () => {
-    // PDF generation logic will be implemented here
-    console.log("Download Member Growth Chart PDF")
+  // Refs for chart capture
+  const memberChartRef = useRef<HTMLDivElement|null>(null)
+  const revenueChartRef = useRef<HTMLDivElement|null>(null)
+  const [exporting,setExporting] = useState<{member:boolean; revenue:boolean}>({member:false,revenue:false})
+
+  const captureElementToPdf = async (el: HTMLElement, fileName: string) => {
+    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf') as any
+    ])
+    const canvas = await html2canvas(el, { backgroundColor: '#111827', scale: 2 })
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    // Fit keeping aspect ratio
+    const imgWidth = canvas.width
+    const imgHeight = canvas.height
+    const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight)
+    const renderWidth = imgWidth * ratio
+    const renderHeight = imgHeight * ratio
+    const offsetX = (pageWidth - renderWidth)/2
+    const offsetY = (pageHeight - renderHeight)/2
+    pdf.setFillColor('#111827')
+    pdf.rect(0,0,pageWidth,pageHeight,'F')
+    pdf.addImage(imgData,'PNG', offsetX, offsetY, renderWidth, renderHeight)
+    const generatedName = fileName.replace(/\s+/g,'_').toLowerCase()+`_${new Date().toISOString().slice(0,10)}.pdf`
+    pdf.save(generatedName)
   }
 
-  const handleDownloadRevenueChart = () => {
-    // PDF generation logic will be implemented here
-    console.log("Download Revenue Chart PDF")
+  const handleDownloadMemberChart = async () => {
+    if (!memberChartRef.current) return
+    try {
+      setExporting(s=>({...s,member:true}))
+      await captureElementToPdf(memberChartRef.current, 'Member Growth Chart')
+    } catch(e){
+      console.error('Failed to export member chart', e)
+    } finally { setExporting(s=>({...s,member:false})) }
+  }
+
+  const handleDownloadRevenueChart = async () => {
+    if (!revenueChartRef.current) return
+    try {
+      setExporting(s=>({...s,revenue:true}))
+      await captureElementToPdf(revenueChartRef.current, 'Monthly Revenue Chart')
+    } catch(e){
+      console.error('Failed to export revenue chart', e)
+    } finally { setExporting(s=>({...s,revenue:false})) }
   }
 
   return (
@@ -142,7 +215,7 @@ export function DashboardCharts() {
       <div className="hidden lg:grid lg:grid-cols-2 gap-6">
         {/* Member Growth Chart */}
         <div className="space-y-3">
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-gray-800 border-gray-700" ref={memberChartRef}>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-white flex items-center gap-2">
@@ -151,7 +224,7 @@ export function DashboardCharts() {
                   {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 </CardTitle>
                 <CardDescription className="text-gray-400">
-                  Total members over time ({memberData.length} data points)
+                  Total members over time ({filteredMemberData.length} data points)
                 </CardDescription>
               </div>
               <div className="flex items-center gap-1 text-sm">
@@ -177,7 +250,7 @@ export function DashboardCharts() {
                     <p className="text-gray-400">Loading member data...</p>
                   </div>
                 </div>
-              ) : memberData.length === 0 ? (
+              ) : filteredMemberData.length === 0 ? (
                 <div className="h-[300px] flex items-center justify-center">
                   <div className="text-center">
                     <AlertCircle className="w-8 h-8 text-gray-500 mx-auto mb-2" />
@@ -195,7 +268,7 @@ export function DashboardCharts() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={memberData}>
+                    <AreaChart data={filteredMemberData}>
                       <defs>
                         <linearGradient id="memberGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
@@ -221,17 +294,17 @@ export function DashboardCharts() {
           </Card>
           <button
             onClick={handleDownloadMemberChart}
-            disabled={isLoading || memberData.length === 0}
+            disabled={isLoading || memberData.length === 0 || exporting.member}
             className="w-30 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
           >
-            <Download className="w-4 h-4" />
-            Download PDF
+            {exporting.member ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {exporting.member ? 'Generating...' : 'Download PDF'}
           </button>
         </div>
 
         {/* Revenue Chart */}
         <div className="space-y-3">
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-gray-800 border-gray-700" ref={revenueChartRef}>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-white flex items-center gap-2">
@@ -271,10 +344,10 @@ export function DashboardCharts() {
                 <ResponsiveContainer width="100%" height="100%">
                   {revenueLoading ? (
                     <div className="flex items-center justify-center text-gray-400 text-sm">Loading revenue...</div>
-                  ) : revenueData.length === 0 ? (
+                  ) : filteredRevenueData.length === 0 ? (
                     <div className="flex items-center justify-center text-gray-500 text-sm">No revenue data</div>
                   ) : (
-                  <BarChart data={revenueData}>
+                  <BarChart data={filteredRevenueData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} />
                     <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
@@ -294,10 +367,11 @@ export function DashboardCharts() {
           </Card>
           <button
             onClick={handleDownloadRevenueChart}
-            className="w-30 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
+            disabled={revenueLoading || filteredRevenueData.length===0 || exporting.revenue}
+            className="w-30 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
           >
-            <Download className="w-4 h-4" />
-            Download PDF
+            {exporting.revenue ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {exporting.revenue ? 'Generating...' : 'Download PDF'}
           </button>
         </div>
       </div>
@@ -307,7 +381,7 @@ export function DashboardCharts() {
         <div className="grid grid-cols-1 gap-4">
           <button
             onClick={handleDownloadMemberChart}
-            disabled={isLoading || memberData.length === 0}
+            disabled={isLoading || memberData.length === 0 || exporting.member}
             className="w-full bg-gray-800 hover:bg-gray-700 disabled:bg-gray-700 disabled:cursor-not-allowed border border-gray-700 text-white px-4 py-6 rounded-lg flex items-center justify-between transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -318,25 +392,26 @@ export function DashboardCharts() {
                   {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 </div>
                 <div className="text-sm text-gray-400">
-                  {isLoading ? "Loading..." : `Download PDF report (${memberData.length} data points)`}
+                  {isLoading ? "Loading..." : exporting.member ? 'Generating PDF...' : `Download PDF report (${memberData.length} data points)`}
                 </div>
               </div>
             </div>
-            <Download className="w-5 h-5 text-red-400" />
+            {exporting.member ? <Loader2 className="w-5 h-5 animate-spin text-red-400" /> : <Download className="w-5 h-5 text-red-400" />}
           </button>
           
           <button
             onClick={handleDownloadRevenueChart}
-            className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white px-4 py-6 rounded-lg flex items-center justify-between transition-colors"
+            disabled={revenueLoading || filteredRevenueData.length===0 || exporting.revenue}
+            className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-4 py-6 rounded-lg flex items-center justify-between transition-colors"
           >
             <div className="flex items-center gap-3">
               <DollarSign className="w-6 h-6 text-red-400" />
               <div className="text-left">
                 <div className="font-semibold">Revenue Chart</div>
-                <div className="text-sm text-gray-400">Download PDF report</div>
+                <div className="text-sm text-gray-400">{exporting.revenue ? 'Generating PDF...' : 'Download PDF report'}</div>
               </div>
             </div>
-            <Download className="w-5 h-5 text-red-400" />
+            {exporting.revenue ? <Loader2 className="w-5 h-5 animate-spin text-red-400" /> : <Download className="w-5 h-5 text-red-400" />}
           </button>
         </div>
       </div>

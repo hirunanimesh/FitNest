@@ -263,7 +263,7 @@ const GymsPage = () => {
         {/* Gyms Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {gyms.map((gym) => (
-            <Card key={gym.gym_id} className="bg-gray-800/50 backdrop-blur-sm border-gray-700 hover:border-red-500/50 transition-all duration-300 group">
+            <Card key={gym.gym_id} className="bg-gray-800/50 backdrop-blur-sm border-gray-700 hover:border-red-500/50 transition-all duration-300 group h-full flex flex-col">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -282,44 +282,56 @@ const GymsPage = () => {
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                {/* Description */}
-                <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                  {gym.description || "A great place to achieve your fitness goals with professional guidance and modern equipment."}
-                </CardDescription>
+              <CardContent className="flex flex-col flex-grow">
+                <div className="space-y-4 flex-grow">
+                  {/* Description */}
+                  <CardDescription 
+                    className="text-gray-300 text-sm leading-relaxed overflow-hidden"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical' as const,
+                      maxHeight: '4.5em' // Fallback for 3 lines
+                    }}
+                  >
+                    {gym.description || "A great place to achieve your fitness goals with professional guidance and modern equipment."}
+                  </CardDescription>
 
-                {/* Contact Info */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-400 text-sm">
-                    <MapPin className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{gym.address}</span>
-                  </div>
-                  {gym.contact_no && (
+                  {/* Contact Info */}
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2 text-gray-400 text-sm">
-                      <Phone className="h-4 w-4 flex-shrink-0" />
-                      <span>{gym.contact_no}</span>
+                      <MapPin className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{gym.address}</span>
                     </div>
-                  )}
+                    {gym.contact_no && (
+                      <div className="flex items-center gap-2 text-gray-400 text-sm">
+                        <Phone className="h-4 w-4 flex-shrink-0" />
+                        <span>{gym.contact_no}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Send Request Button */}
-                <Button
-                  onClick={() => sendRequest(gym.gym_id)}
-                  disabled={sendingRequests.has(gym.gym_id)}
-                  className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 transition-all duration-300 shadow-lg hover:shadow-red-500/25"
-                >
-                  {sendingRequests.has(gym.gym_id) ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Send Request
-                    </>
-                  )}
-                </Button>
+                {/* Send Request Button - Always at bottom */}
+                <div className="mt-4">
+                  <Button
+                    onClick={() => sendRequest(gym.gym_id)}
+                    disabled={sendingRequests.has(gym.gym_id)}
+                    className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 transition-all duration-300 shadow-lg hover:shadow-red-500/25"
+                  >
+                    {sendingRequests.has(gym.gym_id) ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Send Request
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

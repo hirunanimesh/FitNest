@@ -64,6 +64,20 @@ export async function getgymbyid(gymId) {
         if (error) {
         throw new Error(error.message);
         }
+
+        // Parse documents from JSON string to array
+        if (data.documents) {
+          try {
+            data.documents = typeof data.documents === 'string' 
+              ? JSON.parse(data.documents) 
+              : data.documents;
+          } catch (e) {
+            console.warn('Could not parse documents JSON:', e);
+            data.documents = [];
+          }
+        } else {
+          data.documents = [];
+        }
         
         return data; // Return the gym data
 }
@@ -82,11 +96,30 @@ export async function getgymbyuserid(userId) {
   if (error) {
   throw new Error(error.message);
   }
+
+  // Parse documents from JSON string to array
+  if (data.documents) {
+    try {
+      data.documents = typeof data.documents === 'string' 
+        ? JSON.parse(data.documents) 
+        : data.documents;
+    } catch (e) {
+      console.warn('Could not parse documents JSON:', e);
+      data.documents = [];
+    }
+  } else {
+    data.documents = [];
+  }
   
   return data; // Return the gym data
 }
 
 export async function updategymdetails(gymId, gymData) {
+  // Handle documents as JSON if provided
+  if (gymData.documents && Array.isArray(gymData.documents)) {
+    gymData.documents = JSON.stringify(gymData.documents);
+  }
+
   const { data, error } = await supabase
     .from('gym')
     .update(gymData)
@@ -95,6 +128,18 @@ export async function updategymdetails(gymId, gymData) {
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  // Parse documents back to array for response
+  if (data[0] && data[0].documents) {
+    try {
+      data[0].documents = typeof data[0].documents === 'string' 
+        ? JSON.parse(data[0].documents) 
+        : data[0].documents;
+    } catch (e) {
+      console.warn('Could not parse documents JSON:', e);
+      data[0].documents = [];
+    }
   }
 
   return data[0]; // Return updated gym
