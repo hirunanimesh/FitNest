@@ -145,7 +145,7 @@ export const getGymById = async (req, res) => {
         if (gyms) {
         res.status(200).json({ message: "Gyms retrieved successfully", gyms });
         } else {
-        res.status(404).json({ message: "Gyms not found" });
+        res.status(200).json({ message: "Gyms not found", gyms: [] });
         }
     } catch (error) {
         console.error("Error retrieving gyms:", error);

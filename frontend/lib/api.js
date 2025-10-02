@@ -638,3 +638,19 @@ export const AddReport = async (customerId, targetId, targetType,report) => {
         throw error;
     }
 }
+
+export const UpdateGymProfile = async (gymId, gymData) => {
+    try {
+        const response = await axios.put(`${Base_URL}/api/gym/updategymdetails/${gymId}`, gymData);
+        return response.data;
+    } catch (error) {
+        console.error("Error updating gym profile:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to update gym profile");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+}

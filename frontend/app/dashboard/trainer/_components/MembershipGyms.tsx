@@ -7,6 +7,8 @@ import { useTrainerData } from '@/app/dashboard/trainer/context/TrainerContext';
 import { GetMembershipGyms } from '@/lib/api';
 import GymCard from '@/components/GymCard';
 import { GetGymDetails } from '@/api/user/route';
+import { Building2, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Define interfaces for type safety
 interface GymRequest {
@@ -127,7 +129,27 @@ export default function MembershipGyms() {
   }
 
   if (!items || items.length === 0) {
-    return <div className="py-8 text-gray-400 text-center">No membership gyms found.</div>;
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="max-w-md w-full bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-slate-700/60 rounded-2xl p-8 text-center shadow-xl backdrop-blur">
+          <div className="mx-auto mb-6 w-20 h-20 rounded-full bg-slate-800/70 flex items-center justify-center border border-slate-600/60">
+            <Building2 className="w-10 h-10 text-red-500" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">No Membership Gyms Yet</h3>
+          <p className="text-slate-400 text-sm leading-relaxed mb-6">
+            You haven't joined any gyms as a member. Send membership requests to gyms to collaborate, publish plans, and reach more users.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              onClick={() => router.push('/dashboard/trainer/gyms')}
+              className="bg-red-600 hover:bg-red-700 text-white gap-2"
+            >
+              <Search className="w-4 h-4" /> Explore Gyms
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

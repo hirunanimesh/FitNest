@@ -73,7 +73,6 @@ export async function getmembershipGyms(trainerId) {
   if (trainerId === undefined || trainerId === null) {
     throw new Error('trainerId is required');
   }
-
   const id = Number(trainerId);
   if (Number.isNaN(id)) {
     throw new Error('trainerId must be a valid number');

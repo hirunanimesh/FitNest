@@ -161,96 +161,73 @@ const GymProfile = () => {
         contact_no: string;
         description: string;
         profile_img?: string;
+        documents?: any;
       } = { ...formData };
       
-      // Handle profile image upload
-      let profileImgUrl = gymProfileData.profile_img;
+      // Handle profile image upload to Cloudinary
       if (newProfileImage?.file) {
-        const fileExt = newProfileImage.file.name.split('.').pop();
-        const fileName = `${userId}/profile_${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('gym-profiles')
-          .upload(fileName, newProfileImage.file, {
-            cacheControl: '3600',
-            upsert: true
-          });
-
-        if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
-        
-        const { data: publicUrlData } = supabase.storage
-          .from('gym-profiles')
-          .getPublicUrl(fileName);
-        
-        profileImgUrl = publicUrlData.publicUrl;
-        updateData.profile_img = profileImgUrl;
+        try {
+          const { uploadToCloudinary } = await import('@/lib/cloudinary');
+          const uploadResult = await uploadToCloudinary(newProfileImage.file, 'gym-profiles');
+          updateData.profile_img = uploadResult.url;
+        } catch (uploadError) {
+          throw new Error(`Image upload failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
+        }
       }
 
-      // Handle document uploads
+      // Handle document uploads to Cloudinary
       const uploadedDocs: Document[] = [];
       for (const doc of newDocuments) {
-        const fileExt = doc.file.name.split('.').pop();
-        const fileName = `${userId}/docs/${Date.now()}_${doc.type}`;
-        const { error: uploadError } = await supabase.storage
-          .from('gym-documents')
-          .upload(fileName, doc.file, {
-            cacheControl: '3600',
-            upsert: true
+        try {
+          const { uploadToCloudinary } = await import('@/lib/cloudinary');
+          const uploadResult = await uploadToCloudinary(doc.file, 'gym-documents');
+          uploadedDocs.push({
+            id: `doc_${Date.now()}_${Math.random()}`,
+            type: doc.type,
+            url: uploadResult.url
           });
-
-        if (uploadError) throw new Error(`Document upload failed: ${uploadError.message}`);
-        
-        const { data: publicUrlData } = supabase.storage
-          .from('gym-documents')
-          .getPublicUrl(fileName);
-        
-        uploadedDocs.push({
-          id: doc.id,
-          type: doc.type,
-          url: publicUrlData.publicUrl
-        });
+        } catch (uploadError) {
+          console.error(`Failed to upload document ${doc.type}:`, uploadError);
+          throw new Error(`Document upload failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
+        }
       }
 
-      // Handle document deletions
-      if (documentsToDelete.length > 0) {
-        const filesToDelete = documentsToDelete.map(docId => {
-          const doc = gymProfileData.documents.find(d => d.id === docId);
-          return doc?.url.split('/').pop();
-        }).filter((fileName): fileName is string => Boolean(fileName));
+      // Prepare final documents array
+      const finalDocuments = [
+        ...gymProfileData.documents.filter(doc => !documentsToDelete.includes(doc.id)),
+        ...uploadedDocs
+      ];
 
-        await supabase.storage
-          .from('gym-documents')
-          .remove(filesToDelete);
+      // Include documents in update data
+      updateData.documents = finalDocuments;
+
+      // Update database via API
+      if (!gymProfileData.gym_id) {
+        throw new Error("Gym ID not found");
       }
 
-      // Update database
-      const { error: dbError } = await supabase
-        .from('gym_profiles')
-        .upsert({
-          user_id: userId,
-          ...updateData
-        } as any, { onConflict: 'user_id' });
+      const { UpdateGymProfile } = await import('@/lib/api');
+      const response = await UpdateGymProfile(gymProfileData.gym_id, updateData);
 
-      if (dbError) throw new Error(`Database update failed: ${dbError.message}`);
+      if (response && response.updatedGym) {
+        // Update local state with the response from server
+        setGymProfileData(prev => ({
+          ...prev,
+          ...updateData,
+          documents: finalDocuments
+        }));
 
-      // Update local state
-      setGymProfileData(prev => ({
-        ...prev,
-        ...updateData,
-        profile_img: profileImgUrl,
-        documents: [
-          ...prev.documents.filter(doc => !documentsToDelete.includes(doc.id)),
-          ...uploadedDocs
-        ]
-      }));
+        // Reset editing states
+        setNewProfileImage(null);
+        setNewDocuments([]);
+        setDocumentsToDelete([]);
+        setIsEditing(false);
 
-      // Reset editing states
-      setNewProfileImage(null);
-      setNewDocuments([]);
-      setDocumentsToDelete([]);
-      setIsEditing(false);
-
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
-      console.log("Profile updated successfully");
+        setMessage({ type: 'success', text: 'Profile updated successfully!' });
+        console.log("Profile updated successfully");
+      } else {
+        throw new Error("Failed to update profile - no response from server");
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -507,7 +484,7 @@ const GymProfile = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide flex items-center gap-2">
+                  <label className="flex text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide items-center gap-2">
                     <MapPin className="w-4 h-4" /> Address
                   </label>
                   {isEditing ? (
@@ -525,7 +502,7 @@ const GymProfile = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide flex items-center gap-2">
+                    <label className="flex text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide items-center gap-2">
                       <Clock className="w-4 h-4" /> Operating Hours
                     </label>
                     {isEditing ? (
@@ -543,7 +520,7 @@ const GymProfile = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide flex items-center gap-2">
+                    <label className="flex text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide items-center gap-2">
                       <Phone className="w-4 h-4" /> Contact
                     </label>
                     {isEditing ? (
@@ -583,7 +560,7 @@ const GymProfile = () => {
         </div>
 
         <div className="mt-8 bg-gray-900/50 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-800 p-8">
-          <label className="block text-sm font-semibold text-gray-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+          <label className="flex text-sm font-semibold text-gray-400 mb-4 uppercase tracking-wide items-center gap-2">
             <FileText className="w-4 h-4" /> Documents & Certifications
           </label>
           
