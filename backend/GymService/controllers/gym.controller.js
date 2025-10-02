@@ -136,7 +136,7 @@ export const getGymTrainerCount = async (req,res) => {
 }
 
 export const getAllGymUsers = async (req, res) => {
-    console.log("Awooooooooooooooooo");
+    
     const { customerIds } = req.body;
     console.log("Received customerIds:", customerIds);
 

@@ -118,20 +118,33 @@ class GymPlanEmailService {
      */
     async getTrainerDetails(trainerIds) {
         try {
-            const { data, error } = await supabase.rpc('get_trainer_details',{
+            console.log('Fetching trainer details for IDs:', trainerIds);
+            
+            const { data, error } = await supabase.rpc('get_trainer_details', {
                 trainer_ids: trainerIds
             });
+
+            console.log('Trainer details fetched:', data);
 
             if (error) {
                 console.error('Error fetching trainer details:', error);
                 return [];
             }
 
-            return data.map(trainer => ({
-                trainerId: trainer.id,
+            if (!data || data.length === 0) {
+                console.log('No trainer details found');
+                return [];
+            }
+
+            // Handle the RPC response structure
+            const trainersWithEmails = data.map(trainer => ({
+                trainerId: trainer.trainer_id,
                 trainerName: trainer.trainer_name,
-                trainerEmail: trainer.users?.email
+                trainerEmail: trainer.trainer_email
             })).filter(trainer => trainer.trainerEmail); // Only return trainers with valid emails
+
+            console.log('Processed trainer details:', trainersWithEmails);
+            return trainersWithEmails;
         } catch (error) {
             console.error('Error in getTrainerDetails:', error);
             return [];

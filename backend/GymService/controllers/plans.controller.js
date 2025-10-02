@@ -124,8 +124,12 @@ export const getMemberCountPerPlan = async (req, res) => {
 
 export const assignTrainersToPlan = async (req, res) => {
   try {
+    console.log('🔄 Assigning trainers to plan:', { plan_id: req.body.plan_id, trainer_ids: req.body.trainer_ids });
+    
     const { plan_id, trainer_ids } = req.body;
     const result = await assigntrainerstoplan(plan_id, trainer_ids);
+    
+    console.log('✅ Trainers assigned successfully:', result);
     
     res.status(200).json({ 
       message: "Trainers assigned to plan successfully", 
@@ -134,44 +138,58 @@ export const assignTrainersToPlan = async (req, res) => {
 
     // Send email notifications to assigned trainers
     try {
+      console.log('📧 Starting trainer email notifications...');
       const emailService = new GymPlanEmailService();
       
       // Get plan details
+      console.log('📋 Fetching plan details for plan_id:', plan_id);
       const planDetails = await getgymplanbyplanid(plan_id);
       if (!planDetails) {
-        console.error('Plan not found for email notification');
+        console.error('❌ Plan not found for email notification');
         return;
       }
+      console.log('📋 Plan details found:', planDetails);
 
       // Get gym details
-      const ownerDetails = await emailService.getGymOwnerDetails(planDetails.gymid);
+      console.log('🏢 Fetching gym details for gym_id:', planDetails.gym_id);
+      const ownerDetails = await emailService.getGymOwnerDetails(planDetails.gym_id);
       if (!ownerDetails) {
-        console.error('Gym details not found for email notification');
+        console.error('❌ Gym details not found for email notification');
         return;
       }
+      console.log('🏢 Gym details found:', ownerDetails);
 
       // Get trainer details
-      console.log('Fetching trainer details for IDs:', trainer_ids);
+      console.log('👥 Fetching trainer details for IDs:', trainer_ids);
       const trainerDetails = await emailService.getTrainerDetails(trainer_ids);
+      
+      if (!trainerDetails || trainerDetails.length === 0) {
+        console.log('❌ No trainer details found or no valid emails');
+        return;
+      }
+      
+      console.log(`📬 Sending emails to ${trainerDetails.length} trainers...`);
       
       // Send email to each trainer
       for (const trainer of trainerDetails) {
         try {
+          console.log(`📧 Sending assignment email to: ${trainer.trainerName} (${trainer.trainerEmail})`);
           await emailService.sendTrainerAssignmentEmail(
             trainer.trainerEmail,
             trainer.trainerName,
             ownerDetails.gymName,
             planDetails.title,
             `$${planDetails.price}`,
-            `${planDetails.duration} days`
+            planDetails.duration
           );
-          console.log(`Assignment email sent successfully to trainer: ${trainer.trainerName}`);
+          console.log(`✅ Assignment email sent successfully to trainer: ${trainer.trainerName}`);
         } catch (trainerEmailError) {
-          console.error(`Failed to send assignment email to trainer ${trainer.trainerName}:`, trainerEmailError);
+          console.error(`❌ Failed to send assignment email to trainer ${trainer.trainerName}:`, trainerEmailError);
         }
       }
+      console.log('📧 Trainer email notifications completed');
     } catch (emailError) {
-      console.error('Failed to send trainer assignment emails:', emailError);
+      console.error('❌ Failed to send trainer assignment emails:', emailError);
       // Don't fail the entire request if email fails
     }
   } catch (error) {
