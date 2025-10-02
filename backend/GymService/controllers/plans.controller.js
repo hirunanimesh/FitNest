@@ -1,5 +1,5 @@
 import { GymPlanCreateProducer, GymPlanDeleteProducer, GymPlanPriceUpdateProducer } from "../kafka/Producer.js";
-import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers,getOneDayGyms , getOtherGyms, getgymplanbyplanid, getgymplandetails } from "../services/plans.service.js";
+import { addgymplan, assigntrainerstoplan, deletegymplan, getallgymplans, getgymplanbygymid, getplanmembercount, getplantrainers, updategymplan, updateplantrainers,getOneDayGyms , getOtherGyms, getgymplanbyplanid, getgymplandetails, getcustomersnearGym } from "../services/plans.service.js";
 import GymPlanEmailService from "../services/GymPlanEmailService.js";
 
 
@@ -11,13 +11,15 @@ export const addGymPlan = async (req, res) => {
             res.status(200).json({ message: "Gym plan created successfully", gymPlan });
             await GymPlanCreateProducer(gymPlan.plan_id,gymPlan.title,gymPlan.price,gymPlan.duration);
             
-            // Send email notification to gym owner
+            // Send email notifications
             try {
                 const emailService = new GymPlanEmailService();
+                
+                // 1. Send email to gym owner
                 const ownerDetails = await emailService.getGymOwnerDetails(gymPlan.gym_id);
                 
                 if (ownerDetails && ownerDetails.ownerEmail) {
-                    console.log('Sending email to:', ownerDetails.ownerEmail);
+                    console.log('Sending plan creation email to gym owner:', ownerDetails.ownerEmail);
                     await emailService.sendPlanCreationEmail(
                         ownerDetails.ownerEmail,
                         ownerDetails.ownerName,
@@ -30,8 +32,40 @@ export const addGymPlan = async (req, res) => {
                 } else {
                     console.log('❌ Gym owner details not found or missing email');
                 }
+
+                // 2. Send promotional emails to nearby customers
+                console.log('📧 Starting promotional emails to nearby customers...');
+                const nearbyCustomers = await getcustomersnearGym(gymPlan.gym_id);
+                
+                if (nearbyCustomers && nearbyCustomers.length > 0) {
+                    console.log(`📬 Found ${nearbyCustomers.length} nearby customers, sending promotional emails...`);
+                    
+                    // Send promotional emails to all nearby customers
+                    const promotionalEmailPromises = nearbyCustomers.map(async (customer) => {
+                        try {
+                            await emailService.sendPromotionalEmail(
+                                customer.user_email,
+                                customer.customer_name,
+                                ownerDetails?.gymName || 'Our Gym',
+                                gymPlan.title,
+                                `$${gymPlan.price}`,
+                                gymPlan.duration,
+                                customer.distance_km
+                            );
+                            console.log(`✅ Promotional email sent to customer: ${customer.customer_name} (${customer.user_email})`);
+                        } catch (customerEmailError) {
+                            console.error(`❌ Failed to send promotional email to customer ${customer.customer_name}:`, customerEmailError);
+                        }
+                    });
+                    
+                    // Wait for all promotional emails to be sent
+                    await Promise.allSettled(promotionalEmailPromises);
+                    console.log('📧 Promotional email campaign completed');
+                } else {
+                    console.log('📭 No nearby customers found for promotional emails');
+                }
             } catch (emailError) {
-                console.error('❌ Failed to send plan creation email:', emailError);
+                console.error('❌ Failed to send emails:', emailError);
                 // Don't fail the entire request if email fails
             }
         }
