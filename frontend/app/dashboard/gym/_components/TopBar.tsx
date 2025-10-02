@@ -6,11 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGym } from '../context/GymContext';
 import { supabase } from '@/lib/supabase';
 import { GetUserInfo } from '@/lib/api';
+import { GetGymPlans } from '@/api/gym/route';
+import { GetUserSubscriptions } from '@/api/user/route';
 
 const TopBar = () => {
   const { user, signOut } = useAuth();
+  const { gymId } = useGym();
   const [userInfo, setUserInfo] = useState<{ name: string; avatar?: string } | null>(null);
   const [qrOpen,setQrOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -27,6 +31,90 @@ const TopBar = () => {
   const [scanning,setScanning] = useState(false);
   const [scanError,setScanError] = useState<string | null>(null);
   const [decodedValue,setDecodedValue] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [accessStatus, setAccessStatus] = useState<'checking' | 'granted' | 'denied' | null>(null);
+  const [matchingPlans, setMatchingPlans] = useState<any[]>([]);
+
+  // Parse QR data and extract customer ID
+  const parseQRData = (qrData: string) => {
+    try {
+      const parsed = JSON.parse(qrData);
+      if (parsed.type === 'gym_entry' && parsed.customer_id) {
+        setCustomerId(parsed.customer_id);
+        verifyGymAccess(parsed.customer_id);
+        return parsed.customer_id;
+      }
+    } catch (error) {
+      // If not JSON, treat as plain text
+      console.log('QR data is not JSON, treating as plain text');
+    }
+    return null;
+  };
+
+  // Verify if customer has access to gym
+  const verifyGymAccess = async (customerId: string) => {
+    try {
+      setAccessStatus('checking');
+      setDebugMsg('Verifying gym access...');
+      
+      // Use gymId from context
+      if (!gymId) {
+        setAccessStatus('denied');
+        setDebugMsg('Gym ID not available');
+        return;
+      }
+      
+      // Get gym plans using existing API function
+      const gymPlansResponse = await GetGymPlans(gymId);
+      const gymPlansData = gymPlansResponse.data;
+      
+      if (!gymPlansData.gymPlan || gymPlansData.gymPlan.length === 0) {
+        setAccessStatus('denied');
+        setDebugMsg('No gym plans available');
+        return;
+      }
+      
+            // Get customer subscriptions
+            const subscriptionData = await GetUserSubscriptions(customerId);
+            
+            if (!subscriptionData || 
+                (!subscriptionData.planIds && subscriptionData.length === 0) ||
+                (subscriptionData.planIds && subscriptionData.planIds.length === 0)) {
+                setAccessStatus('denied');
+                setDebugMsg('Customer has no active subscriptions');
+                return;
+            }
+            
+            // Find matching plans
+            const gymPlanIds = gymPlansData.gymPlan.map((plan: any) => plan.plan_id);
+            const customerPlanIds = subscriptionData.planIds || subscriptionData;
+            
+            // Ensure customerPlanIds is an array
+            if (!Array.isArray(customerPlanIds)) {
+                setAccessStatus('denied');
+                setDebugMsg('Invalid subscription data format');
+                return;
+            }
+      
+      const matching = gymPlansData.gymPlan.filter((plan: any) => 
+        customerPlanIds.includes(plan.plan_id)
+      );
+      
+      if (matching.length > 0) {
+        setAccessStatus('granted');
+        setMatchingPlans(matching);
+        setDebugMsg(`Access granted! Found ${matching.length} matching plan(s)`);
+      } else {
+        setAccessStatus('denied');
+        setDebugMsg('No matching plans found');
+      }
+      
+    } catch (error) {
+      console.error('Error verifying gym access:', error);
+      setAccessStatus('denied');
+      setDebugMsg('Error verifying access');
+    }
+  };
 
   const stopStream = () => {
     // Stop ZXing controls if active
@@ -68,6 +156,13 @@ const TopBar = () => {
           const code = jsqrRef.current(imageData.data, imageData.width, imageData.height, { inversionAttempts:'dontInvert' });
           if (code && code.data) {
             console.log('[QR-DECODED-jsQR]', code.data);
+            const extractedCustomerId = parseQRData(code.data);
+            if (extractedCustomerId) {
+              console.log('Extracted Customer ID:', extractedCustomerId);
+              setDebugMsg(`Customer ID: ${extractedCustomerId}`);
+            } else {
+              setDebugMsg('QR detected');
+            }
             const loc = code.location;
             if (loc) {
               const minX = Math.min(loc.topLeftCorner.x, loc.topRightCorner.x, loc.bottomLeftCorner.x, loc.bottomRightCorner.x);
@@ -76,7 +171,6 @@ const TopBar = () => {
               const maxY = Math.max(loc.topLeftCorner.y, loc.topRightCorner.y, loc.bottomLeftCorner.y, loc.bottomRightCorner.y);
               setBox({x:minX,y:minY,w:maxX-minX,h:maxY-minY});
             }
-            setDebugMsg('QR detected');
             setDecodedValue(code.data);
             stopStream();
             return;
@@ -95,6 +189,9 @@ const TopBar = () => {
     setBox(null);
     setDebugMsg('Initializing camera');
     setDecodedValue(null);
+    setCustomerId(null);
+    setAccessStatus(null);
+    setMatchingPlans([]);
     try {
       // Preload decoders
       if (!jsqrRef.current) {
@@ -139,7 +236,13 @@ const TopBar = () => {
             zxingControlsRef.current = await zxingRef.current.decodeFromVideoDevice(chosenDeviceId, videoRef.current, (result:any, err:any, controls:any)=>{
               if (result) {
                 console.log('[QR-DECODED-ZXING]', result.getText());
-                setDebugMsg('QR detected');
+                const extractedCustomerId = parseQRData(result.getText());
+                if (extractedCustomerId) {
+                  console.log('Extracted Customer ID:', extractedCustomerId);
+                  setDebugMsg(`Customer ID: ${extractedCustomerId}`);
+                } else {
+                  setDebugMsg('QR detected');
+                }
                 setDecodedValue(result.getText());
                 stopStream();
               }
@@ -233,12 +336,7 @@ const TopBar = () => {
               <div className="relative w-full flex justify-center">
                 <div className="relative">
                   <video ref={videoRef} className="rounded border border-gray-600 max-h-[320px]" playsInline muted />
-                  {box ? (
-                    <div
-                      className="absolute border-2 border-green-500 animate-pulse"
-                      style={{ left: box.x, top: box.y, width: box.w, height: box.h } as React.CSSProperties}
-                    />
-                  ) : null}
+
                 </div>
                 {!scanning && !scanError && (
                   <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">Starting camera...</div>
@@ -251,21 +349,77 @@ const TopBar = () => {
               <div className="w-full flex flex-col gap-2">
                 <p className="text-xs text-gray-400 text-center min-h-[18px]">{debugMsg}</p>
                 {decodedValue && (
-                  <div className="mt-1 p-3 rounded bg-gray-800 border border-green-600 text-green-400 text-sm break-words whitespace-pre-wrap">
-                    <span className="font-semibold block mb-1 text-green-300">Decoded QR Value:</span>
-                    {decodedValue}
-                    <div className="mt-2 flex gap-2">
+                  <div className="mt-1 p-3 rounded bg-gray-800 border text-white text-sm">
+                    {customerId ? (
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-semibold text-gray-300">Customer ID: {customerId}</span>
+                          {accessStatus === 'checking' && (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
+                          )}
+                        </div>
+                        
+                        {accessStatus === 'granted' && (
+                          <div className="border border-green-500 bg-green-900/20 rounded p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                              <span className="font-bold text-green-400">ACCESS GRANTED</span>
+                            </div>
+                            <p className="text-green-300 text-xs mb-3">Customer has valid subscription(s) for this gym</p>
+                            
+                            <div className="space-y-2">
+                              <span className="text-green-200 text-xs font-semibold">Active Plans:</span>
+                              {matchingPlans.map((plan, index) => (
+                                <div key={index} className="bg-green-800/30 rounded p-2 border border-green-600">
+                                  <div className="font-medium text-green-100">{plan.title}</div>
+                                  <div className="text-xs text-green-300">Price: ${plan.price} • Duration: {plan.duration}</div>
+                                  <div className="text-xs text-green-400 mt-1">{plan.description}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {accessStatus === 'denied' && (
+                          <div className="border border-red-500 bg-red-900/20 rounded p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                              <span className="font-bold text-red-400">ACCESS DENIED</span>
+                            </div>
+                            <p className="text-red-300 text-xs">Customer does not have valid subscription for this gym</p>
+                          </div>
+                        )}
+                        
+                        {accessStatus === 'checking' && (
+                          <div className="border border-yellow-500 bg-yellow-900/20 rounded p-3">
+                            <div className="flex items-center gap-2">
+                              <div className="animate-pulse w-3 h-3 bg-yellow-500 rounded-full"></div>
+                              <span className="font-bold text-yellow-400">VERIFYING ACCESS...</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="font-semibold block mb-1 text-gray-300">Decoded QR Value:</span>
+                        <div className="break-words whitespace-pre-wrap text-gray-300">{decodedValue}</div>
+                      </div>
+                    )}
+                    <div className="mt-3 flex gap-2">
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="border-green-600 text-green-400 hover:bg-green-600/10"
-                        onClick={()=>decodedValue && navigator.clipboard.writeText(decodedValue)}
-                      >Copy</Button>
+                        className="border-gray-600 text-gray-400 hover:bg-gray-600/10"
+                        onClick={()=>{
+                          const textToCopy = customerId || decodedValue;
+                          textToCopy && navigator.clipboard.writeText(textToCopy);
+                        }}
+                      >{customerId ? 'Copy Customer ID' : 'Copy'}</Button>
                       <Button
                         type="button"
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-gray-600 hover:bg-gray-700"
                         onClick={()=>{ stopStream(); startScan(); }}
                       >Scan Another</Button>
                     </div>
