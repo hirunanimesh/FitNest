@@ -3,7 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 
-import {addfeedback,getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails} from './controllers/user.controller.js'
+import {addfeedback,getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails, getMySessions, addreport} from './controllers/user.controller.js'
 import {
 	getGoogleOauthUrl,
 	googleCallback,
@@ -25,7 +25,8 @@ app.post('/addweight',addweight)
 app.get('/getweightbyid/:userId',getweightbyid)
 app.get('/getlatestweightbyid/:userId',getlatestweightbyid)
 app.post('/addfeedback',addfeedback)
-
+app.get('/mysessions/:customerId',getMySessions)
+app.post('/addreport',addreport)  
 // Calendar / Google OAuth endpoints
 app.get('/google/oauth-url/:userId', getGoogleOauthUrl)
 app.get('/google/callback', googleCallback)
