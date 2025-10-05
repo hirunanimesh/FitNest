@@ -1,8 +1,3 @@
-/**
- * Calendar API functions
- * Contains all API calls extracted from Calendar.tsx component
- */
-
 import { mapServerList as mapServerListUtil } from '@/components/calendar/calendarUtils';
 
 interface Event {
@@ -218,4 +213,144 @@ export const formatEventIso = (ev: any) => {
     start: start ? fmt(new Date(start)) : null,
     end: end ? fmt(new Date(end)) : null
   };
+};
+
+/**
+ * Create a new event
+ * @param userId - User ID to create event for
+ * @param eventData - Event data to create
+ * @returns Promise<any> - Created event data
+ */
+export const createEvent = async (userId: string, eventData: {
+  title: string;
+  start: string;
+  end: string | null;
+  description: string;
+  color: string;
+}): Promise<any> => {
+  const base = getBaseUrl();
+  try {
+    const response = await fetch(`${base}/calendar/create/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(eventData),
+    });
+
+    if (!response.ok) {
+      let parsed: any = null;
+      try { 
+        parsed = await response.json();
+      } catch (e) { 
+        /* not JSON */ 
+      }
+      const bodyText = parsed && (parsed.message || parsed.error) 
+        ? (parsed.message || parsed.error) 
+        : (await response.text().catch(() => '<no body>'));
+      throw new Error(`create failed: ${bodyText}`);
+    }
+
+    let saved: any = null;
+    try {
+      saved = await response.json();
+    } catch (e) {
+      const txt = await response.text().catch(() => null);
+      console.warn('create returned non-JSON response', txt);
+      saved = { 
+        id: `${Date.now()}`, 
+        title: eventData.title, 
+        start: eventData.start, 
+        end: eventData.end, 
+        description: eventData.description, 
+        google_event_id: null 
+      };
+    }
+    return saved;
+  } catch (error) {
+    console.error('create event failed', error);
+    throw error;
+  }
+};
+
+/**
+ * Update an existing event with changes
+ * @param eventId - Event ID to update
+ * @param changes - Changes to apply to the event
+ * @param userId - User ID for fallback operations
+ * @param existingEvent - Existing event data for comparison
+ * @returns Promise<any> - Updated event data
+ */
+export const updateEventWithChanges = async (
+  eventId: string, 
+  changes: any, 
+  userId: string, 
+  existingEvent?: any
+): Promise<any> => {
+  const base = getBaseUrl();
+  try {
+    const fetchOpts: any = { method: 'PATCH' };
+    if (Object.keys(changes).length > 0) {
+      fetchOpts.headers = { 'Content-Type': 'application/json' };
+      fetchOpts.body = JSON.stringify(changes);
+    }
+
+    console.debug('[API] PATCH', { url: `${base}/calendar/${eventId}`, fetchOpts, existingEvent });
+    const res = await fetch(`${base}/calendar/${eventId}`, fetchOpts);
+
+    if (!res.ok) {
+      let parsed: any = null;
+      try { 
+        parsed = await res.json(); 
+      } catch (e) { 
+        /* not JSON */ 
+      }
+      const bodyText = parsed && (parsed.message || parsed.error) 
+        ? (parsed.message || parsed.error) 
+        : (await res.text().catch(() => '<no body>'));
+      
+      console.debug('[API] PATCH failed', { status: res.status, bodyText, parsed });
+      const normalized = String(bodyText || '').toLowerCase();
+      const notFound = res.status === 404 || 
+        /not.*found|no.*rows|calendar.*row/.test(normalized) || 
+        normalized.includes('row not found') || 
+        normalized.includes('calendar row not found');
+      
+      if (notFound) {
+        // Try to create the event if it has a google_event_id
+        if (existingEvent && existingEvent.google_event_id) {
+          const createBody: any = {
+            title: changes.title || existingEvent.title,
+            start: changes.start || existingEvent.start,
+            end: changes.end || existingEvent.end,
+            description: changes.description || existingEvent.description || '',
+            color: changes.color || existingEvent.backgroundColor || '#3b82f6',
+            google_event_id: existingEvent.google_event_id
+          };
+          const createRes = await fetch(`${base}/calendar/create/${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(createBody)
+          });
+          if (createRes.ok) {
+            return await createRes.json();
+          }
+        }
+        throw new Error('Update failed: calendar row not found locally. It may have been deleted or not yet persisted. Please sync and try again.');
+      }
+
+      const msg = bodyText || `status ${res.status}`;
+      throw new Error('Update failed: ' + msg);
+    }
+
+    let parsed: any = null;
+    try {
+      parsed = await res.json();
+    } catch (e) {
+      throw new Error('update returned non-JSON response');
+    }
+
+    return parsed;
+  } catch (error) {
+    console.error('update event with changes failed', error);
+    throw error;
+  }
 };

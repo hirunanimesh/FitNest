@@ -1,5 +1,5 @@
 // Shared helpers for mapping and deduplication between Schedule and AddTask
-export const mapServerList = (list: any[] = [], fallbackColor = '#ef4444') => {
+export const mapServerList = (list: any[] = [], fallbackColor = '#3b82f6') => {
   return (list || []).map((ev: any) => ({
     id: String(ev.id || ev.calendar_id || ev.calendarId || ''),
     title: ev.title || ev.task || '',
@@ -16,7 +16,7 @@ export const mapServerList = (list: any[] = [], fallbackColor = '#ef4444') => {
   }))
 }
 
-export const mapUpdatedToEvent = (upd: any, fallbackTitle = '', fallbackColor = '#ef4444') => {
+export const mapUpdatedToEvent = (upd: any, fallbackTitle = '', fallbackColor = '#3b82f6') => {
   const start = upd.start || upd.task_date || ''
   const end = upd.end || upd.task_date || ''
   const color = upd.color || upd.backgroundColor || fallbackColor

@@ -27,7 +27,7 @@ interface Event {
 
 const Schedule: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [taskColor, setTaskColor] = useState('#ef4444');
+  const [taskColor, setTaskColor] = useState('#3b2aa5ff');
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
@@ -182,7 +182,7 @@ const Schedule: React.FC = () => {
       title: ev.title,
       start: rawStart || ev.startStr || '',
       end: rawEnd || ev.endStr || '',
-      backgroundColor: ev.backgroundColor || '#ef4444',
+      backgroundColor: ev.backgroundColor || '#28375cff',
       description: ev.extendedProps?.description || ''
     }
     setViewingEvent(viewed);
@@ -350,7 +350,7 @@ const Schedule: React.FC = () => {
 
   // Render events with responsive styles
   const renderEventContent = (eventInfo: any) => {
-    const color = eventInfo.event.backgroundColor || '#ef4444'
+    const color = eventInfo.event.backgroundColor || '#28375cff'
     const fontSize = isSmallScreen ? '0.64rem' : '0.72rem'
     const padding = isSmallScreen ? '2px 6px' : '3px 6px'
     const titleClass = isSmallScreen ? 'calendar-event-title--small' : 'calendar-event-title--regular'

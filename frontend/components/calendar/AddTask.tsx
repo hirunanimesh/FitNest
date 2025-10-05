@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext'
 import { mapServerList as mapServerListUtil, mapUpdatedToEvent as mapUpdatedToEventUtil, dedupeEvents as dedupeEventsUtil } from './calendarUtils'
+import { fetchEvents, createEvent, updateEventWithChanges, deleteEvent as deleteEventAPI } from '@/api/calendar/route'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -41,16 +42,14 @@ const AddTask: React.FC<Props> = ({
   setEvents,
 }) => {
   const { user } = useAuth()
-
-  const mapServerList = (list: any[], fallbackColor = '#ef4444') => mapServerListUtil(list, fallbackColor)
+  const mapServerList = (list: any[], fallbackColor = '#28375cff') => mapServerListUtil(list, fallbackColor)
   const mapUpdatedToEvent = (upd: any): EventShape => mapUpdatedToEventUtil(upd, taskTitle, taskColor)
   const dedupeEvents = (list: EventShape[]) => dedupeEventsUtil(list)
-
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDate, setTaskDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [taskColor, setTaskColor] = useState('#ef4444');
+  const [taskColor, setTaskColor] = useState('#28375cff');
   const [taskDescription, setTaskDescription] = useState('');
 
   useEffect(() => {
@@ -68,7 +67,7 @@ const AddTask: React.FC<Props> = ({
       setStartTime(start && start.includes('T') ? start.split('T')[1].slice(0,5) : '')
       setEndTime(end && end.includes('T') ? end.split('T')[1].slice(0,5) : '')
       setTaskDescription(editingEvent.description || editingEvent.extendedProps?.description || '')
-      setTaskColor(editingEvent.backgroundColor || '#ef4444')
+      setTaskColor(editingEvent.backgroundColor || '#28375cff')
     } else if (viewingEvent) {
       const { start, end } = pickRaw(viewingEvent as any)
       setTaskTitle(viewingEvent.title || '')
@@ -76,14 +75,14 @@ const AddTask: React.FC<Props> = ({
       setStartTime(start && start.includes('T') ? start.split('T')[1].slice(0,5) : '')
       setEndTime(end && end.includes('T') ? end.split('T')[1].slice(0,5) : '')
       setTaskDescription(viewingEvent.description || viewingEvent.extendedProps?.description || '')
-      setTaskColor(viewingEvent.backgroundColor || '#ef4444')
+      setTaskColor(viewingEvent.backgroundColor || '#28375cff')
     } else if (!isTaskDialogOpen) {
       setTaskTitle('')
       setTaskDate('')
       setStartTime('')
       setEndTime('')
       setTaskDescription('')
-      setTaskColor('#ef4444')
+      setTaskColor('#28375cff')
     }
   }, [editingEvent, viewingEvent, isTaskDialogOpen])
 
@@ -122,7 +121,6 @@ const AddTask: React.FC<Props> = ({
     }
 
     try {
-      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
       const userId = user?.id
       if (!userId) return alert('You must be signed in to add tasks')
 
@@ -131,7 +129,6 @@ const AddTask: React.FC<Props> = ({
           alert('Cannot update this event because it has no local id. Please sync your calendar or create the event instead.')
           return
         }
-        const patchUrl = `${base}/calendar/${editingEvent.id}`
 
         const existingStart = editingEvent.extendedProps?.rawStart || editingEvent.start || ''
         const existingEnd = editingEvent.extendedProps?.rawEnd || editingEvent.end || ''
@@ -143,198 +140,75 @@ const AddTask: React.FC<Props> = ({
         // treat null/undefined end as removal; include when differing
         if ((payload.end || '') !== (existingEnd || '')) changed.end = payload.end
 
-        const fetchOpts: any = { method: 'PATCH' }
-        if (Object.keys(changed).length > 0) {
-          fetchOpts.headers = { 'Content-Type': 'application/json' }
-          fetchOpts.body = JSON.stringify(changed)
-        }
-
-        // outgoing update request (minimal or empty body)
-        console.debug('[AddTask] PATCH', { patchUrl, fetchOpts, editingEvent })
-        const res = await fetch(patchUrl, fetchOpts)
-
-        if (!res.ok) {
-          let parsed: any = null
-          try { parsed = await res.json() } catch (e) { /* not JSON */ }
-          const bodyText = parsed && (parsed.message || parsed.error) ? (parsed.message || parsed.error) : (await res.text().catch(() => '<no body>'))
-          console.debug('[AddTask] PATCH failed', { status: res.status, bodyText, parsed })
-          const normalized = String(bodyText || '').toLowerCase()
-          const notFound = res.status === 404 || /not.*found|no.*rows|calendar.*row/.test(normalized) || normalized.includes('row not found') || normalized.includes('calendar row not found')
-          if (notFound) {
-            try {
-              if (editingEvent && editingEvent.google_event_id) {
-                const createBody: any = {
-                  title: payload.title,
-                  start: payload.start || editingEvent.start,
-                  end: payload.end || editingEvent.end,
-                  description: payload.description || editingEvent.description || '',
-                  color: payload.color || editingEvent.backgroundColor || '#ef4444',
-                  google_event_id: editingEvent.google_event_id
-                }
-                const createRes = await fetch(`${base}/calendar/create/${userId}`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(createBody)
-                })
-                if (createRes.ok) {
-                  try {
-                    const r = await fetch(`${base}/calendar/events/${userId}`)
-                    if (r.ok) {
-                      const all = await r.json()
-                      setEvents(mapServerList(all, taskColor))
-                      alert('Event was persisted locally from Google and your update can be retried.')
-                      return
-                    }
-                  } catch (e) { /* ignore refresh errors */ }
-                }
-              }
-            } catch (e) { /* ignore create errors */ }
-
-            try {
-              if (userId) {
-                const r = await fetch(`${base}/calendar/events/${userId}`)
-                if (r.ok) {
-                  const all = await r.json()
-                  setEvents(mapServerList(all, taskColor))
-                }
-              }
-            } catch (e) { /* ignore refetch errors */ }
-            alert('Update failed: calendar row not found locally. It may have been deleted or not yet persisted. Please sync and try again.')
-            return
-          }
-
-          try {
-            if (userId) {
-              const r = await fetch(`${base}/calendar/events/${userId}`)
-              if (r.ok) {
-                const all = await r.json()
-                setEvents(mapServerList(all, taskColor))
-              }
-            }
-          } catch (e) { /* ignore refetch errors */ }
-          const msg = bodyText || `status ${res.status}`
-          alert('Update failed: ' + msg)
-          return
-        }
-
-        let parsed: any = null
         try {
-          parsed = await res.json()
-        } catch (e) {
-          // Non-JSON response: refresh authoritative list
-          try {
-            const r = await fetch(`${base}/calendar/events/${userId}`)
-            if (r.ok) {
-              const all = await r.json()
-              setEvents(mapServerList(all, taskColor))
-              setEditingEvent(null)
-              return
-            }
-          } catch (e2) { /* ignore */ }
-          throw new Error('update returned non-JSON response')
-        }
-
-        // Support two possible shapes from backend:
-        // 1) { updated, events } - authoritative events list included
-        // 2) updated (single row)
-        if (parsed && parsed.events && Array.isArray(parsed.events)) {
-          setEvents(mapServerList(parsed.events, taskColor))
-          setEditingEvent(null)
-        } else {
-          const updated = parsed && parsed.updated ? parsed.updated : parsed
-          const mapped = mapUpdatedToEvent(updated)
-          if (mapped) {
-            setEvents(prev => {
-              const mappedId = String(mapped.id || '')
-              const mappedGoogleId = String(mapped.google_event_id || '')
-              const editingId = String(editingEvent?.id || '')
-              const editingGid = String(editingEvent?.google_event_id || '')
-              const mappedRaw = mapped.extendedProps?.rawStart || mapped.start || ''
-              const mappedTitle = mapped.title || ''
-              const filtered = prev.filter(ev => {
-                const evId = String((ev as any).id || '')
-                const evGid = String((ev as any).google_event_id || '')
-                const evRaw = (ev as any).extendedProps?.rawStart || (ev as any).start || ''
-                const evTitle = (ev as any).title || ''
-                if (evId && (evId === mappedId || evId === editingId)) return false
-                if (evGid && (evGid === mappedGoogleId || evGid === editingGid)) return false
-                if (evRaw && evTitle && mappedRaw && mappedTitle && evRaw === mappedRaw && evTitle === mappedTitle) return false
-                return true
-              })
-              return dedupeEvents([...filtered, mapped])
-            })
+          const parsed = await updateEventWithChanges(editingEvent.id, changed, userId, editingEvent)
+          
+          if (parsed && parsed.events && Array.isArray(parsed.events)) {
+            setEvents(mapServerList(parsed.events, '#3b82f6'))
             setEditingEvent(null)
           } else {
+            // Always refresh from server after update to ensure consistency
             try {
-              if (userId) {
-                const r = await fetch(`${base}/calendar/events/${userId}`)
-                if (r.ok) {
-                  const all = await r.json()
-                  setEvents(mapServerList(all, taskColor))
-                }
+              const refreshedEvents = await fetchEvents(userId)
+              setEvents(refreshedEvents)
+              console.log('[AddTask] Calendar refreshed after update')
+              setEditingEvent(null)
+            } catch (e) { 
+              console.error('Failed to refresh calendar after update', e)
+              // Fallback: try to update local state if server refresh fails
+              const updated = parsed && parsed.updated ? parsed.updated : parsed
+              const mapped = mapUpdatedToEvent(updated)
+              if (mapped) {
+                setEvents(prev => {
+                  const mappedId = String(mapped.id || '')
+                  const editingId = String(editingEvent?.id || '')
+                  const filtered = prev.filter(ev => String((ev as any).id || '') !== mappedId && String((ev as any).id || '') !== editingId)
+                  return dedupeEvents([...filtered, mapped])
+                })
               }
-            } catch (e) { console.error('failed to refetch events after update', e) }
+              setEditingEvent(null)
+            }
           }
+        } catch (error: any) {
+          // Refresh events on error
+          try {
+            const refreshedEvents = await fetchEvents(userId)
+            setEvents(refreshedEvents)
+          } catch (e) { /* ignore refetch errors */ }
+          alert('Update failed: ' + (error.message || String(error)))
+          return
         }
       } else {
-        const postUrl = `${base}/calendar/create/${userId}`
-        const res = await fetch(postUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-        if (!res.ok) {
-          let parsed: any = null
-          try { parsed = await res.json() } catch (e) { /* not JSON */ }
-          const bodyText = parsed && (parsed.message || parsed.error) ? (parsed.message || parsed.error) : (await res.text().catch(() => '<no body>'))
-          throw new Error(`create failed: ${bodyText}`)
-        }
-        let saved: any = null
         try {
-          saved = await res.json()
-        } catch (e) {
-          const txt = await res.text().catch(() => null)
-          console.warn('create returned non-JSON response', txt)
-          saved = { id: `${Date.now()}`, title: payload.title, start: payload.start, end: payload.end, description: payload.description, google_event_id: null }
-        }
-        if (!saved || !saved.id) {
+          const saved = await createEvent(userId, payload)
+          
+          // Always refresh from server after create to ensure consistency and get latest IDs
           try {
-            const r = await fetch(`${base}/calendar/events/${userId}`)
-            if (r.ok) {
-              const all = await r.json()
-              setEvents(mapServerList(all, taskColor))
+            const refreshedEvents = await fetchEvents(userId)
+            setEvents(refreshedEvents)
+            console.log('[AddTask] Calendar refreshed after create')
+          } catch (e) { 
+            console.error('Failed to refresh calendar after create, using fallback', e)
+            // Fallback: create local event if server refresh fails
+            if (saved && saved.id) {
+              const newEvent: EventShape = {
+                id: String(saved.id || `${Date.now()}`),
+                title: saved.title || payload.title,
+                start: saved.start || payload.start,
+                end: saved.end || payload.end,
+                backgroundColor: taskColor,
+                color: taskColor,
+                description: saved.description || payload.description || '',
+                google_event_id: saved.google_event_id || null,
+                allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
+                extendedProps: { description: saved.description || payload.description || '', rawStart: saved.start || payload.start, rawEnd: saved.end || payload.end }
+              }
+              setEvents(prev => dedupeEvents([...prev, newEvent]))
             }
-          } catch (e) { console.error('failed to refetch events after create', e) }
-        } else {
-          const newEvent: EventShape = {
-            id: String(saved.id || `${Date.now()}`),
-            title: saved.title || payload.title,
-            start: saved.start || payload.start,
-            end: saved.end || payload.end,
-            backgroundColor: taskColor,
-            color: taskColor,
-            description: saved.description || payload.description || '',
-            google_event_id: saved.google_event_id || null,
-            allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
-            extendedProps: { description: saved.description || payload.description || '', rawStart: saved.start || payload.start, rawEnd: saved.end || payload.end }
           }
-          setEvents(prev => {
-            const newId = String(newEvent.id || '')
-            const newGid = String(newEvent.google_event_id || '')
-            const newRaw = newEvent.extendedProps?.rawStart || newEvent.start || ''
-            const newTitle = newEvent.title || ''
-            const filtered = prev.filter(ev => {
-              const evId = String((ev as any).id || '')
-              const evGid = String((ev as any).google_event_id || '')
-              const evRaw = (ev as any).extendedProps?.rawStart || (ev as any).start || ''
-              const evTitle = (ev as any).title || ''
-              if (evId && newId && evId === newId) return false
-              if (evGid && newGid && evGid === newGid) return false
-              if (evRaw && evTitle && newRaw && newTitle && evRaw === newRaw && evTitle === newTitle) return false
-              return true
-            })
-            return dedupeEvents([...filtered, newEvent])
-          })
+        } catch (error: any) {
+          console.error('create event failed', error)
+          throw new Error(`create failed: ${error.message || String(error)}`)
         }
       }
     } catch (err: any) {
@@ -346,7 +220,7 @@ const AddTask: React.FC<Props> = ({
       setStartTime('')
       setEndTime('')
       setTaskDescription('')
-      setTaskColor('#ef4444')
+      setTaskColor('#28375cff')
       setIsTaskDialogOpen(false)
       setViewingEvent(null)
     }
@@ -354,18 +228,27 @@ const AddTask: React.FC<Props> = ({
 
   const handleDeleteEvent = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+      const userId = user?.id
       const idToDelete = editingEvent?.id || viewingEvent?.id
       if (!idToDelete) return alert('No event selected to delete')
-      const deleteUrl = `${base}/calendar/${idToDelete}`
-      const res = await fetch(deleteUrl, { method: 'DELETE' })
-      if (!res.ok) {
-        let parsed: any = null
-        try { parsed = await res.json() } catch (e) { /* not JSON */ }
-        const bodyText = parsed && (parsed.message || parsed.error) ? (parsed.message || parsed.error) : (await res.text().catch(() => '<no body>'))
-        throw new Error(`delete failed: ${bodyText}`)
+      
+      await deleteEventAPI(idToDelete)
+      
+      // Auto-refresh calendar after successful delete
+      try {
+        if (userId) {
+          const refreshedEvents = await fetchEvents(userId)
+          setEvents(refreshedEvents)
+          console.log('[AddTask] Calendar refreshed after delete')
+        } else {
+          setEvents(prev => prev.filter(ev => ev.id !== String(idToDelete)))
+        }
+      } catch (e) {
+        console.error('Failed to refresh calendar after delete', e)
+        // Fallback: remove from local state
+        setEvents(prev => prev.filter(ev => ev.id !== String(idToDelete)))
       }
-      setEvents(prev => prev.filter(ev => ev.id !== String(idToDelete)))
+      
       setEditingEvent(null)
       setViewingEvent(null)
       setIsTaskDialogOpen(false)
@@ -383,7 +266,7 @@ const AddTask: React.FC<Props> = ({
     setStartTime('')
     setEndTime('')
     setTaskDescription('')
-    setTaskColor('#ef4444')
+    setTaskColor('#28375cff')
     setIsTaskDialogOpen(true)
   }
 
@@ -411,11 +294,6 @@ const AddTask: React.FC<Props> = ({
     return () => window.removeEventListener('keydown', onKey)
   }, [isTaskDialogOpen, viewingEvent, editingEvent])
 
-  // helpers to format date/time for the details card
-  // Parse an ISO-like string into a local Date object without applying
-  // unintended timezone conversions when the string lacks an explicit
-  // timezone marker. If the string includes Z or +HH:MM, fall back to
-  // Date(iso) which is timezone-aware.
   const parseToLocalDate = (iso?: string): Date | null => {
     if (!iso) return null
     // If it contains timezone info (Z or +HH or -HH), let Date handle it
@@ -482,7 +360,7 @@ const AddTask: React.FC<Props> = ({
                   </div>
                 </div>
               </DialogHeader>
-              <div className="text-sm text-gray-300 whitespace-pre-wrap">{taskDescription || 'No description'}</div>
+              <div className="text-sm text-gray-300 whitespace-pre-wrap">{viewingEvent.description || viewingEvent.extendedProps?.description || 'No description'}</div>
             </div>
           ) : (
             <>
