@@ -14,6 +14,21 @@ export async function updateUserDetails(userId, userData) {
   return data[0]; // Return updated customer
 }
 
+export async function getUserByCustomerId(customerId) {
+  const { data, error } = await supabase
+    .from('customer')
+    .select('*')
+    .eq('id', customerId)
+    .single(); 
+    if(!data){
+      return null;
+    }
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data; 
+}
+
 export async function addWeight(weightData) {
     const { data, error } = await supabase
       .from('customer_progress')
