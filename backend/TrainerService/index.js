@@ -11,16 +11,19 @@ import {
   updatedSession,
   getallSessionByTrainerId
 } from "./controllers/session.controller.js";
-import { 
-  getallTrainers, 
-  getTrainerById, 
+import {
+  getallTrainers,
+  getTrainerById,
   updateTrainerDetails,
   getFeedbackbyTrainerId,
   bookSession,
   getGymPlanByTrainerId,
-  getGymById, 
-  sendRequest
- } from './controllers/trainer.controller.js'
+  getGymById,
+  sendRequest,
+  requestVerification,
+  holdSession,
+  releaseSession
+  } from './controllers/trainer.controller.js'
 import {
   addplans,
   deletePlan,
@@ -53,11 +56,25 @@ app.patch('/updateplan/:planId', updatePlan);
 app.delete('/deleteplan/:planId', deletePlan);
 
 app.post('/booksession',bookSession)
+app.post('/holdsession', holdSession)
+app.post('/releasesession', releaseSession)
 
 app.get('/getgymplanbytrainerid/:trainerId',getGymPlanByTrainerId);
 app.get('/getmembershipgyms/:trainerId',getGymById);
-
 app.post('/sendrequesttogym',sendRequest)
+app.post('/request-verification', requestVerification)
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Trainer Service is running',
+    timestamp: new Date().toISOString(),
+    service: 'TrainerService',
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
 
 
 //get subscribe user

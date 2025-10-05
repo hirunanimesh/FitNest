@@ -1,4 +1,4 @@
-import {getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById } from '../services/user.service.js';
+import {getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById, getUserSessions, addReport } from '../services/user.service.js';
 import{addFeedback} from  '../services/feedback.service.js';
 
 export const updateuserdetails = async (req, res) => {
@@ -82,6 +82,30 @@ export const addfeedback = async (req, res) => {
 };
 
 
+export const getMySessions = async(req,res)=>{
+    const {customerId} = req.params;
+    try{
+        const sessions = await getUserSessions(customerId);
+        console.log("Sessions:", sessions);
+        if(sessions){
+            res.status(200).json({message:"Sessions retrieved successfully",sessions});
+        }else{
+            res.status(200).json({message:"No sessions found"});
+        }
+    }catch(error){
+        console.error("Error retrieving sessions:", error);
+        res.status(500).json({message:"Internal server error",error:error.message});
+    }
+};
 
-
-
+export const addreport = async (req, res) => {
+    try {
+        const report = await addReport(req.body);
+        if (report) {
+            res.status(200).json({ message: "Report added successfully", report });
+        }
+    } catch (error) {
+        console.error("Error adding report:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};

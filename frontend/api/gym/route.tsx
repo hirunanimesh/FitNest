@@ -98,3 +98,32 @@ export const GetAllGymCustomers = async(customerIds:string[])=>{
     })
     return customers
 }
+
+export const RequestVerification = async(gym_id:any,email:string) => {
+  const response =  await fetch(`${Base_URL}/api/gym/request-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gym_id: gym_id, // Use gym_id if available, otherwise userId
+          type: 'gym',
+          status: 'pending',
+          email: email
+        })
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Verification request failed');
+      }
+
+      return result;
+}
+
+export const GetMonthlyMembers = async(gymPlans:any[])=>{
+    const response = await axios.post(`${Base_URL}/api/payment/monthlymembers`,{
+        gymPlans
+    })
+    return response
+}

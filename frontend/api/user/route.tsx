@@ -33,17 +33,27 @@ export const GetOtherGyms = async() => {
     }
 };
 
-export const SubscribeGymPlan = async (planId: any, customerId: any, email: any, user_id: any) => {
+export const SubscribeGymPlan = async (planId: any, customerId: any, email: any, user_id: any,duration:any) => {
     try {
-        const response = await axios.post(`${Base_URL}/api/payment/subscribe`, {
-            planId,
-            customer_id: customerId,
-            user_id,
-            email
-        });
-
-        // If we reach here, the request was successful
+        if(duration === "1 day"){
+            const response = await axios.post(`${Base_URL}/api/payment/onetimepayment`, {
+                planId,
+                customer_id: customerId,
+                user_id,
+                email
+            });
         return { success: true, url: response.data.url };
+
+        }else{
+            const response = await axios.post(`${Base_URL}/api/payment/subscribe`, {
+                planId,
+                customer_id: customerId,
+                user_id,
+                email
+            });
+            return { success: true, url: response.data.url };
+        }
+       
 
     } catch (error: any) {
         // Handle different types of errors
@@ -77,25 +87,12 @@ export const SubscribeGymPlan = async (planId: any, customerId: any, email: any,
 
 
 export const GetUserSubscriptions = async (customerId:any) =>{
-    try {
-        const res = await axios.get(`${Base_URL}/api/payment/getsubscription/${customerId}`);
-        const data = res.data;
+    const planIds = await axios.get(`${Base_URL}/api/payment/getsubscription/${customerId}`)
 
-    // backend returns { planIds: [...] } or { error: '...' }
-    if (!data) return [];
-        if (Array.isArray(data)) return data;
-        if (Array.isArray(data.planIds)) return data.planIds;
-
-        // fallback - no subscriptions
-        return [];
-    } catch (error:any) {
-        // Treat 404 (customer not found / no subscriptions) as empty list
-        if (error.response && error.response.status === 404) {
-            return [];
-        }
-        // rethrow other errors so callers can handle them/log
-        throw error;
+    if(planIds.data.length === 0){
+        return []
     }
+    return planIds.data
 }
 
 export const GetMyPlansDetails = async (planIds:any[])=>{
@@ -113,13 +110,20 @@ export const UnsubscribeGymPlan = async (planId:any, customerId:any) => {
     return response.data
 }
 
-export const BookSession = async (sessionId:any, customerId:any)=>{
-    console.log("frontend api called", sessionId, customerId);
-    const response = await axios.post(`${Base_URL}/api/trainer/booksession`,{
+export const BookSession = async (sessionId:any, customerId:any,user_id:string,email:string)=>{
+    console.log("frontend api called", sessionId, customerId, user_id,email);
+    const response = await axios.post(`${Base_URL}/api/payment/sessionpayment`,{
         sessionId,
-        customerId
+        customer_id: customerId,
+        user_id,
+        email
     })
     return response.data
 }
 
+
+export const GetUserSessions = async (customerId:any)=>{
+    const response = await axios.get(`${Base_URL}/api/user/mysessions/${customerId}`)
+    return response.data
+}
 

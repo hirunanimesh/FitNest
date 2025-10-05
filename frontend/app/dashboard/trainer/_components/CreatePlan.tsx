@@ -9,6 +9,7 @@ import { Plus, Upload, X } from 'lucide-react';
 import { AddSession, uploadToCloudinary } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
+import VerifiedActions from '@/components/VerifiedActions';
 
 interface Session {
     session_id?: number;
@@ -254,11 +255,13 @@ const CreateSession = () => {
   return (
     <div>
        <Dialog open={isSessionDialogOpen} onOpenChange={setIsSessionDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <Plus className="h-4 w-4 mr-1" /> Create New Session
-                </Button>
-              </DialogTrigger>
+              <VerifiedActions fallbackMessage="You need to be a verified trainer to create sessions.">
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <Plus className="h-4 w-4 mr-1" /> Create New Session
+                  </Button>
+                </DialogTrigger>
+              </VerifiedActions>
               <DialogContent className='bg-gray-800 text-white max-w-[98vw] sm:max-w-lg md:max-w-2xl w-full mx-1 sm:mx-4 h-[98vh] sm:h-auto sm:max-h-[90vh] p-0'>
                 <div className="flex flex-col h-full">
                   <DialogHeader className="flex-shrink-0 p-4 sm:p-6 border-b border-gray-700">

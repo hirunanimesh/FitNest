@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, Save, X } from "lucide-react";
+import { Edit, Trash2, Save, X, Calendar } from "lucide-react";
 import { useTrainerData } from '../context/TrainerContext';
 import CreatePlan from './CreateSession';
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { UpdateSessionDetails, DeleteSession } from "@/lib/api";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import VerifiedActions from '@/components/VerifiedActions';
 
 interface Session {
   session_id: number;
@@ -26,9 +27,82 @@ interface Session {
   };
 }
 
+// Skeleton loader component for sessions
+const SessionSkeleton = () => (
+  <div className="group relative p-2 rounded-xl">
+    {/* Blurred glow effect */}
+    <div
+      className="absolute inset-0 rounded-xl -m-1 bg-gray-800/50 blur-lg opacity-60 z-0"
+      aria-hidden
+    />
+    <Card className="relative z-10 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl shadow-lg backdrop-blur-sm">
+      <CardHeader>
+        {/* Price skeleton */}
+        <div className="flex items-center gap-2">
+          <div className="w-[60px] h-4 bg-gray-600 rounded animate-pulse" />
+          <div className="h-4 bg-gray-700 rounded animate-pulse flex-1" />
+        </div>
+        
+        {/* Duration skeleton */}
+        <div className="flex items-center gap-2">
+          <div className="w-[60px] h-4 bg-gray-600 rounded animate-pulse" />
+          <div className="h-4 bg-gray-700 rounded animate-pulse flex-1" />
+        </div>
+        
+        {/* Date skeleton */}
+        <div className="flex items-center gap-2">
+          <div className="w-[60px] h-4 bg-gray-600 rounded animate-pulse" />
+          <div className="h-4 bg-gray-700 rounded animate-pulse flex-1" />
+        </div>
+        
+        {/* Time skeleton */}
+        <div className="flex items-center gap-2">
+          <div className="w-[60px] h-4 bg-gray-600 rounded animate-pulse" />
+          <div className="h-4 bg-gray-700 rounded animate-pulse flex-1" />
+        </div>
+        
+        {/* Zoom link skeleton */}
+        <div className="flex items-center gap-2">
+          <div className="w-[80px] h-4 bg-gray-600 rounded animate-pulse" />
+          <div className="h-4 bg-gray-700 rounded animate-pulse flex-1" />
+        </div>
+        
+        {/* Action buttons skeleton */}
+        <div className="flex gap-2 mt-3">
+          <div className="h-8 bg-gray-600 rounded animate-pulse flex-1" />
+          <div className="h-8 bg-gray-600 rounded animate-pulse flex-1" />
+        </div>
+      </CardHeader>
+    </Card>
+  </div>
+);
+
+// Loading state component
+const LoadingState = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    {Array.from({ length: 8 }).map((_, index) => (
+      <SessionSkeleton key={index} />
+    ))}
+  </div>
+);
+
+// Empty state component
+const EmptyState = () => (
+  <div className="col-span-full flex flex-col items-center justify-center py-16 px-8">
+    <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-xl mb-6">
+      <Calendar className="w-12 h-12 text-white" />
+    </div>
+    <h3 className="text-2xl font-bold text-red-400 mb-4">No Sessions Available</h3>
+    <p className="text-red-300 text-center max-w-md leading-relaxed mb-6">
+      You haven't created any training sessions yet. Start scheduling sessions to connect with your clients and help them achieve their fitness goals.
+    </p>
+    <p className="text-sm text-gray-400">Click "Create Session" to get started</p>
+  </div>
+);
+
 export default function Plans() {
   const { toast } = useToast();
-  const { trainerData, refreshTrainerData } = useTrainerData();
+  const { trainerData, refreshTrainerData, isLoading } = useTrainerData();
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Session>>({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -174,8 +248,12 @@ export default function Plans() {
             <CreatePlan />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {sessions.map((session: Session) => (
+          {/* Content section with loading, empty, and data states */}
+          {isLoading ? (
+            <LoadingState />
+          ) : sessions && sessions.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {sessions.map((session: Session) => (
               <div key={session.session_id} className="group relative p-2 rounded-xl">
                 {/* blurred red glow */}
                 <div
@@ -291,22 +369,26 @@ export default function Plans() {
                         </>
                       ) : (
                         <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(session)}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-                          >
-                            <Edit className="w-4 h-4 mr-2" /> Edit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openDeleteModal(session.session_id)}
-                            className="flex-1 bg-red-600 hover:bg-red-700 text-white border-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                          </Button>
+                          <VerifiedActions fallbackMessage="You need to be a verified trainer to edit sessions.">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(session)}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                            >
+                              <Edit className="w-4 h-4 mr-2" /> Edit
+                            </Button>
+                          </VerifiedActions>
+                          <VerifiedActions fallbackMessage="You need to be a verified trainer to delete sessions.">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openDeleteModal(session.session_id)}
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white border-red-600"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </Button>
+                          </VerifiedActions>
                         </>
                       )}
                     </div>
@@ -314,7 +396,10 @@ export default function Plans() {
                 </Card>
               </div>
             ))}
-          </div>
+            </div>
+          ) : (
+            <EmptyState />
+          )}
         </div>
       </section>
     </>

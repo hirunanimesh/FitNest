@@ -9,6 +9,8 @@ import {
     getChatHealthStatus 
 } from '../services/chat.service.js';
 import Joi from 'joi';
+import AdminService from '../services/admin.service.js';
+import EmailService from '../services/EmailService.js';
 
 // Validation schemas
 const uploadDocumentsSchema = Joi.object({
@@ -282,3 +284,212 @@ export async function chatHealth(req, res) {
         });
     }
 }
+
+//get member growth stats
+export async function getMemberGrowth(req, res) {
+    console.log('in the admin controller');
+    try {
+        const result = await AdminService.getMemberGrowthStats();
+        res.status(200).json({
+            success: true,
+            message: 'Member growth stats retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getMemberGrowth controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve member growth stats',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
+
+export async function getTrainerVerifications(req, res) {
+    
+    try {
+        const result = await AdminService.getTrainerVerifications();
+   
+        res.status(200).json({
+            success: true,
+            message: 'Trainer verifications retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getTrainerVerifications controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve trainer verifications',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
+
+export async function getGymVerifications(req, res) {
+    
+    try {
+        const result = await AdminService.getGymVerifications();
+        
+        res.status(200).json({
+            success: true,
+            message: 'Gym verifications retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getGymVerifications controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve gym verifications',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
+
+export async function handleVerificationState(req, res) {
+    console.log('in the handleVerificationState controller');
+    const { id, state, type, entityId } = req.params;
+
+    try {
+        // Update verification state and get user details
+        const result = await AdminService.handleVerificationState(id, state, type, entityId);
+        
+        // Send email notification if user details are available
+        if (result.userDetails && result.userDetails.email) {
+            try {
+                const emailService = new EmailService();
+                const { email, name, entityName, entityType } = result.userDetails;
+                
+                if (state === 'Approved') {
+                    console.log(`Sending approval email to ${email} for ${entityType}`);
+                    await emailService.sendVerificationApprovedEmail(
+                        email, 
+                        name, 
+                        entityType, 
+                        entityName
+                    );
+                    console.log('Approval email sent successfully');
+                } else if (state === 'Rejected') {
+                    console.log(`Sending rejection email to ${email} for ${entityType}`);
+                    // You can add a reason parameter from req.body if needed
+                    const reason = req.body?.reason || null;
+                    await emailService.sendVerificationRejectedEmail(
+                        email, 
+                        name, 
+                        entityType, 
+                        entityName, 
+                        reason
+                    );
+                    console.log('Rejection email sent successfully');
+                }
+            } catch (emailError) {
+                console.error('Failed to send email notification:', emailError);
+                // Don't fail the entire request if email fails - just log the error
+                // The verification state update was successful
+            }
+        } else {
+            console.log('No user details available for email notification');
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Verification state updated successfully',
+            data: result.verificationUpdate
+        });
+    } catch (error) {
+        console.error('Error in handleVerificationState controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update verification state',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
+
+export async function getDashboardStats(req,res){
+    console.log('in the getDashboardStats controller');
+    try {
+        const result = await AdminService.getDashboardStats();
+        res.status(200).json({
+            success: true,
+            message: 'Dashboard stats retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getDashboardStats controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve dashboard stats',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+}
+export async function banneduser(req, res) {
+    try {
+        const data = await AdminService.BannedUsers(req.body);
+        if (data) {
+            res.status(200).json({ message: "Banned user successfully", data });
+        }
+    } catch (error) {
+        console.error("Error happen:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
+export async function getuserinquiries(req,res){
+    console.log('in the getUserInquiries controller');
+    try {
+        const result = await AdminService.getUserInquiries();
+        res.status(200).json({
+            success: true,
+            message: 'User inqueries retrieved successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('Error in getUserInquiries controller:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve user inqueries',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+};
+export async function updateinquirydetails(req, res) {
+    // Support multiple ways callers might send the id: /:inquiryId, /:id or in the request body
+    let inquiryId = req.params?.inquiryId ?? req.params?.id ?? req.body?.inquiryId ?? req.body?.id;
+
+    // Normalize common accidental string values
+    if (inquiryId === 'undefined') inquiryId = undefined;
+
+    // Convert numeric strings to Number to avoid DB bigint parsing errors
+    if (typeof inquiryId === 'string' && /^\d+$/.test(inquiryId)) {
+        inquiryId = Number(inquiryId);
+    }
+
+    if (!inquiryId) {
+        console.warn('updateinquirydetails called without inquiryId', { params: req.params, body: req.body })
+        return res.status(400).json({ success: false, message: 'inquiryId is required' });
+    }
+
+    const updatePayload = req.body || {};
+    if (Object.keys(updatePayload).length === 0) {
+        console.warn('updateinquirydetails called with empty body', { inquiryId, params: req.params })
+        return res.status(400).json({ success: false, message: 'Request body is empty - nothing to update' });
+    }
+
+    // Diagnostic log: show what's coming in to help debug 500s from Supabase
+    console.log('updateinquirydetails called with', {
+        inquiryId,
+        inquiryIdType: typeof inquiryId,
+        updatePayload
+    })
+
+    try {
+        const updatedInquiry = await AdminService.updateUserInquiries(inquiryId, updatePayload);
+        if (updatedInquiry) {
+            return res.status(200).json({ success: true, message: 'Inquiry updated successfully', data: updatedInquiry });
+        }
+        return res.status(404).json({ success: false, message: 'Inquiry not found' });
+    } catch (error) {
+        console.error('Error updating inquiry:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error', error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong' });
+    }
+};

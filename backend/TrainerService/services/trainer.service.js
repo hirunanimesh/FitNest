@@ -42,7 +42,7 @@ export async function gettrainerbyid(trainerId) {
         .single(); // Fetch single trainer by ID
 
         if(!data){
-                return null;
+          return null;
         }
         
         if (error) {
@@ -73,7 +73,6 @@ export async function getmembershipGyms(trainerId) {
   if (trainerId === undefined || trainerId === null) {
     throw new Error('trainerId is required');
   }
-
   const id = Number(trainerId);
   if (Number.isNaN(id)) {
     throw new Error('trainerId must be a valid number');
@@ -101,7 +100,7 @@ export async function updatetrainerdetails(trainerId, trainerData) {
   }
 
   return data[0]; // Return updated trainer
-} 
+}
     
 export async function getfeedbackbytrainerid(trainerId) {
   const { data, error } = await supabase
@@ -126,7 +125,7 @@ export async function getfeedbackbytrainerid(trainerId) {
 export async function booksession(sessionId, customerId) {
   const { data, error } = await supabase
   .from('trainer_sessions')
-  .update({ customer_id: customerId, booked: true })
+  .update({ customer_id: customerId, booked: true, lock: false })
   .eq('session_id', sessionId)
   .select()
   .single();
@@ -138,6 +137,44 @@ export async function booksession(sessionId, customerId) {
 
 }
 
+// Atomically place a hold on a session if it's not already booked
+export async function holdsession(sessionId, customerId) {
+  const { data, error } = await supabase
+    .from('trainer_sessions')
+    // place a lock only if not already locked or booked
+    .update({ customer_id: customerId, lock: true })
+    .eq('session_id', sessionId)
+    .eq('booked', false)
+    .eq('lock', false)
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // If no rows updated, someone else already booked/holding it
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  return data[0];
+}
+
+// Release a held session (set booked=false and clear customer)
+export async function releasesession(sessionId) {
+  const { data, error } = await supabase
+    .from('trainer_sessions')
+    // release only the lock; do not mark as booked
+    .update({ customer_id: null, lock: false })
+    .eq('session_id', sessionId)
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data && data[0] ? data[0] : null;
+}
 export async function sendrequest(trainerId,gymId){
   const { data, error } = await supabase
   .from('trainer_requests')
@@ -150,6 +187,52 @@ export async function sendrequest(trainerId,gymId){
   }
   return data;
 }
- 
+
+export async function requestTrainerVerification(verificationData) {
+  const { trainer_id, type, status, email } = verificationData;
+
+  // Check if a verification record already exists for this trainer_id
+  const { data: existingRecord, error: checkError } = await supabase
+    .from('verifications')
+    .select('*')
+    .eq('customer_id', trainer_id)
+    .single();
+
+  if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+    throw new Error(checkError.message);
+  }
+
+  if (existingRecord) {
+    // Record exists, check status
+    if (existingRecord.verification_state === 'Pending') {
+      return { message: 'Verification request already sent. Please wait for approval.' };
+    } else if (existingRecord.verification_state === 'Rejected') {
+      return { message: 'Your previous verification request was rejected. Please contact support.' };
+    } else if (existingRecord.verification_state === 'Approved') {
+      return { message: 'Your trainer profile is already verified.' };
+    }
+  }
+
+  // No existing record, create new one
+  const { data, error } = await supabase
+    .from('verifications')
+    .insert([{
+      customer_id:trainer_id,
+      type,
+      verification_state:status,
+      email,
+      created_at: new Date().toISOString()
+    }])
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { message: 'Verification request submitted successfully. You will be notified once reviewed.' };
+}
+
+
+
 
 

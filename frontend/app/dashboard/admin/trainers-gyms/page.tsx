@@ -1,103 +1,78 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Building2, UserCheck, MapPin, Phone, Calendar, Users, ArrowUpDown } from "lucide-react"
+import { Building2, UserCheck, MapPin, Phone, Calendar, Users } from "lucide-react"
 import Image from "next/image"
+import { fetchAllGyms, fetchAllTrainers } from "@/api/admin/route"
 
-// Mock data for gyms
-const gymsData = [
-  {
-    id: 1,
-    name: "FitZone Gym",
-    profilePic: "/placeholder.svg?height=50&width=50",
-    address: "123 Main St, Downtown",
-    contactNumber: "+1 (555) 123-4567",
-    joinedDate: "2023-01-15",
-    totalMembers: 245,
-  },
-  {
-    id: 2,
-    name: "PowerHouse Fitness",
-    profilePic: "/placeholder.svg?height=50&width=50",
-    address: "456 Oak Ave, Midtown",
-    contactNumber: "+1 (555) 234-5678",
-    joinedDate: "2023-03-22",
-    totalMembers: 189,
-  },
-  {
-    id: 3,
-    name: "Elite Training Center",
-    profilePic: "/placeholder.svg?height=50&width=50",
-    address: "789 Pine Rd, Uptown",
-    contactNumber: "+1 (555) 345-6789",
-    joinedDate: "2022-11-08",
-    totalMembers: 312,
-  },
-  {
-    id: 4,
-    name: "Muscle Factory",
-    profilePic: "/placeholder.svg?height=50&width=50",
-    address: "321 Elm St, Westside",
-    contactNumber: "+1 (555) 456-7890",
-    joinedDate: "2023-05-10",
-    totalMembers: 156,
-  },
-]
+// Type definitions
+interface Gym {
+  gym_id: number;
+  gym_name: string;
+  profile_img?: string | null;
+  description?: string | null;
+  address: string;
+  location: string;
+  contact_no?: string | null;
+  created_at?: string;
+}
 
-// Mock data for trainers
-const trainersData = [
-  {
-    id: 1,
-    name: "John Smith",
-    profilePic: "/placeholder.svg?height=50&width=50",
-    address: "Downtown Area",
-    contactNumber: "+1 (555) 111-2222",
-    totalSubscribers: 45,
-    joinedDate: "2023-02-01",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    profilePic: "/placeholder.svg?height=50&width=50",
-    address: "Midtown District",
-    contactNumber: "+1 (555) 222-3333",
-    totalSubscribers: 67,
-    joinedDate: "2022-12-15",
-  },
-  {
-    id: 3,
-    name: "Mike Wilson",
-    profilePic: "/placeholder.svg?height=50&width=50",
-    address: "Uptown Area",
-    contactNumber: "+1 (555) 333-4444",
-    totalSubscribers: 32,
-    joinedDate: "2023-04-20",
-  },
-  {
-    id: 4,
-    name: "Emily Davis",
-    profilePic: "/placeholder.svg?height=50&width=50",
-    address: "Eastside",
-    contactNumber: "+1 (555) 444-5555",
-    totalSubscribers: 89,
-    joinedDate: "2023-01-10",
-  },
-]
-const downloadCSV = (data: any[]) => {
+interface Trainer {
+  id: number;
+  trainer_name: string;
+  profile_img?: string | null;
+  expertise: string;
+  contact_no?: string | null;
+  years_of_experience: number;
+  email: string;
+  skills: string | string[];
+  bio: string;
+  rating: number;
+  created_at?: string;
+}
+
+interface PaginatedResponse {
+  data: Gym[] | Trainer[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+// CSV download function
+const downloadCSV = (data: any[], type: 'gyms' | 'trainers') => {
+  const headers = type === 'gyms' 
+    ? ["Name", "Address", "Location", "Contact Number", "Created Date"]
+    : ["Name", "Email", "Contact Number", "Expertise", "Experience", "Rating", "Created Date"];
+    
   const csvRows = [
-    ["Name", "Address", "Contact Number", "Joined Date", "Total Members"],
-    ...data.map((item) => [
-      item.name,
-      item.address,
-      item.contactNumber,
-      item.joinedDate,
-      item.totalMembers,
-    ]),
+    headers,
+    ...data.map((item) => 
+      type === 'gyms' 
+        ? [
+            item.gym_name,
+            item.address,
+            item.location,
+            item.contact_no || 'N/A',
+            item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'
+          ]
+        : [
+            item.trainer_name,
+            item.email,
+            item.contact_no || 'N/A',
+            item.expertise,
+            item.years_of_experience,
+            item.rating,
+            item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'
+          ]
+    ),
   ]
 
   const csvString = csvRows.map((row) => row.join(",")).join("\n")
@@ -106,168 +81,255 @@ const downloadCSV = (data: any[]) => {
 
   const a = document.createElement("a")
   a.href = url
-  a.download = "gyms_trainers_data.csv"
+  a.download = `${type}_data.csv`
   a.click()
   URL.revokeObjectURL(url)
 }
 
 export default function TrainersGymsPage() {
+  const router = useRouter()
   const [selectedView, setSelectedView] = useState<"gyms" | "trainers">("gyms")
   const [searchTerm, setSearchTerm] = useState("")
-  const [sortBy, setSortBy] = useState<"date" | "members">("date")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [gyms, setGyms] = useState<Gym[]>([])
+  const [trainers, setTrainers] = useState<Trainer[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
-  const filteredAndSortedGyms = gymsData
-    .filter(
-      (gym) =>
-        gym.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        gym.address.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-    .sort((a, b) => {
-      if (sortBy === "date") {
-        const dateA = new Date(a.joinedDate).getTime()
-        const dateB = new Date(b.joinedDate).getTime()
-        return sortOrder === "asc" ? dateA - dateB : dateB - dateA
-      } else {
-        return sortOrder === "asc" ? a.totalMembers - b.totalMembers : b.totalMembers - a.totalMembers
-      }
-    })
+  // Pagination states
+  const [gymPagination, setGymPagination] = useState({
+    page: 1,
+    hasNext: false,
+    total: 0,
+    totalPages: 0
+  })
+  const [trainerPagination, setTrainerPagination] = useState({
+    page: 1,
+    hasNext: false,
+    total: 0,
+    totalPages: 0
+  })
 
-  const filteredAndSortedTrainers = trainersData
-    .filter(
-      (trainer) =>
-        trainer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        trainer.address.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-    .sort((a, b) => {
-      if (sortBy === "date") {
-        const dateA = new Date(a.joinedDate).getTime()
-        const dateB = new Date(b.joinedDate).getTime()
-        return sortOrder === "asc" ? dateA - dateB : dateB - dateA
+  // Navigation functions
+  const navigateToGymProfile = (gymId: number) => {
+    router.push(`/dashboard/user/gym/${gymId}?adminView=true`)
+  }
+
+  const navigateToTrainerProfile = (trainerId: number) => {
+    router.push(`/profile/trainer?id=${trainerId}&adminView=true`)
+  }
+
+  // Initial data loading
+  useEffect(() => {
+    fetchInitialData()
+  }, [])
+
+  // Debounced search
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      fetchFilteredData()
+    }, 300)
+
+    return () => clearTimeout(debounceTimer)
+  }, [searchTerm, selectedView])
+
+  const fetchInitialData = async () => {
+    setIsLoadingData(true)
+    try {
+      if (selectedView === "gyms") {
+        await fetchGymsData(1, true)
       } else {
-        return sortOrder === "asc" ? a.totalSubscribers - b.totalSubscribers : b.totalSubscribers - a.totalSubscribers
+        await fetchTrainersData(1, true)
       }
-    })
+    } catch (error) {
+      console.error("Error fetching initial data:", error)
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
+
+  const fetchFilteredData = async () => {
+    setIsLoadingData(true)
+    try {
+      if (selectedView === "gyms") {
+        await fetchGymsData(1, true, searchTerm)
+      } else {
+        await fetchTrainersData(1, true, searchTerm)
+      }
+    } catch (error) {
+      console.error("Error fetching filtered data:", error)
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
+
+  const fetchGymsData = async (page: number, reset: boolean = false, search: string = "") => {
+    try {
+      const response = await fetchAllGyms(page, 12, search)
+      
+      if (response.data && response.data.gyms) {
+        const gymData: PaginatedResponse = response.data.gyms
+        
+        if (reset) {
+          setGyms(gymData.data as Gym[])
+        } else {
+          setGyms(prev => [...prev, ...(gymData.data as Gym[])])
+        }
+        
+        setGymPagination({
+          page: gymData.page,
+          hasNext: gymData.hasNext,
+          total: gymData.total,
+          totalPages: gymData.totalPages
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching gyms:", error)
+      if (reset) setGyms([])
+    }
+  }
+
+  const fetchTrainersData = async (page: number, reset: boolean = false, search: string = "") => {
+    try {
+      const response = await fetchAllTrainers(page, 12, search)
+      
+      if (response.data && response.data.trainers) {
+        const trainerData: PaginatedResponse = response.data.trainers
+        
+        if (reset) {
+          setTrainers(trainerData.data as Trainer[])
+        } else {
+          setTrainers(prev => [...prev, ...(trainerData.data as Trainer[])])
+        }
+        
+        setTrainerPagination({
+          page: trainerData.page,
+          hasNext: trainerData.hasNext,
+          total: trainerData.total,
+          totalPages: trainerData.totalPages
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching trainers:", error)
+      if (reset) setTrainers([])
+    }
+  }
+
+  const handleViewMore = async () => {
+    setIsLoadingMore(true)
+    try {
+      if (selectedView === "gyms") {
+        await fetchGymsData(gymPagination.page + 1, false, searchTerm)
+      } else {
+        await fetchTrainersData(trainerPagination.page + 1, false, searchTerm)
+      }
+    } catch (error) {
+      console.error("Error loading more data:", error)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
 
   return (
-   
-      <div className="min-h-screen bg-gray-900 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
-  <h1 className="text-2xl md:text-3xl font-bold text-white">
-    {selectedView === "gyms" ? "Gym Management" : "Trainer Management"}
-  </h1>
+    <div className="min-h-screen bg-gray-900 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
+            {selectedView === "gyms" ? "Gym Management" : "Trainer Management"}
+          </h1>
 
-  {/* View Selection */}
-  <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-    <Button
-      onClick={() => downloadCSV(selectedView === "gyms" ? filteredAndSortedGyms : filteredAndSortedTrainers)}
-      className="w-full sm:w-auto lg:min-w-[120px] order-3 sm:order-1"
-    >
-      Download CSV
-    </Button>
-    
-    <div className="flex gap-2 order-1 sm:order-2">
-      <Button
-        onClick={() => setSelectedView("gyms")}
-        variant={selectedView === "gyms" ? "default" : "outline"}
-        className={`flex-1 sm:flex-none ${
-          selectedView === "gyms"
-            ? "bg-red-600 hover:bg-red-700 text-white border-0"
-            : "border-gray-600 text-black hover:bg-gray-300"
-        }`}
-      >
-        <Building2 className="h-4 w-4 mr-2" />
-        Gyms
-      </Button>
-      <Button
-        onClick={() => setSelectedView("trainers")}
-        variant={selectedView === "trainers" ? "default" : "outline"}
-        className={`flex-1 sm:flex-none ${
-          selectedView === "trainers"
-            ? "bg-red-600 hover:bg-red-700 text-white border-0"
-            : "border-gray-600 text-black hover:bg-gray-300"
-        }`}
-      >
-        <UserCheck className="h-4 w-4 mr-2" />
-        Trainers
-      </Button>
-    </div>
-  </div>
-</div>
+          {/* View Selection */}
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+            <Button
+              onClick={() => downloadCSV(selectedView === "gyms" ? gyms : trainers, selectedView)}
+              className="w-full sm:w-auto lg:min-w-[120px] order-3 sm:order-1"
+            >
+              Download CSV
+            </Button>
+            
+            <div className="flex gap-2 order-1 sm:order-2">
+              <Button
+                onClick={() => setSelectedView("gyms")}
+                variant={selectedView === "gyms" ? "default" : "outline"}
+                className={`flex-1 sm:flex-none ${
+                  selectedView === "gyms"
+                    ? "bg-red-600 hover:bg-red-700 text-white border-0"
+                    : "border-gray-600 text-black hover:bg-gray-300"
+                }`}
+              >
+                <Building2 className="h-4 w-4 mr-2" />
+                Gyms
+              </Button>
+              <Button
+                onClick={() => setSelectedView("trainers")}
+                variant={selectedView === "trainers" ? "default" : "outline"}
+                className={`flex-1 sm:flex-none ${
+                  selectedView === "trainers"
+                    ? "bg-red-600 hover:bg-red-700 text-white border-0"
+                    : "border-gray-600 text-black hover:bg-gray-300"
+                }`}
+              >
+                <UserCheck className="h-4 w-4 mr-2" />
+                Trainers
+              </Button>
+            </div>
+          </div>
+        </div>
 
-          {/* Filters and Search */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">Filters & Search</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <Input
-                    placeholder={`Search ${selectedView}...`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Select value={sortBy} onValueChange={(value: "date" | "members") => setSortBy(value)}>
-                    <SelectTrigger className="w-40 bg-gray-700 border-gray-600 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600">
-                      <SelectItem value="date" className="text-white hover:bg-gray-600">
-                        Join Date
-                      </SelectItem>
-                      <SelectItem value="members" className="text-white hover:bg-gray-600">
-                        {selectedView === "gyms" ? "Members" : "Subscribers"}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                    className="border-gray-600 text-black hover:bg-gray-400"
-                  >
-                    <ArrowUpDown className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Search */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">Search {selectedView === "gyms" ? "Gyms" : "Trainers"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Input
+              placeholder={`Search ${selectedView} by name...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+            />
+          </CardContent>
+        </Card>
 
-          {/* Results */}
+        {/* Results */}
+        {isLoadingData ? (
+          <div className="text-center py-16">
+            <div className="relative inline-block">
+              <div className="w-16 h-16 border-4 border-red-500/30 rounded-full animate-spin border-t-red-500"></div>
+              <div className="absolute inset-0 w-12 h-12 border-4 border-rose-500/30 rounded-full animate-spin border-t-rose-500 animate-reverse"></div>
+            </div>
+            <p className="mt-4 text-lg text-slate-300">Loading {selectedView}...</p>
+          </div>
+        ) : (
           <div className="space-y-4">
             {selectedView === "gyms" ? (
               <>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-white">Gyms ({filteredAndSortedGyms.length})</h2>
+                  <h2 className="text-xl font-semibold text-white">Gyms ({gymPagination.total})</h2>
                 </div>
                 <div className="grid gap-4">
-                  {filteredAndSortedGyms.map((gym) => (
-                    <Card key={gym.id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
+                  {gyms.map((gym) => (
+                    <Card key={gym.gym_id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
                       <CardContent className="p-6">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                           <div className="flex items-center gap-4 flex-1">
                             <Image
-                              src={gym.profilePic || "/placeholder.svg"}
-                              alt={gym.name}
-                              width={50}
-                              height={50}
-                              className="rounded-full bg-gray-700"
+                              src={gym.profile_img || "/placeholder.svg"}
+                              alt={gym.gym_name}
+                              width={60}
+                              height={60}
+                              className="w-14 h-14 rounded-full bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity object-cover"
+                              onClick={() => navigateToGymProfile(gym.gym_id)}
                             />
                             <div className="space-y-1">
-                              <h3 className="font-semibold text-white text-lg">{gym.name}</h3>
+                              <h3 className="font-semibold text-white text-lg">{gym.gym_name}</h3>
                               <div className="flex items-center gap-2 text-gray-400 text-sm">
                                 <MapPin className="h-4 w-4" />
-                                {gym.address}
+                                {gym.address}, {gym.location}
                               </div>
                               <div className="flex items-center gap-2 text-gray-400 text-sm">
                                 <Phone className="h-4 w-4" />
-                                {gym.contactNumber}
+                                {gym.contact_no || 'N/A'}
                               </div>
                             </div>
                           </div>
@@ -275,11 +337,11 @@ export default function TrainersGymsPage() {
                             <div className="flex flex-col items-start sm:items-end gap-2">
                               <div className="flex items-center gap-2 text-gray-400 text-sm">
                                 <Calendar className="h-4 w-4" />
-                                Joined: {new Date(gym.joinedDate).toLocaleDateString()}
+                                Created: {gym.created_at ? new Date(gym.created_at).toLocaleDateString() : 'N/A'}
                               </div>
                               <Badge className="bg-red-600/20 text-red-400 border-red-600/30">
-                                <Users className="h-3 w-3 mr-1" />
-                                {gym.totalMembers} Members
+                                <Building2 className="h-3 w-3 mr-1" />
+                                ID: {gym.gym_id}
                               </Badge>
                             </div>
                           </div>
@@ -288,34 +350,63 @@ export default function TrainersGymsPage() {
                     </Card>
                   ))}
                 </div>
+                
+                {/* View More Button for Gyms */}
+                {gymPagination.hasNext && (
+                  <div className="text-center mt-8">
+                    <Button
+                      onClick={handleViewMore}
+                      disabled={isLoadingMore}
+                      className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl px-8 py-3 font-semibold text-lg"
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 rounded-full animate-spin border-t-white mr-2"></div>
+                          Loading...
+                        </>
+                      ) : (
+                        "View More Gyms"
+                      )}
+                    </Button>
+                  </div>
+                )}
+                
+                {/* No Results Message for Gyms */}
+                {gyms.length === 0 && (
+                  <div className="text-center py-16">
+                    <Building2 className="w-16 h-16 text-red-500 mx-auto" />
+                    <p className="mt-4 text-lg text-slate-300">No gyms found matching your criteria.</p>
+                  </div>
+                )}
               </>
             ) : (
               <>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-white">Trainers ({filteredAndSortedTrainers.length})</h2>
+                  <h2 className="text-xl font-semibold text-white">Trainers ({trainerPagination.total})</h2>
                 </div>
                 <div className="grid gap-4">
-                  {filteredAndSortedTrainers.map((trainer) => (
+                  {trainers.map((trainer) => (
                     <Card key={trainer.id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
                       <CardContent className="p-6">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                           <div className="flex items-center gap-4 flex-1">
                             <Image
-                              src={trainer.profilePic || "/placeholder.svg"}
-                              alt={trainer.name}
-                              width={50}
-                              height={50}
-                              className="rounded-full bg-gray-700"
+                              src={trainer.profile_img || "/placeholder.svg"}
+                              alt={trainer.trainer_name}
+                              width={60}
+                              height={60}
+                              className="w-14 h-14 rounded-full bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity object-cover"
+                              onClick={() => navigateToTrainerProfile(trainer.id)}
                             />
                             <div className="space-y-1">
-                              <h3 className="font-semibold text-white text-lg">{trainer.name}</h3>
+                              <h3 className="font-semibold text-white text-lg">{trainer.trainer_name}</h3>
                               <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                <MapPin className="h-4 w-4" />
-                                {trainer.address}
+                                <UserCheck className="h-4 w-4" />
+                                {trainer.expertise}
                               </div>
                               <div className="flex items-center gap-2 text-gray-400 text-sm">
                                 <Phone className="h-4 w-4" />
-                                {trainer.contactNumber}
+                                {trainer.contact_no || trainer.email}
                               </div>
                             </div>
                           </div>
@@ -323,11 +414,11 @@ export default function TrainersGymsPage() {
                             <div className="flex flex-col items-start sm:items-end gap-2">
                               <div className="flex items-center gap-2 text-gray-400 text-sm">
                                 <Calendar className="h-4 w-4" />
-                                Joined: {new Date(trainer.joinedDate).toLocaleDateString()}
+                                Created: {trainer.created_at ? new Date(trainer.created_at).toLocaleDateString() : 'N/A'}
                               </div>
                               <Badge className="bg-red-600/20 text-red-400 border-red-600/30">
                                 <Users className="h-3 w-3 mr-1" />
-                                {trainer.totalSubscribers} Subscribers
+                                Rating: {trainer.rating}/5 ({trainer.years_of_experience}y exp)
                               </Badge>
                             </div>
                           </div>
@@ -336,11 +427,39 @@ export default function TrainersGymsPage() {
                     </Card>
                   ))}
                 </div>
+                
+                {/* View More Button for Trainers */}
+                {trainerPagination.hasNext && (
+                  <div className="text-center mt-8">
+                    <Button
+                      onClick={handleViewMore}
+                      disabled={isLoadingMore}
+                      className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl px-8 py-3 font-semibold text-lg"
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 rounded-full animate-spin border-t-white mr-2"></div>
+                          Loading...
+                        </>
+                      ) : (
+                        "View More Trainers"
+                      )}
+                    </Button>
+                  </div>
+                )}
+                
+                {/* No Results Message for Trainers */}
+                {trainers.length === 0 && (
+                  <div className="text-center py-16">
+                    <UserCheck className="w-16 h-16 text-red-500 mx-auto" />
+                    <p className="mt-4 text-lg text-slate-300">No trainers found matching your criteria.</p>
+                  </div>
+                )}
               </>
             )}
           </div>
-        </div>
+        )}
       </div>
-   
+    </div>
   )
 }

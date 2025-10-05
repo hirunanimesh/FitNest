@@ -61,7 +61,7 @@ const GymProfile: React.FC = () => {
     const plansSectionRef = useRef<HTMLDivElement>(null);
     const [myPlans, setMyPlans] = useState<string[]>([]);
     const [role,setRole] = useState<string>('');
-
+    
     // Scroll to top on page load
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -77,6 +77,7 @@ const GymProfile: React.FC = () => {
         const fetchMySubscriptions = async () => {
             try {
                 const customer_id = await getUserProfileId();
+                
                 if (customer_id) {
                     const MyPlans = await GetUserSubscriptions(customer_id);
                     setMyPlans(MyPlans.planIds || []);
@@ -217,7 +218,7 @@ const GymProfile: React.FC = () => {
         fetchGymPlans();
     }, [gymId]);
 
-    const handleSubscribe = async (planId: string) => {
+    const handleSubscribe = async (planId: string,duration:string) => {
         if (!email) {
             setSubscriptionErrorMessage('User email is not available yet');
             toast.error('Authentication Required', {
@@ -249,7 +250,8 @@ const GymProfile: React.FC = () => {
                 planId,
                 customer_id,
                 email,
-                gymData?.user_id
+                gymData?.user_id,
+                duration
             );
 
             toast.dismiss('subscription-loading');
@@ -628,7 +630,7 @@ const GymProfile: React.FC = () => {
                                                 </Button>
                                             ) : role === 'customer' ? (
                                                 <Button
-                                                    onClick={() => handleSubscribe(plan.plan_id)}
+                                                    onClick={() => handleSubscribe(plan.plan_id,plan.duration)}
                                                     className={`w-full bg-gradient-to-r ${gradient} hover:shadow-xl hover:shadow-red-500/25 text-white font-bold py-4 text-lg rounded-xl transition-all duration-300 hover:scale-105 group-hover:shadow-2xl`}
                                                 >
                                                     Subscribe Now
@@ -654,7 +656,7 @@ const GymProfile: React.FC = () => {
                     )}
                 </div>
             </div>
-
+                 
             {/* Custom Styles */}
             <style jsx global>{`
                 html {

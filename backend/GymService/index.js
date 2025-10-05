@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 
-import { addGym,approveTrainer,getAllGyms, getAllGymUsers, getGymById, getGymByUserId, getGymTrainerCount, getTotalGymMemberCount, getTrainers, updateGymDetails } from './controllers/gym.controller.js'
+import { addGym,approveTrainer,getAllGyms, getAllGymUsers, getGymById, getGymByUserId, getGymTrainerCount, getTotalGymMemberCount, getTrainers, updateGymDetails, requestVerification } from './controllers/gym.controller.js'
 import { addGymPlan, deleteGymPlan, getAllGymPlans, getGymPlanByGymId, getMemberCountPerPlan, updateGymPlan, assignTrainersToPlan, getPlanTrainers, updatePlanTrainers , GetOneDayGyms , GetOtherGyms, GetGymPlanDetails} from './controllers/plans.controller.js'
 
 
@@ -42,6 +42,7 @@ app.get('/getstatistics/:gymId',getGymTrainerCount)
 
 app.get('/one-day', GetOneDayGyms)
 app.get('/other', GetOtherGyms)
+app.post('/request-verification', requestVerification)
 
 app.listen(process.env.PORT || 3002,()=>{
     console.log(`Gym Service is running on port ${process.env.PORT || 3002}`)

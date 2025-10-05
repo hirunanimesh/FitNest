@@ -71,3 +71,33 @@ export async function getLatestWeightById(userId) {
 
   return data[0]; // Array of all weight entries
 }
+
+export async function getUserSessions(customerId){
+  const {data,error} = await supabase
+  .from('trainer_sessions')
+  .select(`*,trainer(
+    trainer_name,
+    profile_img
+    )`)
+  .eq('customer_id',customerId)
+  .eq('booked',true)
+  .order('date',{ascending:false});
+
+  if(error){
+    throw new Error(error.message);
+  }
+  return data;
+};
+
+export async function addReport(reportData) {
+    const { data, error } = await supabase
+      .from('Reports')
+      .insert(reportData)
+      .select();
+  
+    if (error) {
+      throw new Error(error.message);
+    }
+  
+    return data[0]; 
+  }

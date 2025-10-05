@@ -10,6 +10,7 @@ import { ScrollRevealStatsSection } from "@/components/scroll-reveal-stats"
 import PWAInstallPrompt from "@/components/pwa-install-prompt"
 import { PublicRoute } from "@/components/PublicRoute"
 
+
 const galleryImages = [
   {
     image: "/images/gallery-1.png",

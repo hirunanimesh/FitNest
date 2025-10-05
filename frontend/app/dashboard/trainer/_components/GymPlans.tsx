@@ -18,58 +18,6 @@ const GymPlans = () => {
     const { trainerData } = useTrainerData();
     const [gymPlans, setGymPlans] = useState<Plan[]>([]);
 
-    // Dummy gym plans data
-    const dummyGymPlans: Plan[] = [
-        {
-            id: 1,
-            title: "Premium Membership",
-            price: 99,
-            duration: "month",
-            description: "Access to all gym facilities, group classes, personal training sessions, and premium amenities including sauna and pool.",
-            gym_name: "FitZone Elite"
-        },
-        {
-            id: 2,
-            title: "Basic Membership",
-            price: 49,
-            duration: "month",
-            description: "Essential gym access with cardio and strength training equipment. Perfect for beginners starting their fitness journey.",
-            gym_name: "PowerHouse Gym"
-        },
-        {
-            id: 3,
-            title: "Student Plan",
-            price: 29,
-            duration: "month",
-            description: "Affordable membership for students with valid ID. Includes gym access during off-peak hours and basic facilities.",
-            gym_name: "Campus Fitness Center"
-        },
-        {
-            id: 4,
-            title: "Annual VIP",
-            price: 999,
-            duration: "year",
-            description: "Ultimate fitness experience with unlimited access, personal trainer, nutrition consultation, and exclusive member events.",
-            gym_name: "Elite Performance Hub"
-        },
-        {
-            id: 5,
-            title: "Family Package",
-            price: 149,
-            duration: "month",
-            description: "Perfect for families! Includes access for up to 4 family members with kids' programs and family-friendly facilities.",
-            gym_name: "Family Fitness World"
-        },
-        {
-            id: 6,
-            title: "Corporate Plan",
-            price: 79,
-            duration: "month",
-            description: "Designed for working professionals with flexible hours, express workouts, and corporate wellness programs.",
-            gym_name: "Business Fitness Solutions"
-        }
-    ];
-
     const gradients = [
         'from-red-500 to-rose-600',
         'from-rose-500 to-pink-600',
@@ -87,18 +35,15 @@ const GymPlans = () => {
             try {
                 const trainerId = trainerData?.trainer_id || (trainerData as any)?.id;
                 if (!trainerId) {
-                    // Use dummy data when no trainer ID
-                    setGymPlans(dummyGymPlans);
+                    setGymPlans([]);
                     return;
                 }
                 const res = await GetTrainersGymplans(trainerId);
                 const plans = res?.gymplans || res?.plans || [];
-                // Use dummy data if no real plans found
-                setGymPlans(plans.length > 0 ? plans : dummyGymPlans);
+                setGymPlans(plans);
             } catch (err) {
                 console.error('Failed to load gym plans', err);
-                // Use dummy data on error
-                setGymPlans(dummyGymPlans);
+                setGymPlans([]);
             }
         };
         fetch();
@@ -112,7 +57,15 @@ const GymPlans = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {gymPlans.length === 0 ? (
-                    <div className="text-center text-gray-400 col-span-full">No gym plans available</div>
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 px-8">
+                        <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-xl mb-6">
+                            <Award className="w-12 h-12 text-white" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-red-400 mb-4">No Gym Plans Available</h3>
+                        <p className="text-red-300 text-center max-w-md leading-relaxed">
+                            You haven't been assigned to any gym plans yet. Contact your gym administrator or check back later for available plans.
+                        </p>
+                    </div>
                 ) : (
                     gymPlans.map((plan: any, index: number) => {
                         const gradient = gradients[index % gradients.length];

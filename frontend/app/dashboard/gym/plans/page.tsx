@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GetGymPlans } from "@/api/gym/route";
+import { GetGymPlans, CreateGymPlan } from "@/api/gym/route";
+import { toast } from "sonner";
 
 const mockPlans = [
 	{ id: 1, name: "Basic Plan", price: "$20/month", description: "Access to gym equipment" },
@@ -26,15 +27,45 @@ export default function GymPlans() {
 
 	
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		
 		if (form.id) {
-			// Update existing plan
+			// Update existing plan (keep current mock behavior for now)
 			setPlans((prev: typeof plans) => prev.map((plan) => (plan.id === form.id ? { ...form, id: form.id } : plan)));
+			toast.success("Plan updated successfully!");
 		} else {
-			// Add new plan
-			setPlans((prev: typeof plans) => [...prev, { ...form, id: Date.now() }]);
+			// Add new plan - call API
+			try {
+				const gymId = 1; // You'll need to get the actual gym ID from context/auth
+				const planData = {
+					title: form.name,
+					price: parseFloat(form.price.replace('$', '').replace('/month', '')),
+					description: form.description,
+					duration: 30, // Default to 30 days, you can make this configurable
+					gymid: gymId
+				};
+
+				const response = await CreateGymPlan(gymId, planData);
+				
+				if (response.data.success || response.data.message === "Gym plan created successfully") {
+					// Add to local state
+					setPlans((prev: typeof plans) => [...prev, { 
+						...form, 
+						id: Date.now(),
+						price: `$${planData.price}/month`
+					}]);
+					
+					toast.success("🎉 Plan created successfully! Email notifications have been sent.");
+				} else {
+					toast.error("Failed to create plan. Please try again.");
+				}
+			} catch (error) {
+				console.error("Error creating plan:", error);
+				toast.error("Failed to create plan. Please try again.");
+			}
 		}
+		
 		setForm({ id: null, name: "", price: "", description: "" });
 		setIsDialogOpen(false);
 	};

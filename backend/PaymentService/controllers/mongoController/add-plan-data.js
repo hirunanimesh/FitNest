@@ -1,6 +1,7 @@
 import StripePlanData from '../../models/stripe_plan_data.js'
 import StripeCustomer from '../../models/stripe_customer.js'
 import StripeAccount from '../../models/stripe_account.js';
+import StripeSession from '../../models/stripe_session.js';
 
 function addPlanData ({plan_id,product_id,price_id}){
 
@@ -89,6 +90,11 @@ async function findStripePriceId ({planId}){
     return stripe_plan;
 }
 
+async function findstripeSessionPriceId({sessionId}){
+    const stripe_session = await StripeSession.findOne({session_id:sessionId})
+    return stripe_session;
+}
+
 async function findPlansByProductId({product_id}){
     const plans = await StripePlanData.find({
         product_id: { $in: product_id },
@@ -108,5 +114,18 @@ async function findCustomerByStripeId({stripe_customer_id}){
     return customer;
 }
 
+async function addSession({session_id,product_id,price_id}){
+    const session = new StripeSession({
+        session_id,
+        price_id,
+        product_id
+    })
+    session.save()
+    .then(savedSession => {
+      console.log('📦 Session saved:', savedSession);
+    })
+    .catch(err => console.error('❌ Save error:', err));
+}
+
 export { addPlanData, findStripeCustomerId, addStripeCustomer,addStripeAccount,findStripeAccount,deletePlanData, 
-    findStripePriceId,findPlansByProductId,findPlansByPlanIds,findCustomerByStripeId,updatePlanPrice};
+    findStripePriceId,findPlansByProductId,findPlansByPlanIds,findCustomerByStripeId,updatePlanPrice,addSession,findstripeSessionPriceId};

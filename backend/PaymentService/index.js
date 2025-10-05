@@ -12,9 +12,15 @@ import connectDatabase from './database/mongo.js';
 import getConnectedAccountPayments from './controllers/stripeController/get-connected-account-payments.js';
 import oneTimePayment from './controllers/stripeController/one-time-payment.js';
 import getCurrentMonthRevenue from './controllers/stripeController/get-monthly-revenue.js';
-import { GymPlanCreatedConsumer, GymPlanDeletedConsumer, GymPlanPriceUpdatedConsumer } from './kafka/Consumer.js';
+import { GymPlanCreatedConsumer, GymPlanDeletedConsumer, GymPlanPriceUpdatedConsumer, TrainerSessionCreatedConsumer } from './kafka/Consumer.js';
 import cancelSubscription from './controllers/stripeController/cancel-subscription.js';
 import getCustomersByGymPlans from './controllers/stripeController/get-customer-ids.js';
+import getMonthlyMembers from './controllers/stripeController/get-monthly-members.js';
+import SessionPayment from './controllers/stripeController/session-payment.js';
+import releaseSessionHandler from './controllers/stripeController/release-session.js';
+import stripeWebhook from './controllers/stripeController/webhook.js';
+import successSessionHandler from './controllers/stripeController/success-session.js';
+import systemRevenue from './controllers/stripeController/system-revenue.js';
 
 dotenv.config();
 
@@ -36,10 +42,19 @@ app.use('/connectedaccountpayments/:userId',getConnectedAccountPayments)
 app.use('/onetimepayment',oneTimePayment)
 app.use('/monthlyrevenue/:userId',getCurrentMonthRevenue)
 app.use('/getgymcustomerids',getCustomersByGymPlans)
+app.post('/monthlymembers', getMonthlyMembers)
+app.post('/sessionpayment', SessionPayment)
+// cancel handler to release holds and redirect
+app.get('/sessionpayment/cancel', releaseSessionHandler)
+// success handler to finalize booking and redirect
+app.get('/sessionpayment/success', successSessionHandler)
+app.post('/webhook', stripeWebhook)
+app.get('/getsystemrevenue',systemRevenue )
 
 GymPlanCreatedConsumer()
 GymPlanDeletedConsumer()
 GymPlanPriceUpdatedConsumer()
+TrainerSessionCreatedConsumer()
 
 
 app.listen(process.env.PORT || 3003, () => {

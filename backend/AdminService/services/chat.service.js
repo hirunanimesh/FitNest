@@ -25,6 +25,56 @@ async function generateMockResponse(context, question) {
     return randomResponse;
 }
 
+
+
+/**
+ * Generate AI response using direct REST API approach as fallback
+ * @param {string} context - The context documents  
+ * @param {string} question - The user's question
+ * @returns {Promise<string>} - AI response
+ */
+async function generateWithRestAPI(context, question) {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    const prompt = `You are a helpful gym management chatbot assistant. Answer the user's question based ONLY on the provided context. If the context doesn't contain relevant information to answer the question, politely say so.
+
+Context from gym documents:
+${context}
+
+User Question: ${question}
+
+Instructions:
+- Only use information from the provided context
+- Be helpful and friendly
+- If you cannot answer based on the context, say "I don't have enough information in my knowledge base to answer that question"
+- Keep responses concise but informative
+- Focus on gym-related topics
+
+Answer:`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{
+                    text: prompt
+                }]
+            }]
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`REST API failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+}
+
 /**
  * Generate a real AI response using Google Gemini
  * @param {string} context - The context documents
@@ -33,7 +83,7 @@ async function generateMockResponse(context, question) {
  */
 async function generateRealResponse(context, question) {
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash' });
 
     const prompt = `You are a helpful gym management chatbot assistant. Answer the user's question based ONLY on the provided context. If the context doesn't contain relevant information to answer the question, politely say so.
 
@@ -69,30 +119,18 @@ export async function processChatQuestion(question) {
         }
 
         const trimmedQuestion = question.trim();
-        console.log(`Processing chat question: ${trimmedQuestion}`);
 
         // Step 1: Generate embedding for the question
-        console.log('Generating embedding for the question...');
         const queryEmbedding = await generateEmbedding(trimmedQuestion);
 
         // Step 2: Retrieve relevant documents using Supabase RPC function
-        console.log('Searching for relevant documents...');
-        console.log('Query embedding length:', queryEmbedding.length);
-        console.log('Query embedding sample:', queryEmbedding.slice(0, 5));
         
         const { data: relevantDocs, error: searchError } = await supabase.rpc('match_documents', {
             query_embedding: queryEmbedding,
             match_count: 3
         });
 
-        console.log('RPC call result:', { 
-            dataLength: relevantDocs?.length || 0, 
-            error: searchError,
-            sampleData: relevantDocs?.[0] 
-        });
-
         if (searchError) {
-            console.error('Supabase RPC Error Details:', searchError);
             throw new Error(`Document search failed: ${searchError.message}`);
         }
 
@@ -107,7 +145,6 @@ export async function processChatQuestion(question) {
         }
 
         // Step 3: Build context from retrieved documents
-        console.log(`Found ${relevantDocs.length} relevant documents`);
         const context = relevantDocs
             .filter(doc => doc.similarity > 0.1) // Filter out very low similarity matches
             .map((doc, index) => {
@@ -128,14 +165,11 @@ export async function processChatQuestion(question) {
         }
 
         // Step 4: Generate AI response
-        console.log('Generating AI response...');
         let answer;
         
         if (USE_MOCK_AI) {
-            console.log('🎭 Using mock AI response for development');
             answer = await generateMockResponse(context, trimmedQuestion);
         } else {
-            console.log('🤖 Using Google Gemini AI');
             answer = await generateRealResponse(context, trimmedQuestion);
         }
 
@@ -178,7 +212,7 @@ export async function getChatHealthStatus() {
         if (!USE_MOCK_AI) {
             try {
                 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-                const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+                const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
                 await model.generateContent("test");
             } catch (aiError) {
                 aiWorking = false;
@@ -205,3 +239,4 @@ export async function getChatHealthStatus() {
         };
     }
 }
+

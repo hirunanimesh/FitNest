@@ -253,5 +253,22 @@ export const getgymplandetails = async (planIds) => {
   }
 };
 
+export const getcustomersnearGym = async (gymId) => {
+  try {
+    const { data, error } = await supabase.rpc('get_customers_near_gym', { gym_id_input: gymId });
+    
+    if (error) {
+      console.error('Error getting customers near gym:', error);
+      throw new Error(error.message);
+    }
+    
+    console.log(`Found ${data?.length || 0} customers near gym ${gymId}`);
+    return data || [];
+  } catch (err) {
+    console.error("Error fetching customers near gym:", err.message);
+    return [];
+  }
+};
+
 
 
