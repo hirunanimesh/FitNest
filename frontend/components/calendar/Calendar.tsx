@@ -63,13 +63,6 @@ const Schedule: React.FC = () => {
     return () => { if (mq.removeEventListener) mq.removeEventListener('change', apply); else mq.removeListener(apply) }
   }, [])
 
-  // Centralized fetch helper used across effects and manual syncs. Returns mapped events.
-  // Note: fetchEvents is now imported from API route
-
-  // No custom "more" modal: we'll use FullCalendar's native popover.
-
-  // Use FullCalendar's built-in more/popover; no custom handler.
-
   useEffect(() => {
     // Re-run when `user` becomes available (login) so buttons and events load correctly
     (async () => {
@@ -85,9 +78,7 @@ const Schedule: React.FC = () => {
 
         const mappedServer = await fetchEvents(userId);
         if (Array.isArray(mappedServer)) {
-          // Merge server results with any existing client-side events instead of clobbering them.
-          // Keep server as authoritative for items it returns, but preserve local-only/Google-only
-          // events that the server hasn't persisted yet (they'll have no matching id/google_event_id).
+
           setEvents(prev => {
             // Build quick lookup of server keys
             const serverIds = new Set(mappedServer.map(s => String(s.id || '')))
@@ -463,10 +454,34 @@ const Schedule: React.FC = () => {
   return (
     <div>
   {/* Rely on FullCalendar's built-in small popover for "more" links */}
-      <style jsx global>{styles}</style>
+      <style jsx global>{`
+        ${styles}
+        
+        /* Style time labels on left side to match date colors */
+        .fc-timegrid-axis-cushion,
+        .fc-timegrid-slot-label-cushion,
+        .fc-timegrid-slot-label {
+          color: #9ca3af !important; /* Same gray as date text */
+        }
+        
+        .fc-timegrid-axis {
+          color: #9ca3af !important;
+        }
+        
+        /* Time text styling */
+        .fc-timegrid-slot-label .fc-timegrid-slot-label-cushion {
+          color: #9ca3af !important;
+          font-weight: 400 !important;
+        }
+        
+        /* Ensure all time-related text uses consistent color */
+        .fc-timegrid-slot-minor .fc-timegrid-slot-label-cushion {
+          color: #6b7280 !important; /* Slightly lighter for minor time slots */
+        }
+      `}</style>
       
 
-            <h2 className="text-4xl md:text-5xl font-black text-center mb-10 text-gray-300">User Schedule</h2>
+            <h2 className="text-4xl md:text-5xl font-black text-center mb-10 text-gray-300">My Calendar</h2>
           
       <AddTask
         isTaskDialogOpen={isTaskDialogOpen}

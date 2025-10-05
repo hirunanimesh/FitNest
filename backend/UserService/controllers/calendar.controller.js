@@ -153,26 +153,51 @@ export const createCalendarEvent = async (req, res) => {
 export const updateCalendarEvent = async (req, res) => {
   const { calendarId } = req.params
   const payload = req.body
+  
+  console.log(`📝 [calendar.controller] Updating calendar event`, { 
+    timestamp: new Date().toISOString(),
+    calendarId,
+    payload,
+    method: req.method,
+    url: req.url
+  });
+  
   try {
-    // If caller passed a Google event id instead of the numeric local calendar_id,
-    // resolve it to the calendar_id so the update targets the right row.
+    // Check if caller passed a Google event id instead of UUID calendar_id
+    // Calendar IDs are UUIDs, Google event IDs are different format
     let idToUse = String(calendarId)
-    if (!/^\d+$/.test(idToUse)) {
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idToUse)
+    
+    if (!isUUID) {
+      // This might be a Google event ID, try to resolve it
+      console.log(`🔍 [calendar.controller] Resolving Google event ID to calendar ID`, { googleEventId: idToUse });
       try {
         const { data, error } = await supabase.from('calendar').select('calendar_id').eq('google_event_id', idToUse).single()
         if (error || !data) {
+          console.log(`❌ [calendar.controller] Calendar event not found for Google ID`, { googleEventId: idToUse, error });
           return res.status(404).json({ error: 'not_found', message: 'calendar row not found for id' })
         }
         idToUse = String(data.calendar_id)
+        console.log(`✅ [calendar.controller] Resolved calendar ID`, { googleEventId: calendarId, calendarId: idToUse });
       } catch (e) {
-        console.error('failed to resolve google_event_id to calendar_id', e)
+        console.error('❌ [calendar.controller] failed to resolve google_event_id to calendar_id', e)
         return res.status(500).json({ error: 'resolve_failed', message: e.message })
       }
+    } else {
+      console.log(`✅ [calendar.controller] Using UUID as calendar_id`, { calendarId: idToUse });
     }
+    
+    console.log(`🔄 [calendar.controller] Calling updateEventForUser`, { calendarId: idToUse });
     const updated = await updateEventForUser(String(idToUse), payload)
+    
+    console.log(`✅ [calendar.controller] Event updated successfully`, { 
+      eventId: updated.calendar_id,
+      title: updated.task 
+    });
+    
     res.json(updated)
   } catch (err) {
-    console.error('updateCalendarEvent error', err)
+    console.error('❌ [calendar.controller] updateCalendarEvent error', err)
     if (err && (err.code === 'GOOGLE_AUTH_REQUIRED' || String(err.message).toLowerCase().includes('google_auth_required'))) {
       return res.status(401).json({ error: 'google_auth_required' })
     }

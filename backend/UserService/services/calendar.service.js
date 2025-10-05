@@ -101,6 +101,8 @@ async function deleteCalendarEvent(calendarId) {
 }
 
 async function updateCalendarEvent(calendarId, updates) {
+  logInfo('Executing database update', { calendarId, updates })
+  
   try {
     const { data, error } = await supabase
       .from('calendar')
@@ -109,11 +111,17 @@ async function updateCalendarEvent(calendarId, updates) {
       .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, color, description')
       .single()
     
-    if (error) throw error
+    if (error) {
+      logError('Database update failed', { calendarId, updates, error })
+      throw error
+    }
+    
+    logInfo('Database update successful', { calendarId, updatedData: data })
     return { success: true, data }
   } catch (error) {
     // Handle color column missing gracefully
     if (String(error.message).toLowerCase().includes('column') && String(error.message).toLowerCase().includes('color')) {
+      logInfo('Retrying update without color column', { calendarId })
       const { color, ...updatesNoColor } = updates
       const { data, error: retryError } = await supabase
         .from('calendar')
@@ -122,9 +130,16 @@ async function updateCalendarEvent(calendarId, updates) {
         .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, description')
         .single()
       
-      if (retryError) throw retryError
+      if (retryError) {
+        logError('Database update retry failed', { calendarId, updatesNoColor, error: retryError })
+        throw retryError
+      }
+      
+      logInfo('Database update retry successful', { calendarId, updatedData: data })
       return { success: true, data }
     }
+    
+    logError('Database update failed with unhandled error', { calendarId, updates, error })
     throw error
   }
 }
@@ -655,32 +670,53 @@ export async function saveOrCreateEventForUser(userId, payload) {
 }
 
 export async function updateEventForUser(calendarIdOrGoogleId, payload) {
+  logInfo('Updating calendar event', { calendarIdOrGoogleId, payload })
+  
   let calendarId = String(calendarIdOrGoogleId || '')
   
-  // Resolve Google event ID to calendar ID if needed
-  if (!/^\d+$/.test(calendarId)) {
-    const { data: resolved } = await supabase
+  // Check if this is a UUID (calendar_id) or a Google event ID
+  // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(calendarId)
+  
+  if (isUUID) {
+    // This is already a calendar_id UUID, use it directly
+    logInfo('Using provided UUID as calendar_id', { calendarId })
+  } else {
+    // This might be a Google event ID, try to resolve it
+    logInfo('Resolving Google event ID to calendar ID', { googleEventId: calendarId })
+    const { data: resolved, error: resolveError } = await supabase
       .from('calendar')
       .select('calendar_id')
       .eq('google_event_id', calendarId)
       .single()
     
-    if (!resolved) {
+    if (resolveError || !resolved) {
+      logError('Failed to resolve Google event ID to calendar ID', { calendarId, error: resolveError })
       throw new Error('Calendar event not found')
     }
+    
     calendarId = String(resolved.calendar_id)
+    logInfo('Resolved calendar ID', { originalId: calendarIdOrGoogleId, resolvedId: calendarId })
   }
 
   // Get existing event
-  const { data: existing } = await supabase
+  logInfo('Retrieving existing calendar event', { calendarId })
+  const { data: existing, error: existingError } = await supabase
     .from('calendar')
     .select('*')
     .eq('calendar_id', calendarId)
     .single()
   
-  if (!existing) {
+  if (existingError || !existing) {
+    logError('Calendar event not found', { calendarId, error: existingError })
     throw new Error('Calendar event not found')
   }
+  
+  logInfo('Found existing event', { 
+    existingTitle: existing.task, 
+    existingDate: existing.task_date, 
+    existingUserId: existing.user_id 
+  })
 
   // Prepare updates
   const updates = {}
@@ -698,22 +734,36 @@ export async function updateEventForUser(calendarIdOrGoogleId, payload) {
     const { time } = extractDateAndTime(payload.end)
     updates.end = time
   }
+  
+  logInfo('Prepared updates', { updates })
 
   // Update local event
+  logInfo('Updating local calendar event', { calendarId, updates })
   const result = await updateCalendarEvent(calendarId, updates)
+  
+  if (result.success) {
+    logInfo('Local event updated successfully', { updatedEventId: result.data.calendar_id })
+  } else {
+    logError('Failed to update local event', result)
+  }
   
   // Sync to Google if event has google_event_id
   if (existing.google_event_id) {
+    logInfo('Syncing update to Google Calendar', { googleEventId: existing.google_event_id })
     try {
       const accessToken = await refreshAccessTokenIfNeeded(existing.user_id)
       if (accessToken) {
         await updateGoogleEvent(accessToken, existing.google_event_id, payload)
+        logInfo('Successfully synced update to Google Calendar')
+      } else {
+        logError('No access token available for Google Calendar sync')
       }
     } catch (error) {
       logError('Failed to sync event update to Google', error)
     }
   }
 
+  logInfo('Event update completed', { resultData: result.data })
   return result.data
 }
 
