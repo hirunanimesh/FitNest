@@ -283,6 +283,13 @@ async function fetchGoogleCalendarEvents(accessToken) {
 }
 
 async function createGoogleEvent(accessToken, eventData) {
+  logInfo('Creating Google Calendar event', { 
+    task: eventData.task, 
+    task_date: eventData.task_date, 
+    start: eventData.start, 
+    end: eventData.end 
+  })
+  
   const authClient = await createGoogleAuthClient(accessToken)
   const calendar = google.calendar({ version: 'v3', auth: authClient })
   
@@ -293,6 +300,8 @@ async function createGoogleEvent(accessToken, eventData) {
   const endDateTime = eventData.end && eventData.task_date 
     ? `${eventData.task_date}T${eventData.end}` 
     : null
+  
+  logInfo('Constructed datetime values', { startDateTime, endDateTime })
   
   // Validate dates before creating ISO strings
   let startValue, endValue
@@ -322,11 +331,14 @@ async function createGoogleEvent(accessToken, eventData) {
     end: endValue
   }
 
+  logInfo('Sending event to Google Calendar', googleEvent)
+
   const response = await calendar.events.insert({
     calendarId: process.env.GOOGLE_CALENDAR_ID || 'primary',
     requestBody: googleEvent
   })
 
+  logInfo('Google Calendar event created', { id: response.data.id, summary: response.data.summary })
   return response.data
 }
 
@@ -534,9 +546,38 @@ export async function getEventsForUser(userId) {
 export async function saveOrCreateEventForUser(userId, payload) {
   if (!userId) throw new Error('Missing userId')
   
+  logInfo('Creating new event', { userId, payload })
+  
   const userIdForCalendar = String(userId)
   const { date: taskDate, time: startTime } = extractDateAndTime(payload.start)
   const { time: endTime } = extractDateAndTime(payload.end)
+  
+  logInfo('Extracted date/time', { taskDate, startTime, endTime })
+  
+  // Check for recent duplicate submissions (same user, task, date within last 5 seconds)
+  const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString()
+  const { data: recentEvents, error: checkError } = await supabase
+    .from('calendar')
+    .select('calendar_id, task, created_at')
+    .eq('user_id', userIdForCalendar)
+    .eq('task', payload.title || payload.summary || 'No title')
+    .eq('task_date', taskDate)
+    .gte('created_at', fiveSecondsAgo)
+    .limit(1)
+  
+  if (!checkError && recentEvents && recentEvents.length > 0) {
+    logInfo('Duplicate event detected, returning existing event', { existingId: recentEvents[0].calendar_id })
+    // Return the existing event instead of creating a duplicate
+    const existingEvent = recentEvents[0]
+    return {
+      id: existingEvent.calendar_id,
+      title: existingEvent.task,
+      start: startTime ? `${taskDate}T${startTime}` : taskDate,
+      end: endTime ? `${taskDate}T${endTime}` : taskDate,
+      color: payload.color || null,
+      description: payload.description || null
+    }
+  }
   
   const eventData = {
     task_date: taskDate,
@@ -549,17 +590,55 @@ export async function saveOrCreateEventForUser(userId, payload) {
     color: payload.color || null
   }
 
-  const result = await upsertCalendarEvent(eventData)
+  // For new events, use insert instead of upsert to avoid null google_event_id conflicts
+  let result
+  try {
+    const { data, error } = await supabase
+      .from('calendar')
+      .insert([eventData])
+      .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, color, description')
+      .single()
+    
+    if (error) {
+      // Handle color column missing gracefully
+      if (String(error.message).toLowerCase().includes('column') && String(error.message).toLowerCase().includes('color')) {
+        const { color, ...eventDataNoColor } = eventData
+        const { data: retryData, error: retryError } = await supabase
+          .from('calendar')
+          .insert([eventDataNoColor])
+          .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, description')
+          .single()
+        
+        if (retryError) throw retryError
+        result = { success: true, data: retryData }
+      } else {
+        throw error
+      }
+    } else {
+      result = { success: true, data }
+    }
+  } catch (error) {
+    logError('Failed to create calendar event', error)
+    throw error
+  }
+  
+  logInfo('Local calendar event created', { calendarId: result.data.calendar_id })
   
   // Optionally sync to Google Calendar if user has tokens
   try {
+    logInfo('Attempting to sync new event to Google', { userId: userIdForCalendar, eventTitle: eventData.task })
     const accessToken = await refreshAccessTokenIfNeeded(userIdForCalendar)
     if (accessToken) {
+      logInfo('Access token obtained, creating Google event')
       const googleEvent = await createGoogleEvent(accessToken, eventData)
+      logInfo('Google event created successfully', { googleEventId: googleEvent.id })
       // Update local event with Google event ID
       await updateCalendarEvent(result.data.calendar_id, { 
         google_event_id: googleEvent.id 
       })
+      logInfo('Local event updated with Google event ID')
+    } else {
+      logError('No access token available for Google Calendar sync', { userId: userIdForCalendar })
     }
   } catch (error) {
     logError('Failed to sync new event to Google', error)

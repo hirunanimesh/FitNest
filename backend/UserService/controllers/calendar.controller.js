@@ -128,12 +128,24 @@ export const syncCalendar = async (req, res) => {
 export const createCalendarEvent = async (req, res) => {
   const { userId } = req.params;
   const payload = req.body;
+  
+  console.log(`📝 [calendar.controller] Creating calendar event for user ${userId}`, { 
+    timestamp: new Date().toISOString(),
+    title: payload.title,
+    start: payload.start,
+    end: payload.end 
+  });
+  
   try {
     // payload expected: { title, start, end, description }
     const created = await saveOrCreateEventForUser(String(userId), payload)
+    console.log(`✅ [calendar.controller] Calendar event created successfully`, { 
+      eventId: created.id,
+      title: created.title 
+    });
     res.json(created)
   } catch (err) {
-    console.error('createCalendarEvent error', err);
+    console.error('❌ [calendar.controller] createCalendarEvent error', err);
     res.status(500).json({ error: 'create failed', message: err.message })
   }
 }
