@@ -7,19 +7,10 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import AddTask from './AddTask'
 import styles from '../Schedule.styles'
-import { mapServerList as mapServerListUtil, dedupeEvents as dedupeEventsUtil } from './calendarUtils'
+import calendarStyles from './Calendar.styles'
+import { dedupeEvents as dedupeEventsUtil } from './calendarUtils'
 import { Button } from "@/components/ui/button";
-import {
-  fetchEvents,
-  checkGoogleCalendarStatus,
-  connectGoogleCalendar,
-  syncGoogleCalendar,
-  updateEvent,
-  deleteEvent,
-  formatEventIso
-} from '@/api/calendar/route';
-
-// Note: renderEventContent moved into component to allow responsive sizing
+import {fetchEvents,checkGoogleCalendarStatus,connectGoogleCalendar,syncGoogleCalendar,updateEvent,deleteEvent,formatEventIso} from '@/api/calendar/route';
 
 interface Event {
   id: string;
@@ -36,16 +27,10 @@ interface Event {
 
 const Schedule: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [taskTitle, setTaskTitle] = useState('');
-  const [taskDate, setTaskDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
   const [taskColor, setTaskColor] = useState('#ef4444');
-  const [taskDescription, setTaskDescription] = useState('');
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
   const [loadingSync, setLoadingSync] = useState(false);
   const { user } = useAuth()
@@ -197,17 +182,11 @@ const Schedule: React.FC = () => {
       title: ev.title,
       start: rawStart || ev.startStr || '',
       end: rawEnd || ev.endStr || '',
-      backgroundColor: ev.backgroundColor || taskColor,
+      backgroundColor: ev.backgroundColor || '#ef4444',
       description: ev.extendedProps?.description || ''
     }
     setViewingEvent(viewed);
-    setTaskTitle(ev.title || '');
-    setTaskDate(s.date);
-    setStartTime(s.time);
-    setEndTime(e.time);
-    setTaskDescription(ev.extendedProps?.description || '');
     setTaskColor(ev.backgroundColor || taskColor);
-    setIsEditing(false);
     setIsTaskDialogOpen(true);
   }
 
@@ -222,9 +201,6 @@ const Schedule: React.FC = () => {
       // ignore
     }
   }
-
-  // Helper to format event start/end into server-friendly ISO strings
-  // Note: formatEventIso is now imported from API route
 
   // Persist drag/drop changes to server
   const handleEventDrop = async (dropInfo: any) => {
@@ -269,7 +245,6 @@ const Schedule: React.FC = () => {
   const enableEditMode = () => {
     if (!viewingEvent) return;
     setEditingEvent(viewingEvent);
-    setIsEditing(true);
   }
 
   const handleDeleteEvent = async () => {
@@ -313,11 +288,6 @@ const Schedule: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey)
   }, [isTaskDialogOpen, viewingEvent, editingEvent])
 
-  // When FullCalendar opens the native small popover for "+N more", it
-  // injects a DOM node with class `.fc-popover` and a header/title element
-  // containing the full verbose date (e.g. "September 29 2025"). We prefer
-  // to show only the day number ("29") per design. Use a MutationObserver
-  // to watch for popovers and shorten the title when it appears.
   useEffect(() => {
     const observer = new MutationObserver(mutations => {
       for (const m of mutations) {
@@ -344,11 +314,6 @@ const Schedule: React.FC = () => {
               // Apply immediately
               shortenTitle()
 
-              // If FullCalendar later updates the title (for example when
-              // interacting with items inside the popover), re-apply the
-              // shortened form. Attach a quick observer to this title node
-              // (only once per element) which will schedule shortenTitle on
-              // any text/child changes.
               if (!(title as any).__shortenObserver) {
                 try {
                   const tObs = new MutationObserver(() => {
@@ -381,72 +346,31 @@ const Schedule: React.FC = () => {
     }
   }, [])
 
-  const handleDialogOpenChange = (open: boolean) => {
-    setIsTaskDialogOpen(open)
-    if (!open) {
-      setViewingEvent(null)
-      setEditingEvent(null)
-      setIsEditing(false)
-      setTaskTitle('')
-      setTaskDate('')
-      setStartTime('')
-      setEndTime('')
-      setTaskDescription('')
-      setTaskColor('#ef4444')
-    }
-  }
 
-  const openAddTask = () => {
-    setViewingEvent(null)
-    setEditingEvent(null)
-    setIsEditing(false)
-    setTaskTitle('')
-    setTaskDate('')
-    setStartTime('')
-    setEndTime('')
-    setTaskDescription('')
-    setTaskColor('#ef4444')
-    setIsTaskDialogOpen(true)
-  }
 
   // Render events with responsive styles
   const renderEventContent = (eventInfo: any) => {
     const color = eventInfo.event.backgroundColor || '#ef4444'
-    const lineClamp = isSmallScreen ? 1 : 2
     const fontSize = isSmallScreen ? '0.64rem' : '0.72rem'
     const padding = isSmallScreen ? '2px 6px' : '3px 6px'
+    const titleClass = isSmallScreen ? 'calendar-event-title--small' : 'calendar-event-title--regular'
+    
     return (
       <div
+        className="calendar-event-container"
         style={{
           backgroundColor: color,
-          borderRadius: 6,
-          color: '#fff',
           border: `1px solid ${color}`,
-          fontWeight: 400,
           boxShadow: `0 2px 6px ${color}55`,
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding,
-          overflow: 'hidden'
+          padding
         }}
       >
-        <div style={{
-          width: '100%',
-          display: '-webkit-box',
-          WebkitLineClamp: lineClamp,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'normal',
-          textAlign: 'center',
-          lineHeight: isSmallScreen ? '0.9rem' : '0.95rem',
-          fontSize,
-          letterSpacing: '-0.25px',
-          fontWeight: 400
-        }}>{eventInfo.event.title}</div>
+        <div 
+          className={`calendar-event-title ${titleClass}`}
+          style={{ fontSize }}
+        >
+          {eventInfo.event.title}
+        </div>
       </div>
     )
   }
@@ -456,28 +380,7 @@ const Schedule: React.FC = () => {
   {/* Rely on FullCalendar's built-in small popover for "more" links */}
       <style jsx global>{`
         ${styles}
-        
-        /* Style time labels on left side to match date colors */
-        .fc-timegrid-axis-cushion,
-        .fc-timegrid-slot-label-cushion,
-        .fc-timegrid-slot-label {
-          color: #9ca3af !important; /* Same gray as date text */
-        }
-        
-        .fc-timegrid-axis {
-          color: #9ca3af !important;
-        }
-        
-        /* Time text styling */
-        .fc-timegrid-slot-label .fc-timegrid-slot-label-cushion {
-          color: #9ca3af !important;
-          font-weight: 400 !important;
-        }
-        
-        /* Ensure all time-related text uses consistent color */
-        .fc-timegrid-slot-minor .fc-timegrid-slot-label-cushion {
-          color: #6b7280 !important; /* Slightly lighter for minor time slots */
-        }
+        ${calendarStyles}
       `}</style>
       
 
