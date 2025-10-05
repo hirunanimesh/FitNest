@@ -28,6 +28,21 @@ app.get('/getgymplanbygymid/:gymId',getGymPlanByGymId)
 app.put('/updategymplan/:gymPlanId', updateGymPlan)
 app.delete('/deletegymplan/:gymPlanId',deleteGymPlan)
 app.post('/getgymplandetails',GetGymPlanDetails)
+app.get('/getgymplan/:planId', async (req, res) => {
+    try {
+        const { getgymplanbyplanid } = await import('./services/plans.service.js');
+        const planData = await getgymplanbyplanid(req.params.planId);
+        
+        if (planData) {
+            res.status(200).json(planData);
+        } else {
+            res.status(404).json({ message: "Gym plan not found" });
+        }
+    } catch (error) {
+        console.error("Error retrieving gym plan:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+})
 
 // New routes for managing plan trainers
 app.post('/assign-trainers-to-plan', assignTrainersToPlan)

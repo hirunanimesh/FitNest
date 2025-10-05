@@ -52,6 +52,16 @@ export default async function subscribe(req, res) {
                     destination: account_id,
                 },
                 application_fee_percent: 10,
+                metadata: {
+                    user_id: user_id,
+                    plan_id: planId,
+                    customer_id: customer_id
+                }
+            },
+            metadata: {
+                user_id: user_id,
+                plan_id: planId,
+                customer_id: customer_id
             },
             success_url: `${process.env.DOMAIN}/dashboard/user`,
             cancel_url: `${process.env.DOMAIN}/dashboard/user`,
