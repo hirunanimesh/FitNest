@@ -2,10 +2,10 @@
 //import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect } from "react";
 import Progress from "./_components/Progress"
-import TodaySessions from "./_components/TodaySessions"
+
 import UpcomingSessions from "./_components/UpcomingSessions"
 import Charts from "./_components/Charts"
-import Schedule from "./_components/Schedule"
+import Schedule from "../../../components/calendar/Calendar"
 import MotivationQuotes from "./_components/MotivationQuote"
 import { Suspense } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";

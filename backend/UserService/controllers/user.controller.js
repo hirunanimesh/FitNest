@@ -80,8 +80,6 @@ export const addfeedback = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
-
-
 export const getMySessions = async(req,res)=>{
     const {customerId} = req.params;
     try{
