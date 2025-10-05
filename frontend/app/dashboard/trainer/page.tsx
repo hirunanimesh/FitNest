@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Statistics from "./_components/Statistics";
 import UploadContent from "./_components/UploadContent";
-import Calendar from "./_components/Calendar";
+import Schedule from "../../../components/calendar/Calendar"
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import MembershipGyms from "./_components/MembershipGyms";
 import { supabase } from "@/lib/supabase";
@@ -152,7 +152,7 @@ const TrainerDashboard = () => {
           </section>
           <MembershipGyms />
           <section className="bg-transparent rounded-2xl p-4">
-            <Calendar />
+           <Schedule />
           </section>
 
           {/* <section className="bg-gradient-to-r from-gray-800/50 to-transparent rounded-2xl p-4">

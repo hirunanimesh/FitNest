@@ -6,9 +6,18 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import AddTask from './AddTask'
-import styles from './Schedule.styles'
+import styles from '../Schedule.styles'
 import { mapServerList as mapServerListUtil, dedupeEvents as dedupeEventsUtil } from './calendarUtils'
 import { Button } from "@/components/ui/button";
+import {
+  fetchEvents,
+  checkGoogleCalendarStatus,
+  connectGoogleCalendar,
+  syncGoogleCalendar,
+  updateEvent,
+  deleteEvent,
+  formatEventIso
+} from '@/api/calendar/route';
 
 // Note: renderEventContent moved into component to allow responsive sizing
 
@@ -55,18 +64,7 @@ const Schedule: React.FC = () => {
   }, [])
 
   // Centralized fetch helper used across effects and manual syncs. Returns mapped events.
-  const fetchEvents = async (userId: string) => {
-    const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
-    try {
-      const r = await fetch(`${base}/calendar/events/${userId}`)
-      if (!r.ok) throw new Error('fetch events failed: ' + r.status)
-      const serverEvents = await r.json()
-      return mapServerListUtil(serverEvents, '#28375cff')
-    } catch (e) {
-      console.error('failed to fetch events', e)
-      return []
-    }
-  }
+  // Note: fetchEvents is now imported from API route
 
   // No custom "more" modal: we'll use FullCalendar's native popover.
 
@@ -76,23 +74,16 @@ const Schedule: React.FC = () => {
     // Re-run when `user` becomes available (login) so buttons and events load correctly
     (async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
-        const userId = user?.id
+        const userId = user?.id;
         if (!userId) {
-          setGoogleConnected(false)
-          return
-        }
-
-        const statusRes = await fetch(`${base}/calendar/status/${userId}`)
-        if (statusRes.ok) {
-          const json = await statusRes.json();
-          setGoogleConnected(Boolean(json.connected));
-        } else {
-          console.warn('calendar status check returned non-ok', statusRes.status)
           setGoogleConnected(false);
+          return;
         }
 
-        const mappedServer = await fetchEvents(userId)
+        const connected = await checkGoogleCalendarStatus(userId);
+        setGoogleConnected(connected);
+
+        const mappedServer = await fetchEvents(userId);
         if (Array.isArray(mappedServer)) {
           // Merge server results with any existing client-side events instead of clobbering them.
           // Keep server as authoritative for items it returns, but preserve local-only/Google-only
@@ -130,113 +121,55 @@ const Schedule: React.FC = () => {
     })();
   }, [user]);
 
-  const connectGoogleCalendar = async () => {
+  const handleConnectGoogleCalendar = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
-      const userId = user?.id
-      if (!userId) return alert('You must be signed in to connect Google Calendar')
-      const res = await fetch(`${base}/google/oauth-url/${userId}`)
-      if (!res.ok) throw new Error('Failed to get oauth url');
-      const { url } = await res.json();
-      window.location.href = url;
+      const userId = user?.id;
+      if (!userId) return alert('You must be signed in to connect Google Calendar');
+      await connectGoogleCalendar(userId);
     } catch (err) {
-      console.error('Google connect failed', err);
       alert('Unable to start Google OAuth. Check console for details.');
     }
   };
 
-  const syncGoogleCalendar = async () => {
-    const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
-    const userId = user?.id
+  const handleSyncGoogleCalendar = async () => {
+    const userId = user?.id;
     if (!userId) {
-      alert('You must be signed in to sync')
-      return
+      alert('You must be signed in to sync');
+      return;
     }
 
-    setLoadingSync(true)
+    setLoadingSync(true);
     try {
-      const res = await fetch(`${base}/calendar/sync/${userId}`, { method: 'POST' })
-      if (!res.ok) {
-        const text = await res.text().catch(() => 'no body')
-        console.error('calendar sync failed response:', res.status, text)
-        throw new Error(`Sync failed: ${res.status} ${text}`)
-      }
-
-      const synced = await res.json().catch(() => null)
-      // Accept either a direct array or a wrapped object like { events: [...] }
-      const items = Array.isArray(synced) ? synced : (synced && Array.isArray(synced.events) ? synced.events : null)
-      if (!items) {
-        console.warn('sync returned unexpected shape', synced)
-        throw new Error('Sync returned unexpected response shape')
-      }
-
-  const mapped = mapServerListUtil(items, '#28375cff')
+      const mapped = await syncGoogleCalendar(userId);
 
       // Merge synced server events with any existing local events conservatively
-  setEvents(prev => {
-        const serverIds = new Set(mapped.map((s: any) => String(s.id || '')))
-        const serverGids = new Set(mapped.map((s: any) => String(s.google_event_id || '')))
+      setEvents(prev => {
+        const serverIds = new Set(mapped.map((s: any) => String(s.id || '')));
+        const serverGids = new Set(mapped.map((s: any) => String(s.google_event_id || '')));
         const leftover = prev.filter(p => {
-          const pid = String((p as any).id || '')
-          const pgid = String((p as any).google_event_id || '')
-          const raw = (p as any).extendedProps?.rawStart || p.start || ''
-          const title = p.title || ''
-          if (pid && serverIds.has(pid)) return false
-          if (pgid && serverGids.has(pgid)) return false
+          const pid = String((p as any).id || '');
+          const pgid = String((p as any).google_event_id || '');
+          const raw = (p as any).extendedProps?.rawStart || p.start || '';
+          const title = p.title || '';
+          if (pid && serverIds.has(pid)) return false;
+          if (pgid && serverGids.has(pgid)) return false;
           const matchesServer = mapped.find((s: any) => {
-            const sRaw = (s as any).extendedProps?.rawStart || s.start || ''
-            const sTitle = s.title || ''
-            return sRaw && sTitle && sRaw === raw && sTitle === title
-          })
-          if (matchesServer) return false
-          return true
-        })
-        return dedupeEvents([...mapped, ...leftover])
-      })
+            const sRaw = (s as any).extendedProps?.rawStart || s.start || '';
+            const sTitle = s.title || '';
+            return sRaw && sTitle && sRaw === raw && sTitle === title;
+          });
+          if (matchesServer) return false;
+          return true;
+        });
+        return dedupeEvents([...mapped, ...leftover]);
+      });
 
-      // If the sync endpoint returned Google events but they don't appear
-      // persisted via `/calendar/events/:userId` on refresh, attempt to persist
-      // any items that lack a DB id but include a google_event_id. This is a
-      // defensive fallback for backends that return transient Google data.
-      try {
-        const toPersist = mapped.filter((m: any) => !m.id && m.google_event_id)
-        if (toPersist.length > 0) {
-          // POST each item (best-effort). Include google_event_id to help server dedupe/upsert.
-          await Promise.allSettled(toPersist.map((it: any) => {
-            const body = {
-              title: it.title,
-              start: it.start,
-              end: it.end,
-              description: it.description || null,
-              color: it.backgroundColor || it.color || '#ef4444',
-              google_event_id: it.google_event_id
-            }
-            return fetch(`${base}/calendar/create/${userId}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body)
-            })
-          }))
-
-          // Refresh authoritative events from server after persistence attempts
-          try {
-            const fresh = await fetch(`${base}/calendar/events/${userId}`)
-            if (fresh.ok) {
-              const all = await fresh.json()
-              setEvents(mapServerListUtil(all, '#28375cff'))
-            }
-          } catch (e) { /* ignore refresh errors */ }
-        }
-      } catch (e) {
-        console.warn('persistence fallback after sync failed', e)
-      }
-
-      setGoogleConnected(true)
+      setGoogleConnected(true);
     } catch (err) {
-      console.error('Sync failed', err)
-      alert('Sync failed. Check console for details.')
+      console.error('Sync failed', err);
+      alert('Sync failed. Check console for details.');
     } finally {
-      setLoadingSync(false)
+      setLoadingSync(false);
     }
   };
 
@@ -299,86 +232,48 @@ const Schedule: React.FC = () => {
     }
   }
 
-  // Helper to format event start/end into server-friendly ISO or date strings
-  const formatEventIso = (ev: any) => {
-    const start = ev.start
-    const end = ev.end
-    const fmt = (d: Date) => {
-      const iso = d.toISOString()
-      // prefer full ISO when time component present; otherwise date-only
-      return iso
-    }
-    return {
-      start: start ? fmt(new Date(start)) : null,
-      end: end ? fmt(new Date(end)) : null
-    }
-  }
+  // Helper to format event start/end into server-friendly ISO strings
+  // Note: formatEventIso is now imported from API route
 
   // Persist drag/drop changes to server
   const handleEventDrop = async (dropInfo: any) => {
-    const ev = dropInfo.event
-    const id = ev.id || (ev.extendedProps && ev.extendedProps.calendar_id)
+    const ev = dropInfo.event;
+    const id = ev.id || (ev.extendedProps && ev.extendedProps.calendar_id);
     if (!id) {
       // no local id to update; open edit modal as fallback
-      setViewingEvent({ id: String(ev.id), title: ev.title, start: ev.startStr || '', end: ev.endStr || '', backgroundColor: ev.backgroundColor || taskColor } as Event)
-      setIsTaskDialogOpen(true)
-      return
+      setViewingEvent({ id: String(ev.id), title: ev.title, start: ev.startStr || '', end: ev.endStr || '', backgroundColor: ev.backgroundColor || taskColor } as Event);
+      setIsTaskDialogOpen(true);
+      return;
     }
-    const { start, end } = formatEventIso(ev)
+    const { start, end } = formatEventIso(ev);
     try {
-      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
-      const res = await fetch(`${base}/calendar/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ start, end })
-      })
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '')
-        console.error('eventDrop persist failed', res.status, txt)
-        dropInfo.revert()
-        alert('Failed to move event. See console for details.')
-        return
-      }
+      await updateEvent(String(id), { start, end });
       // update local event in state
-      setEvents(prev => prev.map(ev0 => ev0.id === String(id) ? ({ ...ev0, start: start || ev0.start, end: end || ev0.end }) : ev0))
+      setEvents(prev => prev.map(ev0 => ev0.id === String(id) ? ({ ...ev0, start: start || ev0.start, end: end || ev0.end }) : ev0));
     } catch (e) {
-      console.error('failed to persist event drop', e)
-      dropInfo.revert()
-      alert('Failed to move event. See console for details.')
+      dropInfo.revert();
+      alert('Failed to move event. See console for details.');
     }
-  }
+  };
 
   // Persist resize changes to server
   const handleEventResize = async (resizeInfo: any) => {
-    const ev = resizeInfo.event
-    const id = ev.id || (ev.extendedProps && ev.extendedProps.calendar_id)
+    const ev = resizeInfo.event;
+    const id = ev.id || (ev.extendedProps && ev.extendedProps.calendar_id);
     if (!id) {
-      setViewingEvent({ id: String(ev.id), title: ev.title, start: ev.startStr || '', end: ev.endStr || '', backgroundColor: ev.backgroundColor || taskColor } as Event)
-      setIsTaskDialogOpen(true)
-      return
+      setViewingEvent({ id: String(ev.id), title: ev.title, start: ev.startStr || '', end: ev.endStr || '', backgroundColor: ev.backgroundColor || taskColor } as Event);
+      setIsTaskDialogOpen(true);
+      return;
     }
-    const { start, end } = formatEventIso(ev)
+    const { start, end } = formatEventIso(ev);
     try {
-      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
-      const res = await fetch(`${base}/calendar/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ start, end })
-      })
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '')
-        console.error('eventResize persist failed', res.status, txt)
-        resizeInfo.revert()
-        alert('Failed to resize event. See console for details.')
-        return
-      }
-      setEvents(prev => prev.map(ev0 => ev0.id === String(id) ? ({ ...ev0, start: start || ev0.start, end: end || ev0.end }) : ev0))
+      await updateEvent(String(id), { start, end });
+      setEvents(prev => prev.map(ev0 => ev0.id === String(id) ? ({ ...ev0, start: start || ev0.start, end: end || ev0.end }) : ev0));
     } catch (e) {
-      console.error('failed to persist event resize', e)
-      resizeInfo.revert()
-      alert('Failed to resize event. See console for details.')
+      resizeInfo.revert();
+      alert('Failed to resize event. See console for details.');
     }
-  }
+  };
 
   const enableEditMode = () => {
     if (!viewingEvent) return;
@@ -388,26 +283,19 @@ const Schedule: React.FC = () => {
 
   const handleDeleteEvent = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
-      const idToDelete = editingEvent?.id || viewingEvent?.id
-      if (!idToDelete) return alert('No event selected to delete')
-      const res = await fetch(`${base}/calendar/${idToDelete}`, { method: 'DELETE' })
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '')
-        console.error('delete event failed', res.status, txt)
-        alert('Failed to delete event')
-        return
-      }
-
-      setEvents(prev => prev.filter(ev => ev.id !== String(idToDelete)))
-      setEditingEvent(null)
-      setViewingEvent(null)
-      setIsTaskDialogOpen(false)
+      const idToDelete = editingEvent?.id || viewingEvent?.id;
+      if (!idToDelete) return alert('No event selected to delete');
+      
+      await deleteEvent(idToDelete);
+      
+      setEvents(prev => prev.filter(ev => ev.id !== String(idToDelete)));
+      setEditingEvent(null);
+      setViewingEvent(null);
+      setIsTaskDialogOpen(false);
     } catch (err) {
-      console.error('delete failed', err)
-      alert('Failed to delete event')
+      alert('Failed to delete event');
     }
-  }
+  };
 
   useEffect(() => {
     if (!isTaskDialogOpen) return
@@ -594,13 +482,13 @@ const Schedule: React.FC = () => {
           <span className="text-sm text-gray-400">Checking Google Calendar connection...</span>
         ) : googleConnected ? (
           <>
-            <Button type="button" onClick={syncGoogleCalendar} disabled={loadingSync}>
+            <Button type="button" onClick={handleSyncGoogleCalendar} disabled={loadingSync}>
               {loadingSync ? 'Syncing...' : 'Sync Google Calendar'}
             </Button>
             <span className="text-sm text-gray-300">Connected</span>
           </>
         ) : (
-          <Button type="button" onClick={connectGoogleCalendar} className="bg-blue-600 text-white">
+          <Button type="button" onClick={handleConnectGoogleCalendar} className="bg-blue-600 text-white">
             Connect Google Calendar
           </Button>
         )}
