@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { LoginUser } from "@/lib/api"
 import { PublicRoute } from "@/components/PublicRoute"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 // Removed unused TIMEOUT import
 
 export default function LoginPage() {

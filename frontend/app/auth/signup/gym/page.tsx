@@ -15,7 +15,7 @@ import { AppLogo } from "@/components/AppLogo"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
 import { useRouter } from "next/navigation"
 import { GymRegister } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { PublicRoute } from "@/components/PublicRoute"
 
 interface DocumentEntry {
