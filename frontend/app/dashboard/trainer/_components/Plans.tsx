@@ -8,7 +8,7 @@ import { Edit, Trash2, Save, X, Calendar } from "lucide-react";
 import { useTrainerData } from '../context/TrainerContext';
 import CreatePlan from './CreateSession';
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { UpdateSessionDetails, DeleteSession } from "@/lib/api";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import VerifiedActions from '@/components/VerifiedActions';

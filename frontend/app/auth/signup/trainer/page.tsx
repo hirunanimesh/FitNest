@@ -33,7 +33,7 @@ import Link from "next/link";
 import { AppLogo } from "@/components/AppLogo";
 import { useRouter } from "next/navigation";
 import { TrainerRegister } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { PublicRoute } from "@/components/PublicRoute";
 
 interface DocumentEntry {
