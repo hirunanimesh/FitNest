@@ -3,6 +3,7 @@ import { jest } from '@jest/globals';
 let planService;
 
 beforeAll(async () => {
+  jest.resetModules();
   await jest.unstable_mockModule('../database/supabase.js', () => ({
     supabase: {
       from: jest.fn(),

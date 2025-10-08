@@ -6,6 +6,7 @@ jest.mock('express', () => {
     use: jest.fn(),
     listen: jest.fn(),
     get: jest.fn(),
+    post: jest.fn(),
   };
   const mockExpress = jest.fn(() => mockApp);
   mockExpress.json = jest.fn(() => 'json middleware');
@@ -31,6 +32,7 @@ jest.mock('../kafka/Consumer.js', () => ({
   GymPlanCreatedConsumer: jest.fn(),
   GymPlanDeletedConsumer: jest.fn(),
   GymPlanPriceUpdatedConsumer: jest.fn(),
+  TrainerSessionCreatedConsumer: jest.fn(),
 }));
 jest.mock('../controllers/stripeController/cancel-subscription.js', () => ({ default: 'cancelSubscription' }));
 jest.mock('../controllers/stripeController/get-customer-ids.js', () => ({ default: 'getCustomersByGymPlans' }));

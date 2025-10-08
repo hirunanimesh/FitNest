@@ -4,6 +4,7 @@ let planController;
 let planService;
 
 beforeAll(async () => {
+  jest.resetModules();
   await jest.unstable_mockModule('../services/plan.service.js', () => ({
     addplan: jest.fn(),
     getallplans: jest.fn(),

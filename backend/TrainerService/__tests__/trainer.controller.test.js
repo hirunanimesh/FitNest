@@ -5,6 +5,7 @@ let trainerService;
 
 // Mock the service module before importing the controller (ESM)
 beforeAll(async () => {
+    jest.resetModules();
 	await jest.unstable_mockModule('../services/trainer.service.js', () => ({
 		getalltrainers: jest.fn(),
 		gettrainerbyid: jest.fn(),
@@ -13,6 +14,10 @@ beforeAll(async () => {
 		getgymplanbytrainerid: jest.fn(),
 		booksession: jest.fn(),
 		getmembershipGyms: jest.fn(),
+		holdsession: jest.fn(),
+		releasesession: jest.fn(),
+        requestTrainerVerification: jest.fn(),
+        sendrequest: jest.fn(),
 	}));
 
 	trainerController = await import('../controllers/trainer.controller.js');
@@ -186,8 +191,8 @@ describe('TrainerController Unit Tests (AuthService style)', () => {
 
 			await trainerController.getGymPlanByTrainerId(mockReq, mockRes);
 
-			expect(mockRes.status).toHaveBeenCalledWith(404);
-			expect(mockRes.json).toHaveBeenCalledWith({ message: 'No Plans found' });
+			expect(mockRes.status).toHaveBeenCalledWith(200);
+			expect(mockRes.json).toHaveBeenCalledWith({ message: 'No Plans found', gymplans: [] });
 		});
 
 		test('returns 500 on error', async () => {
@@ -248,14 +253,14 @@ describe('TrainerController Unit Tests (AuthService style)', () => {
 			expect(mockRes.json).toHaveBeenCalledWith({ message: 'Gyms retrieved successfully', gyms });
 		});
 
-		test('returns 404 when not found', async () => {
+		test('returns 200 with empty when not found', async () => {
 			mockReq.params.trainerId = 'none';
 			trainerService.getmembershipGyms.mockResolvedValue(null);
 
 			await trainerController.getGymById(mockReq, mockRes);
 
-			expect(mockRes.status).toHaveBeenCalledWith(404);
-			expect(mockRes.json).toHaveBeenCalledWith({ message: 'Gyms not found' });
+			expect(mockRes.status).toHaveBeenCalledWith(200);
+			expect(mockRes.json).toHaveBeenCalledWith({ message: 'Gyms not found', gyms: [] });
 		});
 
 		test('returns 500 on error', async () => {
