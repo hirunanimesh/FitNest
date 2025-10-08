@@ -28,6 +28,12 @@ jest.mock('../database/mongo.js', () => jest.fn());
 jest.mock('../controllers/stripeController/get-connected-account-payments.js', () => ({ default: 'getConnectedAccountPayments' }));
 jest.mock('../controllers/stripeController/one-time-payment.js', () => ({ default: 'oneTimePayment' }));
 jest.mock('../controllers/stripeController/get-monthly-revenue.js', () => ({ default: 'getCurrentMonthRevenue' }));
+jest.mock('../controllers/stripeController/get-monthly-members.js', () => ({ default: 'getMonthlyMembers' }));
+jest.mock('../controllers/stripeController/session-payment.js', () => ({ default: 'sessionPayment' }));
+jest.mock('../controllers/stripeController/release-session.js', () => ({ default: 'releaseSessionHandler' }));
+jest.mock('../controllers/stripeController/webhook.js', () => ({ default: 'stripeWebhook' }));
+jest.mock('../controllers/stripeController/success-session.js', () => ({ default: 'successSessionHandler' }));
+jest.mock('../controllers/stripeController/system-revenue.js', () => ({ default: 'systemRevenue' }));
 jest.mock('../kafka/Consumer.js', () => ({
   GymPlanCreatedConsumer: jest.fn(),
   GymPlanDeletedConsumer: jest.fn(),
