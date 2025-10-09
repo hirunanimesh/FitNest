@@ -17,6 +17,11 @@
   "test:trainer": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config backend/TrainerService/jest.config.cjs --colors -i"
   ,
   "test:all": "npm run test; npm run test:trainer"
+  ,
+  "test:user:api": "jest --selectProjects \"UserService Tests\" --testPathPatterns=\"backend/UserService/__tests__/(user\\.routes\\.int\\.test\\.js|calendar\\.controller\\.test\\.js)$\"",
+  "test:auth:api": "jest --selectProjects \"AuthService Tests\" --testPathPatterns=\"backend/AuthService/__tests__/(auth\\.http\\.int\\.unit\\.test\\.js|authRoutes\\.int\\.unit\\.test\\.js)$\"",
+  "test:trainer:api": "node --experimental-vm-modules node_modules/jest/bin/jest.js --selectProjects \"TrainerService Tests\" --testPathPatterns=\"trainer\\.http\\.int\\.test\\.js$\"",
+  "test:gym:api": "node --experimental-vm-modules node_modules/jest/bin/jest.js --selectProjects \"GymService Tests\" --testPathPatterns=\"(gym|plans)\\.http\\.int\\.test\\.js$\""
   },
   "keywords": [
     "supabase",
