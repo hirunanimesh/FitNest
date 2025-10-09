@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest",
+    "test": "node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js",
     "test:chat": "jest --testPathPattern=chat --verbose --coverage",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

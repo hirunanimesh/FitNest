@@ -112,9 +112,9 @@ module.exports = {
       testEnvironment: "node",
       testTimeout: 30000,
       setupFilesAfterEnv: ["<rootDir>/backend/AdminService/test-setup.js"],
-      transform: {
-        "^.+\\.jsx?$": "babel-jest"
-      },
+      // Run as native ESM to support jest.unstable_mockModule and ESM imports
+      transform: undefined,
+      resolver: undefined,
       collectCoverageFrom: [
         "backend/AdminService/**/*.js",
         "!backend/AdminService/**/node_modules/**",
