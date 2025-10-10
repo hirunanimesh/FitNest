@@ -10,6 +10,7 @@ import Link from "next/link"
 import { AppLogo } from "@/components/AppLogo"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { getBaseUrl } from "@/lib/config"
 import { LoginUser } from "@/lib/api"
 import { PublicRoute } from "@/components/PublicRoute"
 import { useToast } from "@/components/ui/use-toast"
@@ -192,10 +193,11 @@ export default function LoginPage() {
       setIsLoading(true);
       // Request Google Calendar scopes here so user grants calendar access during sign-in.
       // NOTE: adjust scopes as needed; include offline access and prompt=consent to request a refresh token.
+      console.log("baseurl:", getBaseUrl());
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/login`,
+          redirectTo: `${getBaseUrl()}/auth/login`,
           // request calendar events scope in addition to basic openid/profile/email
           scopes: 'openid profile email https://www.googleapis.com/auth/calendar.events',
           queryParams: {
