@@ -29,9 +29,17 @@ import { testConnection } from './database/supabase.js';
 // Initialize Express app
 const app = express();
 
+// CORS configuration
+const corsOptions = {
+    origin: '*', // Allow all origins
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+};
+
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors()); // Enable CORS
+app.use(cors(corsOptions)); // Enable CORS with proper configuration
 app.use(express.json({ limit: '50mb' })); // Parse JSON bodies with increased limit for large documents
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 

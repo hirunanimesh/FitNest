@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase";
+import { getBaseUrl } from "@/lib/config";
 import { useRouter } from 'next/navigation'
 import { PublicRoute } from "@/components/PublicRoute"
 
@@ -22,10 +23,11 @@ export default function SignupPage() {
     try{
       setIsLoading(true);
       console.log("Selected role for Google sign-up:", selectedRole);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/complete-profile/${selectedRole}`,
+          redirectTo: `${getBaseUrl()}/auth/complete-profile/${selectedRole}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

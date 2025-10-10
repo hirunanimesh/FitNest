@@ -12,7 +12,7 @@ module.exports = {
     admin: process.env.ADMIN_SERVICE_URL || 'http://localhost:3006',
   },
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3010',
+    origin: '*', // Allow all origins
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
