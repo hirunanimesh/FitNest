@@ -57,6 +57,10 @@ module.exports = {
       testEnvironment: "node",
       testTimeout: 30000,
   setupFiles: ["<rootDir>/backend/UserService/test-setup.js"],
+      // Use Babel to transform ESM/CJS so mixed-style tests run reliably
+      transform: {
+        "^.+\\.jsx?$": "babel-jest"
+      },
       collectCoverageFrom: [
         "backend/UserService/**/*.js",
         "!backend/UserService/**/node_modules/**",

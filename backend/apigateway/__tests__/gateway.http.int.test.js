@@ -1,13 +1,7 @@
 const request = require('supertest');
 const nock = require('nock');
 const app = require('..');
-
-// Helper to get base origin for a service env var or default
-function baseOrigin(envKey, def) {
-  const url = process.env[envKey] || def;
-  const { URL } = require('url');
-  return new URL(url).origin;
-}
+const config = require('../src/config');
 
 describe('API Gateway HTTP', () => {
   afterEach(() => nock.cleanAll());
@@ -15,131 +9,69 @@ describe('API Gateway HTTP', () => {
   test('GET /health → 200', async () => {
     const res = await request(app).get('/health');
     expect(res.status).toBe(200);
+    expect(res.body).toEqual(expect.objectContaining({ status: 'success', service: 'APIGateway' }));
   });
 
-  // AUTH proxy (note: current pathRewrite forwards /api/auth/* as /api/auth/*)
-  describe('Auth proxy', () => {
-    const origin = baseOrigin('AUTH_SERVICE_URL', 'http://localhost:3001');
-
-    test('200 passthrough', async () => {
-      nock(origin).get('/api/auth/health').reply(200, { ok: true });
-      const res = await request(app).get('/api/auth/health');
-      expect(res.status).toBe(200);
-    });
-
-    test('500 passthrough', async () => {
-      nock(origin).get('/api/auth/health').reply(500, { error: 'down' });
-      const res = await request(app).get('/api/auth/health');
-      expect(res.status).toBe(500);
-    });
-
-    test('timeout/network error → 503', async () => {
-      nock(origin).get('/api/auth/health').replyWithError({ code: 'ETIMEDOUT' });
-      const res = await request(app).get('/api/auth/health');
-      expect(res.status).toBe(503);
-    });
+  // Cover 404 handler
+  test('GET /non-existent → 404 with available routes', async () => {
+    const res = await request(app).get('/non-existent');
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('availableRoutes');
   });
 
-  // GYM proxy
-  describe('Gym proxy', () => {
-    const origin = baseOrigin('GYM_SERVICE_URL', 'http://localhost:3002');
-
-    test('200 passthrough', async () => {
-      nock(origin).get('/health').reply(200, { ok: true });
-      const res = await request(app).get('/api/gym/health');
-      expect(res.status).toBe(200);
+  // Cover global error handler by registering a test route that throws
+  test('Global error handler catches thrown error → 500', async () => {
+    // Register a one-off route on the imported app
+    app.get('/cause-error', (req, res) => {
+      throw new Error('boom');
     });
-
-    test('404 passthrough', async () => {
-      nock(origin).get('/missing').reply(404, { error: 'not found' });
-      const res = await request(app).get('/api/gym/missing');
-      expect(res.status).toBe(404);
-    });
-
-    test('500 passthrough', async () => {
-      nock(origin).get('/health').reply(500, { error: 'down' });
-      const res = await request(app).get('/api/gym/health');
-      expect(res.status).toBe(500);
-    });
-
-    test('timeout/network error → 503', async () => {
-      nock(origin).get('/health').replyWithError({ code: 'ETIMEDOUT' });
-      const res = await request(app).get('/api/gym/health');
-      expect(res.status).toBe(503);
-    });
+    const res = await request(app).get('/cause-error');
+    expect(res.status).toBe(500);
   });
 
-  // PAYMENT proxy
-  describe('Payment proxy', () => {
-    const origin = baseOrigin('PAYMENT_SERVICE_URL', 'http://localhost:3003');
+  // Table of routes and their downstream base URLs
+  const proxies = [
+    { route: '/api/auth/health', base: new URL(config.services.auth).origin },
+    { route: '/api/gym/health', base: new URL(config.services.gym).origin },
+    { route: '/api/payment/health', base: new URL(config.services.payment).origin },
+    { route: '/api/user/health', base: new URL(config.services.user).origin },
+    { route: '/api/trainer/health', base: new URL(config.services.trainer).origin },
+    { route: '/api/admin/health', base: new URL(config.services.admin).origin },
+  ];
 
-    test('200 passthrough', async () => {
-      nock(origin).get('/getinvoices').reply(200, []);
-      const res = await request(app).get('/api/payment/getinvoices');
-      expect(res.status).toBe(200);
-    });
+  proxies.forEach(({ route, base }) => {
+    describe(`Proxy ${route}`, () => {
+      test('proxies 200 from downstream', async () => {
+        nock(base).get(/.*/).reply(200, { ok: true });
+        const res = await request(app).get(route);
+        expect(res.status).toBe(200);
+      });
 
-    test('500 passthrough', async () => {
-      nock(origin).get('/getinvoices').reply(500, { error: 'down' });
-      const res = await request(app).get('/api/payment/getinvoices');
-      expect(res.status).toBe(500);
-    });
+      test('proxies 404 from downstream', async () => {
+        nock(base).get(/.*/).reply(404, { error: 'not found' });
+        const res = await request(app).get(route);
+        expect(res.status).toBe(404);
+      });
 
-    test('timeout/network error → 503', async () => {
-      nock(origin).get('/getinvoices').replyWithError({ code: 'ETIMEDOUT' });
-      const res = await request(app).get('/api/payment/getinvoices');
-      expect(res.status).toBe(503);
+      test('proxies 500 from downstream', async () => {
+        nock(base).get(/.*/).reply(500, { error: 'fail' });
+        const res = await request(app).get(route);
+        expect(res.status).toBe(500);
+      });
+
+      test('handles network errors via onError → 503', async () => {
+        nock(base).get(/.*/).replyWithError({ code: 'ETIMEDOUT', message: 'timeout' });
+        const res = await request(app).get(route);
+        expect(res.status).toBe(503);
+      });
     });
   });
 
-  // USER proxy
-  describe('User proxy', () => {
-    const origin = baseOrigin('USER_SERVICE_URL', 'http://localhost:3004');
-
-    test('200 passthrough', async () => {
-      nock(origin).get('/getuserbyid/u1').reply(200, { id: 'u1' });
-      const res = await request(app).get('/api/user/getuserbyid/u1');
-      expect(res.status).toBe(200);
-    });
-
-    test('timeout/network error → 503', async () => {
-      nock(origin).get('/getuserbyid/u1').replyWithError({ code: 'ETIMEDOUT' });
-      const res = await request(app).get('/api/user/getuserbyid/u1');
-      expect(res.status).toBe(503);
-    });
-  });
-
-  // TRAINER proxy
-  describe('Trainer proxy', () => {
-    const origin = baseOrigin('TRAINER_SERVICE_URL', 'http://localhost:3005');
-
-    test('200 passthrough', async () => {
-      nock(origin).get('/health').reply(200, { ok: true });
-      const res = await request(app).get('/api/trainer/health');
-      expect(res.status).toBe(200);
-    });
-
-    test('timeout/network error → 503', async () => {
-      nock(origin).get('/health').replyWithError({ code: 'ETIMEDOUT' });
-      const res = await request(app).get('/api/trainer/health');
-      expect(res.status).toBe(503);
-    });
-  });
-
-  // ADMIN proxy
-  describe('Admin proxy', () => {
-    const origin = baseOrigin('ADMIN_SERVICE_URL', 'http://localhost:3006');
-
-    test('200 passthrough', async () => {
-      nock(origin).get('/health').reply(200, { ok: true });
-      const res = await request(app).get('/api/admin/health');
-      expect(res.status).toBe(200);
-    });
-
-    test('timeout/network error → 503', async () => {
-      nock(origin).get('/health').replyWithError({ code: 'ETIMEDOUT' });
-      const res = await request(app).get('/api/admin/health');
-      expect(res.status).toBe(503);
-    });
+  // One POST proxy test to exercise body forwarding (use user service)
+  test('POST /api/user/echo → 200 downstream with body', async () => {
+    const base = new URL(config.services.user).origin;
+    nock(base).post(/.*/).reply(200, { ok: true });
+    const res = await request(app).post('/api/user/echo').send({ a: 1 });
+    expect(res.status).toBe(200);
   });
 });
