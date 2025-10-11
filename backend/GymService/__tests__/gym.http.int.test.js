@@ -80,6 +80,12 @@ describe('GymService HTTP (gym controller routes)', () => {
     expect(res.status).toBe(200);
   });
 
+  test('GET /getallgyms → 500 on error', async () => {
+    gymService.getallgyms.mockRejectedValueOnce(new Error('boom'));
+    const res = await request(app).get('/getallgyms?page=1&limit=12');
+    expect(res.status).toBe(500);
+  });
+
   test('GET /getgymbyid/:gymId → 200 when found, 404 when not', async () => {
     gymService.getgymbyid.mockResolvedValueOnce({ gym_id: 'g1' });
     let res = await request(app).get('/getgymbyid/g1');
@@ -87,6 +93,12 @@ describe('GymService HTTP (gym controller routes)', () => {
     gymService.getgymbyid.mockResolvedValueOnce(null);
     res = await request(app).get('/getgymbyid/missing');
     expect(res.status).toBe(404);
+  });
+
+  test('GET /getgymbyid/:gymId → 500 on error', async () => {
+    gymService.getgymbyid.mockRejectedValueOnce(new Error('boom'));
+    const res = await request(app).get('/getgymbyid/g1');
+    expect(res.status).toBe(500);
   });
 
   test('GET /getgymbyuserid/:userId → 200/404', async () => {
@@ -98,6 +110,12 @@ describe('GymService HTTP (gym controller routes)', () => {
     expect(res.status).toBe(404);
   });
 
+  test('GET /getgymbyuserid/:userId → 500 on error', async () => {
+    gymService.getgymbyuserid.mockRejectedValueOnce(new Error('boom'));
+    const res = await request(app).get('/getgymbyuserid/u1');
+    expect(res.status).toBe(500);
+  });
+
   test('PUT /updategymdetails/:gymId → 200/404', async () => {
     gymService.updategymdetails.mockResolvedValueOnce({ gym_id: 'g1', name: 'New' });
     let res = await request(app).put('/updategymdetails/g1').send({ name: 'New' });
@@ -105,6 +123,12 @@ describe('GymService HTTP (gym controller routes)', () => {
     gymService.updategymdetails.mockResolvedValueOnce(null);
     res = await request(app).put('/updategymdetails/missing').send({ name: 'X' });
     expect(res.status).toBe(404);
+  });
+
+  test('PUT /updategymdetails/:gymId → 500 on error', async () => {
+    gymService.updategymdetails.mockRejectedValueOnce(new Error('boom'));
+    const res = await request(app).put('/updategymdetails/g1').send({ name: 'New' });
+    expect(res.status).toBe(500);
   });
 
   test('POST /getallgymusers → 400 invalid, 404 none, 200 success', async () => {
@@ -121,6 +145,12 @@ describe('GymService HTTP (gym controller routes)', () => {
     expect(res.status).toBe(200);
   });
 
+  test('POST /getallgymusers → 500 on error', async () => {
+    gymService.getAllGymUsersByIds.mockRejectedValueOnce(new Error('boom'));
+    const res = await request(app).post('/getallgymusers').send({ customerIds: ['c1'] });
+    expect(res.status).toBe(500);
+  });
+
   test('GET /gettotalmembercount/:gymId → 200 non-null, 404 null', async () => {
     gymService.gettotalmembercount.mockResolvedValueOnce(3);
     let res = await request(app).get('/gettotalmembercount/g1');
@@ -128,6 +158,12 @@ describe('GymService HTTP (gym controller routes)', () => {
     gymService.gettotalmembercount.mockResolvedValueOnce(null);
     res = await request(app).get('/gettotalmembercount/g1');
     expect(res.status).toBe(404);
+  });
+
+  test('GET /gettotalmembercount/:gymId → 500 on error', async () => {
+    gymService.gettotalmembercount.mockRejectedValueOnce(new Error('boom'));
+    const res = await request(app).get('/gettotalmembercount/g1');
+    expect(res.status).toBe(500);
   });
 
   test('GET /gettrainers/:gymId → 200 when data, 404 when null', async () => {
@@ -139,6 +175,12 @@ describe('GymService HTTP (gym controller routes)', () => {
     expect(res.status).toBe(404);
   });
 
+  test('GET /gettrainers/:gymId → 500 on error', async () => {
+    gymService.getgymtrainers.mockRejectedValueOnce(new Error('boom'));
+    const res = await request(app).get('/gettrainers/g1');
+    expect(res.status).toBe(500);
+  });
+
   test('PUT /approvetrainer/:request_id → 200/404', async () => {
     gymService.approvetrainer.mockResolvedValueOnce({ ok: true });
     let res = await request(app).put('/approvetrainer/r1');
@@ -148,10 +190,22 @@ describe('GymService HTTP (gym controller routes)', () => {
     expect(res.status).toBe(404);
   });
 
+  test('PUT /approvetrainer/:request_id → 500 on error', async () => {
+    gymService.approvetrainer.mockRejectedValueOnce(new Error('boom'));
+    const res = await request(app).put('/approvetrainer/r1');
+    expect(res.status).toBe(500);
+  });
+
   test('GET /getstatistics/:gymId → 200', async () => {
     gymService.getgymtrainercount.mockResolvedValueOnce(0);
     const res = await request(app).get('/getstatistics/g1');
     expect(res.status).toBe(200);
+  });
+
+  test('GET /getstatistics/:gymId → 500 on error', async () => {
+    gymService.getgymtrainercount.mockRejectedValueOnce(new Error('boom'));
+    const res = await request(app).get('/getstatistics/g1');
+    expect(res.status).toBe(500);
   });
 
   test('POST /request-verification → 200 on success, 400 when missing fields', async () => {
@@ -163,5 +217,12 @@ describe('GymService HTTP (gym controller routes)', () => {
     const payload = { gym_id: 'g1', type: 'gym', status: 'pending', email: 'g1@example.com' };
     res = await request(app).post('/request-verification').send(payload);
     expect(res.status).toBe(200);
+  });
+
+  test('POST /request-verification → 500 on error', async () => {
+    gymService.requestGymVerification.mockRejectedValueOnce(new Error('boom'));
+    const payload = { gym_id: 'g1', type: 'gym', status: 'pending', email: 'g1@example.com' };
+    const res = await request(app).post('/request-verification').send(payload);
+    expect(res.status).toBe(500);
   });
 });
