@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import EmailService from '../services/EmailService.js';
 
 describe('EmailService', () => {

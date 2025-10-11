@@ -1,8 +1,11 @@
-import { generateEmbedding, generateBatchEmbeddings } from '../services/embedding.service.js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-// Mock GoogleGenerativeAI
-jest.mock('@google/generative-ai');
+import { jest } from '@jest/globals';
+// Use ESM-friendly mocks for GoogleGenerativeAI
+await jest.unstable_mockModule('@google/generative-ai', () => ({
+    GoogleGenerativeAI: jest.fn(),
+    __esModule: true,
+}));
+const { GoogleGenerativeAI } = await import('@google/generative-ai');
+const { generateEmbedding, generateBatchEmbeddings } = await import('../services/embedding.service.js');
 
 describe('Embedding Service Unit Tests', () => {
     const mockGoogleGenerativeAI = GoogleGenerativeAI;

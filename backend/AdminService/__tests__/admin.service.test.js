@@ -1,11 +1,18 @@
-import AdminService from '../services/admin.service.js';
+import { jest } from '@jest/globals';
 
-jest.mock('../database/supabase.js', () => ({
+await jest.unstable_mockModule('../database/supabase.js', () => ({
+  __esModule: true,
   supabase: {
     rpc: jest.fn(),
-    from: jest.fn(() => ({ update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), select: jest.fn().mockResolvedValue({ data: [{ id: 1 }], error: null }) }))
-  }
+    from: jest.fn(() => ({ update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), select: jest.fn().mockResolvedValue({ data: [{ id: 1 }], error: null }) })),
+  },
+  default: {
+    rpc: jest.fn(),
+    from: jest.fn(() => ({ update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), select: jest.fn().mockResolvedValue({ data: [{ id: 1 }], error: null }) })),
+  },
 }));
+
+const { default: AdminService } = await import('../services/admin.service.js');
 
 describe('AdminService', () => {
   let supabase;
@@ -99,8 +106,31 @@ describe('AdminService', () => {
   });
 
   test('BannedUsers - inserts and updates related tables', async () => {
-    const chain = { insert: jest.fn().mockReturnThis(), select: jest.fn().mockResolvedValue({ data: [{ id: 1 }], error: null }), update: jest.fn().mockReturnThis(), eq: jest.fn().mockResolvedValue({ error: null }) };
-    supabase.from = jest.fn(() => chain);
+    // Provide table-specific chainable mocks
+    supabase.from = jest.fn((table) => {
+      if (table === 'banned') {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              limit: jest.fn().mockReturnValue({
+                maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+              }),
+            }),
+          }),
+          insert: jest.fn().mockReturnValue({
+            select: jest.fn().mockResolvedValue({ data: [{ id: 1 }], error: null }),
+          }),
+        };
+      }
+      if (table === 'trainer' || table === 'gym' || table === 'Reports') {
+        return {
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ error: null }),
+          }),
+        };
+      }
+      return {};
+    });
 
     const res = await AdminService.BannedUsers({ user_id: 9, reason: 'spam', target_type: 'trainer', inquiryId: 5 });
     expect(res).toEqual({ id: 1 });

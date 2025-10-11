@@ -1,5 +1,7 @@
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'http://localhost:54321/mock';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-key';
+// Ensure embedding service uses mock embeddings during tests
+process.env.GOOGLE_API_KEY = 'placeholder-key';
 
 // Support both CJS and ESM Jest environments
 let J;

@@ -1,10 +1,15 @@
-jest.mock('../services/document.service.js', () => ({
+import { jest } from '@jest/globals';
+
+// Use ESM-compatible module mocking
+await jest.unstable_mockModule('../services/document.service.js', () => ({
   uploadDocumentsToRAG: jest.fn(),
   searchSimilarDocuments: jest.fn(),
   getAllDocuments: jest.fn(),
-  deleteDocument: jest.fn()
+  deleteDocument: jest.fn(),
+  __esModule: true,
 }));
-jest.mock('../services/admin.service.js', () => ({
+
+await jest.unstable_mockModule('../services/admin.service.js', () => ({
   __esModule: true,
   default: {
     getMemberGrowthStats: jest.fn(),
@@ -14,15 +19,16 @@ jest.mock('../services/admin.service.js', () => ({
     getDashboardStats: jest.fn(),
     BannedUsers: jest.fn(),
     getUserInquiries: jest.fn(),
-    updateUserInquiries: jest.fn()
-  }
+    updateUserInquiries: jest.fn(),
+  },
 }));
-jest.mock('../services/EmailService.js', () => ({
+
+await jest.unstable_mockModule('../services/EmailService.js', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => ({
     sendVerificationApprovedEmail: jest.fn().mockResolvedValue({ success: true }),
-    sendVerificationRejectedEmail: jest.fn().mockResolvedValue({ success: true })
-  }))
+    sendVerificationRejectedEmail: jest.fn().mockResolvedValue({ success: true }),
+  })),
 }));
 
 describe('Admin Controller (additional)', () => {
