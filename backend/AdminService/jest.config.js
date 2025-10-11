@@ -10,6 +10,9 @@ export default {
     "**/__tests__/**/*.test.js"
   ],
   verbose: true,
+  setupFilesAfterEnv: [
+    "<rootDir>/test-setup.js"
+  ],
   transform: {
     "^.+\\.js$": "babel-jest"
   }

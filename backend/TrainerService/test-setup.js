@@ -5,6 +5,20 @@ process.env.NODE_ENV = 'test';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://test.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'test_key';
 
+// Some modules (Kafka) read CA file during import; stub fs.readFileSync when running tests
+try {
+  const fs = require('fs');
+  const originalReadFileSync = fs.readFileSync;
+  fs.readFileSync = function(path, options) {
+    if (typeof path === 'string' && path.toLowerCase().endsWith('ca.pem')) {
+      return '';
+    }
+    return originalReadFileSync.apply(this, arguments);
+  };
+} catch (_) {
+  // no-op in environments where require isn't available
+}
+
 global.console = {
   ...console,
   log: () => {},

@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config=jest.config.cjs",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:gym": "jest --testPathPattern=gym --verbose --coverage",
