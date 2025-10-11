@@ -46,33 +46,50 @@ export default function UserInquiries() {
 
         const mappedInquiries: UserInquiry[] = await Promise.all(
           apiInquiries.map(async (item: any) => {
-            const userInfo = await GetCustomerById(item.reporter_id)
+            // Reporter info (tolerate failures)
+            let reporterName = ""
+            let reporterEmail = ""
+            let reporterAvatar: string | undefined = undefined
+            try {
+              const userInfo = await GetCustomerById(item.reporter_id)
+              reporterName = userInfo?.user?.first_name ?? ""
+              reporterEmail = userInfo?.email ?? ""
+              reporterAvatar = userInfo?.user?.profile_img
+            } catch (e) {
+              console.warn("⚠️ Failed to load reporter details", { reporterId: item.reporter_id, error: (e as any)?.message })
+            }
 
-            const reporterName = userInfo?.user?.first_name ?? ""
-            const reporterEmail = userInfo?.email ?? ""
-
+            // Target info (trainer/gym) — tolerate 404s and other errors
             let targetName = `${item.target_type} #${item.target_id}`
             let targetAvatar: string | undefined = undefined
             let bannedUserId: string | null = null
 
-            if (item.target_type === "trainer") {
-              const restrainer = await GetTrainerById(item.target_id)
-              targetName = restrainer?.trainer?.trainer_name ?? targetName
-              targetAvatar = restrainer?.trainer?.profile_img
-              bannedUserId = restrainer?.trainer?.user_id ?? null
-            } else if (item.target_type === "gym") {
-              const res = await GetGymDetails(item.target_id)
-              targetName = res?.data?.gym?.gym_name ?? targetName
-              targetAvatar = res?.data?.gym?.profile_img
-              bannedUserId = res?.data?.gym?.user_id ?? null
-              console.log("gym details", bannedUserId)
+            if ((item.target_type as string)?.toLowerCase() === "trainer") {
+              try {
+                const restrainer = await GetTrainerById(item.target_id)
+                targetName = restrainer?.trainer?.trainer_name ?? targetName
+                targetAvatar = restrainer?.trainer?.profile_img
+                bannedUserId = restrainer?.trainer?.user_id ?? null
+              } catch (e) {
+                console.warn("⚠️ Failed to load trainer details", { targetId: item.target_id, error: (e as any)?.message })
+              }
+            } else if ((item.target_type as string)?.toLowerCase() === "gym") {
+              try {
+                const res = await GetGymDetails(item.target_id)
+                targetName = res?.data?.gym?.gym_name ?? targetName
+                targetAvatar = res?.data?.gym?.profile_img
+                bannedUserId = res?.data?.gym?.user_id ?? null
+                console.log("gym details", bannedUserId)
+              } catch (e) {
+                console.warn("⚠️ Failed to load gym details", { targetId: item.target_id, error: (e as any)?.message })
+              }
             }
 
             return {
               id: String(item.id),
               reporterName,
               reporterEmail,
-              reporterAvatar: userInfo?.user?.profile_img,
+              reporterAvatar,
               targetName,
               targetEmail: "",
               targetAvatar,
