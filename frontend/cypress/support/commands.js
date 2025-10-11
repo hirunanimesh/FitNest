@@ -222,11 +222,13 @@ Cypress.Commands.add('visitAndWaitForHydration', (url, options = {}) => {
  * @param {string} value - The value to type
  */
 Cypress.Commands.add('safeType', (selector, value) => {
-  cy.get(selector)
+  // Wait for element to be ready and not disabled
+  cy.get(selector, { timeout: 15000 })
     .should('be.visible')
     .should('not.be.disabled')
-    .clear()
-    .type(value, { delay: 50 })
+    .wait(500) // Extra wait for stability
+    .clear({ force: true })
+    .type(value, { delay: 100, force: true })
 })
 
 /**

@@ -74,9 +74,9 @@ Cypress.on('uncaught:exception', (err, runnable) => {
     return false
   }
   
-  // Log critical errors but let test continue for debugging
-  console.log('⚠️ Unhandled error (allowing test to continue):', err.message.substring(0, 100))
-  return false // Change to true if you want to fail on unhandled errors
+  // Handle all other errors to prevent test failures during development
+  console.log('⚠️ Suppressing error to continue test:', err.name)
+  return false // Always return false to prevent test failures from app errors
 })
 
 // Alternatively you can use CommonJS syntax:
