@@ -426,12 +426,11 @@ export async function getDashboardStats(req,res){
 export async function banneduser(req, res) {
     try {
         const data = await AdminService.BannedUsers(req.body);
-        if (data) {
-            res.status(200).json({ message: "Banned user successfully", data });
-        }
+        // Always send a response so the client doesn't hang
+        return res.status(200).json({ success: true, message: "Banned user processed", data: data ?? null });
     } catch (error) {
         console.error("Error happen:", error);
-        res.status(500).json({ message: "Internal server error", error: error.message });
+        return res.status(500).json({ success: false, message: "Internal server error", error: error.message });
     }
 };
 export async function getuserinquiries(req,res){
