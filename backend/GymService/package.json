@@ -9,6 +9,8 @@
     "test:coverage": "jest --coverage",
     "test:gym": "jest --testPathPattern=gym --verbose --coverage",
     "test:plans": "jest --testPathPattern=plans --verbose --coverage",
+    "smoke:tables": "node -r dotenv/config scripts/supabase-tables-smoke.js",
+    "test:db:write": "node -r dotenv/config scripts/supabase-write-integrity.js",
     "start": "nodemon index.js",
     "dev": "npx nodemon index.js"
   },

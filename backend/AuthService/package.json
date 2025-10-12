@@ -18,7 +18,13 @@
     "test": "jest",
     "test:unit": "jest --testPathPatterns=\"unit.test.js\"",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "smoke:supabase": "node -r dotenv/config scripts/supabase-smoke.js",
+    "smoke:tables": "node -r dotenv/config scripts/supabase-tables-smoke.js",
+    "smoke:rls": "node -r dotenv/config scripts/supabase-rls-smoke.js",
+    "test:db:write": "node -r dotenv/config scripts/supabase-write-integrity.js",
+    "db:seed": "node -r dotenv/config scripts/seed-all-tables.js",
+    "db:seed:auth": "node -r dotenv/config scripts/seed-auth-users.js"
   },
   "keywords": [],
   "author": "",
