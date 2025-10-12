@@ -24,7 +24,8 @@
     "smoke:rls": "node -r dotenv/config scripts/supabase-rls-smoke.js",
     "test:db:write": "node -r dotenv/config scripts/supabase-write-integrity.js",
     "db:seed": "node -r dotenv/config scripts/seed-all-tables.js",
-    "db:seed:auth": "node -r dotenv/config scripts/seed-auth-users.js"
+    "db:seed:auth": "node -r dotenv/config scripts/seed-auth-users.js",
+    "db:all": "node scripts/run-db-suite.js"
   },
   "keywords": [],
   "author": "",
