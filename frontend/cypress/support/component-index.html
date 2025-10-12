@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Components App</title>
+    <style>
+      /* Reset and base styles for component testing */
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
+                     'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 
+                     'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #1a1a1a;
+        color: #ffffff;
+      }
+      
+      /* Basic Tailwind-like utilities for component testing */
+      .flex { display: flex; }
+      .items-center { align-items: center; }
+      .justify-center { justify-content: center; }
+      .space-x-2 > * + * { margin-left: 0.5rem; }
+      .font-bold { font-weight: 700; }
+      .text-xl { font-size: 1.25rem; }
+      .text-black { color: #000000; }
+      .text-primary { color: #3b82f6; }
+      .h-5 { height: 1.25rem; }
+      .w-5 { width: 1.25rem; }
+      .rounded-lg { border-radius: 0.5rem; }
+      .p-6 { padding: 1.5rem; }
+      .bg-white\/5 { background-color: rgba(255, 255, 255, 0.05); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-cy-root></div>
+  </body>
+</html>

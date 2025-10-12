@@ -35,4 +35,25 @@ module.exports = defineConfig({
       SUPABASE_URL: 'https://cvmxfwmcaxmqnhmsxicu.supabase.co'
     }
   },
+  component: {
+    devServer: {
+      framework: 'next',
+      bundler: 'webpack',
+    },
+    setupNodeEvents(on, config) {
+      // Component testing node events
+    },
+    supportFile: 'cypress/support/component.js',
+    specPattern: 'cypress/component/**/*.cy.{js,jsx,ts,tsx}',
+    video: false,
+    screenshot: false,
+    viewportWidth: 1280,
+    viewportHeight: 720,
+    defaultCommandTimeout: 10000,
+    retries: {
+      runMode: 2,
+      openMode: 1
+    },
+    indexHtmlFile: 'cypress/support/component-index.html'
+  },
 })
