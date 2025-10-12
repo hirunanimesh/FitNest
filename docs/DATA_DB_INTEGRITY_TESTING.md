@@ -31,6 +31,32 @@ Updated: 2025-10-12
 
 Other services can also have `.env.test`, but `AuthService` is the orchestration point for seeding and global smokes.
 
+## Required tools (what and where we use them)
+
+- Jest (test runner)
+  - Purpose: unit and HTTP integration tests for services (outside the all-in-one DB seeding/smoke flow).
+  - Where: `backend/*Service/__tests__/`, with configs like `backend/*Service/jest.config.js`.
+  - Notes: not required for the `npm run db:all` DB suite, but used for service-level tests.
+
+- Supertest (API request testing)
+  - Purpose: HTTP integration tests against controllers/routes.
+  - Where example: `backend/AdminService/__tests__/admin.http.int.test.js` uses Supertest to validate endpoints.
+  - Notes: optional for DB integrity flows; helpful to validate API → DB paths end-to-end.
+
+- Supabase client (`@supabase/supabase-js`)
+  - Purpose: all DB integrity scripts use the Supabase client with service-role and anon keys.
+  - Where: `backend/AuthService/scripts/*.js` (seeding, smoke, RLS, write integrity). Also supplemental scripts in `backend/*Service/scripts/`.
+  - Keys used: `SUPABASE_SERVICE_ROLE_KEY` for privileged operations; `SUPABASE_ANON_KEY` for RLS verification.
+
+- pgAdmin or Supabase SQL editor
+  - Purpose: optional manual inspection and ad‑hoc queries during debugging or verification.
+  - Where: external tools; not required to run the scripted suite.
+
+- `dotenv/config` (environment isolation)
+  - Purpose: force all scripts to load `.env.test` only via `DOTENV_CONFIG_PATH`.
+  - Where: all npm scripts (e.g., `smoke:*`, `db:seed`, `test:db:write`) run Node with `-r dotenv/config` and require `DOTENV_CONFIG_PATH=".env.test"`.
+  - Example (PowerShell): `$env:DOTENV_CONFIG_PATH = ".env.test"; npm run db:all`
+
 ## Environment isolation
 
 Every script enforces `.env.test` usage and exits if `DOTENV_CONFIG_PATH` is not set to `.env.test`.

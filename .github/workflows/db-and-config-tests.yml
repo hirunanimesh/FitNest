@@ -1,0 +1,72 @@
+name: DB and Config Tests (Supabase)
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: db-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  supabase-db-suite:
+    name: Supabase DB Suite
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/AuthService
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/AuthService/package-lock.json
+
+      - name: Install dependencies (AuthService)
+        run: npm ci
+
+      - name: Create .env.test from secrets (no changes to .env)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .env.test << 'EOF'
+          # Test-only environment. Generated at CI runtime. Safe to echo in job, not committed.
+          SUPABASE_URL=${{ secrets.SUPABASE_URL_TEST }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY_TEST }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY_TEST }}
+          NODE_ENV=test
+          EOF
+
+      - name: Run DB Test Suite (seed + smokes + RLS + write)
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DOTENV_CONFIG_PATH=.env.test
+          npm run db:all | tee db-suite.log
+
+      - name: Attach summary
+        if: always()
+        shell: bash
+        run: |
+          echo "### Supabase DB Suite Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "Workflow: $GITHUB_WORKFLOW" >> "$GITHUB_STEP_SUMMARY"
+          echo "Run ID: $GITHUB_RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+          echo "\nLast 200 lines of db-suite.log:" >> "$GITHUB_STEP_SUMMARY"
+          tail -n 200 db-suite.log >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-suite-logs
+          path: backend/AuthService/db-suite.log
+          if-no-files-found: warn
