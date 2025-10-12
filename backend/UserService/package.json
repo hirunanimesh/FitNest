@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "smoke:tables": "node -r dotenv/config scripts/supabase-tables-smoke.js",
+    "test:db:write": "node -r dotenv/config scripts/supabase-write-integrity.js",
     "start": "node index.js",
     "dev": "npx nodemon index.js"
   },

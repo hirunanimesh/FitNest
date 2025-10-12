@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules\\jest\\bin\\jest.js --config=jest.config.cjs",
+    "smoke:tables": "node -r dotenv/config scripts/supabase-tables-smoke.js",
+    "test:db:write": "node -r dotenv/config scripts/supabase-write-integrity.js",
     "start": "node index.js",
     "dev": "npx nodemon index.js"
   },
