@@ -12,6 +12,8 @@ export async function POST(req: Request) {
       ? process.env.NEXT_PUBLIC_USERSERVICE_URL
       : 'https://cvmxfwmcaxmqnhmsxicu.supabase.co'
 
+
+      
     const res = await fetch(`${backend}/calendar/sync/${userId}`, { method: 'POST' })
     const body = await res.text()
     return new NextResponse(body, { status: res.status, headers: { 'content-type': res.headers.get('content-type') || 'application/json' } })
