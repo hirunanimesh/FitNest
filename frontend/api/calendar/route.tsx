@@ -14,9 +14,11 @@ interface Event {
 }
 
 const getBaseUrl = () => {
-  return process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() 
-    ? process.env.NEXT_PUBLIC_USERSERVICE_URL 
-    : 'http://localhost:3004';
+  // Prefer explicit environment variable; otherwise use production Supabase URL.
+  // Make sure to set NEXT_PUBLIC_USERSERVICE_URL during deployment if you use a different host.
+  return process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim()
+    ? process.env.NEXT_PUBLIC_USERSERVICE_URL
+    : 'https://cvmxfwmcaxmqnhmsxicu.supabase.co';
 };
 
 /**
