@@ -8,7 +8,12 @@ export async function GET(req: Request) {
     const userId = segments[segments.length - 1] || url.searchParams.get('userId')
     if (!userId) return NextResponse.json({ error: 'missing userId' }, { status: 400 })
 
-    const backend = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim() ? process.env.NEXT_PUBLIC_USERSERVICE_URL : 'http://localhost:3004'
+    // Prefer explicit environment variable, otherwise fall back to the production URL.
+    // NOTE: Update NEXT_PUBLIC_USERSERVICE_URL at build/deploy time for other environments.
+    const backend = process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim()
+      ? process.env.NEXT_PUBLIC_USERSERVICE_URL
+      : 'https://cvmxfwmcaxmqnhmsxicu.supabase.co'
+
     const res = await fetch(`${backend}/google/oauth-url/${userId}`)
     const body = await res.text()
     return new NextResponse(body, { status: res.status, headers: { 'content-type': res.headers.get('content-type') || 'application/json' } })
