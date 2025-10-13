@@ -14,11 +14,9 @@ interface Event {
 }
 
 const getBaseUrl = () => {
-  // Prefer explicit environment variable; otherwise use production Supabase URL.
-  // Make sure to set NEXT_PUBLIC_USERSERVICE_URL during deployment if you use a different host.
-  return process.env.NEXT_PUBLIC_USERSERVICE_URL?.trim()
-    ? process.env.NEXT_PUBLIC_USERSERVICE_URL
-    : 'https://cvmxfwmcaxmqnhmsxicu.supabase.co';
+  // Route client API requests through the API Gateway. Set NEXT_PUBLIC_API_GATEWAY_URL
+  // when deploying (e.g. https://api.fit-nest.app). Defaults to localhost for dev.
+  return process.env.NEXT_PUBLIC_API_GATEWAY_URL?.trim() || 'http://localhost:3000';
 };
 
 /**
@@ -29,7 +27,7 @@ const getBaseUrl = () => {
 export const fetchEvents = async (userId: string): Promise<Event[]> => {
   const base = getBaseUrl();
   try {
-    const response = await fetch(`${base}/calendar/events/${userId}`);
+  const response = await fetch(`${base}/api/user/calendar/events/${userId}`);
     if (!response.ok) {
       throw new Error('fetch events failed: ' + response.status);
     }
@@ -49,7 +47,7 @@ export const fetchEvents = async (userId: string): Promise<Event[]> => {
 export const checkGoogleCalendarStatus = async (userId: string): Promise<boolean> => {
   const base = getBaseUrl();
   try {
-    const statusRes = await fetch(`${base}/calendar/status/${userId}`);
+  const statusRes = await fetch(`${base}/api/user/calendar/status/${userId}`);
     if (statusRes.ok) {
       const json = await statusRes.json();
       return Boolean(json.connected);
@@ -70,7 +68,7 @@ export const checkGoogleCalendarStatus = async (userId: string): Promise<boolean
 export const connectGoogleCalendar = async (userId: string): Promise<void> => {
   const base = getBaseUrl();
   try {
-    const response = await fetch(`${base}/google/oauth-url/${userId}`);
+  const response = await fetch(`${base}/api/user/google/oauth-url/${userId}`);
     if (!response.ok) {
       throw new Error('Failed to get oauth url');
     }
@@ -90,7 +88,7 @@ export const connectGoogleCalendar = async (userId: string): Promise<void> => {
 export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
   const base = getBaseUrl();
   try {
-    const response = await fetch(`${base}/calendar/sync/${userId}`, { method: 'POST' });
+  const response = await fetch(`${base}/api/user/calendar/sync/${userId}`, { method: 'POST' });
     if (!response.ok) {
       const text = await response.text().catch(() => 'no body');
       console.error('calendar sync failed response:', response.status, text);
@@ -121,7 +119,7 @@ export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
             color: item.backgroundColor || item.color || '#ef4444',
             google_event_id: item.google_event_id
           };
-          return fetch(`${base}/calendar/create/${userId}`, {
+          return fetch(`${base}/api/user/calendar/create/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -130,7 +128,7 @@ export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
 
         // Refresh authoritative events from server after persistence attempts
         try {
-          const fresh = await fetch(`${base}/calendar/events/${userId}`);
+          const fresh = await fetch(`${base}/api/user/calendar/events/${userId}`);
           if (fresh.ok) {
             const all = await fresh.json();
             return mapServerListUtil(all, '#28375cff');
@@ -159,7 +157,7 @@ export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
 export const updateEvent = async (eventId: string, updates: { start?: string | null; end?: string | null }): Promise<boolean> => {
   const base = getBaseUrl();
   try {
-    const response = await fetch(`${base}/calendar/${eventId}`, {
+  const response = await fetch(`${base}/api/user/calendar/${eventId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates)
@@ -186,7 +184,7 @@ export const updateEvent = async (eventId: string, updates: { start?: string | n
 export const deleteEvent = async (eventId: string): Promise<boolean> => {
   const base = getBaseUrl();
   try {
-    const response = await fetch(`${base}/calendar/${eventId}`, { method: 'DELETE' });
+  const response = await fetch(`${base}/api/user/calendar/${eventId}`, { method: 'DELETE' });
     if (!response.ok) {
       const text = await response.text().catch(() => '');
       console.error('delete event failed', response.status, text);
@@ -232,7 +230,7 @@ export const createEvent = async (userId: string, eventData: {
 }): Promise<any> => {
   const base = getBaseUrl();
   try {
-    const response = await fetch(`${base}/calendar/create/${userId}`, {
+  const response = await fetch(`${base}/api/user/calendar/create/${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(eventData),
@@ -295,8 +293,8 @@ export const updateEventWithChanges = async (
       fetchOpts.body = JSON.stringify(changes);
     }
 
-    console.debug('[API] PATCH', { url: `${base}/calendar/${eventId}`, fetchOpts, existingEvent });
-    const res = await fetch(`${base}/calendar/${eventId}`, fetchOpts);
+  console.debug('[API] PATCH', { url: `${base}/api/user/calendar/${eventId}`, fetchOpts, existingEvent });
+  const res = await fetch(`${base}/api/user/calendar/${eventId}`, fetchOpts);
 
     if (!res.ok) {
       let parsed: any = null;
@@ -327,7 +325,7 @@ export const updateEventWithChanges = async (
             color: changes.color || existingEvent.backgroundColor || '#3b82f6',
             google_event_id: existingEvent.google_event_id
           };
-          const createRes = await fetch(`${base}/calendar/create/${userId}`, {
+          const createRes = await fetch(`${base}/api/user/calendar/create/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(createBody)
