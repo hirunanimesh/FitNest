@@ -140,7 +140,7 @@ export default function LoginPage() {
       return 'customer'; // Default fallback
     }
   };
-
+  //signing with email and password
   const handleLogin = async () => {
     setIsLoading(true);
     setError(null); // Clear any previous errors
