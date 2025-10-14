@@ -6,6 +6,9 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// Test console log for CI/CD workflow
+console.log('🚀 Admin Service starting up - CI/CD test change');
+
 // Import controllers
 import { 
     uploadDocuments, 
