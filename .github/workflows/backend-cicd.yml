@@ -1,0 +1,266 @@
+name: Backend Microservices CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.changes.outputs.services }}
+      apigateway: ${{ steps.changes.outputs.apigateway }}
+      authservice: ${{ steps.changes.outputs.authservice }}
+      userservice: ${{ steps.changes.outputs.userservice }}
+      gymservice: ${{ steps.changes.outputs.gymservice }}
+      paymentservice: ${{ steps.changes.outputs.paymentservice }}
+      trainerservice: ${{ steps.changes.outputs.trainerservice }}
+      adminservice: ${{ steps.changes.outputs.adminservice }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed services
+        id: changes
+        run: |
+          # Get list of changed files
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          else
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Initialize service flags
+          APIGATEWAY=false
+          AUTHSERVICE=false
+          USERSERVICE=false
+          GYMSERVICE=false
+          PAYMENTSERVICE=false
+          TRAINERSERVICE=false
+          ADMINSERVICE=false
+          
+          # Check which services have changes
+          if echo "$CHANGED_FILES" | grep -q "^backend/apigateway/"; then
+            APIGATEWAY=true
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "^backend/AuthService/"; then
+            AUTHSERVICE=true
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "^backend/UserService/"; then
+            USERSERVICE=true
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "^backend/GymService/"; then
+            GYMSERVICE=true
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "^backend/PaymentService/"; then
+            PAYMENTSERVICE=true
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "^backend/TrainerService/"; then
+            TRAINERSERVICE=true
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "^backend/AdminService/"; then
+            ADMINSERVICE=true
+          fi
+          
+          # Create services array
+          SERVICES="["
+          COMMA=""
+          
+          if [ "$APIGATEWAY" = "true" ]; then
+            SERVICES="${SERVICES}${COMMA}\"apigateway\""
+            COMMA=","
+          fi
+          
+          if [ "$AUTHSERVICE" = "true" ]; then
+            SERVICES="${SERVICES}${COMMA}\"authservice\""
+            COMMA=","
+          fi
+          
+          if [ "$USERSERVICE" = "true" ]; then
+            SERVICES="${SERVICES}${COMMA}\"userservice\""
+            COMMA=","
+          fi
+          
+          if [ "$GYMSERVICE" = "true" ]; then
+            SERVICES="${SERVICES}${COMMA}\"gymservice\""
+            COMMA=","
+          fi
+          
+          if [ "$PAYMENTSERVICE" = "true" ]; then
+            SERVICES="${SERVICES}${COMMA}\"paymentservice\""
+            COMMA=","
+          fi
+          
+          if [ "$TRAINERSERVICE" = "true" ]; then
+            SERVICES="${SERVICES}${COMMA}\"trainerservice\""
+            COMMA=","
+          fi
+          
+          if [ "$ADMINSERVICE" = "true" ]; then
+            SERVICES="${SERVICES}${COMMA}\"adminservice\""
+            COMMA=","
+          fi
+          
+          SERVICES="${SERVICES}]"
+          
+          echo "Services to build: $SERVICES"
+          
+          # Set outputs
+          echo "services=$SERVICES" >> $GITHUB_OUTPUT
+          echo "apigateway=$APIGATEWAY" >> $GITHUB_OUTPUT
+          echo "authservice=$AUTHSERVICE" >> $GITHUB_OUTPUT
+          echo "userservice=$USERSERVICE" >> $GITHUB_OUTPUT
+          echo "gymservice=$GYMSERVICE" >> $GITHUB_OUTPUT
+          echo "paymentservice=$PAYMENTSERVICE" >> $GITHUB_OUTPUT
+          echo "trainerservice=$TRAINERSERVICE" >> $GITHUB_OUTPUT
+          echo "adminservice=$ADMINSERVICE" >> $GITHUB_OUTPUT
+
+  build-and-deploy:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set service context and image name
+        id: service-info
+        run: |
+          case "${{ matrix.service }}" in
+            "apigateway")
+              echo "context=backend/apigateway" >> $GITHUB_OUTPUT
+              echo "image_name=fitnest-api-gateway" >> $GITHUB_OUTPUT
+              ;;
+            "authservice")
+              echo "context=backend/AuthService" >> $GITHUB_OUTPUT
+              echo "image_name=fitnest-auth-service" >> $GITHUB_OUTPUT
+              ;;
+            "userservice")
+              echo "context=backend/UserService" >> $GITHUB_OUTPUT
+              echo "image_name=fitnest-user-service" >> $GITHUB_OUTPUT
+              ;;
+            "gymservice")
+              echo "context=backend/GymService" >> $GITHUB_OUTPUT
+              echo "image_name=fitnest-gym-service" >> $GITHUB_OUTPUT
+              ;;
+            "paymentservice")
+              echo "context=backend/PaymentService" >> $GITHUB_OUTPUT
+              echo "image_name=fitnest-payment-service" >> $GITHUB_OUTPUT
+              ;;
+            "trainerservice")
+              echo "context=backend/TrainerService" >> $GITHUB_OUTPUT
+              echo "image_name=fitnest-trainer-service" >> $GITHUB_OUTPUT
+              ;;
+            "adminservice")
+              echo "context=backend/AdminService" >> $GITHUB_OUTPUT
+              echo "image_name=fitnest-admin-service" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.service-info.outputs.image_name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.service-info.outputs.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Print build summary
+        run: |
+          echo "✅ Successfully built and pushed ${{ steps.service-info.outputs.image_name }}"
+          echo "📦 Context: ${{ steps.service-info.outputs.context }}"
+          echo "🏷️ Tags: ${{ steps.meta.outputs.tags }}"
+
+  deployment-summary:
+    needs: [detect-changes, build-and-deploy]
+    if: always() && needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "🚀 Deployment Summary"
+          echo "====================="
+          echo "Changed services: ${{ needs.detect-changes.outputs.services }}"
+          echo ""
+          echo "The following Docker images have been built and pushed to Docker Hub:"
+          
+          SERVICES='${{ needs.detect-changes.outputs.services }}'
+          echo "$SERVICES" | jq -r '.[]' | while read service; do
+            case "$service" in
+              "apigateway") echo "- ${{ secrets.DOCKERHUB_USERNAME }}/fitnest-api-gateway:latest" ;;
+              "authservice") echo "- ${{ secrets.DOCKERHUB_USERNAME }}/fitnest-auth-service:latest" ;;
+              "userservice") echo "- ${{ secrets.DOCKERHUB_USERNAME }}/fitnest-user-service:latest" ;;
+              "gymservice") echo "- ${{ secrets.DOCKERHUB_USERNAME }}/fitnest-gym-service:latest" ;;
+              "paymentservice") echo "- ${{ secrets.DOCKERHUB_USERNAME }}/fitnest-payment-service:latest" ;;
+              "trainerservice") echo "- ${{ secrets.DOCKERHUB_USERNAME }}/fitnest-trainer-service:latest" ;;
+              "adminservice") echo "- ${{ secrets.DOCKERHUB_USERNAME }}/fitnest-admin-service:latest" ;;
+            esac
+          done
+          echo ""
+          echo "📋 Next Steps:"
+          echo "- Images are now available on Docker Hub with 'latest' tag"
+          echo "- Watchtower on your Google Cloud VM will automatically detect and pull the new images"
+          echo "- Services will be automatically restarted with the new versions"
+
+  notify-watchtower:
+    needs: [detect-changes, build-and-deploy]
+    if: success() && needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Watchtower Update (Optional)
+        run: |
+          echo "💡 Watchtower Integration Notes:"
+          echo "================================"
+          echo ""
+          echo "If you want to force an immediate update, you can:"
+          echo "1. SSH into your Google Cloud VM"
+          echo "2. Run: docker exec watchtower watchtower --run-once"
+          echo ""
+          echo "Or configure webhooks for instant notifications:"
+          echo "- Set up Watchtower with HTTP API notifications"
+          echo "- Add webhook URL to trigger immediate checks"
+          echo ""
+          echo "Current setup assumes Watchtower is running with periodic checks."
