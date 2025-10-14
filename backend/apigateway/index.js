@@ -65,6 +65,7 @@ if (require.main === module) {
   const PORT = config.port;
   app.listen(PORT, () => {
     console.log(`🚀 API Gateway is running on port ${PORT}`);
+    console.log('new change here to check cicd');
     console.log(`📡 Health check: http://localhost:${PORT}/health`);
     console.log(`🔗 Proxying to services:`, config.services);
     console.log(`🌐 CORS enabled for: ${config.cors.origin}`);
