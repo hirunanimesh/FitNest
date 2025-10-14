@@ -207,7 +207,7 @@ export async function removeDocument(req, res) {
 export async function healthCheck(req, res) {
     res.status(200).json({
         success: true,
-        message: 'Admin Service is running',
+        message: 'Admin Service is running with cicd',
         timestamp: new Date().toISOString(),
         service: 'AdminService'
     });
