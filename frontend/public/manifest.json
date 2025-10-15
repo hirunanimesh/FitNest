@@ -10,6 +10,8 @@
   "categories": ["health", "fitness", "lifestyle"],
   "lang": "en",
   "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
