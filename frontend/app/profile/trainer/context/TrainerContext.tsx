@@ -1,8 +1,8 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { useSearchParams } from 'next/navigation';
+import { GetTrainerById, GetAllSessionsByTrainerId, GetFeedbackByTrainerId } from '@/lib/api';
 
 interface TrainerData {
   id: string;
@@ -49,11 +49,11 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
     try {
       console.log(`Fetching trainer data for ID: ${trainerId}`);
       
-      // Fetch all trainer data in parallel to reduce API calls
+      // Fetch all trainer data in parallel using authenticated API functions
       const [trainerResponse, sessionsResponse, feedbackResponse] = await Promise.allSettled([
-        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/gettrainerbyid/${trainerId}`),
-        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getallsessionbytrainerid/${trainerId}`),
-        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getfeedbackbytrainerid/${trainerId}`)
+        GetTrainerById(trainerId),
+        GetAllSessionsByTrainerId(trainerId),
+        GetFeedbackByTrainerId(trainerId)
       ]);
 
       let trainer = null;
@@ -61,15 +61,15 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
       let feedbacks: any[] = [];
 
       // Process trainer data
-      if (trainerResponse.status === 'fulfilled' && trainerResponse.value.data?.trainer) {
-        trainer = trainerResponse.value.data.trainer;
+      if (trainerResponse.status === 'fulfilled' && trainerResponse.value?.trainer) {
+        trainer = trainerResponse.value.trainer;
       } else {
         console.error("Trainer data request failed:", trainerResponse.status === 'rejected' ? trainerResponse.reason : "No trainer data");
       }
 
       // Process sessions data (handle both 'sessions' and legacy 'session' keys)
       if (sessionsResponse.status === 'fulfilled') {
-        const resp = sessionsResponse.value.data || {};
+        const resp = sessionsResponse.value || {};
         // Backend uses 'sessions' (plural); older endpoints may return 'session'
         sessions = resp.sessions ?? resp.session ?? [];
         console.log("Sessions data fetched successfully:", sessions);
@@ -78,8 +78,8 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
       }
 
       // Process feedback data
-      if (feedbackResponse.status === 'fulfilled' && feedbackResponse.value.data?.trainer) {
-        feedbacks = feedbackResponse.value.data.trainer;
+      if (feedbackResponse.status === 'fulfilled' && feedbackResponse.value?.trainer) {
+        feedbacks = feedbackResponse.value.trainer;
         console.log("Feedback data fetched successfully:", feedbacks);
       } else {
         console.log("Feedback data request failed or no feedback found:", feedbackResponse.status === 'rejected' ? feedbackResponse.reason : "No feedback data");

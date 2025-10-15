@@ -3,7 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 
-import {addfeedback,getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails, getMySessions, addreport, getuserbycustomerid} from './controllers/user.controller.js'
+import {addfeedback,getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails, getMySessions, addreport} from './controllers/user.controller.js'
 import {
 	getGoogleOauthUrl,
 	googleCallback,
@@ -19,8 +19,18 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'success',
+        message: 'User Service is running',
+        timestamp: new Date().toISOString(),
+        service: 'UserService',
+        version: '1.0.0'
+    });
+});
+
 app.get('/getuserbyid/:userId',getuserbyid)
-app.get('/getuserbycustomerid/:customerId',getuserbycustomerid)
 app.patch('/updateuserdetails/:userId',updateuserdetails)
 app.post('/addweight',addweight)
 app.get('/getweightbyid/:userId',getweightbyid)

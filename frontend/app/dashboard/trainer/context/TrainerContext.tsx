@@ -2,8 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { GetTrainerById } from '@/lib/api';
-import axios from 'axios';
+import { GetTrainerById, GetAllSessionsByTrainerId, GetAllPlansByTrainerId } from '@/lib/api';
 interface TrainerData {
   trainer_id: number;
   trainer_name: string;
@@ -61,10 +60,10 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
       // Get trainer ID directly from AuthContext
       const trainerId = await getUserProfileId();
       const [ sessionsResponse ] = await Promise.allSettled([
-        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getallsessionbytrainerid/${trainerId}`),
+        GetAllSessionsByTrainerId(trainerId),
       ]);
       const[plansResponse] = await Promise.allSettled([
-        axios.get(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getallplansbytrainerid/${trainerId}`),
+        GetAllPlansByTrainerId(trainerId),
       ]);
       
        let sessions: any[] = [];
@@ -73,9 +72,9 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
        let totalSessionCount = 0;
        let totalPlanCount = 0;
 
-if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.sessions) {
-  sessions = sessionsResponse.value.data.sessions;
-  totalSessionCount = sessionsResponse.value.data.totalCount || 0;
+if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value?.sessions) {
+  sessions = sessionsResponse.value.sessions;
+  totalSessionCount = sessionsResponse.value.totalCount || 0;
   console.log("Sessions data fetched successfully:", sessions, "Total:", totalSessionCount);
 
 
@@ -83,9 +82,9 @@ if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.sess
       console.log("Sessions data request failed or no sessions found:", 
         sessionsResponse.status === 'rejected' ? sessionsResponse.reason : "No sessions data");
     }
-    if (plansResponse.status === 'fulfilled' && (plansResponse.value.data?.plans)) {
-      plans = plansResponse.value.data.plans;
-      totalPlanCount = plansResponse.value.data.totalCount || 0;
+    if (plansResponse.status === 'fulfilled' && plansResponse.value?.plans) {
+      plans = plansResponse.value.plans;
+      totalPlanCount = plansResponse.value.totalCount || 0;
       console.log("Plans data fetched successfully:", plans, "Total:", totalPlanCount);
       
     } else {

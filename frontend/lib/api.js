@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthHeaders } from './auth';
 
 const Base_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3000';
 
@@ -188,7 +189,8 @@ export const CompleteOAuthProfileGym = async (profileData) => {
 
 export const GetGymProfileData = async(id) =>{
     try{
-        const response = await axios.get(`${Base_URL}/api/gym/getgymbyuserid/${id}`)
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${Base_URL}/api/gym/getgymbyuserid/${id}`, { headers })
         if(!response){
             console.error("Error fetching data!")
         }
@@ -208,7 +210,8 @@ export const GetGymProfileData = async(id) =>{
 
 export const GetCustomerById = async (customerId) => {
     try {
-        const response = await axios.get(`${Base_URL}/api/user/getuserbyid/${customerId}`);
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${Base_URL}/api/user/getuserbyid/${customerId}`, { headers });
         return response.data;
     } catch (error) {
         console.error("Error getting customer data:", error);
@@ -223,7 +226,8 @@ export const GetCustomerById = async (customerId) => {
 };
 export const GetTrainerById = async (trainerId) => {
     try {
-        const response = await axios.get(`${Base_URL}/api/trainer/gettrainerbyid/${trainerId}`);
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${Base_URL}/api/trainer/gettrainerbyid/${trainerId}`, { headers });
         return response.data;
     } catch (error) {
         console.error("Error getting trainer data:", error);
@@ -239,7 +243,8 @@ export const GetTrainerById = async (trainerId) => {
 
 export const GetLatestWeight = async(customerId) =>{
     try{
-        const response = await axios.get(`${Base_URL}/api/user/getlatestweightbyid/${customerId}`)
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${Base_URL}/api/user/getlatestweightbyid/${customerId}`, { headers })
         if(!response){
             console.error("Error fetching data!")
         }
@@ -257,7 +262,8 @@ export const GetLatestWeight = async(customerId) =>{
 }
 export const GetWeight = async(customerId) =>{
     try{
-        const response = await axios.get(`${Base_URL}/api/user/getweightbyid/${customerId}`)
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${Base_URL}/api/user/getweightbyid/${customerId}`, { headers })
         if(!response){
             console.error("Error fetching data!")
         }
@@ -276,13 +282,15 @@ export const GetWeight = async(customerId) =>{
 
 export const UpdateUserDetails = async (customerId, userData) => {
     try {
-        const config = {};
+        const authHeaders = await getAuthHeaders();
+        const config = { headers: { ...authHeaders } };
         let requestData;
         
         // Check if userData is FormData (contains file) or regular object
         if (userData instanceof FormData) {
-            // If it's FormData, set the appropriate headers and use it directly
+            // If it's FormData, merge auth headers with multipart headers
             config.headers = {
+                ...authHeaders,
                 'Content-Type': 'multipart/form-data',
             };
             requestData = userData;
@@ -320,7 +328,8 @@ export const UpdateUserDetails = async (customerId, userData) => {
 // Session API functions
 export const AddSession = async (sessionData) => {
     try {
-        const response = await axios.post(`${Base_URL}/api/trainer/addsession`, sessionData);
+        const headers = await getAuthHeaders();
+        const response = await axios.post(`${Base_URL}/api/trainer/addsession`, sessionData, { headers });
         return response.data;
     } catch (error) {
         console.error("Error adding session:", error);
@@ -335,12 +344,14 @@ export const AddSession = async (sessionData) => {
 };
 export const UpdateSessionDetails = async (sessionId, sessionData) => {
     try {
-        const config = {};
+        const authHeaders = await getAuthHeaders();
+        const config = { headers: { ...authHeaders } };
         let requestData;
 
         // Check if sessionData is FormData (contains file) or regular object
         if (sessionData instanceof FormData) {
             config.headers = {
+                ...authHeaders,
                 'Content-Type': 'multipart/form-data',
             };
             requestData = sessionData;
@@ -375,7 +386,8 @@ export const UpdateSessionDetails = async (sessionId, sessionData) => {
 };
 export const DeleteSession = async (sessionId) => {
     try {
-        await axios.delete(`${Base_URL}/api/trainer/deletesession/${sessionId}`);
+        const headers = await getAuthHeaders();
+        await axios.delete(`${Base_URL}/api/trainer/deletesession/${sessionId}`, { headers });
         // Do not show toast here; handle it in the component
     } catch (error) {
         console.error('Error deleting session:', error);
@@ -384,13 +396,15 @@ export const DeleteSession = async (sessionId) => {
 };
 export const UpdateTrainerDetails = async (trainerId, trainerData) => {
     try {
-        const config = {};
+        const authHeaders = await getAuthHeaders();
+        const config = { headers: { ...authHeaders } };
         let requestData;
         
         // Check if trainerData is FormData (contains file) or regular object
         if (trainerData instanceof FormData) {
-            // If it's FormData, set the appropriate headers and use it directly
+            // If it's FormData, merge auth headers with multipart headers
             config.headers = {
+                ...authHeaders,
                 'Content-Type': 'multipart/form-data',
             };
             requestData = trainerData;
@@ -462,7 +476,8 @@ export const uploadToCloudinary = async (file) => {
 }
 export const AddPlan = async (planData) => {
     try {
-        const response = await axios.post(`${Base_URL}/api/trainer/addplan`, planData);
+        const headers = await getAuthHeaders();
+        const response = await axios.post(`${Base_URL}/api/trainer/addplan`, planData, { headers });
         return response.data;
     } catch (error) {
         console.error("Error adding plan:", error);
@@ -477,7 +492,8 @@ export const AddPlan = async (planData) => {
 };
 export const UpdatePlan = async (planId, planData) => {
     try {
-        const config = {};
+        const authHeaders = await getAuthHeaders();
+        const config = { headers: { ...authHeaders } };
         let requestData;
 
         // Check if planData is FormData (contains file) or regular object
@@ -508,6 +524,7 @@ export const UpdatePlan = async (planId, planData) => {
                 }
             }
             config.headers = {
+                ...authHeaders,
                 'Content-Type': 'multipart/form-data',
             };
             requestData = planData;
@@ -542,7 +559,8 @@ export const UpdatePlan = async (planId, planData) => {
 };
 export const DeletePlan = async (planId) => {
     try {
-        await axios.delete(`${Base_URL}/api/trainer/deleteplan/${planId}`);
+        const headers = await getAuthHeaders();
+        await axios.delete(`${Base_URL}/api/trainer/deleteplan/${planId}`, { headers });
         // Do not show toast here; handle it in the component
     } catch (error) {
         console.error('Error deleting plan:', error);
@@ -551,7 +569,8 @@ export const DeletePlan = async (planId) => {
 };
 export const GetTrainersGymplans = async (trainerId) => {
     try {
-    const response = await axios.get(`${Base_URL}/api/trainer/getgymplanbytrainerid/${trainerId}`);
+    const headers = await getAuthHeaders();
+    const response = await axios.get(`${Base_URL}/api/trainer/getgymplanbytrainerid/${trainerId}`, { headers });
     // return the API response data for the caller to use
     return response.data;
     } catch (error) {
@@ -561,7 +580,8 @@ export const GetTrainersGymplans = async (trainerId) => {
 };
 export const GetMembershipGyms = async (trainerId) => {
     try {
-    const response = await axios.get(`${Base_URL}/api/trainer/getmembershipgyms/${trainerId}`);
+    const headers = await getAuthHeaders();
+    const response = await axios.get(`${Base_URL}/api/trainer/getmembershipgyms/${trainerId}`, { headers });
     // return the API response data for the caller to use
     return response.data;
     } catch (error) {
@@ -574,10 +594,11 @@ export const GetMembershipGyms = async (trainerId) => {
 export const SendRequestToGym = async (trainerId, gymId) => {
     try {
         console.log("Sending request to gym:",  trainerId, gymId );
+        const headers = await getAuthHeaders();
         const response = await axios.post(`${Base_URL}/api/trainer/sendrequesttogym`, {
             trainer_id: trainerId,
             gym_id: gymId
-        });
+        }, { headers });
         return response.data;
     } catch (error) {
         console.error("Error sending request to gym:", error);
@@ -599,7 +620,8 @@ export const SendFeedback = async (trainerId, userId, feedback) => {
             feedback,
             trainer_id: trainerId,
         }
-        const response = await axios.post(`${Base_URL}/api/user/addfeedback`, payload);
+        const headers = await getAuthHeaders();
+        const response = await axios.post(`${Base_URL}/api/user/addfeedback`, payload, { headers });
         return response.data;
     } catch (error) {
         console.error("Error sending feedback to trainer:", error);
@@ -625,7 +647,8 @@ export const AddReport = async (customerId, targetId, targetType,report) => {
             description: report?.description,
         };
 
-        const response = await axios.post(`${Base_URL}/api/user/addreport`, payload);
+        const headers = await getAuthHeaders();
+        const response = await axios.post(`${Base_URL}/api/user/addreport`, payload, { headers });
         return response.data;
     } catch (error) {
         console.error("Error sending Report:", error);
@@ -641,13 +664,105 @@ export const AddReport = async (customerId, targetId, targetType,report) => {
 
 export const UpdateGymProfile = async (gymId, gymData) => {
     try {
-        const response = await axios.put(`${Base_URL}/api/gym/updategymdetails/${gymId}`, gymData);
+        const headers = await getAuthHeaders();
+        const response = await axios.put(`${Base_URL}/api/gym/updategymdetails/${gymId}`, gymData, { headers });
         return response.data;
     } catch (error) {
         console.error("Error updating gym profile:", error);
         if (error.response && error.response.data) {
             const backendError = error.response.data;
             const newError = new Error(backendError.message || backendError.error || "Failed to update gym profile");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+}
+
+// Trainer-specific API functions
+export const GetAllSessionsByTrainerId = async (trainerId) => {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${Base_URL}/api/trainer/getallsessionbytrainerid/${trainerId}`, { headers });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching trainer sessions:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to fetch trainer sessions");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+}
+
+export const GetFeedbackByTrainerId = async (trainerId) => {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${Base_URL}/api/trainer/getfeedbackbytrainerid/${trainerId}`, { headers });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching trainer feedback:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to fetch trainer feedback");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+}
+
+export const GetAllPlansByTrainerId = async (trainerId) => {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${Base_URL}/api/trainer/getallplansbytrainerid/${trainerId}`, { headers });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching trainer plans:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to fetch trainer plans");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+}
+
+export const AddWeight = async (weightData) => {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.post(`${Base_URL}/api/user/addweight`, weightData, { headers });
+        return response.data;
+    } catch (error) {
+        console.error("Error adding weight:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to add weight");
+            newError.status = error.response.status;
+            throw newError;
+        }
+        throw error;
+    }
+}
+
+export const RequestTrainerVerification = async (trainer_id, email) => {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.post(`${Base_URL}/api/trainer/request-verification`, {
+            trainer_id: trainer_id,
+            type: 'trainer',
+            status: 'Pending',
+            email: email
+        }, { headers });
+        return response.data;
+    } catch (error) {
+        console.error("Error requesting trainer verification:", error);
+        if (error.response && error.response.data) {
+            const backendError = error.response.data;
+            const newError = new Error(backendError.message || backendError.error || "Failed to request verification");
             newError.status = error.response.status;
             throw newError;
         }

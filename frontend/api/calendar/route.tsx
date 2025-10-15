@@ -1,4 +1,5 @@
 import { mapServerList as mapServerListUtil } from '@/components/calendar/calendarUtils';
+import { getAuthHeaders } from '@/lib/auth';
 
 interface Event {
   id: string;
@@ -27,7 +28,10 @@ const getBaseUrl = () => {
 export const fetchEvents = async (userId: string): Promise<Event[]> => {
   const base = getBaseUrl();
   try {
-  const response = await fetch(`${base}/api/user/calendar/events/${userId}`);
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${base}/api/user/calendar/events/${userId}`, {
+      headers
+    });
     if (!response.ok) {
       throw new Error('fetch events failed: ' + response.status);
     }
@@ -47,7 +51,8 @@ export const fetchEvents = async (userId: string): Promise<Event[]> => {
 export const checkGoogleCalendarStatus = async (userId: string): Promise<boolean> => {
   const base = getBaseUrl();
   try {
-  const statusRes = await fetch(`${base}/api/user/calendar/status/${userId}`);
+    const headers = await getAuthHeaders();
+    const statusRes = await fetch(`${base}/api/user/calendar/status/${userId}`, { headers });
     if (statusRes.ok) {
       const json = await statusRes.json();
       return Boolean(json.connected);
@@ -68,7 +73,8 @@ export const checkGoogleCalendarStatus = async (userId: string): Promise<boolean
 export const connectGoogleCalendar = async (userId: string): Promise<void> => {
   const base = getBaseUrl();
   try {
-  const response = await fetch(`${base}/api/user/google/oauth-url/${userId}`);
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${base}/api/user/google/oauth-url/${userId}`, { headers });
     if (!response.ok) {
       throw new Error('Failed to get oauth url');
     }
@@ -88,7 +94,8 @@ export const connectGoogleCalendar = async (userId: string): Promise<void> => {
 export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
   const base = getBaseUrl();
   try {
-  const response = await fetch(`${base}/api/user/calendar/sync/${userId}`, { method: 'POST' });
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${base}/api/user/calendar/sync/${userId}`, { method: 'POST', headers });
     if (!response.ok) {
       const text = await response.text().catch(() => 'no body');
       console.error('calendar sync failed response:', response.status, text);
@@ -121,14 +128,14 @@ export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
           };
           return fetch(`${base}/api/user/calendar/create/${userId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
           });
         }));
 
         // Refresh authoritative events from server after persistence attempts
         try {
-          const fresh = await fetch(`${base}/api/user/calendar/events/${userId}`);
+          const fresh = await fetch(`${base}/api/user/calendar/events/${userId}`, { headers });
           if (fresh.ok) {
             const all = await fresh.json();
             return mapServerListUtil(all, '#28375cff');
@@ -157,9 +164,10 @@ export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
 export const updateEvent = async (eventId: string, updates: { start?: string | null; end?: string | null }): Promise<boolean> => {
   const base = getBaseUrl();
   try {
-  const response = await fetch(`${base}/api/user/calendar/${eventId}`, {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${base}/api/user/calendar/${eventId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify(updates)
     });
     
@@ -184,7 +192,8 @@ export const updateEvent = async (eventId: string, updates: { start?: string | n
 export const deleteEvent = async (eventId: string): Promise<boolean> => {
   const base = getBaseUrl();
   try {
-  const response = await fetch(`${base}/api/user/calendar/${eventId}`, { method: 'DELETE' });
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${base}/api/user/calendar/${eventId}`, { method: 'DELETE', headers });
     if (!response.ok) {
       const text = await response.text().catch(() => '');
       console.error('delete event failed', response.status, text);
@@ -230,9 +239,10 @@ export const createEvent = async (userId: string, eventData: {
 }): Promise<any> => {
   const base = getBaseUrl();
   try {
-  const response = await fetch(`${base}/api/user/calendar/create/${userId}`, {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${base}/api/user/calendar/create/${userId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify(eventData),
     });
 
@@ -293,8 +303,14 @@ export const updateEventWithChanges = async (
       fetchOpts.body = JSON.stringify(changes);
     }
 
-  console.debug('[API] PATCH', { url: `${base}/api/user/calendar/${eventId}`, fetchOpts, existingEvent });
-  const res = await fetch(`${base}/api/user/calendar/${eventId}`, fetchOpts);
+    const headers = await getAuthHeaders();
+    if (!fetchOpts.headers) {
+      fetchOpts.headers = {};
+    }
+    fetchOpts.headers = { ...headers, ...fetchOpts.headers };
+
+    console.debug('[API] PATCH', { url: `${base}/api/user/calendar/${eventId}`, fetchOpts, existingEvent });
+    const res = await fetch(`${base}/api/user/calendar/${eventId}`, fetchOpts);
 
     if (!res.ok) {
       let parsed: any = null;
@@ -327,7 +343,7 @@ export const updateEventWithChanges = async (
           };
           const createRes = await fetch(`${base}/api/user/calendar/create/${userId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify(createBody)
           });
           if (createRes.ok) {

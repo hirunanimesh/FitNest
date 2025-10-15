@@ -25,16 +25,21 @@ import systemRevenue from './controllers/stripeController/system-revenue.js';
 dotenv.config();
 
 const app = express();
+app.use(express.json());
+app.use(cors());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'success',
+        message: 'Payment Service is running',
+        timestamp: new Date().toISOString(),
+        service: 'PaymentService',
+        version: '1.0.0'
+    });
+});
 
 connectDatabase()
-
-app.use(cors());
-// IMPORTANT: Stripe webhook must be defined BEFORE any JSON body parsing
-app.post('/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
-
-// Now enable JSON/urlencoded parsing for all other routes
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 app.use('/create-plan',createPlan)
 app.use('/create-account/:user_id', createAccount);
@@ -54,9 +59,7 @@ app.post('/sessionpayment', SessionPayment)
 app.get('/sessionpayment/cancel', releaseSessionHandler)
 // success handler to finalize booking and redirect
 app.get('/sessionpayment/success', successSessionHandler)
-app.get('/', (req, res) => {
-    res.send('Payment Service is running')
-})
+app.post('/webhook', stripeWebhook)
 app.get('/getsystemrevenue',systemRevenue )
 
 // GymPlanCreatedConsumer()

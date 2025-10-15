@@ -124,12 +124,17 @@ export const getGymTrainerCount = async (req,res) => {
     try{
         const trainers_count = await getgymtrainercount(gymId)
         console.log("Trainer count:", trainers_count);
-        if(trainers_count !== null){
-            res.status(200).json({message:"Trainers count retrive successfully",trainers_count})
+        
+        if(trainers_count === null){
+            return res.status(200).json({message:"No trainers found", trainers_count: 0})
         }
-        if(trainers_count === 0 | trainers_count === null){
-            res.status(200).json({message:"No trainers found",trainers_count})
+        
+        if(trainers_count === 0){
+            return res.status(200).json({message:"No trainers found", trainers_count})
         }
+        
+        return res.status(200).json({message:"Trainers count retrieved successfully", trainers_count})
+        
     }catch(error){
         res.status(500).json({ message: "Internal server error", error: error.message });
     }

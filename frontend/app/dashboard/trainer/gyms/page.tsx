@@ -20,9 +20,9 @@ import {
   Loader2
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import axios from "axios";
 import { useTrainerData } from '../context/TrainerContext';
 import { SendRequestToGym } from '@/lib/api';
+import { fetchAllGyms } from '@/api/admin/route';
 
 interface Gym {
   gym_id: number;
@@ -92,9 +92,7 @@ const GymsPage = () => {
         ...(location && location !== "default" && { location })
       });
 
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms?${params}`
-      );
+      const response = await fetchAllGyms(page, 12, search);
 
       if (response.data && response.data.gyms) {
         const gymData: PaginatedGymResponse = response.data.gyms;

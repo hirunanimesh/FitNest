@@ -7,9 +7,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Plus } from 'lucide-react';
-import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext'
 import { useUserData } from '../context/UserContext'
+import { AddWeight } from '@/lib/api';
 
 interface BMIData {
     day: string;
@@ -153,7 +153,7 @@ const Charts: React.FC = () => {
                 };
                 console.log("Request data:", requestData);
                 
-                await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/user/addweight`, requestData);
+                await AddWeight(requestData);
                 
                 console.log("Weight added successfully");
 
