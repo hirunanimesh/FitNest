@@ -1,6 +1,6 @@
 import { URL } from 'url';
 
-const TRAINER_SERVICE_URL = process.env.TRAINER_SERVICE_URL || 'http://localhost:3005';
+const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:3000';
 
 export default async function releaseSessionHandler(req, res) {
   try {
@@ -14,7 +14,7 @@ export default async function releaseSessionHandler(req, res) {
 
     // Release the hold on the session
     try {
-      await fetch(`${TRAINER_SERVICE_URL}/releasesession`, {
+      await fetch(`${API_GATEWAY_URL}/api/trainer/releasesession`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId })
