@@ -1,41 +1,121 @@
+"use client";
 import React from 'react';
 import { useTrainerData } from '../app/dashboard/trainer/context/TrainerContext';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertTriangle, Shield, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { GetGymProfileData } from '@/lib/api';
 
 interface VerifiedActionsProps {
   children: React.ReactElement;
+  role?: 'trainer' | 'gym';
+  // When using for gyms (or to override), pass explicit verification/loading state
+  isVerified?: boolean;
+  loadingOverride?: boolean;
   fallbackMessage?: string;
   showDialog?: boolean;
 }
 
-const VerifiedActions: React.FC<VerifiedActionsProps> = ({ 
-  children, 
-  fallbackMessage = "This action is only available for verified trainers.",
-  showDialog = true 
+const VerifiedActions: React.FC<VerifiedActionsProps> = ({
+  children,
+  role = 'trainer',
+  isVerified,
+  loadingOverride,
+  fallbackMessage,
+  showDialog = true,
 }) => {
-  const { trainerData, isLoading } = useTrainerData();
+  // Try to access trainer context when available (keeps backward compatibility for trainer usage)
+  let trainerCtx: { trainerData: any; isLoading: boolean } | null = null;
+  try {
+    // This will throw if not wrapped in TrainerDataProvider; we catch and treat as null
+    trainerCtx = useTrainerData();
+  } catch (e) {
+    trainerCtx = null;
+  }
+
+  const ctxLoading = trainerCtx?.isLoading ?? false;
+  const ctxVerified = trainerCtx?.trainerData?.verified ?? false;
+
+  const normalizedRole: 'trainer' | 'gym' = role ?? 'trainer';
+  const entityLabel = normalizedRole === 'gym' ? 'gym' : 'trainer';
+  const defaultMessage = `This action is only available for verified ${entityLabel}s.`;
+
+  // Internal gym verification state (only used when role === 'gym' and props not provided)
+  const [gymLoading, setGymLoading] = useState<boolean>(normalizedRole === 'gym');
+  const [gymVerified, setGymVerified] = useState<boolean>(false);
+
+  // Fetch gym verification via API (mirrors trainer context usage pattern)
+  useEffect(() => {
+    let cancelled = false;
+    const fetchGymVerification = async () => {
+      if (normalizedRole !== 'gym') return;
+      // If caller provided overrides, skip fetching
+      if (typeof isVerified === 'boolean' || typeof loadingOverride === 'boolean') return;
+      try {
+        setGymLoading(true);
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        const userId = data.session?.user?.id;
+        if (!userId) {
+          if (!cancelled) setGymVerified(false);
+          return;
+        }
+        const resp = await GetGymProfileData(userId);
+        const verified = Boolean(resp?.gym?.verified);
+        if (!cancelled) setGymVerified(verified);
+      } catch (err) {
+        if (!cancelled) setGymVerified(false);
+      } finally {
+        if (!cancelled) setGymLoading(false);
+      }
+    };
+    fetchGymVerification();
+    return () => {
+      cancelled = true;
+    };
+  // It's intentional to exclude isVerified/loadingOverride from deps; if those change, caller controls
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedRole]);
+
+  const effectiveIsLoading =
+    // Caller override takes precedence
+    typeof loadingOverride === 'boolean'
+      ? loadingOverride
+      : normalizedRole === 'trainer'
+        ? ctxLoading
+        : gymLoading;
+
+  const effectiveIsVerified =
+    // Caller override takes precedence
+    typeof isVerified === 'boolean'
+      ? isVerified
+      : normalizedRole === 'trainer'
+        ? ctxVerified
+        : gymVerified;
+
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
 
   // Debug logging
   console.log('VerifiedActions Debug:', {
-    isLoading,
-    trainerData: trainerData ? { verified: trainerData.verified, trainer_name: trainerData.trainer_name } : null,
+    role: normalizedRole,
+    isLoading: effectiveIsLoading,
+    fromContext: trainerCtx ? 'trainer-context' : 'no-context',
+    verified: effectiveIsVerified,
     showDialog,
-    showVerificationDialog
+    showVerificationDialog,
   });
 
   // Don't render anything while loading
-  if (isLoading) {
-    console.log('VerifiedActions: Still loading trainer data');
+  if (effectiveIsLoading) {
+    console.log('VerifiedActions: Still loading data');
     return null;
   }
 
   // If trainer is verified, render children normally
-  if (trainerData?.verified) {
-    console.log('VerifiedActions: Trainer is verified, rendering normal button');
+  if (effectiveIsVerified) {
+    console.log('VerifiedActions: Entity is verified, rendering normal button');
     return children;
   }
 
@@ -60,7 +140,7 @@ const VerifiedActions: React.FC<VerifiedActionsProps> = ({
         {React.cloneElement(children, {
           disabled: true,
           className: `${children.props.className || ''} opacity-50 cursor-not-allowed`,
-          title: fallbackMessage,
+          title: fallbackMessage ?? defaultMessage,
           style: { pointerEvents: 'none' }
         })}
       </div>
@@ -79,15 +159,15 @@ const VerifiedActions: React.FC<VerifiedActionsProps> = ({
               </div>
               <DialogDescription asChild>
                 <div className="text-gray-300 space-y-3">
-                  <p>{fallbackMessage}</p>
+                  <p>{fallbackMessage ?? defaultMessage}</p>
                   <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
                       <div className="text-sm text-blue-300">
                         <p className="font-medium mb-1">To get verified:</p>
                         <ul className="list-disc list-inside space-y-1 text-xs">
-                          <li>Go to your profile page</li>
-                          <li>Click "Verify Me" button</li>
+                          <li>Go to your {entityLabel === 'gym' ? 'gym profile' : 'profile'} page</li>
+                          <li>Click {entityLabel === 'gym' ? '"Verify Gym"' : '"Verify Me"'} button</li>
                           <li>Submit your verification request</li>
                           <li>Wait for admin approval</li>
                         </ul>
@@ -96,7 +176,7 @@ const VerifiedActions: React.FC<VerifiedActionsProps> = ({
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-400">
                     <CheckCircle className="h-4 w-4 text-green-400" />
-                    <span>Verified trainers get access to all platform features</span>
+                    <span>Verified {entityLabel}s get access to all platform features</span>
                   </div>
                 </div>
               </DialogDescription>

@@ -4,6 +4,7 @@ let trainerController;
 let trainerService;
 
 beforeAll(async () => {
+  jest.resetModules();
   await jest.unstable_mockModule('../services/trainer.service.js', () => ({
     getalltrainers: jest.fn(),
     gettrainerbyid: jest.fn(),
@@ -12,6 +13,10 @@ beforeAll(async () => {
     getgymplanbytrainerid: jest.fn(),
     booksession: jest.fn(),
     getmembershipGyms: jest.fn(),
+    holdsession: jest.fn(),
+    releasesession: jest.fn(),
+        requestTrainerVerification: jest.fn(),
+        sendrequest: jest.fn(),
   }));
 
   trainerController = await import('../controllers/trainer.controller.js');

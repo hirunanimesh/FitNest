@@ -161,22 +161,42 @@ export default class AdminService {
       return data;
     }
 
-    static async BannedUsers(banned_data) {
+  static async BannedUsers(banned_data) {
   // only pick the fields that exist in the "banned" table
   const bannedInsert = {
     user_id: banned_data.user_id,
     reason: banned_data.reason,
-    target_type: banned_data.target_type
   }
 
-  // 1️⃣ Insert into banned table
-  const { data, error } = await supabase
+  // 1️⃣ Ensure idempotency: if user is already banned, reuse that row; else insert
+  let data;
+  let error;
+  const { data: existing, error: existErr } = await supabase
     .from('banned')
-    .insert(bannedInsert)
-    .select();
+    .select('*')
+    .eq('user_id', bannedInsert.user_id)
+    .limit(1)
+    .maybeSingle();
 
-  if (error) {
-    throw new Error(error.message);
+  if (existErr) {
+    throw new Error(existErr.message);
+  }
+
+  if (existing) {
+    data = [existing];
+  } else {
+    console.log('typeof banned_data.user_id:', typeof banned_data.user_id, banned_data.user_id);
+
+    const insertRes = await supabase
+      .from('banned')
+      .insert(bannedInsert)
+      .select();
+    data = insertRes.data;
+    error = insertRes.error;
+
+    if (error) {
+      throw new Error(error.message);
+    }
   }
 
   // 2️⃣ Update trainer or gym table (optional, e.g., mark verified false)

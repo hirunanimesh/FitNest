@@ -10,15 +10,10 @@ services:
     volumes:
       - ./backend/apigateway:/app
       - api_gateway_node_modules:/app/node_modules
+    env_file:
+      - ./backend/apigateway/.env
     environment:
       - PORT=3000
-      - FRONTEND_URL=http://localhost:3010
-      - AUTH_SERVICE_URL=http://auth-service:3001
-      - GYM_SERVICE_URL=http://gym-service:3002
-      - PAYMENT_SERVICE_URL=http://payment-service:3003
-      - USER_SERVICE_URL=http://user-service:3004
-      - TRAINER_SERVICE_URL=http://trainer-service:3005
-      - ADMIN_SERVICE_URL=http://admin-service:3006
       - NODE_ENV=production
     depends_on:
       - auth-service
@@ -47,6 +42,8 @@ services:
     volumes:
       - ./backend/AuthService:/app
       - auth_service_node_modules:/app/node_modules
+    env_file:
+      - ./backend/AuthService/.env
     environment:
       - PORT=3001
       - NODE_ENV=production
@@ -70,6 +67,8 @@ services:
     volumes:
       - ./backend/GymService:/app
       - gym_service_node_modules:/app/node_modules
+    env_file:
+      - ./backend/GymService/.env
     environment:
       - PORT=3002
       - NODE_ENV=production
@@ -93,6 +92,8 @@ services:
     volumes:
       - ./backend/PaymentService:/app
       - payment_service_node_modules:/app/node_modules
+    env_file:
+      - ./backend/PaymentService/.env
     environment:
       - PORT=3003
       - NODE_ENV=production
@@ -116,6 +117,8 @@ services:
     volumes:
       - ./backend/UserService:/app
       - user_service_node_modules:/app/node_modules
+    env_file:
+      - ./backend/UserService/.env
     environment:
       - PORT=3004
       - NODE_ENV=production
@@ -139,6 +142,8 @@ services:
     volumes:
       - ./backend/TrainerService:/app
       - trainer_service_node_modules:/app/node_modules
+    env_file:
+      - ./backend/TrainerService/.env
     environment:
       - PORT=3005
       - NODE_ENV=production
@@ -159,48 +164,16 @@ services:
     container_name: fitnest-admin-service
     ports:
       - "3006:3006"
-    volumes:
-      - ./backend/AdminService:/app
-      - admin_service_node_modules:/app/node_modules
+    env_file:
+      - ./backend/AdminService/.env
     environment:
       - PORT=3006
       - NODE_ENV=production
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
     networks:
       - fitnest-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Frontend Service
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: fitnest-frontend
-    ports:
-      - "3010:3010"
-    volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-      - frontend_next_cache:/app/.next
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:3000
-    depends_on:
-      - api-gateway
-    networks:
-      - fitnest-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3010"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -222,12 +195,6 @@ volumes:
   user_service_node_modules:
     driver: local
   trainer_service_node_modules:
-    driver: local
-  admin_service_node_modules:
-    driver: local
-  frontend_node_modules:
-    driver: local
-  frontend_next_cache:
     driver: local
   # Add any other volumes if needed for persistent data
   node_modules_cache:

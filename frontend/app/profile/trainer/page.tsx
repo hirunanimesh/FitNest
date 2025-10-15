@@ -3,7 +3,6 @@
 import { useSearchParams } from "next/navigation"
 import HeroSection from "./components/HeroSection"
 import SessionsSection from "./components/SessionsSection"
-import BlogSection from "./components/BlogSection"
 import ContactSection from "./components/ContactSection"
 import { Suspense } from "react"
 import Feedback from "./components/Feedback"
@@ -26,7 +25,7 @@ function TrainerPageContent() {
       
         <SessionsSection />
         <Feedback />
-        <BlogSection />
+        
         <ContactSection />
       </main>
     </TrainerDataProvider>

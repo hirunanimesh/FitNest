@@ -13,7 +13,7 @@ import { CompleteOAuthProfileMember } from "@/lib/api"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
 import { PublicRoute } from "@/components/PublicRoute"
 import { useAuth } from "@/contexts/AuthContext"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function CompleteProfile() {
   const router = useRouter()

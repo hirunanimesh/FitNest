@@ -1,0 +1,20 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Test PaymentService",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test",
+				"--silent",
+				"--",
+				"__tests__/webhook.controller.test.js"
+			],
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
+		}
+	]
+}

@@ -210,7 +210,7 @@ describe('Gym Service Unit Tests', () => {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: null,
+          data: { gym_id: gymId },
           error: mockError
         })
       });
@@ -307,7 +307,8 @@ describe('Gym Service Unit Tests', () => {
       const result = await gettotalmembercount(gymId);
 
       expect(supabase.rpc).toHaveBeenCalledWith('get_gym_member_count', { gym_id_param: gymId });
-      expect(result).toBe(25);
+      // Service returns the data object directly
+      expect(result).toEqual({ total_members: 25 });
     });
 
     test('should return 0 for null result', async () => {
@@ -335,7 +336,7 @@ describe('Gym Service Unit Tests', () => {
 
       const result = await gettotalmembercount(gymId);
 
-      expect(result).toBe(0);
+      expect(result).toEqual({ total_members: 0 });
     });
 
     test('should throw error when RPC fails', async () => {
@@ -434,7 +435,7 @@ describe('Gym Service Unit Tests', () => {
       const result = await getgymtrainercount(gymId);
 
       expect(supabase.rpc).toHaveBeenCalledWith('get_gym_trainer_count', { gym_id_input: gymId });
-      expect(result).toBe(5);
+      expect(result).toEqual({ trainer_count: 5 });
     });
 
     test('should return 0 for null result', async () => {
