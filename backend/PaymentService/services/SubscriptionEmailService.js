@@ -9,11 +9,7 @@ class SubscriptionEmailService {
         // Default sender email
         this.fromEmail = process.env.FROM_EMAIL || 'noreply@fitnest.com';
         
-        // Service URLs
-        this.GYM_SERVICE_URL = process.env.GYM_SERVICE_URL || 'http://localhost:3002';
-        this.USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:3001';
-        
-        // API gateway URL
+        // API gateway URL - all service calls should go through gateway
         this.apiGatewayUrl = process.env.API_GATEWAY_URL || 'http://localhost:3000';
     }
 
@@ -29,7 +25,7 @@ class SubscriptionEmailService {
             console.log('Fetching user and plan details for subscription email');
             
             // Fetch user details
-            const userResponse = await fetch(`${this.USER_SERVICE_URL}/user/${userId}`);
+            const userResponse = await fetch(`${this.apiGatewayUrl}/api/user/user/${userId}`);
             if (!userResponse.ok) {
                 throw new Error(`Failed to fetch user details: ${userResponse.statusText}`);
             }
@@ -37,7 +33,7 @@ class SubscriptionEmailService {
             const userName = userData.fullName || userData.name || 'Valued Member';
             
             // Fetch plan details
-            const planResponse = await fetch(`${this.GYM_SERVICE_URL}/getgymplan/${planId}`);
+            const planResponse = await fetch(`${this.apiGatewayUrl}/api/gym/getgymplan/${planId}`);
             if (!planResponse.ok) {
                 throw new Error(`Failed to fetch plan details: ${planResponse.statusText}`);
             }

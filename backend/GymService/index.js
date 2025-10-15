@@ -23,7 +23,7 @@ app.put('/updategymdetails/:gymId',updateGymDetails)
 
 app.post('/getallgymusers',getAllGymUsers)
 
-app.use('/api/gym', subscriptionEmailRoutes);
+app.use('/', subscriptionEmailRoutes);
 
 app.post('/addgymplan', addGymPlan)
 app.get('/getallgymplans',getAllGymPlans)

@@ -1,6 +1,8 @@
 import stripe from '../../lib/stripe.js';
 import axios from 'axios';
 
+const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:3000';
+
 export default async function webhook(req, res) {
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -26,14 +28,14 @@ export default async function webhook(req, res) {
         }
 
         try {
-            // 1. Get user details from UserService
-            const userUrl = `http://localhost:3004/getuserbycustomerid/${customer_id}`;
+            // 1. Get user details from UserService via API Gateway
+            const userUrl = `${API_GATEWAY_URL}/api/user/getuserbycustomerid/${customer_id}`;
             const userResponse = await axios.get(userUrl);
             const userData = userResponse.data;
             const customerObj = userData?.customer ?? userData?.user ?? userData;
 
-            // 2. Get plan details from GymService
-            const planUrl = `http://localhost:3002/getgymplanbyplanid/${planId}`;
+            // 2. Get plan details from GymService via API Gateway
+            const planUrl = `${API_GATEWAY_URL}/api/gym/getgymplanbyplanid/${planId}`;
             const planResponse = await axios.get(planUrl);
             const plan = planResponse.data?.planDetails ?? planResponse.data;
 
@@ -67,8 +69,11 @@ export default async function webhook(req, res) {
                     planDuration,
                     gymName
                 };
-                const emailUrl = 'http://localhost:3002/api/gym/send-subscription-email';
+                const emailUrl = `${API_GATEWAY_URL}/api/gym/send-subscription-email`;
+                console.log('Sending subscription email with payload:', JSON.stringify(emailPayload, null, 2));
+                console.log('Email URL:', emailUrl);
                 await axios.post(emailUrl, emailPayload);
+                console.log('Subscription email sent successfully');
             } else {
                 console.error('Failed to resolve user or plan for email');
             }
@@ -76,6 +81,9 @@ export default async function webhook(req, res) {
             console.error('Error handling checkout session completion:', error?.message || error);
             if (error?.response) {
                 console.error('Downstream service error status:', error.response.status);
+                console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+                console.error('Request URL:', error.config?.url);
+                console.error('Request payload:', JSON.stringify(error.config?.data, null, 2));
             }
         }
     }

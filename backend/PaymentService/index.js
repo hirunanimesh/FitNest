@@ -59,10 +59,10 @@ app.get('/', (req, res) => {
 })
 app.get('/getsystemrevenue',systemRevenue )
 
-GymPlanCreatedConsumer()
-GymPlanDeletedConsumer()
-GymPlanPriceUpdatedConsumer()
-TrainerSessionCreatedConsumer()
+// GymPlanCreatedConsumer()
+// GymPlanDeletedConsumer()
+// GymPlanPriceUpdatedConsumer()
+// TrainerSessionCreatedConsumer()
 
 
 app.listen(process.env.PORT || 3003, () => {
