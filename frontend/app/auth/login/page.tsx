@@ -195,7 +195,7 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${getBaseUrl()}/auth/login`,
+          redirectTo: `https://fit-nest.app/auth/login`,
         }
       });
 
