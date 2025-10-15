@@ -1,6 +1,6 @@
 import stripe from '../../lib/stripe.js';
 
-const TRAINER_SERVICE_URL = process.env.TRAINER_SERVICE_URL || 'http://localhost:3005';
+const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:3000';
 
 export default async function webhook(req, res) {
   // Ensure event is an object even if body parsing failed
@@ -24,7 +24,7 @@ export default async function webhook(req, res) {
         }
         if (trainerSessionId && appCustomerId) {
           try {
-            await fetch(`${TRAINER_SERVICE_URL}/booksession`, {
+            await fetch(`${API_GATEWAY_URL}/api/trainer/booksession`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ sessionId: trainerSessionId, customerId: appCustomerId })
@@ -48,7 +48,7 @@ export default async function webhook(req, res) {
         }
         if (trainerSessionId) {
           try {
-            await fetch(`${TRAINER_SERVICE_URL}/releasesession`, {
+            await fetch(`${API_GATEWAY_URL}/api/trainer/releasesession`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ sessionId: trainerSessionId })
