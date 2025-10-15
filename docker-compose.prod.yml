@@ -250,7 +250,6 @@ services:
       - WATCHTOWER_POLL_INTERVAL=300  # Check every 5 minutes
       - WATCHTOWER_INCLUDE_STOPPED=true
       - WATCHTOWER_REVIVE_STOPPED=true
-      - WATCHTOWER_LABEL_ENABLE=true
     command: --interval 300 --cleanup
     restart: always
     networks:
