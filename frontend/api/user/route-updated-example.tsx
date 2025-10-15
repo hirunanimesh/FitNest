@@ -1,0 +1,121 @@
+// Example: Updated user route.tsx using the new apiClient
+import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/apiClient"
+
+export const GetGymDetails = async(gymId: any) => {
+    const response = await apiGet(`/api/gym/getgymbyid/${gymId}`)
+    return response
+}
+
+export const GetGymPlans = async(gymId: any) => {
+    const response = await apiGet(`/api/gym/getgymplanbygymid/${gymId}`)
+    return response
+}
+
+export const GetOneDayGyms = async() => {
+    try {
+        const response = await apiGet('/api/gym/one-day');
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching one day gyms:", error);
+        throw error;
+    }
+};
+
+export const GetOtherGyms = async() => {
+    try {
+        const response = await apiGet('/api/gym/other');
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching other gyms:", error);
+        throw error;
+    }
+};
+
+export const SubscribeGymPlan = async (planId: any, customerId: any, email: any, user_id: any, duration: any) => {
+    try {
+        if(duration === "1 day"){
+            const response = await apiPost('/api/payment/onetimepayment', {
+                planId,
+                customer_id: customerId,
+                user_id,
+                email
+            });
+            return { success: true, url: response.data.url };
+        } else {
+            const response = await apiPost('/api/payment/subscribe', {
+                planId,
+                customer_id: customerId,
+                user_id,
+                email
+            });
+            return { success: true, url: response.data.url };
+        }
+    } catch (error: any) {
+        // Handle different types of errors
+        if (error.response) {
+            // Server responded with error status (4xx, 5xx)
+            const status = error.response.status;
+            const message = error.response.data?.error || error.response.data?.message || 'Unknown error occurred';
+
+            return {
+                success: false,
+                error: message,
+                status: status
+            };
+        } else if (error.request) {
+            // Network error - request was made but no response received
+            return {
+                success: false,
+                error: 'Network error: Please check your internet connection',
+                status: 0
+            };
+        } else {
+            // Other error
+            return {
+                success: false,
+                error: error.message || 'An unexpected error occurred',
+                status: 0
+            };
+        }
+    }
+};
+
+export const GetUserSubscriptions = async (customerId: any) => {
+    const planIds = await apiGet(`/api/payment/getsubscription/${customerId}`)
+    
+    if(planIds.data.length === 0){
+        return []
+    }
+    return planIds.data
+}
+
+export const GetMyPlansDetails = async (planIds: any[]) => {
+    const plans = await apiPost('/api/gym/getgymplandetails', {
+        planIds: planIds
+    })
+    return plans.data
+}
+
+export const UnsubscribeGymPlan = async (planId: any, customerId: any) => {
+    const response = await apiPost('/api/payment/cancel-subscription', {
+        planId,
+        customerId
+    })
+    return response.data
+}
+
+export const BookSession = async (sessionId: any, customerId: any, user_id: string, email: string) => {
+    console.log("frontend api called", sessionId, customerId, user_id, email);
+    const response = await apiPost('/api/payment/sessionpayment', {
+        sessionId,
+        customer_id: customerId,
+        user_id,
+        email
+    })
+    return response.data
+}
+
+export const GetUserSessions = async (customerId: any) => {
+    const response = await apiGet(`/api/user/mysessions/${customerId}`)
+    return response.data
+}

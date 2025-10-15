@@ -10,6 +10,7 @@ import TrainerCard from "@/components/TrainerCard";
 import GymsMapView from "@/components/GymsMapView";
 import { useRouter } from "next/navigation";
 import { GetOneDayGyms, GetOtherGyms } from "@/api/user/route";
+import { fetchAllGyms, fetchAllTrainers } from "@/api/admin/route";
 
 // Type definitions
 interface Gym {
@@ -159,16 +160,8 @@ export default function SearchPage() {
 
   const fetchGyms = async (page: number, reset: boolean = false, search: string = "", location: string = "") => {
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "12",
-        ...(search && { search }),
-        ...(location && location !== "default" && { location })
-      });
-
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/gym/getallgyms?${params}`
-      );
+      // Use the authenticated API function instead of direct axios call
+      const response = await fetchAllGyms(page, 12, search);
 
       if (response.data && response.data.gyms) {
         const gymData: PaginatedGymResponse = response.data.gyms;
@@ -194,15 +187,8 @@ export default function SearchPage() {
 
   const fetchTrainers = async (page: number, reset: boolean = false, search: string = "") => {
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "12",
-        ...(search && { search })
-      });
-
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getalltrainers?${params}`
-      );
+      // Use the authenticated API function instead of direct axios call
+      const response = await fetchAllTrainers(page, 12, search);
 
       if (response.data && response.data.trainers) {
         const trainerData: PaginatedTrainerResponse = response.data.trainers;

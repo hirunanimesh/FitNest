@@ -3,9 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useTrainerData } from '../context/TrainerContext';
-import { UpdateTrainerDetails, uploadToCloudinary } from "@/lib/api";
+import { UpdateTrainerDetails, uploadToCloudinary, RequestTrainerVerification } from "@/lib/api";
 import TrainerDocuments from '../_components/TrainerDocuments';
-import axios from "axios";
 import { Edit3, ArrowLeft, Shield } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -103,22 +102,9 @@ const TrainerProfile: React.FC = () => {
         email = userData.user.email;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3000'}/api/trainer/request-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          trainer_id: trainerData?.trainer_id,
-          type: 'trainer',
-          status: 'Pending',
-          email: email
-        })
-      });
+      const result = await RequestTrainerVerification(trainerData?.trainer_id, email);
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result) {
         throw new Error(result.message || 'Verification request failed');
       }
 

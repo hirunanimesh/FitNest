@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const config = require('./src/config');
 const loggingMiddleware = require('./src/middleware/logging');
+const { authenticationMiddleware } = require('./src/middleware/authentication');
 const authProxy = require('./src/proxies/authProxy');
 const gymProxy = require('./src/proxies/gymProxy');
 const paymentProxy = require('./src/proxies/paymentProxy');
@@ -15,7 +16,11 @@ const app = express();
 
 // Middleware
 app.use(cors(config.cors));
+app.use(express.json()); // Parse JSON bodies
 app.use(loggingMiddleware);
+
+// Authentication middleware - verify tokens before routing to services
+app.use(authenticationMiddleware);
 
 // Start service health monitoring
 startHealthChecks();

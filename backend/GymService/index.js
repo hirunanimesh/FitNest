@@ -12,7 +12,16 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 
-
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'success',
+        message: 'Gym Service is running',
+        timestamp: new Date().toISOString(),
+        service: 'GymService',
+        version: '1.0.0'
+    });
+});
 
 app.post('/addGym',addGym)
 app.get('/getallgyms',getAllGyms)
