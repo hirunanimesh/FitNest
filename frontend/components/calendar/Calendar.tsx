@@ -49,21 +49,21 @@ const Schedule: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    // Re-run when `user` becomes available (login) so buttons and events load correctly
+    // Only run when user ID changes, not on every user object change
+    const userId = user?.id;
+    if (!userId) {
+      setGoogleConnected(false);
+      return;
+    }
+
+    // Simple fetch without caching complications
     (async () => {
       try {
-        const userId = user?.id;
-        if (!userId) {
-          setGoogleConnected(false);
-          return;
-        }
-
         const connected = await checkGoogleCalendarStatus(userId);
         setGoogleConnected(connected);
 
         const mappedServer = await fetchEvents(userId);
         if (Array.isArray(mappedServer)) {
-
           setEvents(prev => {
             // Build quick lookup of server keys
             const serverIds = new Set(mappedServer.map(s => String(s.id || '')))
@@ -95,7 +95,7 @@ const Schedule: React.FC = () => {
         setGoogleConnected(false);
       }
     })();
-  }, [user]);
+  }, [user?.id]); // Only depend on user.id to prevent excessive re-renders
 
   const handleConnectGoogleCalendar = async () => {
     try {
