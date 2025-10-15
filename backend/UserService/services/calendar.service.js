@@ -420,7 +420,7 @@ async function deleteGoogleEvent(accessToken, googleEventId) {
 
 export function buildOauthUrl(userId) {
   const clientId = process.env.GOOGLE_CLIENT_ID
-  const redirectUri = `${process.env.BACKEND_URL || ''}/google/callback`
+  const redirectUri = `${process.env.BACKEND_URL || ''}/api/user/google/callback`
   const scope = [
     'openid',
     'profile', 
@@ -444,7 +444,7 @@ export function buildOauthUrl(userId) {
 export async function exchangeCodeForTokens(code) {
   const clientId = process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-  const redirectUri = `${process.env.BACKEND_URL || ''}/google/callback`
+  const redirectUri = `${process.env.BACKEND_URL || ''}/api/user/google/callback`
 
   const body = {
     code,
