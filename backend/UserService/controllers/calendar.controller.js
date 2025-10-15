@@ -36,8 +36,56 @@ export const googleCallback = async (req, res) => {
     if (!code) return res.status(400).send('Missing code');
     const tokens = await exchangeCodeForTokens(String(code));
     await saveTokensForUser(String(userId), tokens);
-    // Redirect user back to frontend dashboard
-    res.redirect(process.env.FRONTEND_URL || '/');
+    // Determine user role to redirect to the correct dashboard
+    const base = String(process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+    let role = null;
+    try {
+      // Prefer role from auth metadata if available
+      const { data, error } = await supabase.auth.admin.getUserById(String(userId));
+      if (!error) {
+        role = data?.user?.user_metadata?.role || null;
+      } else {
+        console.warn('[oauth] getUserById error (will fallback to table checks):', error?.message || error);
+      }
+    } catch (e) {
+      console.warn('[oauth] getUserById threw (will fallback to table checks):', e?.message || e);
+    }
+
+    // Fallback: infer role from domain tables using user_id
+    if (!role) {
+      try {
+        const { data: c } = await supabase.from('customer').select('id').eq('user_id', String(userId)).single();
+        if (c) role = 'customer';
+      } catch {}
+    }
+    if (!role) {
+      try {
+        const { data: t } = await supabase.from('trainer').select('id').eq('user_id', String(userId)).single();
+        if (t) role = 'trainer';
+      } catch {}
+    }
+    if (!role) {
+      try {
+        const { data: g } = await supabase.from('gym').select('gym_id').eq('user_id', String(userId)).single();
+        if (g) role = 'gym';
+      } catch {}
+    }
+
+    // Default to customer dashboard if role cannot be determined
+    const pathByRole = (r) => {
+      switch (r) {
+        case 'admin': return '/dashboard/admin';
+        case 'trainer': return '/dashboard/trainer';
+        case 'gym': return '/dashboard/gym';
+        case 'customer':
+        default: return '/dashboard/user';
+      }
+    };
+
+    const targetPath = pathByRole(role);
+    const redirectUrl = base ? `${base}${targetPath}` : targetPath;
+    // Redirect user back to their dashboard
+    return res.redirect(redirectUrl);
   } catch (err) {
     console.error('Callback error', err);
     res.status(500).send('OAuth callback failed');
