@@ -64,19 +64,13 @@ export const googleCallback = async (req, res) => {
         if (t) role = 'trainer';
       } catch {}
     }
-    if (!role) {
-      try {
-        const { data: g } = await supabase.from('gym').select('gym_id').eq('user_id', String(userId)).single();
-        if (g) role = 'gym';
-      } catch {}
-    }
+    
 
     // Default to customer dashboard if role cannot be determined
     const pathByRole = (r) => {
       switch (r) {
         case 'admin': return '/dashboard/admin';
         case 'trainer': return '/dashboard/trainer';
-        case 'gym': return '/dashboard/gym';
         case 'customer':
         default: return '/dashboard/user';
       }
