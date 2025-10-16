@@ -137,14 +137,14 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     setUserData(prev => prev ? { ...prev, ...newData } : null);
   };
 
-  // Fetch data on mount and when auth changes
+  // Fetch data on mount only
   useEffect(() => {
     let isMounted = true;
     
     const fetchData = async () => {
-      const customerId = await getUserProfileId();
-      // Only fetch if component is still mounted and we have a customer ID
-      if (isMounted && customerId && (!userData || userData === null)) {
+      // Only fetch if component is still mounted and we haven't fetched data yet
+      if (isMounted && !userData && !isFetching) {
+        console.log('🚀 UserContext: Initial data fetch');
         await fetchUserData();
       }
     };
@@ -155,7 +155,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       isMounted = false;
     };
-  }, [getUserProfileId]); // Only re-run when getUserProfileId changes
+  }, []); // Empty dependency array - only run once on mount
 
   const value: UserContextType = {
     userData,
