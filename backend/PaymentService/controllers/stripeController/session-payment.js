@@ -92,9 +92,9 @@ export default async function SessionPayment(req, res) {
   // Stripe requires min 30 minutes for Checkout expiry; use 31 minutes
   expires_at: Math.floor(Date.now() / 1000) + (31 * 60),
   // On success, hit our success handler with the Checkout Session ID so we can finalize booking even without webhook
-  success_url: `${PAYMENT_SERVICE_BASE_URL}/sessionpayment/success?cs={CHECKOUT_SESSION_ID}&redirect=${encodeURIComponent(`${DOMAIN}/dashboard/user`)}`,
+  success_url: `${API_GATEWAY_URL}/api/payment/sessionpayment/success?cs={CHECKOUT_SESSION_ID}&redirect=${encodeURIComponent(`${DOMAIN}/dashboard/user`)}`,
       // Cancel goes through payment service to release the hold, then redirects to app
-      cancel_url: `${PAYMENT_SERVICE_BASE_URL}/sessionpayment/cancel?sessionId=${encodeURIComponent(sessionId)}&redirect=${encodeURIComponent(`${DOMAIN}/dashboard/user`)}`,
+      cancel_url: `${API_GATEWAY_URL}/api/payment/sessionpayment/cancel?sessionId=${encodeURIComponent(sessionId)}&redirect=${encodeURIComponent(`${DOMAIN}/dashboard/user`)}`,
     });
 
     res.json({ url: session.url });
