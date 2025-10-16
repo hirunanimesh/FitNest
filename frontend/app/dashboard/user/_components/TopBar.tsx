@@ -16,7 +16,7 @@ export default function TopBar() {
   const router = useRouter();
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
   const pathname = usePathname();
-  const userName = userData ? `${userData.firstName} ${userData.lastName}` : "User";
+  const userName = isLoading ? "Loading..." : (userData ? `${userData.firstName} ${userData.lastName}` : "User");
   const imgUrl = userData?.avatar || null;
 
  
