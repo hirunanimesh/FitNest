@@ -1,11 +1,4 @@
-/**
- * Unit tests for calendar.service.js focusing on increasing coverage.
- * - deleteEventForUser branches (no existing, existing with google_event_id)
- * - updateAccessTokenForUser success and error
- * - buildOauthUrl URL composition
- * - exchangeCodeForTokens success and failure
- * - fetchGoogleCalendarEvents transform and 401 handling
- */
+
 
 import { jest } from '@jest/globals';
 

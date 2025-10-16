@@ -2,8 +2,6 @@ import { supabase } from '../database/supabase.js'
 import qs from 'querystring'
 import { google } from 'googleapis'
 
-// ========== HELPER UTILITIES ==========
-
 // Centralized logging utility
 const logError = (msg, error) => {
   console.error(`❌ [calendar.service] ${msg}:`, error?.message || error)
@@ -28,8 +26,6 @@ function extractDateAndTime(s) {
   }
   return { date: str, time: null }
 }
-
-// ========== SUPABASE HELPERS ==========
 
 // Centralized calendar operations
 async function upsertCalendarEvent(eventData) {
@@ -144,13 +140,12 @@ async function updateCalendarEvent(calendarId, updates) {
   }
 }
 
-// ========== TOKEN MANAGEMENT ==========
-
 // Centralized token operations
 async function getTokensForUser(userId) {
+  // Only select the token fields we actually need
   const { data, error } = await supabase
     .from('user_google_tokens')
-    .select('*')
+    .select('user_id, access_token, refresh_token, expires_at, scope')
     .eq('user_id', userId)
     .single()
   
@@ -190,7 +185,8 @@ async function saveTokensForUser(userId, tokens) {
   const { data, error } = await supabase
     .from('user_google_tokens')
     .upsert(payload, { onConflict: 'user_id' })
-    .select()
+    // Only return the minimal fields we need after upsert
+    .select('user_id, access_token, refresh_token, expires_at, scope')
     .single()
 
   if (error) throw error
@@ -472,7 +468,7 @@ export async function exchangeCodeForTokens(code) {
   return res.json()
 }
 
-// Optimized main sync function
+// Optimized main sync function-- get events from google calendar to db
 export async function saveOrUpdateEventsForUser(userId, events) {
   if (!userId) throw new Error('Missing userId')
   if (!Array.isArray(events)) return []
@@ -483,7 +479,7 @@ export async function saveOrUpdateEventsForUser(userId, events) {
   const results = []
 
   // Process events in batches for better performance
-  const batchSize = 10
+  const batchSize = 60
   for (let i = 0; i < events.length; i += batchSize) {
     const batch = events.slice(i, i + batchSize)
     const batchResults = await Promise.allSettled(
@@ -499,9 +495,11 @@ export async function saveOrUpdateEventsForUser(userId, events) {
           task: event.title,
           user_id: userIdForCalendar,
           description: event.description || null,
-          color: event.color || null
         }
-
+        // Only include color when provided to avoid overwriting existing DB values with null
+        if (event.color != null) {
+          eventData.color = event.color
+        }
         return upsertCalendarEvent(eventData)
       })
     )
@@ -709,9 +707,10 @@ export async function updateEventForUser(calendarIdOrGoogleId, payload) {
 
   // Get existing event
   logInfo('Retrieving existing calendar event', { calendarId })
+  // Only fetch the fields we need for update and sync
   const { data: existing, error: existingError } = await supabase
     .from('calendar')
-    .select('*')
+    .select('calendar_id, google_event_id, task, task_date, start, "end", user_id, color, description')
     .eq('calendar_id', calendarId)
     .single()
   
@@ -779,7 +778,7 @@ export async function deleteEventForUser(calendarId) {
   // Get existing event details
   const { data: existing } = await supabase
     .from('calendar')
-    .select('*')
+    .select('calendar_id, google_event_id, user_id')
     .eq('calendar_id', calendarId)
     .single()
   
