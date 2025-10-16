@@ -30,17 +30,44 @@ export async function getUserByCustomerId(customerId) {
 }
 
 export async function addWeight(weightData) {
-    const { data, error } = await supabase
+  const { customer_id, date } = weightData;
+
+  // Check if a record already exists for this customer on this date
+  const { data: existing, error: fetchError } = await supabase
+    .from('customer_progress')
+    .select('id')
+    .eq('customer_id', customer_id)
+    .eq('date', date)
+    .single();
+
+  if (fetchError && fetchError.code !== 'PGRST116') { // ignore "no rows found" error
+    throw new Error(fetchError.message);
+  }
+
+  let result, error;
+
+  if (existing) {
+    // Update existing record
+    ({ data: result, error } = await supabase
+      .from('customer_progress')
+      .update(weightData)
+      .eq('id', existing.id)
+      .select());
+  } else {
+    // Insert new record
+    ({ data: result, error } = await supabase
       .from('customer_progress')
       .insert(weightData)
-      .select();
-  
-    if (error) {
-      throw new Error(error.message);
-    }
-  
-    return data[0]; // Return first inserted weight
+      .select());
   }
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return result[0];
+}
+
 
   export async function getUserById(userId) {
           const { data, error } = await supabase
