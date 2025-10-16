@@ -35,9 +35,11 @@ const nextConfig = {
 
 const pwaConfig = withPWA({
   dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: false, // Enable PWA in all environments
+  register: true, // Enable service worker for PWA installation
+  skipWaiting: true, // Auto-update without showing "new version" message
+  disable: false, // Enable PWA but with minimal caching
+  // Disable update notifications
+  reloadOnOnline: false,
   buildExcludes: [
     /middleware-manifest\.json$/,
     /app-build-manifest\.json$/,
@@ -45,88 +47,12 @@ const pwaConfig = withPWA({
     /_ssgManifest\.js$/
   ],
   publicExcludes: ['!robots.txt', '!sitemap.xml'],
-  fallbacks: {
-    document: '/offline', // fallback for document (page) requests
-  },
-  // Enhanced PWA configurations for better offline support
-  runtimeCaching: [
-    // Cache page navigations (documents) with NetworkFirst strategy
-    {
-      urlPattern: /^https?.*\//,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'pages',
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60, // 1 day
-        },
-        networkTimeoutSeconds: 3,
-      },
-    },
-    // Cache static resources with CacheFirst strategy
-    {
-      urlPattern: /\.(?:js|css|woff2?|png|jpg|jpeg|gif|svg|ico|webp)$/,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'static-resources',
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-      },
-    },
-    // Cache API calls with NetworkFirst strategy
-    {
-      urlPattern: /^https?.*\/api\/.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'api-cache',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 5 * 60, // 5 minutes
-        },
-        networkTimeoutSeconds: 5,
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
-    },
-    // Cache Google Fonts with CacheFirst strategy
-    {
-      urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'google-fonts-stylesheets',
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
-        },
-      },
-    },
-    {
-      urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'google-fonts-webfonts',
-        expiration: {
-          maxEntries: 30,
-          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
-        },
-      },
-    },
-    // Cache images with CacheFirst strategy
-    {
-      urlPattern: /\.(?:png|jpg|jpeg|gif|svg|webp)$/,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'images',
-        expiration: {
-          maxEntries: 60,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-      },
-    },
-  ],
+  // No fallbacks - no offline functionality
+  // fallbacks: {
+  //   document: '/offline',
+  // },
+  // NO CACHING AT ALL - PWA installation only
+  runtimeCaching: [],
 })
 
 export default pwaConfig(nextConfig)
