@@ -30,17 +30,17 @@ export async function getUserByCustomerId(customerId) {
 }
 
 export async function addWeight(weightData) {
-    const { data, error } = await supabase
-      .from('customer_progress')
-      .insert(weightData)
-      .select();
-  
-    if (error) {
-      throw new Error(error.message);
-    }
-  
-    return data[0]; // Return first inserted weight
+  const { data, error } = await supabase
+    .from('customer_progress')
+    .upsert(weightData, { onConflict: ['customer_id', 'date'] }) // replaces if already exists for same day
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
   }
+
+  return data[0]; // Return the updated or newly inserted record
+}
 
   export async function getUserById(userId) {
           const { data, error } = await supabase
