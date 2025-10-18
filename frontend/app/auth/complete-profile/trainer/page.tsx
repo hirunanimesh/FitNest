@@ -23,7 +23,7 @@ import {
 import { AppLogo } from "@/components/AppLogo"
 import { supabase } from "@/lib/supabase"
 import { CompleteOAuthProfileTrainer } from "@/lib/api"
-import {useToast} from "@/hooks/use-toast"
+import {useToast} from "@/components/ui/use-toast"
 
 interface DocumentEntry {
   id: string

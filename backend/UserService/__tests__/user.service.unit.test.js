@@ -50,6 +50,17 @@ describe('user.service unit tests (mocked supabase)', () => {
     expect(res).toBeNull();
   });
 
+  test('getUserById throws when supabase returns error with data present', async () => {
+    supabase.from.mockReturnValueOnce({
+      select: () => ({
+        eq: () => ({
+          single: async () => ({ data: { id: 'u1' }, error: { message: 'bad' } })
+        })
+      })
+    });
+    await expect(service.getUserById('u1')).rejects.toThrow('bad');
+  });
+
   test('getWeightById returns weights array', async () => {
     const weights = [{ weight: 70 }, { weight: 71 }];
     supabase.from.mockReturnValueOnce({ select: () => ({ eq: () => ({ order: async () => ({ data: weights, error: null }) }) }) });
@@ -78,5 +89,45 @@ describe('user.service unit tests (mocked supabase)', () => {
   test('getLatestWeightById throws when supabase returns error', async () => {
     supabase.from.mockReturnValueOnce({ select: () => ({ eq: () => ({ order: () => ({ limit: async () => ({ data: null, error: { message: 'err' } }) }) }) }) });
     await expect(service.getLatestWeightById('u1')).rejects.toThrow('err');
+  });
+
+  test('getUserSessions returns sessions array', async () => {
+    const sessions = [{ session_id: 's1' }];
+    supabase.from.mockReturnValueOnce({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            order: async () => ({ data: sessions, error: null })
+          })
+        })
+      })
+    });
+    const res = await service.getUserSessions('u1');
+    expect(res).toEqual(sessions);
+  });
+
+  test('getUserSessions throws when supabase returns error', async () => {
+    supabase.from.mockReturnValueOnce({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            order: async () => ({ data: null, error: { message: 'db' } })
+          })
+        })
+      })
+    });
+    await expect(service.getUserSessions('u1')).rejects.toThrow('db');
+  });
+
+  test('addReport returns inserted report', async () => {
+    const report = { id: 'r1' };
+    supabase.from.mockReturnValueOnce({ insert: () => ({ select: async () => ({ data: [report], error: null }) }) });
+    const res = await service.addReport({ a: 1 });
+    expect(res).toEqual(report);
+  });
+
+  test('addReport throws when supabase returns error', async () => {
+    supabase.from.mockReturnValueOnce({ insert: () => ({ select: async () => ({ data: null, error: { message: 'fail' } }) }) });
+    await expect(service.addReport({})).rejects.toThrow('fail');
   });
 });

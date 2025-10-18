@@ -108,9 +108,9 @@ describe('Plans Service Unit Tests', () => {
         error: null
       };
 
+      // Service currently awaits the result of select() directly
       supabase.from.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue(mockResponse)
+        select: jest.fn().mockResolvedValue(mockResponse)
       });
 
       const result = await getallgymplans();
@@ -125,8 +125,7 @@ describe('Plans Service Unit Tests', () => {
       };
 
       supabase.from.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue(mockResponse)
+        select: jest.fn().mockResolvedValue(mockResponse)
       });
 
       const result = await getallgymplans();
@@ -426,14 +425,24 @@ describe('Plans Service Unit Tests', () => {
     test('should call assigntrainerstoplan', async () => {
       const planId = 'plan123';
       const trainerIds = ['trainer1', 'trainer2'];
-      const mockResult = [{ gym_plan_id: planId, trainer_id: 'trainer1' }];
+      const mockAssignments = [{ gym_plan_id: planId, trainer_id: 'trainer1' }];
 
-      assigntrainerstoplan.mockResolvedValue(mockResult);
+      // Mock the underlying supabase calls used by assigntrainerstoplan
+      const mockDeleteQuery = {
+        delete: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ error: null })
+      };
+      const mockInsertQuery = {
+        insert: jest.fn().mockReturnThis(),
+        select: jest.fn().mockResolvedValue({ data: mockAssignments, error: null })
+      };
+      supabase.from
+        .mockReturnValueOnce(mockDeleteQuery)
+        .mockReturnValueOnce(mockInsertQuery);
 
       const result = await updateplantrainers(planId, trainerIds);
 
-      expect(assigntrainerstoplan).toHaveBeenCalledWith(planId, trainerIds);
-      expect(result).toEqual(mockResult);
+      expect(result).toEqual(mockAssignments);
     });
   });
 

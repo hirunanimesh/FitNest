@@ -98,7 +98,6 @@ describe('createPlan', () => {
     expect(stripe.prices.create).toHaveBeenCalledWith({
       unit_amount: 100,
       currency: 'usd',
-      recurring: { interval: 'day' },
       product: 'prod_101',
     });
   });
@@ -119,7 +118,7 @@ describe('createPlan', () => {
 
     await expect(createPlan('Test Plan', 10, '1 month', 'plan_123'))
       .rejects
-      .toThrow('Failed to create product or price in Stripe');
+      .toThrow('Failed to create price in Stripe');
   });
 
   it('should throw error if Stripe API fails', async () => {

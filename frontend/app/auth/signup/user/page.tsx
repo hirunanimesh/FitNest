@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation"
 import { AddCustomer } from "@/lib/api"
 import { AppLogo } from "@/components/AppLogo"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { PublicRoute } from "@/components/PublicRoute"
 
 export default function UserSignup() {

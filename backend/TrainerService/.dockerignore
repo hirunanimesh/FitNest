@@ -36,7 +36,7 @@ jspm_packages/
 .yarn-integrity
 
 # dotenv environment variables file (remove this line if you want to include .env)
-# .env
+.env
 
 # Logs
 logs

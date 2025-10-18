@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import TopBar  from './_components/TopBar'
 import { UserDataProvider } from './context/UserContext'
 
-function UserLayoutContent({ children }: { children: React.ReactNode }) {
+function LayoutContent({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams()
   const isAdminView = searchParams.get('adminView') === 'true'
   
@@ -24,12 +24,12 @@ function Userlayout({ children }: { children: React.ReactNode }) {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-lg">Loading...</div>
+        <div className="text-white">Loading...</div>
       </div>
     }>
-      <UserLayoutContent>{children}</UserLayoutContent>
+      <LayoutContent>{children}</LayoutContent>
     </Suspense>
   )
 }
 
-export default Userlayout
+export default  Userlayout

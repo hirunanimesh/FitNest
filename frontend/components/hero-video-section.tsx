@@ -39,7 +39,7 @@ export function HeroVideoSection() {
           </h1>
 
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center mb-8 sm:mb-12 px-4 sm:px-0">
-            <Link href="http://localhost:3010/auth/signup" className="w-full sm:w-auto">
+            <Link href="https://fit-nest.app/auth/signup" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 className="w-full sm:w-auto text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 bg-primary hover:bg-primary/90 transition-all duration-300"

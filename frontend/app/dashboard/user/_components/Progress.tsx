@@ -6,7 +6,7 @@ import { Ruler, Activity } from 'lucide-react';
 import { useUserData } from '../context/UserContext';
 
 const Progress = () => {
-    const { userData } = useUserData();
+    const { userData, isLoading } = useUserData();
     
     // Use data from UserContext
     const weightData = userData?.currentWeight || null;
@@ -33,6 +33,29 @@ const Progress = () => {
         if (bmiValue < 30) return "Overweight";
         return "Obese";
     };
+
+    // Show loading skeleton while fetching
+    if (isLoading) {
+        return (
+            <div className="w-full px-2 sm:px-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                    {[1, 2, 3].map((i) => (
+                        <Card key={i} className="bg-transparent w-full h-full">
+                            <CardContent className="p-3 sm:p-4 lg:p-6 bg-transparent h-full">
+                                <div className="flex items-center justify-between p-4 sm:p-5 lg:p-6 border border-silver rounded-lg h-full min-h-[80px] sm:min-h-[90px] lg:min-h-[100px] animate-pulse">
+                                    <div className="flex-1">
+                                        <div className="h-4 bg-gray-700 rounded w-20 mb-2"></div>
+                                        <div className="h-8 bg-gray-700 rounded w-24"></div>
+                                    </div>
+                                    <div className="h-8 w-8 bg-gray-700 rounded"></div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full px-2 sm:px-4">

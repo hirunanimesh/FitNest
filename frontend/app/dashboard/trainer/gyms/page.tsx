@@ -19,7 +19,7 @@ import {
   AlertCircle,
   Loader2
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 import { useTrainerData } from '../context/TrainerContext';
 import { SendRequestToGym } from '@/lib/api';

@@ -1,7 +1,7 @@
 import stripe from '../../lib/stripe.js';
 import { findStripeAccount, findStripeCustomerId, findStripePriceId, addStripeCustomer, findstripeSessionPriceId } from '../../controllers/mongoController/add-plan-data.js';
 
-const TRAINER_SERVICE_URL = process.env.TRAINER_SERVICE_URL || 'http://localhost:3005';
+const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:3000';
 const DOMAIN = process.env.DOMAIN || 'http://localhost:3000';
 const PAYMENT_SERVICE_BASE_URL = process.env.PAYMENT_SERVICE_BASE_URL || 'http://localhost:3003';
 
@@ -10,7 +10,7 @@ export default async function SessionPayment(req, res) {
 
   try {
     // 0️⃣ Attempt to place a hold (lock=true) on the session to prevent concurrent bookings
-    const holdResp = await fetch(`${TRAINER_SERVICE_URL}/holdsession`, {
+    const holdResp = await fetch(`${API_GATEWAY_URL}/api/trainer/holdsession`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId, customerId: customer_id })
@@ -45,7 +45,7 @@ export default async function SessionPayment(req, res) {
     const stripePrice = await findstripeSessionPriceId({ sessionId });
     if (!stripePrice) {
       // Release lock if we cannot proceed
-      await fetch(`${TRAINER_SERVICE_URL}/releasesession`, {
+      await fetch(`${API_GATEWAY_URL}/api/trainer/releasesession`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId })
@@ -57,7 +57,7 @@ export default async function SessionPayment(req, res) {
     // 3️⃣ Get connected account for transfer
     const targetStripeAccount = await findStripeAccount({ user_id });
     if (!targetStripeAccount) {
-      await fetch(`${TRAINER_SERVICE_URL}/releasesession`, {
+      await fetch(`${API_GATEWAY_URL}/api/trainer/releasesession`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId })
@@ -92,9 +92,9 @@ export default async function SessionPayment(req, res) {
   // Stripe requires min 30 minutes for Checkout expiry; use 31 minutes
   expires_at: Math.floor(Date.now() / 1000) + (31 * 60),
   // On success, hit our success handler with the Checkout Session ID so we can finalize booking even without webhook
-  success_url: `${PAYMENT_SERVICE_BASE_URL}/sessionpayment/success?cs={CHECKOUT_SESSION_ID}&redirect=${encodeURIComponent(`${DOMAIN}/dashboard/user`)}`,
+  success_url: `${API_GATEWAY_URL}/api/payment/sessionpayment/success?cs={CHECKOUT_SESSION_ID}&redirect=${encodeURIComponent(`${DOMAIN}/dashboard/user`)}`,
       // Cancel goes through payment service to release the hold, then redirects to app
-      cancel_url: `${PAYMENT_SERVICE_BASE_URL}/sessionpayment/cancel?sessionId=${encodeURIComponent(sessionId)}&redirect=${encodeURIComponent(`${DOMAIN}/dashboard/user`)}`,
+      cancel_url: `${API_GATEWAY_URL}/api/payment/sessionpayment/cancel?sessionId=${encodeURIComponent(sessionId)}&redirect=${encodeURIComponent(`${DOMAIN}/dashboard/user`)}`,
     });
 
     res.json({ url: session.url });
@@ -103,7 +103,7 @@ export default async function SessionPayment(req, res) {
     // If creation failed, ensure we release the held session
     try {
       if (sessionId) {
-        await fetch(`${TRAINER_SERVICE_URL}/releasesession`, {
+        await fetch(`${API_GATEWAY_URL}/api/trainer/releasesession`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId })

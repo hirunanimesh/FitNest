@@ -372,6 +372,143 @@ If you have questions, contact us at support@fitnest.com
     }
 
     /**
+     * Send subscription confirmation email to user
+     * @param {string} userEmail - User's email
+     * @param {string} userName - User's name
+     * @param {string} planName - Name of the subscribed plan
+     * @param {string} planPrice - Price of the plan
+     * @param {string} planDuration - Duration of the plan
+     * @param {string} gymName - Name of the gym
+     */
+    async sendSubscriptionConfirmationEmail(userEmail, userName, planName, planPrice, planDuration, gymName, planDescription) {
+        try {
+            console.log('Sending subscription confirmation email to user:', userEmail);
+
+            const msg = {
+                to: userEmail,
+                from: this.fromEmail,
+                subject: `✅ Your Subscription to ${planName} is Confirmed!`,
+                html: this.getSubscriptionConfirmationTemplate(userName, planName, planPrice, planDuration, gymName, planDescription),
+                text: this.getSubscriptionConfirmationText(userName, planName, planPrice, planDuration, gymName, planDescription)
+            };
+
+            const response = await sgMail.send(msg);
+            console.log('Subscription confirmation email sent successfully:', response[0].statusCode);
+            return { success: true, messageId: response[0].headers['x-message-id'] };
+        } catch (error) {
+            console.error('Error sending subscription confirmation email:', error);
+            if (error.response && error.response.body && error.response.body.errors) {
+                console.error('SendGrid detailed error:', JSON.stringify(error.response.body.errors, null, 2));
+            }
+            throw new Error(`Failed to send subscription confirmation email: ${error.message}`);
+        }
+    }
+
+    /**
+     * HTML template for subscription confirmation email
+     */
+    getSubscriptionConfirmationTemplate(userName, planName, planPrice, planDuration, gymName, planDescription) {
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Subscription Confirmed - FitNest</title>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #4CAF50 0%, #2E8B57 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                .success-icon { font-size: 48px; margin-bottom: 20px; }
+                .plan-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50; }
+                .cta-button { display: inline-block; background: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="success-icon">✅</div>
+                <h1>Subscription Confirmed!</h1>
+                <p>Welcome to your new fitness journey!</p>
+            </div>
+            <div class="content">
+                <h2>Hello ${userName}!</h2>
+                <p>Thank you for subscribing to the <strong>${planName}</strong> plan at <strong>${gymName}</strong>. We are thrilled to have you with us!</p>
+                
+                <div class="plan-details">
+                    <h3>📋 Your Subscription Details:</h3>
+                    <ul>
+                        <li><strong>Plan Name:</strong> ${planName}</li>
+                        <li><strong>Description:</strong> ${planDescription}</li>
+                        <li><strong>Price:</strong> ${planPrice}</li>
+                        <li><strong>Duration:</strong> ${planDuration}</li>
+                        <li><strong>Gym:</strong> ${gymName}</li>
+                    </ul>
+                </div>
+
+                <p><strong>What's next:</strong></p>
+                <ul>
+                    <li>📅 Visit the gym and start your training.</li>
+                    <li>💪 Work with our expert trainers.</li>
+                    <li>🎯 Track your progress in your FitNest dashboard.</li>
+                </ul>
+
+                <a href="${process.env.FRONTEND_URL}/dashboard/user" class="cta-button">
+                    Go to Your Dashboard
+                </a>
+
+                <p>If you have any questions, feel free to contact our support team.</p>
+                
+                <p>Best regards,<br>
+                The FitNest Team</p>
+            </div>
+            <div class="footer">
+                <p>This is an automated message. Please do not reply to this email.</p>
+                <p>FitNest | Your ultimate fitness partner.</p>
+            </div>
+        </body>
+        </html>
+        `;
+    }
+
+    /**
+     * Plain text version for subscription confirmation email
+     */
+    getSubscriptionConfirmationText(userName, planName, planPrice, planDuration, gymName, planDescription) {
+        return `
+✅ Subscription Confirmed!
+
+Hello ${userName}!
+
+Thank you for subscribing to the ${planName} plan at ${gymName}. We are thrilled to have you with us!
+
+📋 Your Subscription Details:
+• Plan Name: ${planName}
+• Description: ${planDescription}
+• Price: ${planPrice}
+• Duration: ${planDuration}
+• Gym: ${gymName}
+
+What's next:
+📅 Visit the gym and start your training.
+💪 Work with our expert trainers.
+🎯 Track your progress in your FitNest dashboard.
+
+Go to Your Dashboard: ${process.env.FRONTEND_URL || 'https://fitnest.com'}/dashboard/user
+
+If you have any questions, feel free to contact our support team.
+
+Best regards,
+The FitNest Team
+
+---
+This is an automated message. Please do not reply to this email.
+FitNest | Your ultimate fitness partner.
+        `;
+    }
+    
+
+    /**
      * Send promotional email to nearby customers about new gym plan
      * @param {string} customerEmail - Customer's email
      * @param {string} customerName - Customer's name

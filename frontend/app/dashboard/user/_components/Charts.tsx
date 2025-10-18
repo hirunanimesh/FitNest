@@ -45,7 +45,7 @@ const Charts: React.FC = () => {
     const [bmiData, setBmiData] = useState<BMIData[]>([]);
     const [weightData, setWeightData] = useState<WeightData[]>([]);
     const { getUserProfileId } = useAuth();
-    const { userData, refreshUserData } = useUserData();
+    const { userData, refreshUserData, isLoading } = useUserData();
     
     const formatDate = (date: Date): string => {
         return date.toISOString().split('T')[0];
@@ -194,6 +194,32 @@ const Charts: React.FC = () => {
         return null;
     };
 
+    // Show loading skeleton while fetching
+    if (isLoading) {
+        return (
+            <section id="Health Analytics" className="bg-transparent p-2 sm:p-4 lg:p-6">
+                <div className="text-center mb-4 sm:mb-6 lg:mb-8">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-center mb-4 sm:mb-6 lg:mb-8 text-gray-300">
+                        Health Analytics
+                    </h2>
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 bg-transparent px-2 sm:px-4 lg:px-6 xl:px-8">
+                    {[1, 2].map((i) => (
+                        <Card key={i} className='bg-white/5 backdrop-blur-sm border-white/10'>
+                            <CardHeader className="p-3 sm:p-4 lg:p-6">
+                                <div className="h-6 bg-gray-700 rounded w-32 mb-2 animate-pulse"></div>
+                                <div className="h-4 bg-gray-700 rounded w-48 animate-pulse"></div>
+                            </CardHeader>
+                            <CardContent className="p-3 sm:p-4 lg:p-6">
+                                <div className="h-[250px] sm:h-[300px] lg:h-[350px] bg-gray-700 rounded animate-pulse"></div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </section>
+        );
+    }
+
     return (
         <section id="Health Analytics" className="bg-transparent p-2 sm:p-4 lg:p-6">
                 
@@ -227,15 +253,16 @@ const Charts: React.FC = () => {
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis 
                                         dataKey="day" 
-                                        tick={{ fontSize: 10 }}
-                                        className="sm:!text-xs lg:!text-sm"
+                                        tick={{ fontSize: 12 , fill: "#ccc"}}
                                         interval="preserveStartEnd"
+                                        label={{ value: "Day", position: "insideBottomRight", offset: -2, fill: "white" }}
                                     />
                                     <YAxis 
-                                        domain={["dataMin - 0.5", "dataMax + 0.5"]} 
-                                        tick={{ fontSize: 10 }}
-                                        className="sm:!text-xs lg:!text-sm"
+                                        domain={['auto', 'auto']} 
+                                        tick={{ fontSize: 12 , fill: "#ccc"}}
+                                        label={{ value: "BMI", angle: -90, position: "insideLeft", fill: "white" }}
                                     />
+
                                     <Tooltip content={<CustomTooltip />} />
                                     <Line 
                                         type="monotone" 
@@ -247,7 +274,7 @@ const Charts: React.FC = () => {
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
-                            <div className="mt-2 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
+                            <div className="mt-2 sm:mt-2 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
                                 <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
                                     <p className="text-[10px] sm:text-xs text-gray-200">Average BMI</p>
                                     <p className="text-xs sm:text-sm font-semibold text-red-600">
@@ -365,19 +392,20 @@ const Charts: React.FC = () => {
                         </CardHeader>
                         <CardContent className="p-3 sm:p-4 lg:p-6">
                             <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px] lg:!h-[350px]">
-                                <LineChart data={weightData} margin={{ top: 10, right: 15, left: 10, bottom: 5 }} className="sm:!mx-[20px] lg:!mx-[30px]">
+                                <LineChart data={weightData} margin={{ top: 10, right: 9, left: 12, bottom: 3 }} className="sm:!mx-[20px] lg:!mx-[30px]">
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis 
                                         dataKey="day" 
-                                        tick={{ fontSize: 10 }}
-                                        className="sm:!text-xs lg:!text-sm"
+                                        tick={{ fontSize: 12, fill: "#ccc" }}
                                         interval="preserveStartEnd"
+                                        label={{ value: "Day", position: "insideBottomRight", offset: -2, fill: "white" }}
                                     />
                                     <YAxis 
-                                        domain={["dataMin - 1", "dataMax + 1"]} 
-                                        tick={{ fontSize: 10 }}
-                                        className="sm:!text-xs lg:!text-sm"
+                                        domain={['auto', 'auto']} 
+                                        tick={{ fontSize: 12, fill: "#ccc" }}
+                                        label={{ value: "Weight (kg)", angle: -90, position: "insideLeft", fill: "white" }}
                                     />
+
                                     <Tooltip content={<CustomTooltip />} />
                                     <Line 
                                         type="monotone" 
@@ -389,7 +417,7 @@ const Charts: React.FC = () => {
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
-                            <div className="mt-2 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
+                            <div className="mt-2 sm:mt-2 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
                                 <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
                                     <p className="text-[10px] sm:text-xs text-gray-200">Average Weight</p>
                                     <p className="text-xs sm:text-sm font-semibold text-blue-600">

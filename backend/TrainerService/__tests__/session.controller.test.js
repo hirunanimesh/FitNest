@@ -4,6 +4,10 @@ let sessionController;
 let sessionService;
 
 beforeAll(async () => {
+  jest.resetModules();
+  await jest.unstable_mockModule('../kafka/Producer.js', () => ({
+    TrainerSessionCreateProducer: jest.fn()
+  }));
   await jest.unstable_mockModule('../services/session.service.js', () => ({
     addsession: jest.fn(),
     getallsessions: jest.fn(),
