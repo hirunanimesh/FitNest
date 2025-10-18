@@ -392,7 +392,7 @@ const Charts: React.FC = () => {
                         </CardHeader>
                         <CardContent className="p-3 sm:p-4 lg:p-6">
                             <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px] lg:!h-[350px]">
-                                <LineChart data={weightData} margin={{ top: 10, right: 15, left: 12, bottom: 3 }} className="sm:!mx-[20px] lg:!mx-[30px]">
+                                <LineChart data={weightData} margin={{ top: 10, right: 9, left: 12, bottom: 3 }} className="sm:!mx-[20px] lg:!mx-[30px]">
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis 
                                         dataKey="day" 
