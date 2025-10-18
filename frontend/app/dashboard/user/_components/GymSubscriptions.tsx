@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from '@/contexts/AuthContext';
 import { Award, User, Clock, DollarSign, FileText, Star, X, CheckCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface TrainerPlan {
   id: number;
@@ -42,6 +42,10 @@ const GymSubscriptions = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { getUserProfileId } = useAuth();
 
+  // Cache to prevent duplicate API calls
+  const hasFetched = useRef(false);
+  const cachedPlans = useRef<Plan[]>([]);
+
   const gradients = [
     'from-red-500 to-rose-600',
     'from-rose-500 to-pink-600',
@@ -50,13 +54,27 @@ const GymSubscriptions = () => {
 
   useEffect(() => {
     const fetchMySubscriptions = async () => {
+      // Prevent duplicate API calls
+      if (hasFetched.current) {
+        console.log('✅ GymSubscriptions: Using cached data');
+        setPlans(cachedPlans.current);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('🚀 GymSubscriptions: Making API call for subscriptions');
       setIsLoading(true);
       try {
         const customer_id = await getUserProfileId();
         if (customer_id) {
           const MyPlans = await GetUserSubscriptions(customer_id);
           const plans = await GetMyPlansDetails(MyPlans);
-          setPlans(plans.planDetails || []);
+          const planDetails = plans.planDetails || [];
+          
+          setPlans(planDetails);
+          cachedPlans.current = planDetails;
+          hasFetched.current = true;
+          console.log('💾 GymSubscriptions: Cached subscription data');
         }
       } catch (error) {
         console.error('Failed to fetch user subscriptions:', error);
@@ -65,7 +83,7 @@ const GymSubscriptions = () => {
       }
     };
     fetchMySubscriptions();
-  }, [getUserProfileId]);
+  }, []); // Remove getUserProfileId dependency to prevent frequent calls
 
   const handleUnsubscribeClick = () => {
     setShowUnsubscribeConfirm(true);

@@ -29,7 +29,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserDataProvider = ({ children }: { children: ReactNode }) => {
-  const { getUserProfileId } = useAuth();
+  const { getUserProfileId, loading: authLoading, userRole } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,14 +137,19 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     setUserData(prev => prev ? { ...prev, ...newData } : null);
   };
 
-  // Fetch data on mount and when auth changes
+  // Fetch data on mount only - wait for auth to be ready
   useEffect(() => {
     let isMounted = true;
     
     const fetchData = async () => {
-      const customerId = await getUserProfileId();
-      // Only fetch if component is still mounted and we have a customer ID
-      if (isMounted && customerId && (!userData || userData === null)) {
+      // Only fetch if:
+      // 1. Component is mounted
+      // 2. Auth is not loading
+      // 3. User has customer role
+      // 4. We haven't fetched data yet
+      // 5. Not currently fetching
+      if (isMounted && !authLoading && userRole === 'customer' && !userData && !isFetching) {
+        console.log('🚀 UserContext: Initial data fetch (auth ready)');
         await fetchUserData();
       }
     };
@@ -155,11 +160,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       isMounted = false;
     };
-  }, [getUserProfileId]); // Only re-run when getUserProfileId changes
+  }, [authLoading, userRole]); // Depend on auth loading and role
 
   const value: UserContextType = {
     userData,
-    isLoading,
+    isLoading: isLoading || authLoading, // Include auth loading state
     error,
     refreshUserData,
     updateUserData

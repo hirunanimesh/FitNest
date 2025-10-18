@@ -37,7 +37,10 @@ export const googleCallback = async (req, res) => {
     const tokens = await exchangeCodeForTokens(String(code));
     await saveTokensForUser(String(userId), tokens);
     // Redirect user back to frontend dashboard
-    res.redirect(process.env.FRONTEND_URL || '/');
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.fit-nest.app';
+    const dashboardUrl = `${frontendUrl}/dashboard/user`;
+    console.log('[oauth] redirecting to:', dashboardUrl);
+    res.redirect(dashboardUrl);
   } catch (err) {
     console.error('Callback error', err);
     res.status(500).send('OAuth callback failed');

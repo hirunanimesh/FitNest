@@ -45,7 +45,7 @@ const Charts: React.FC = () => {
     const [bmiData, setBmiData] = useState<BMIData[]>([]);
     const [weightData, setWeightData] = useState<WeightData[]>([]);
     const { getUserProfileId } = useAuth();
-    const { userData, refreshUserData } = useUserData();
+    const { userData, refreshUserData, isLoading } = useUserData();
     
     const formatDate = (date: Date): string => {
         return date.toISOString().split('T')[0];
@@ -193,6 +193,32 @@ const Charts: React.FC = () => {
         }
         return null;
     };
+
+    // Show loading skeleton while fetching
+    if (isLoading) {
+        return (
+            <section id="Health Analytics" className="bg-transparent p-2 sm:p-4 lg:p-6">
+                <div className="text-center mb-4 sm:mb-6 lg:mb-8">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-center mb-4 sm:mb-6 lg:mb-8 text-gray-300">
+                        Health Analytics
+                    </h2>
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 bg-transparent px-2 sm:px-4 lg:px-6 xl:px-8">
+                    {[1, 2].map((i) => (
+                        <Card key={i} className='bg-white/5 backdrop-blur-sm border-white/10'>
+                            <CardHeader className="p-3 sm:p-4 lg:p-6">
+                                <div className="h-6 bg-gray-700 rounded w-32 mb-2 animate-pulse"></div>
+                                <div className="h-4 bg-gray-700 rounded w-48 animate-pulse"></div>
+                            </CardHeader>
+                            <CardContent className="p-3 sm:p-4 lg:p-6">
+                                <div className="h-[250px] sm:h-[300px] lg:h-[350px] bg-gray-700 rounded animate-pulse"></div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section id="Health Analytics" className="bg-transparent p-2 sm:p-4 lg:p-6">
