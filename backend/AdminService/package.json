@@ -4,10 +4,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest",
+    "test": "node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js",
     "test:chat": "jest --testPathPattern=chat --verbose --coverage",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "smoke:tables": "node -r dotenv/config scripts/supabase-tables-smoke.js",
+    "test:db:write": "node -r dotenv/config scripts/supabase-write-integrity.js",
     "start": "node index.js",
     "dev": "npx nodemon index.js"
   },

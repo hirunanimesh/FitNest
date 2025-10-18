@@ -1,0 +1,282 @@
+version: '3.9'
+
+services:
+  # API Gateway Service - Only service exposed to public
+  api-gateway:
+    image: ${DOCKER_HUB_USERNAME}/fitnest-api-gateway:latest
+    container_name: fitnest-api-gateway-prod
+    ports:
+      - "80:3000"  # Only service exposed publicly
+      - "443:3000"  # HTTPS traffic
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - GYM_SERVICE_URL=http://gym-service:3002
+      - PAYMENT_SERVICE_URL=http://payment-service:3003
+      - USER_SERVICE_URL=http://user-service:3004
+      - TRAINER_SERVICE_URL=http://trainer-service:3005
+      - ADMIN_SERVICE_URL=http://admin-service:3006
+      - FRONTEND_URL=${FRONTEND_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    depends_on:
+      - auth-service
+      - user-service
+      - gym-service
+      - payment-service
+      - trainer-service
+      - admin-service
+    networks:
+      - fitnest-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Auth Service
+  auth-service:
+    image: ${DOCKER_HUB_USERNAME}/fitnest-auth-service:latest
+    container_name: fitnest-auth-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    networks:
+      - fitnest-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3001"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # User Service
+  user-service:
+    image: ${DOCKER_HUB_USERNAME}/fitnest-user-service:latest
+    container_name: fitnest-user-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3004
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - AUTH_SERVICE_PORT=3001
+      - GYM_SERVICE_PORT=3002
+      - PAYMENT_SERVICE_PORT=3003
+      - FRONTEND_PORT=3010
+      - API_GATEWAY_PORT=3000
+      - GOOGLE_AUTH_URL=${GOOGLE_AUTH_URL}
+      - GOOGLE_TOKEN_URL=${GOOGLE_TOKEN_URL}
+      - CALENDAR_EVENTS_URL=${CALENDAR_EVENTS_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - BACKEND_URL=${BACKEND_URL}
+    depends_on: 
+      - auth-service
+    networks:
+      - fitnest-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Gym Service
+  gym-service:
+    image: ${DOCKER_HUB_USERNAME}/fitnest-gym-service:latest
+    container_name: fitnest-gym-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - AUTH_SERVICE_PORT=3001
+      - GYM_SERVICE_PORT=3002
+      - PAYMENT_SERVICE_PORT=3003
+      - FRONTEND_PORT=3010
+      - API_GATEWAY_PORT=3000
+      - KAFKA_PASSWORD=${KAFKA_PASSWORD}
+      - KAFKA_BROKER=${KAFKA_BROKER}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - FRONTEND_URL=${FRONTEND_URL}
+    depends_on:
+      - auth-service
+    networks:
+      - fitnest-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Payment Service
+  payment-service:
+    image: ${DOCKER_HUB_USERNAME}/fitnest-payment-service:latest
+    container_name: fitnest-payment-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - DOMAIN=${DOMAIN}
+      - MONGO_URI=${MONGO_URI}
+      - KAFKA_PASSWORD=${KAFKA_PASSWORD}
+      - KAFKA_BROKER=${KAFKA_BROKER}
+      - API_GATEWAY_URL=${API_GATEWAY_URL}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    depends_on:
+      - auth-service
+      - user-service
+    networks:
+      - fitnest-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Trainer Service
+  trainer-service:
+    image: ${DOCKER_HUB_USERNAME}/fitnest-trainer-service:latest
+    container_name: fitnest-trainer-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3005
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - AUTH_SERVICE_PORT=3001
+      - GYM_SERVICE_PORT=3002
+      - PAYMENT_SERVICE_PORT=3003
+      - FRONTEND_PORT=3010
+      - API_GATEWAY_PORT=3000
+      - KAFKA_PASSWORD=${KAFKA_PASSWORD}
+      - KAFKA_BROKER=${KAFKA_BROKER}
+    depends_on:
+      - auth-service
+      - user-service
+    networks:
+      - fitnest-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Admin Service
+  admin-service:
+    image: ${DOCKER_HUB_USERNAME}/fitnest-admin-service:latest
+    container_name: fitnest-admin-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3006
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - API_GATEWAY_URL=${API_GATEWAY_URL}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    depends_on:
+      - auth-service
+      - user-service
+      - gym-service
+      - payment-service
+      - trainer-service
+    networks:
+      - fitnest-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Watchtower for automatic updates
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: fitnest-watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=300  # Check every 5 minutes
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_REVIVE_STOPPED=true
+    command: --interval 300 --cleanup
+    restart: always
+    networks:
+      - fitnest-network
+
+networks:
+  fitnest-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# No volumes needed for stateless services - all data in external databases

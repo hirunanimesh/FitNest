@@ -305,3 +305,18 @@ export const GetGymPlanDetails = async (req,res)=>{
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
+
+export const GetPlanDetailFromPlanId = async(req,res)=>{
+    try{
+        const {planId}=req.params;
+        const planDetails = await getgymplanbyplanid(planId)
+        if(planDetails){
+            res.status(200).json({ message: "Gym plan details retrieved successfully", planDetails });
+        }else{
+            res.status(200).json({ message: "Plan not found", planDetails:null });
+        }
+    }catch(error){
+        console.error("Error retrieving gym plan details:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}

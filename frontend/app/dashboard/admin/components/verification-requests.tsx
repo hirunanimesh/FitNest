@@ -41,49 +41,85 @@ interface VerificationRequest {
 
 // Transform gym verification data from API
 const transformGymData = (gymData: any[]): VerificationRequest[] => {
-  return gymData.map((gym) => ({
-    id: gym.id.toString(),
-    type: "gym" as const,
-    entityId: gym.gym_id, // Extract gym_id from the response
-    applicantName: gym.applicantname,
-    applicantEmail: gym.applicant_email,
-    applicantPhone: gym.applicantphone,
-    businessName: gym.business_name || null,
-    submittedAt: gym.submittedat,
-    status: gym.status.toLowerCase() as "pending" | "approved" | "rejected",
-    documents: gym.documents.map((doc: any) => ({
-      id: doc.id?.toString() || Math.random().toString(),
-      name: doc.name || null,
-      description: doc.description || null,
-      type: doc.type || "application/pdf",
-      url: doc.url,
-      size: doc.size || null,
-    })),
-    avatar: gym.profile_img,
-  }))
+  return gymData.map((gym) => {
+    // Handle documents field - it can be a JSON string or an array
+    let documentsArray = gym.documents
+    if (typeof gym.documents === 'string') {
+      try {
+        documentsArray = JSON.parse(gym.documents)
+      } catch (e) {
+        console.error('Error parsing documents JSON:', e)
+        documentsArray = []
+      }
+    }
+    
+    // Ensure documentsArray is actually an array
+    if (!Array.isArray(documentsArray)) {
+      documentsArray = []
+    }
+
+    return {
+      id: gym.id.toString(),
+      type: "gym" as const,
+      entityId: gym.gym_id, // Extract gym_id from the response
+      applicantName: gym.applicantname,
+      applicantEmail: gym.applicant_email,
+      applicantPhone: gym.applicantphone,
+      businessName: gym.business_name || null,
+      submittedAt: gym.submittedat,
+      status: gym.status.toLowerCase() as "pending" | "approved" | "rejected",
+      documents: documentsArray.map((doc: any) => ({
+        id: doc.id?.toString() || Math.random().toString(),
+        name: doc.name || null,
+        description: doc.description || null,
+        type: doc.type || "application/pdf",
+        url: doc.url,
+        size: doc.size || null,
+      })),
+      avatar: gym.profile_img,
+    }
+  })
 }
 
 // Transform trainer verification data from API
 const transformTrainerData = (trainerData: any[]): VerificationRequest[] => {
-  return trainerData.map((trainer) => ({
-    id: trainer.id.toString(),
-    type: "trainer" as const,
-    entityId: trainer.trainer_id, // Extract trainer_id from the response
-    applicantName: trainer.applicantname,
-    applicantEmail: trainer.applicant_email,
-    applicantPhone: trainer.applicantphone,
-    submittedAt: trainer.submittedat || new Date().toISOString(),
-    status: trainer.status.toLowerCase() as "pending" | "approved" | "rejected",
-    documents: trainer.documents.map((doc: any) => ({
-      id: doc.id?.toString() || Math.random().toString(),
-      name: doc.name || null,
-      description: doc.description || null,
-      type: doc.type || "application/pdf",
-      url: doc.url,
-      size: doc.size || null,
-    })),
-    avatar: trainer.profile_img,
-  }))
+  return trainerData.map((trainer) => {
+    // Handle documents field - ensure it's an array
+    let documentsArray = trainer.documents
+    if (typeof trainer.documents === 'string') {
+      try {
+        documentsArray = JSON.parse(trainer.documents)
+      } catch (e) {
+        console.error('Error parsing documents JSON:', e)
+        documentsArray = []
+      }
+    }
+    
+    // Ensure documentsArray is actually an array
+    if (!Array.isArray(documentsArray)) {
+      documentsArray = []
+    }
+
+    return {
+      id: trainer.id.toString(),
+      type: "trainer" as const,
+      entityId: trainer.trainer_id, // Extract trainer_id from the response
+      applicantName: trainer.applicantname,
+      applicantEmail: trainer.applicant_email,
+      applicantPhone: trainer.applicantphone,
+      submittedAt: trainer.submittedat || new Date().toISOString(),
+      status: trainer.status.toLowerCase() as "pending" | "approved" | "rejected",
+      documents: documentsArray.map((doc: any) => ({
+        id: doc.id?.toString() || Math.random().toString(),
+        name: doc.name || null,
+        description: doc.description || null,
+        type: doc.type || "application/pdf",
+        url: doc.url,
+        size: doc.size || null,
+      })),
+      avatar: trainer.profile_img,
+    }
+  })
 }
 
 export default function VerificationRequests() {

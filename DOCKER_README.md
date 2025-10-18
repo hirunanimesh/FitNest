@@ -10,12 +10,17 @@ This document explains how to run the FitNest application using Docker and Docke
 
 ## Architecture
 
-The FitNest application consists of 4 services:
+The FitNest application consists of 7 backend microservices:
 
-1. **Frontend** (Next.js) - Port 3010
-2. **API Gateway** (Express.js) - Port 3000
-3. **Auth Service** (Express.js) - Port 3001
-4. **Gym Service** (Express.js) - Port 3002
+1. **API Gateway** (Express.js) - Port 3000
+2. **Auth Service** (Express.js) - Port 3001
+3. **Gym Service** (Express.js) - Port 3002
+4. **Payment Service** (Express.js) - Port 3003
+5. **User Service** (Express.js) - Port 3004
+6. **Trainer Service** (Express.js) - Port 3005
+7. **Admin Service** (Express.js) - Port 3006
+
+**Frontend** (Next.js) runs separately on localhost:3010 and connects to the API Gateway.
 
 ## Quick Start
 
@@ -46,11 +51,15 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 **For Development (with live reload):**
 ```bash
-# Build and start all services in development mode with volume binding
+# Build and start all backend services in development mode
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 # Or run in detached mode (background)
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+
+# Then start the frontend separately in another terminal
+cd frontend
+npm run dev
 ```
 
 **For Production:**
@@ -64,10 +73,15 @@ docker-compose up --build -d
 
 ### 4. Access the Application
 
-- **Frontend**: http://localhost:3010
 - **API Gateway**: http://localhost:3000
 - **Auth Service**: http://localhost:3001
 - **Gym Service**: http://localhost:3002
+- **Payment Service**: http://localhost:3003
+- **User Service**: http://localhost:3004
+- **Trainer Service**: http://localhost:3005
+- **Admin Service**: http://localhost:3006
+
+**Note**: Frontend runs separately on localhost:3010 using `npm run dev` in the frontend directory.
 
 ## Docker Commands
 

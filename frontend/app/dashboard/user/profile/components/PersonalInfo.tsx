@@ -11,7 +11,7 @@ import { Upload, MapPinIcon, Edit3, X } from "lucide-react"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
 import { UpdateUserDetails, uploadToCloudinary } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 interface PersonalInfoProps {
   userData: any

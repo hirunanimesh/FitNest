@@ -48,6 +48,7 @@ import {
 } from '@/api/gym/route';
 import { useGym } from '../context/GymContext';
 import { toast } from 'sonner';
+import VerifiedActions from '@/components/VerifiedActions';
 
 // TypeScript interfaces
 interface Trainer {
@@ -355,23 +356,25 @@ const PlansTab: React.FC = () => {
                 Manage subscription plans and pricing
               </CardDescription>
             </div>
-            <Button
-              onClick={() => {
-                setCurrentPlan({
-                  plan_id: null,
-                  title: '',
-                  price: '',
-                  description: '',
-                  duration: '1 month',
-                  trainers: [],
-                });
-                setIsPlanDialogOpen(true);
-              }}
-              className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add New Plan
-            </Button>
+            <VerifiedActions role="gym">
+              <Button
+                onClick={() => {
+                  setCurrentPlan({
+                    plan_id: null,
+                    title: '',
+                    price: '',
+                    description: '',
+                    duration: '1 month',
+                    trainers: [],
+                  });
+                  setIsPlanDialogOpen(true);
+                }}
+                className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Plan
+              </Button>
+            </VerifiedActions>
           </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 py-6">
@@ -461,24 +464,28 @@ const PlansTab: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-black border-gray-600 hover:bg-white px-3 sm:px-4 py-1.5 sm:py-2"
-                            onClick={() => handleEditPlan(plan)}
-                          >
-                            <Edit className="mr-1 h-4 w-4" />
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="bg-red-600 hover:bg-red-700 px-3 sm:px-4 py-1.5 sm:py-2"
-                            onClick={() => handleDeletePlan(plan.plan_id)}
-                          >
-                            <Trash2 className="mr-1 h-4 w-4" />
-                            Delete
-                          </Button>
+                          <VerifiedActions role="gym">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-black border-gray-600 hover:bg-white px-3 sm:px-4 py-1.5 sm:py-2"
+                              onClick={() => handleEditPlan(plan)}
+                            >
+                              <Edit className="mr-1 h-4 w-4" />
+                              Edit
+                            </Button>
+                          </VerifiedActions>
+                          <VerifiedActions role="gym">
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="bg-red-600 hover:bg-red-700 px-3 sm:px-4 py-1.5 sm:py-2"
+                              onClick={() => handleDeletePlan(plan.plan_id)}
+                            >
+                              <Trash2 className="mr-1 h-4 w-4" />
+                              Delete
+                            </Button>
+                          </VerifiedActions>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -600,12 +607,14 @@ const PlansTab: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                className="w-full sm:w-auto order-1 sm:order-2 bg-red-500 hover:bg-red-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-semibold transition-all duration-300"
-              >
-                {currentPlan.plan_id ? 'Update Plan' : 'Create Plan'}
-              </Button>
+              <VerifiedActions role="gym">
+                <Button
+                  type="submit"
+                  className="w-full sm:w-auto order-1 sm:order-2 bg-red-500 hover:bg-red-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-semibold transition-all duration-300"
+                >
+                  {currentPlan.plan_id ? 'Update Plan' : 'Create Plan'}
+                </Button>
+              </VerifiedActions>
             </DialogFooter>
           </form>
         </DialogContent>

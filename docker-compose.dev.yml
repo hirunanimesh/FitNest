@@ -4,6 +4,8 @@ services:
     volumes:
       - ./backend/apigateway:/app
       - /app/node_modules  # Anonymous volume to preserve node_modules
+    env_file:
+      - ./backend/apigateway/.env
     environment:
       - NODE_ENV=development
     command: npm run dev
@@ -13,6 +15,8 @@ services:
     volumes:
       - ./backend/AuthService:/app
       - /app/node_modules  # Anonymous volume to preserve node_modules
+    env_file:
+      - ./backend/AuthService/.env
     environment:
       - NODE_ENV=development
     command: npm run dev
@@ -22,6 +26,8 @@ services:
     volumes:
       - ./backend/GymService:/app
       - /app/node_modules  # Anonymous volume to preserve node_modules
+    env_file:
+      - ./backend/GymService/.env
     environment:
       - NODE_ENV=development
     command: npm run start  # Using start since it uses nodemon
@@ -31,6 +37,8 @@ services:
     volumes:
       - ./backend/PaymentService:/app
       - /app/node_modules  # Anonymous volume to preserve node_modules
+    env_file:
+      - ./backend/PaymentService/.env
     environment:
       - NODE_ENV=development
     command: npm run start  # Using start since it uses nodemon
@@ -40,6 +48,8 @@ services:
     volumes:
       - ./backend/UserService:/app
       - /app/node_modules  # Anonymous volume to preserve node_modules
+    env_file:
+      - ./backend/UserService/.env
     environment:
       - NODE_ENV=development
     command: npm run dev
@@ -49,16 +59,19 @@ services:
     volumes:
       - ./backend/TrainerService:/app
       - /app/node_modules  # Anonymous volume to preserve node_modules
+    env_file:
+      - ./backend/TrainerService/.env
     environment:
       - NODE_ENV=development
     command: npm run dev
 
-  # Frontend Service - Development Overrides
-  frontend:
+  # Admin Service - Development Overrides
+  admin-service:
     volumes:
-      - ./frontend:/app
+      - ./backend/AdminService:/app
       - /app/node_modules  # Anonymous volume to preserve node_modules
+    env_file:
+      - ./backend/AdminService/.env
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:3000
-    command: npm run dev -- -p 3010
+    command: npm run dev

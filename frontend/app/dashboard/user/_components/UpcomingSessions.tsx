@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardHeader,CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Video } from "lucide-react";
@@ -30,8 +30,21 @@ const UpcomingSessions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Cache to prevent duplicate API calls
+  const hasFetched = useRef(false);
+  const cachedSessions = useRef<Session[]>([]);
+
   const fetchSessions = async () => {
+    // Prevent duplicate API calls
+    if (hasFetched.current) {
+      console.log('✅ UpcomingSessions: Using cached data');
+      setSessions(cachedSessions.current);
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('🚀 UpcomingSessions: Making API call for sessions');
       setLoading(true);
       setError(null);
       
@@ -40,11 +53,12 @@ const UpcomingSessions = () => {
       
       console.log("Fetched sessions:", response.sessions);
       
-      if (response.sessions && Array.isArray(response.sessions)) {
-        setSessions(response.sessions);
-      } else {
-        setSessions([]);
-      }
+      const sessionData = (response.sessions && Array.isArray(response.sessions)) ? response.sessions : [];
+      
+      setSessions(sessionData);
+      cachedSessions.current = sessionData;
+      hasFetched.current = true;
+      console.log('💾 UpcomingSessions: Cached session data');
     } catch (err) {
       console.error("Error fetching sessions:", err);
       setError("Failed to fetch sessions");
@@ -56,7 +70,7 @@ const UpcomingSessions = () => {
 
   useEffect(() => {
     fetchSessions();
-  }, []);
+  }, []); // Keep empty dependency array but with proper caching
 
   // Format date for display
   const formatDate = (dateString: string) => {
