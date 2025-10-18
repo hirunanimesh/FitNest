@@ -35,9 +35,11 @@ const nextConfig = {
 
 const pwaConfig = withPWA({
   dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development', // Disable PWA in development to avoid warnings
+  register: true, // Enable service worker for PWA installation
+  skipWaiting: true, // Auto-update without showing "new version" message
+  disable: false, // Enable PWA but with minimal caching
+  // Disable update notifications
+  reloadOnOnline: false,
   buildExcludes: [
     /middleware-manifest\.json$/,
     /app-build-manifest\.json$/,
@@ -45,19 +47,12 @@ const pwaConfig = withPWA({
     /_ssgManifest\.js$/
   ],
   publicExcludes: ['!robots.txt', '!sitemap.xml'],
-  // Add additional PWA configurations
-  runtimeCaching: [
-    {
-      urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'offlineCache',
-        expiration: {
-          maxEntries: 50,
-        },
-      },
-    },
-  ],
+  // No fallbacks - no offline functionality
+  // fallbacks: {
+  //   document: '/offline',
+  // },
+  // NO CACHING AT ALL - PWA installation only
+  runtimeCaching: [],
 })
 
 export default pwaConfig(nextConfig)
