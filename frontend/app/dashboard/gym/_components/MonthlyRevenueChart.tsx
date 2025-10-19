@@ -48,6 +48,7 @@ const MonthlyRevenueChart = () => {
 
   // Download CSV function
   const downloadCSV = () => {
+    const currentYear = new Date().getFullYear();
     const headers = ["Month", "Revenue"];
     const rows = filteredData.map((d) => [d.month, d.revenue]);
     const csvContent =
@@ -56,7 +57,7 @@ const MonthlyRevenueChart = () => {
 
     const link = document.createElement("a");
     link.href = encodeURI(csvContent);
-    link.download = "monthly_revenue.csv";
+    link.download = `monthlyRevenue_${currentYear}.csv`;
     link.click();
   };
 
