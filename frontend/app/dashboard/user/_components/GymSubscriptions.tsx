@@ -77,20 +77,24 @@ const GymSubscriptions = () => {
           hasFetched.current = true;
           console.log('💾 GymSubscriptions: Cached subscription data');
 
-          // Try to hydrate any existing cancellation info from API if present
-          // Expecting MyPlans to be either array of ids or objects; if objects, look for cancel_at/current_period_end
+          // Hydrate cancellation info from API: only mark plans with a scheduled cancel
           try {
             const cancels: Record<string, number> = {};
-            if (Array.isArray(MyPlans)) {
-              MyPlans.forEach((item: any) => {
-                const planId = typeof item === 'string' ? item : (item?.plan_id || item?.planId);
-                const ts = item?.cancel_at || item?.current_period_end;
+            if (MyPlans && typeof MyPlans === 'object' && Array.isArray((MyPlans as any).details)) {
+              (MyPlans as any).details.forEach((d: any) => {
+                const planId = d?.plan_id || d?.planId;
+                const isScheduled = d?.cancel_at_period_end === true || !!d?.cancel_at;
+                if (!isScheduled) return;
+                const ts = d?.current_period_end || d?.cancel_at;
                 if (planId && ts) cancels[String(planId)] = Number(ts);
               });
-            } else if (MyPlans && typeof MyPlans === 'object' && Array.isArray(MyPlans.planIds)) {
-              MyPlans.planIds.forEach((item: any) => {
+            } else if (Array.isArray(MyPlans)) {
+              // fallback for older shape if provided
+              MyPlans.forEach((item: any) => {
                 const planId = typeof item === 'string' ? item : (item?.plan_id || item?.planId);
-                const ts = item?.cancel_at || item?.current_period_end;
+                const isScheduled = item?.cancel_at_period_end === true || !!item?.cancel_at;
+                if (!isScheduled) return;
+                const ts = item?.current_period_end || item?.cancel_at;
                 if (planId && ts) cancels[String(planId)] = Number(ts);
               });
             }
