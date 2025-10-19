@@ -1,2 +1,19 @@
 /node_modules
-.env*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Allow .env.example and .env.test.example to be committed
+!.env.example
+!.env.test.example
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Test files
+.nyc_output
