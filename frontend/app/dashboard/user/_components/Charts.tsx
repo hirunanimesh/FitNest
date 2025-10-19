@@ -258,7 +258,7 @@ const Charts: React.FC = () => {
                                         label={{ value: "Day", position: "insideBottomRight", offset: -2, fill: "white" }}
                                     />
                                     <YAxis 
-                                        domain={['auto', 'auto']} 
+                                        domain={["dataMin - 5", "dataMax + 5"]} 
                                         tick={{ fontSize: 12 , fill: "#ccc"}}
                                         label={{ value: "BMI", angle: -90, position: "insideLeft", fill: "white" }}
                                     />
@@ -401,7 +401,7 @@ const Charts: React.FC = () => {
                                         label={{ value: "Day", position: "insideBottomRight", offset: -2, fill: "white" }}
                                     />
                                     <YAxis 
-                                        domain={['auto', 'auto']} 
+                                        domain={["dataMin - 5", "dataMax + 5"]} 
                                         tick={{ fontSize: 12, fill: "#ccc" }}
                                         label={{ value: "Weight (kg)", angle: -90, position: "insideLeft", fill: "white" }}
                                     />

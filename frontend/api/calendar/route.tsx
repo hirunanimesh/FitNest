@@ -6,7 +6,6 @@ interface Event {
   start: string;
   end: string;
   backgroundColor: string;
-  color?: string;
   description?: string | null;
   extendedProps?: { description?: string | null; rawStart?: string; rawEnd?: string; google_event_id?: string };
   google_event_id?: string | null;
@@ -14,23 +13,23 @@ interface Event {
 }
 
 const getBaseUrl = () => {
-  // Route client API requests through the API Gateway. Set NEXT_PUBLIC_API_GATEWAY_URL
-  // when deploying (e.g. https://api.fit-nest.app). Defaults to localhost for dev.
   return process.env.NEXT_PUBLIC_API_GATEWAY_URL?.trim() || 'http://localhost:3000';
 };
 
-/**
- * Fetch events from the server
- * @param userId - User ID to fetch events for
- * @returns Promise<Event[]> - Array of mapped events
- */
-export const fetchEvents = async (userId: string): Promise<Event[]> => {
+export const fetchEvents = async (userId: string, start?: string, end?: string): Promise<Event[]> => {
   const base = getBaseUrl();
   try {
-  const response = await fetch(`${base}/api/user/calendar/events/${userId}`);
+    let url = `${base}/api/user/calendar/events/${userId}`;
+    if (start && end) {
+      const params = new URLSearchParams({ start, end });
+      url += `?${params.toString()}`;
+    }
+
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error('fetch events failed: ' + response.status);
     }
+
     const serverEvents = await response.json();
     return mapServerListUtil(serverEvents, '#28375cff');
   } catch (error) {
@@ -39,11 +38,6 @@ export const fetchEvents = async (userId: string): Promise<Event[]> => {
   }
 };
 
-/**
- * Check Google Calendar connection status
- * @param userId - User ID to check status for
- * @returns Promise<boolean> - Connection status
- */
 export const checkGoogleCalendarStatus = async (userId: string): Promise<boolean> => {
   const base = getBaseUrl();
   try {
@@ -61,10 +55,6 @@ export const checkGoogleCalendarStatus = async (userId: string): Promise<boolean
   }
 };
 
-/**
- * Connect Google Calendar - redirect to OAuth URL
- * @param userId - User ID to connect calendar for
- */
 export const connectGoogleCalendar = async (userId: string): Promise<void> => {
   const base = getBaseUrl();
   try {
@@ -80,11 +70,6 @@ export const connectGoogleCalendar = async (userId: string): Promise<void> => {
   }
 };
 
-/**
- * Sync Google Calendar events
- * @param userId - User ID to sync calendar for
- * @returns Promise<Event[]> - Array of synced events
- */
 export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
   const base = getBaseUrl();
   try {
@@ -116,7 +101,7 @@ export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
             start: item.start,
             end: item.end,
             description: item.description || null,
-            color: item.backgroundColor || item.color || '#ef4444',
+            backgroundColor: item.backgroundColor ,
             google_event_id: item.google_event_id
           };
           return fetch(`${base}/api/user/calendar/create/${userId}`, {
@@ -131,7 +116,7 @@ export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
           const fresh = await fetch(`${base}/api/user/calendar/events/${userId}`);
           if (fresh.ok) {
             const all = await fresh.json();
-            return mapServerListUtil(all, '#28375cff');
+            return mapServerListUtil(all);
           }
         } catch (e) { 
           console.warn('refresh after persistence failed', e);
@@ -148,12 +133,6 @@ export const syncGoogleCalendar = async (userId: string): Promise<Event[]> => {
   }
 };
 
-/**
- * Update event (used for drag/drop and resize operations)
- * @param eventId - Event ID to update
- * @param updates - Object containing start and/or end times
- * @returns Promise<boolean> - Success status
- */
 export const updateEvent = async (eventId: string, updates: { start?: string | null; end?: string | null }): Promise<boolean> => {
   const base = getBaseUrl();
   try {
@@ -176,11 +155,6 @@ export const updateEvent = async (eventId: string, updates: { start?: string | n
   }
 };
 
-/**
- * Delete an event
- * @param eventId - Event ID to delete
- * @returns Promise<boolean> - Success status
- */
 export const deleteEvent = async (eventId: string): Promise<boolean> => {
   const base = getBaseUrl();
   try {
@@ -197,11 +171,6 @@ export const deleteEvent = async (eventId: string): Promise<boolean> => {
   }
 };
 
-/**
- * Helper to format event start/end into server-friendly ISO strings
- * @param ev - Event object with start/end properties
- * @returns Object with formatted start and end times
- */
 export const formatEventIso = (ev: any) => {
   const start = ev.start;
   const end = ev.end;
@@ -215,18 +184,12 @@ export const formatEventIso = (ev: any) => {
   };
 };
 
-/**
- * Create a new event
- * @param userId - User ID to create event for
- * @param eventData - Event data to create
- * @returns Promise<any> - Created event data
- */
 export const createEvent = async (userId: string, eventData: {
   title: string;
   start: string;
   end: string | null;
   description: string;
-  color: string;
+  backgroundColor: string;
 }): Promise<any> => {
   const base = getBaseUrl();
   try {
@@ -271,14 +234,6 @@ export const createEvent = async (userId: string, eventData: {
   }
 };
 
-/**
- * Update an existing event with changes
- * @param eventId - Event ID to update
- * @param changes - Changes to apply to the event
- * @param userId - User ID for fallback operations
- * @param existingEvent - Existing event data for comparison
- * @returns Promise<any> - Updated event data
- */
 export const updateEventWithChanges = async (
   eventId: string, 
   changes: any, 
@@ -322,7 +277,7 @@ export const updateEventWithChanges = async (
             start: changes.start || existingEvent.start,
             end: changes.end || existingEvent.end,
             description: changes.description || existingEvent.description || '',
-            color: changes.color || existingEvent.backgroundColor || '#3b82f6',
+            backgroundColor: changes.backgroundColor || existingEvent.backgroundColor ,
             google_event_id: existingEvent.google_event_id
           };
           const createRes = await fetch(`${base}/api/user/calendar/create/${userId}`, {

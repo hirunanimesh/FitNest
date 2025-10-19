@@ -18,7 +18,6 @@ interface Event {
   start: string;
   end: string;
   backgroundColor: string;
-  color?: string;
   description?: string | null;
   extendedProps?: { description?: string | null; rawStart?: string; rawEnd?: string; google_event_id?: string };
   google_event_id?: string | null;
@@ -36,6 +35,21 @@ const Schedule: React.FC = () => {
   const { user } = useAuth()
 
   const dedupeEvents = (list: Event[]) => dedupeEventsUtil(list)
+
+  // Load events for a date range (start/end are ISO strings)
+const loadEventsForMonth = async (startIso: string, endIso: string) => {
+    const userId = user?.id;
+    if (!userId) return;
+    try {
+      // fetchEvents backend should accept (userId, start, end) and filter by range
+      const mappedServer = await fetchEvents(userId, startIso, endIso);
+      if (Array.isArray(mappedServer)) {
+        setEvents(() => dedupeEvents(mappedServer));
+      }
+    } catch (err) {
+      console.error('Failed to load events for month', err);
+    }
+  }
 
   // Detect small screens (Pixel 7 ~ 412px width). Adjust rendering accordingly.
   const [isSmallScreen, setIsSmallScreen] = useState(false)
@@ -62,34 +76,10 @@ const Schedule: React.FC = () => {
         const connected = await checkGoogleCalendarStatus(userId);
         setGoogleConnected(connected);
 
-        const mappedServer = await fetchEvents(userId);
-        if (Array.isArray(mappedServer)) {
-          setEvents(prev => {
-            // Build quick lookup of server keys
-            const serverIds = new Set(mappedServer.map(s => String(s.id || '')))
-            const serverGids = new Set(mappedServer.map(s => String((s as any).google_event_id || '')))
-            // Keep previous events that are not represented in server results
-            const leftover = prev.filter(p => {
-              const pid = String((p as any).id || '')
-              const pgid = String((p as any).google_event_id || '')
-              const raw = (p as any).extendedProps?.rawStart || p.start || ''
-              const title = p.title || ''
-              // If prev has an id and server also returned that id -> skip (server authoritative)
-              if (pid && serverIds.has(pid)) return false
-              // If prev has google_event_id and server returned that -> skip
-              if (pgid && serverGids.has(pgid)) return false
-              // If prev has no server id but matches server by rawStart+title, consider it replaced
-              const matchesServer = mappedServer.find(s => {
-                const sRaw = (s as any).extendedProps?.rawStart || s.start || ''
-                const sTitle = s.title || ''
-                return sRaw && sTitle && sRaw === raw && sTitle === title
-              })
-              if (matchesServer) return false
-              return true
-            })
-            return dedupeEvents([...mappedServer, ...leftover])
-          })
-        }
+      const today = new Date();
+        const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+        const lastOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString();
+        await loadEventsForMonth(firstOfMonth, lastOfMonth);
       } catch (err) {
         console.error('calendar status/events check failed', err)
         setGoogleConnected(false);
@@ -415,6 +405,13 @@ const Schedule: React.FC = () => {
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
+           // fetch events when visible date range changes (month navigation / view change)
+        datesSet={(arg) => {
+          const start = arg.startStr;
+         const end = arg.endStr;
+         console.log("[Visible Date Range]", { start, end });
+         loadEventsForMonth(start, end);
+      }}
           events={events}
           eventClick={handleEventClick}
           dateClick={handleDateClick}
