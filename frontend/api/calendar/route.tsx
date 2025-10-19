@@ -20,17 +20,26 @@ const getBaseUrl = () => {
 };
 
 /**
- * Fetch events from the server
+ * Fetch events from the server within an optional date range
  * @param userId - User ID to fetch events for
+ * @param start - Optional start date (ISO string)
+ * @param end - Optional end date (ISO string)
  * @returns Promise<Event[]> - Array of mapped events
  */
-export const fetchEvents = async (userId: string): Promise<Event[]> => {
+export const fetchEvents = async (userId: string, start?: string, end?: string): Promise<Event[]> => {
   const base = getBaseUrl();
   try {
-  const response = await fetch(`${base}/api/user/calendar/events/${userId}`);
+    let url = `${base}/api/user/calendar/events/${userId}`;
+    if (start && end) {
+      const params = new URLSearchParams({ start, end });
+      url += `?${params.toString()}`;
+    }
+
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error('fetch events failed: ' + response.status);
     }
+
     const serverEvents = await response.json();
     return mapServerListUtil(serverEvents, '#28375cff');
   } catch (error) {
@@ -38,6 +47,7 @@ export const fetchEvents = async (userId: string): Promise<Event[]> => {
     return [];
   }
 };
+
 
 /**
  * Check Google Calendar connection status
