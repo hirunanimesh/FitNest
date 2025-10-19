@@ -263,16 +263,15 @@ const Charts: React.FC = () => {
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis 
                                         dataKey="day" 
-                                        tick={{ fontSize: 12 , fill: "#ccc"}}
+                                        tick={{ fontSize: 10 }}
+                                        className="sm:!text-xs lg:!text-sm"
                                         interval="preserveStartEnd"
-                                        label={{ value: "Day", position: "insideBottomRight", offset: -2, fill: "white" }}
                                     />
                                     <YAxis 
-                                        domain={["dataMin - 5", "dataMax + 5"]} 
-                                        tick={{ fontSize: 12 , fill: "#ccc"}}
-                                        label={{ value: "BMI", angle: -90, position: "insideLeft", fill: "white" }}
+                                        domain={["dataMin - 0.5", "dataMax + 0.5"]} 
+                                        tick={{ fontSize: 10 }}
+                                        className="sm:!text-xs lg:!text-sm"
                                     />
-
                                     <Tooltip content={<CustomTooltip />} />
                                     <Line 
                                         type="monotone" 
@@ -284,7 +283,7 @@ const Charts: React.FC = () => {
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
-                            <div className="mt-2 sm:mt-2 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
+                            <div className="mt-2 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
                                 <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
                                     <p className="text-[10px] sm:text-xs text-gray-200">Average BMI</p>
                                     <p className="text-xs sm:text-sm font-semibold text-red-600">
@@ -402,20 +401,19 @@ const Charts: React.FC = () => {
                         </CardHeader>
                         <CardContent className="p-3 sm:p-4 lg:p-6">
                             <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px] lg:!h-[350px]">
-                                <LineChart data={weightData} margin={{ top: 10, right: 9, left: 12, bottom: 3 }} className="sm:!mx-[20px] lg:!mx-[30px]">
+                                <LineChart data={weightData} margin={{ top: 10, right: 15, left: 10, bottom: 5 }} className="sm:!mx-[20px] lg:!mx-[30px]">
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis 
                                         dataKey="day" 
-                                        tick={{ fontSize: 12, fill: "#ccc" }}
+                                        tick={{ fontSize: 10 }}
+                                        className="sm:!text-xs lg:!text-sm"
                                         interval="preserveStartEnd"
-                                        label={{ value: "Day", position: "insideBottomRight", offset: -2, fill: "white" }}
                                     />
                                     <YAxis 
-                                        domain={["dataMin - 5", "dataMax + 5"]} 
-                                        tick={{ fontSize: 12, fill: "#ccc" }}
-                                        label={{ value: "Weight (kg)", angle: -90, position: "insideLeft", fill: "white" }}
+                                        domain={["dataMin - 1", "dataMax + 1"]} 
+                                        tick={{ fontSize: 10 }}
+                                        className="sm:!text-xs lg:!text-sm"
                                     />
-
                                     <Tooltip content={<CustomTooltip />} />
                                     <Line 
                                         type="monotone" 
@@ -427,7 +425,7 @@ const Charts: React.FC = () => {
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
-                            <div className="mt-2 sm:mt-2 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
+                            <div className="mt-2 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
                                 <div className="p-1 sm:p-2 bg-gray-700 rounded-lg">
                                     <p className="text-[10px] sm:text-xs text-gray-200">Average Weight</p>
                                     <p className="text-xs sm:text-sm font-semibold text-blue-600">
