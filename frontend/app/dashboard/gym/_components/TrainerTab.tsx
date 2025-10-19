@@ -1,4 +1,7 @@
+"use client";
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
     Card,
     CardContent,
@@ -68,6 +71,7 @@ interface LoadingStates {
 }
 
 const TrainerTab: React.FC = () => {
+    const router = useRouter();
     const [filteredProfiles, setFilteredProfiles] = useState<Trainer[]>([]);
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -201,7 +205,11 @@ const TrainerTab: React.FC = () => {
                             <div className="block md:hidden">
                                 <div className="space-y-4">
                                     {trainerProfiles.map((profile) => (
-                                        <Card key={profile.id} className="bg-gray-700 border-gray-600">
+                                        <Card
+                                            key={profile.id}
+                                            onClick={() => router.push(`/profile/trainer?id=${profile.id}`)}
+                                            className="bg-gray-700 border-gray-600 cursor-pointer"
+                                        >
                                             <CardContent className="p-4">
                                                 <div className="flex items-start space-x-4">
                                                     <Avatar className="h-12 w-12">
@@ -230,7 +238,7 @@ const TrainerTab: React.FC = () => {
                                                             <Button
                                                                 variant="default"
                                                                 size="sm"
-                                                                onClick={() => handleApprove(profile.request_id, profile.name)}
+                                                                onClick={(e) => { e.stopPropagation(); handleApprove(profile.request_id, profile.name); }}
                                                                 disabled={loadingStates[String(profile.request_id)]}
                                                             >
                                                                 Approve
@@ -260,7 +268,11 @@ const TrainerTab: React.FC = () => {
                                     </TableHeader>
                                     <TableBody>
                                         {trainerProfiles.map((profile) => (
-                                            <TableRow key={profile.id} className="hover:bg-gray-700/50">
+                                            <TableRow
+                                                key={profile.id}
+                                                className="hover:bg-gray-700/50 cursor-pointer"
+                                                onClick={() => router.push(`/profile/trainer?id=${profile.id}`)}
+                                            >
                                                 <TableCell>
                                                     <Avatar className="h-10 w-10">
                                                         {profile.profile_img ? (
@@ -286,18 +298,18 @@ const TrainerTab: React.FC = () => {
                                                 </TableCell>
                                                 <TableCell className="text-gray-300 hidden lg:table-cell">{profile.years_of_experience} years</TableCell>
                                                 <TableCell>
-                                                    {!profile.approved ? (
-                                                        <Button
-                                                            variant="default"
-                                                            size="sm"
-                                                            onClick={() => handleApprove(profile.request_id, profile.name)}
-                                                            disabled={loadingStates[String(profile.request_id)]}
-                                                        >
-                                                            Approve
-                                                        </Button>
-                                                    ) : (
-                                                        <Badge className='bg-blue-500 hover:bg-blue-600 text-xs'>Approved</Badge>
-                                                    )}
+                                                     {!profile.approved ? (
+                                                         <Button
+                                                             variant="default"
+                                                             size="sm"
+                                                             onClick={(e) => { e.stopPropagation(); handleApprove(profile.request_id, profile.name); }}
+                                                             disabled={loadingStates[String(profile.request_id)]}
+                                                         >
+                                                             Approve
+                                                         </Button>
+                                                     ) : (
+                                                         <Badge className='bg-blue-500 hover:bg-blue-600 text-xs'>Approved</Badge>
+                                                     )}
                                                 </TableCell>
                                             </TableRow>
                                         ))}

@@ -121,8 +121,35 @@ const PlansTab: React.FC = () => {
     const fetchGymPlans = async () => {
       try {
         setLoading(true);
+        
+        // Try to load from cache first
+        const cacheKey = `gymPlans_${gymId}`;
+        const cachedData = localStorage.getItem(cacheKey);
+        
+        if (cachedData) {
+          try {
+            const parsedData = JSON.parse(cachedData);
+            setPlans(parsedData);
+            setLoading(false);
+          } catch (e) {
+            console.error('Failed to parse cached plans');
+          }
+        }
+
+        // Fetch fresh data in background
         const response: GymPlansResponse = await GetGymPlans(gymId);
         if (response?.data?.gymPlan) {
+          // Load plans immediately without trainer data
+          const basicPlans = response.data.gymPlan.map(plan => ({
+            ...plan,
+            trainers: []
+          }));
+          setPlans(basicPlans);
+          
+          // Cache the basic plans
+          localStorage.setItem(cacheKey, JSON.stringify(basicPlans));
+          
+          // Load trainer data in background
           const plansWithTrainers = await Promise.all(
             response.data.gymPlan.map(async (plan) => {
               try {
@@ -138,10 +165,14 @@ const PlansTab: React.FC = () => {
               }
             })
           );
+          
           setPlans(plansWithTrainers);
+          localStorage.setItem(cacheKey, JSON.stringify(plansWithTrainers));
         } else {
-          setErrorMessage('No plans found for this gym');
-          toast.error('No plans found for this gym');
+          if (!cachedData) {
+            setErrorMessage('No plans found for this gym');
+            toast.error('No plans found for this gym');
+          }
         }
       } catch (error) {
         setErrorMessage('Failed to load gym plans. Please try again.');
@@ -161,15 +192,34 @@ const PlansTab: React.FC = () => {
     const fetchTrainers = async () => {
       try {
         setLoadingTrainers(true);
+        
+        // Try cache first
+        const trainerCacheKey = `gymTrainers_${gymId}`;
+        const cachedTrainers = localStorage.getItem(trainerCacheKey);
+        
+        if (cachedTrainers) {
+          try {
+            const parsedTrainers = JSON.parse(cachedTrainers);
+            setTrainers(parsedTrainers);
+            setLoadingTrainers(false);
+          } catch (e) {
+            console.error('Failed to parse cached trainers');
+          }
+        }
+
+        // Background fetch
         const response: TrainersResponse = await GetTrainers(gymId);
         if (response?.data?.trainers_data) {
           const approvedTrainers = response.data.trainers_data
             .filter((item) => item.approved)
             .map((item) => item.trainer);
           setTrainers(approvedTrainers);
+          localStorage.setItem(trainerCacheKey, JSON.stringify(approvedTrainers));
         } else {
-          setErrorMessage('No trainers found for this gym');
-          toast.info('No trainers found for this gym');
+          if (!cachedTrainers) {
+            setErrorMessage('No trainers found for this gym');
+            toast.info('No trainers found for this gym');
+          }
         }
       } catch (error) {
         setErrorMessage('Failed to load trainers.');
@@ -185,6 +235,7 @@ const PlansTab: React.FC = () => {
   }, [gymId]);
 
   const handleEditPlan = (plan: Plan) => {
+    // Immediate UI update - no API calls needed
     setCurrentPlan({
       plan_id: plan.plan_id,
       title: plan.title,
@@ -206,12 +257,20 @@ const PlansTab: React.FC = () => {
         return;
       }
 
-      await DeleteGymPlan(planId);
+      // Optimistic update - remove from UI immediately
       setPlans((prev) => prev.filter((plan) => plan.plan_id !== planId));
       setSuccessMessage('Plan deleted successfully');
       toast.success('Plan deleted successfully');
       setTimeout(() => setSuccessMessage(''), 3000);
+
+      // API call in background
+      await DeleteGymPlan(planId);
     } catch (error) {
+      // Revert optimistic update on error
+      const planToRestore = plans.find(plan => plan.plan_id === planId);
+      if (planToRestore) {
+        setPlans((prev) => [...prev, planToRestore]);
+      }
       setErrorMessage('Failed to delete plan. Please try again.');
       toast.error('Failed to delete plan');
       setTimeout(() => setErrorMessage(''), 3000);
@@ -227,71 +286,72 @@ const PlansTab: React.FC = () => {
       return;
     }
 
+    // Close dialog immediately for better UX
+    setIsPlanDialogOpen(false);
+
     try {
       if (currentPlan.plan_id) {
-        await UpdateGymPlan(currentPlan.plan_id, currentPlan);
+        // Optimistic update for edit
+        const optimisticUpdate = {
+          plan_id: currentPlan.plan_id,
+          title: currentPlan.title,
+          price: parseFloat(currentPlan.price),
+          description: currentPlan.description,
+          duration: currentPlan.duration,
+          trainers: currentPlan.trainers,
+          gym_id: gymId,
+          created_at: '',
+          price_id_stripe: null,
+          product_id_stripe: null,
+        };
+
         setPlans((prev) =>
           prev.map((plan) =>
-            plan.plan_id === currentPlan.plan_id
-              ? {
-                  ...plan,
-                  title: currentPlan.title,
-                  price: parseFloat(currentPlan.price),
-                  description: currentPlan.description,
-                  duration: currentPlan.duration,
-                  trainers: currentPlan.trainers,
-                }
-              : plan
+            plan.plan_id === currentPlan.plan_id ? optimisticUpdate : plan
           )
         );
-        await UpdatePlanTrainers(currentPlan.plan_id, currentPlan.trainers);
-        const updatedPlans = await Promise.all(
-          plans.map(async (plan) => {
-            if (plan.plan_id === currentPlan.plan_id) {
-              try {
-                const trainersResponse = await GetPlanTrainers(plan.plan_id);
-                let trainerIds: string[] = [];
-                const trainersArrayUpdate = trainersResponse?.data?.data;
-                if (Array.isArray(trainersArrayUpdate)) {
-                  trainerIds = trainersArrayUpdate.map((item: any) => String(item.trainer_id));
-                }
-                return { ...plan, trainers: trainerIds };
-              } catch (error) {
-                return { ...plan, trainers: currentPlan.trainers };
-              }
-            }
-            return plan;
-          })
-        );
-        setPlans(updatedPlans);
+        
         setSuccessMessage('Plan updated successfully');
         toast.success('Plan updated successfully');
+
+        // API calls in background
+        await UpdateGymPlan(currentPlan.plan_id, currentPlan);
+        await UpdatePlanTrainers(currentPlan.plan_id, currentPlan.trainers);
+        
       } else {
-        const response = await CreateGymPlan(gymId, currentPlan);
-        const newPlan: Plan = response.data.gymPlan;
-        setPlans((prev) => [...prev, newPlan]);
-        if (currentPlan.trainers.length > 0) {
-          await AssignTrainersToPlan(newPlan.plan_id, currentPlan.trainers);
-          try {
-            const trainersResponse = await GetPlanTrainers(newPlan.plan_id);
-            let trainerIds: string[] = [];
-            const trainersArrayNew = trainersResponse?.data?.data;
-            if (Array.isArray(trainersArrayNew)) {
-              trainerIds = trainersArrayNew.map((item: any) => String(item.trainer_id));
-            }
-            setPlans((prev) => 
-              prev.map((plan) => 
-                plan.plan_id === newPlan.plan_id 
-                  ? { ...plan, trainers: trainerIds }
-                  : plan
-              )
-            );
-          } catch (error) {
-            // Silent failure
-          }
-        }
+        // Optimistic update for create
+        const tempId = `temp_${Date.now()}`;
+        const optimisticNewPlan = {
+          plan_id: tempId,
+          title: currentPlan.title,
+          price: parseFloat(currentPlan.price),
+          description: currentPlan.description,
+          duration: currentPlan.duration,
+          trainers: currentPlan.trainers,
+          gym_id: gymId,
+          created_at: new Date().toISOString(),
+          price_id_stripe: null,
+          product_id_stripe: null,
+        };
+
+        setPlans((prev) => [...prev, optimisticNewPlan]);
         setSuccessMessage('Plan created successfully');
         toast.success('Plan created successfully');
+
+        // API calls in background
+        const response = await CreateGymPlan(gymId, currentPlan);
+        const newPlan: Plan = response.data.gymPlan;
+        
+        // Replace temp plan with real plan
+        setPlans((prev) => 
+          prev.map((plan) => 
+            plan.plan_id === tempId ? newPlan : plan
+          )
+        );
+
+        if (currentPlan.trainers.length > 0) {
+          await AssignTrainersToPlan(newPlan.plan_id, currentPlan.trainers);
+        }
       }
 
       setCurrentPlan({
@@ -302,7 +362,6 @@ const PlansTab: React.FC = () => {
         duration: '1 month',
         trainers: [],
       });
-      setIsPlanDialogOpen(false);
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       setErrorMessage('Failed to save plan. Please try again.');
