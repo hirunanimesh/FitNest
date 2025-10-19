@@ -9,6 +9,38 @@ dotenv.config();
 const USE_MOCK_AI = !process.env.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY === 'placeholder-key';
 
 /**
+ * Check if the message is a greeting or general conversation
+ * @param {string} message - The user's message
+ * @returns {string|null} - Greeting response or null if not a greeting
+ */
+function handleGreetingOrGeneral(message) {
+    const lowerMessage = message.toLowerCase().trim();
+    
+    // Greetings
+    const greetings = ['hi', 'hello', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening'];
+    if (greetings.some(greeting => lowerMessage === greeting || lowerMessage.startsWith(greeting + ' '))) {
+        return "Hello! 👋 I'm your FitNest gym assistant. I'm here to help you with information about gyms, trainers, memberships, facilities, and more. How can I assist you today?";
+    }
+    
+    // Thanks
+    if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
+        return "You're welcome! 😊 Feel free to ask me anything else about our gym services.";
+    }
+    
+    // About/Who are you
+    if (lowerMessage.includes('who are you') || lowerMessage.includes('what are you') || lowerMessage.includes('about you')) {
+        return "I'm the FitNest AI assistant, designed to help you find information about gyms, trainers, memberships, facilities, and fitness services. I can answer questions based on the gym information in our system. What would you like to know?";
+    }
+    
+    // Help
+    if (lowerMessage === 'help' || lowerMessage === 'help me') {
+        return "I can help you with:\n\n• Gym locations and facilities\n• Trainer information and specialties\n• Membership plans and pricing\n• Class schedules\n• Equipment and amenities\n• Operating hours\n\nJust ask me any question about these topics!";
+    }
+    
+    return null;
+}
+
+/**
  * Generate a mock AI response for testing purposes
  * @param {string} context - The context documents
  * @param {string} question - The user's question
@@ -37,7 +69,7 @@ async function generateWithRestAPI(context, question) {
     const apiKey = process.env.GOOGLE_API_KEY;
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
-    const prompt = `You are a helpful gym management chatbot assistant. Answer the user's question based ONLY on the provided context. If the context doesn't contain relevant information to answer the question, politely say so.
+    const prompt = `You are a helpful gym management chatbot assistant named FitNest Assistant. Answer the user's question based on the provided context.
 
 Context from gym documents:
 ${context}
@@ -45,11 +77,13 @@ ${context}
 User Question: ${question}
 
 Instructions:
-- Only use information from the provided context
-- Be helpful and friendly
-- If you cannot answer based on the context, say "I don't have enough information in my knowledge base to answer that question"
+- For greetings (hi, hello, hey), warmly greet the user and introduce yourself as the FitNest gym assistant
+- For questions about yourself, explain that you're an AI assistant helping with gym-related information
+- Use information from the provided context when available
+- Be helpful, friendly, and conversational
+- If you cannot answer based on the context, say "I don't have enough information in my knowledge base to answer that specific question. Please try asking about gym facilities, trainers, memberships, or services."
 - Keep responses concise but informative
-- Focus on gym-related topics
+- Focus on gym-related topics (facilities, trainers, memberships, classes, equipment, hours)
 
 Answer:`;
 
@@ -85,7 +119,7 @@ async function generateRealResponse(context, question) {
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
     const model = genAI.getGenerativeModel({ model: 'models/gemini-2.5-flash' });
 
-    const prompt = `You are a helpful gym management chatbot assistant. Answer the user's question based ONLY on the provided context. If the context doesn't contain relevant information to answer the question, politely say so.
+    const prompt = `You are a helpful gym management chatbot assistant named FitNest Assistant. Answer the user's question based on the provided context.
 
 Context from gym documents:
 ${context}
@@ -93,11 +127,13 @@ ${context}
 User Question: ${question}
 
 Instructions:
-- Only use information from the provided context
-- Be helpful and friendly
-- If you cannot answer based on the context, say "I don't have enough information in my knowledge base to answer that question"
+- For greetings (hi, hello, hey), warmly greet the user and introduce yourself as the FitNest gym assistant
+- For questions about yourself, explain that you're an AI assistant helping with gym-related information
+- Use information from the provided context when available
+- Be helpful, friendly, and conversational
+- If you cannot answer based on the context, say "I don't have enough information in my knowledge base to answer that specific question. Please try asking about gym facilities, trainers, memberships, or services."
 - Keep responses concise but informative
-- Focus on gym-related topics
+- Focus on gym-related topics (facilities, trainers, memberships, classes, equipment, hours)
 
 Answer:`;
 
@@ -120,6 +156,19 @@ export async function processChatQuestion(question) {
 
         const trimmedQuestion = question.trim();
 
+        // Check if it's a greeting or general conversation
+        const greetingResponse = handleGreetingOrGeneral(trimmedQuestion);
+        if (greetingResponse) {
+            return {
+                success: true,
+                answer: greetingResponse,
+                sources: [],
+                similarity_scores: [],
+                sources_count: 0,
+                type: 'greeting'
+            };
+        }
+
         // Step 1: Generate embedding for the question
         const queryEmbedding = await generateEmbedding(trimmedQuestion);
 
@@ -137,7 +186,7 @@ export async function processChatQuestion(question) {
         if (!relevantDocs || relevantDocs.length === 0) {
             return {
                 success: true,
-                answer: "I don't have enough information in my knowledge base to answer that question. Please make sure relevant gym information has been added to the system.",
+                answer: "I don't have specific information in my knowledge base to answer that question. I can help you with information about gym facilities, trainers, memberships, class schedules, and services. What would you like to know?",
                 sources: [],
                 similarity_scores: [],
                 sources_count: 0
