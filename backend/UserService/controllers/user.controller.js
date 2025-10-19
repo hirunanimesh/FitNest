@@ -1,4 +1,4 @@
-import {getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById, getUserSessions, addReport } from '../services/user.service.js';
+import {getLatestWeightById,getWeightById, addWeight,updateUserDetails,getUserById, getUserSessions, addReport, getUserByCustomerId } from '../services/user.service.js';
 import{addFeedback} from  '../services/feedback.service.js';
 
 export const updateuserdetails = async (req, res) => {
@@ -92,7 +92,7 @@ export const getMySessions = async(req,res)=>{
     const {customerId} = req.params;
     try{
         const sessions = await getUserSessions(customerId);
-        console.log("Sessions:", sessions);
+        // console.log("Sessions:", sessions); // Commented out to reduce console noise
         if(sessions){
             res.status(200).json({message:"Sessions retrieved successfully",sessions});
         }else{
@@ -115,3 +115,18 @@ export const addreport = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
+
+export const getuserbycustomerid = async(req,res)=>{
+    try{
+        const {customerId} = req.params;
+        const customer = await getUserByCustomerId(customerId)
+        if(customer){
+            res.status(200).json({message:"User retrieved successfully",customer});
+        }else{
+            res.status(404).json({message:"User not found",customer:null});
+        }   
+    }catch(error){
+        console.error("Error retrieving user:", error);
+        res.status(500).json({message:"Internal server error",error:error.message});
+    }
+}

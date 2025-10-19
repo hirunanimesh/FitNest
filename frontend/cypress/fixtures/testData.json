@@ -1,0 +1,81 @@
+{
+  "testUsers": {
+    "customer": {
+      "email": "customer@test.com",
+      "password": "TestPassword123!",
+      "role": "customer",
+      "name": "Test Customer",
+      "id": "customer-test-id"
+    },
+    "trainer": {
+      "email": "trainer@test.com", 
+      "password": "TestPassword123!",
+      "role": "trainer",
+      "name": "Test Trainer",
+      "id": "trainer-test-id"
+    },
+    "gym": {
+      "email": "gym@test.com",
+      "password": "TestPassword123!",
+      "role": "gym", 
+      "name": "Test Gym",
+      "id": "gym-test-id"
+    },
+    "admin": {
+      "email": "admin@test.com",
+      "password": "TestPassword123!",
+      "role": "admin",
+      "name": "Test Admin", 
+      "id": "admin-test-id"
+    }
+  },
+  "gymPlans": [
+    {
+      "id": "plan-1",
+      "title": "Basic Plan",
+      "description": "Basic gym access",
+      "price": 29.99,
+      "duration": "1 month",
+      "gym_name": "Test Gym"
+    },
+    {
+      "id": "plan-2", 
+      "title": "Premium Plan",
+      "description": "Full gym access with trainer",
+      "price": 59.99,
+      "duration": "1 month",
+      "gym_name": "Test Gym"
+    }
+  ],
+  "trainingSessions": [
+    {
+      "id": "session-1",
+      "trainer_name": "Test Trainer",
+      "date": "2025-10-15",
+      "time": "10:00",
+      "duration": "60 minutes",
+      "price": 50,
+      "status": "available"
+    }
+  ],
+  "dashboardStats": {
+    "customer": {
+      "activeSubscriptions": 2,
+      "upcomingSessions": 3,
+      "accountBalance": 150.50,
+      "streakDays": 7
+    },
+    "trainer": {
+      "totalClients": 15,
+      "upcomingSessions": 8,
+      "monthlyEarnings": 2500,
+      "rating": 4.8
+    },
+    "gym": {
+      "totalMembers": 150,
+      "activePlans": 5,
+      "monthlyRevenue": 15000,
+      "trainerRequests": 3
+    }
+  }
+}

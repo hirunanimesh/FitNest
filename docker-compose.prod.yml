@@ -168,6 +168,8 @@ services:
       - MONGO_URI=${MONGO_URI}
       - KAFKA_PASSWORD=${KAFKA_PASSWORD}
       - KAFKA_BROKER=${KAFKA_BROKER}
+      - API_GATEWAY_URL=${API_GATEWAY_URL}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     depends_on:
       - auth-service
       - user-service

@@ -37,24 +37,12 @@ async function upsertCalendarEvent(eventData) {
     const { data, error } = await supabase
       .from('calendar')
       .upsert(eventData, { onConflict: 'google_event_id' })
-      .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, color, description')
+      .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, backgroundColor, description')
       .single()
     
     if (error) throw error
     return { success: true, data }
   } catch (error) {
-    // Handle color column missing gracefully
-    if (String(error.message).toLowerCase().includes('column') && String(error.message).toLowerCase().includes('color')) {
-      const { color, ...eventDataNoColor } = eventData
-      const { data, error: retryError } = await supabase
-        .from('calendar')
-        .upsert(eventDataNoColor, { onConflict: 'google_event_id' })
-        .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, description')
-        .single()
-      
-      if (retryError) throw retryError
-      return { success: true, data }
-    }
     throw error
   }
 }
@@ -64,7 +52,7 @@ async function getCalendarEvents(userId, options = {}) {
     let query = supabase.from('calendar').select(
       options.minimal 
         ? 'calendar_id, task, task_date' 
-        : 'calendar_id, task, task_date, start, "end", color, description'
+        : 'calendar_id, task, task_date, start, end, backgroundColor, description'
     )
     
     if (userId) {
@@ -108,7 +96,7 @@ async function updateCalendarEvent(calendarId, updates) {
       .from('calendar')
       .update(updates)
       .eq('calendar_id', calendarId)
-      .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, color, description')
+      .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, backgroundColor, description')
       .single()
     
     if (error) {
@@ -118,27 +106,7 @@ async function updateCalendarEvent(calendarId, updates) {
     
     logInfo('Database update successful', { calendarId, updatedData: data })
     return { success: true, data }
-  } catch (error) {
-    // Handle color column missing gracefully
-    if (String(error.message).toLowerCase().includes('column') && String(error.message).toLowerCase().includes('color')) {
-      logInfo('Retrying update without color column', { calendarId })
-      const { color, ...updatesNoColor } = updates
-      const { data, error: retryError } = await supabase
-        .from('calendar')
-        .update(updatesNoColor)
-        .eq('calendar_id', calendarId)
-        .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, description')
-        .single()
-      
-      if (retryError) {
-        logError('Database update retry failed', { calendarId, updatesNoColor, error: retryError })
-        throw retryError
-      }
-      
-      logInfo('Database update retry successful', { calendarId, updatedData: data })
-      return { success: true, data }
-    }
-    
+  } catch (error) { 
     logError('Database update failed with unhandled error', { calendarId, updates, error })
     throw error
   }
@@ -260,8 +228,6 @@ async function refreshAccessToken(refreshToken) {
 
   return res.json()
 }
-
-// ========== GOOGLE CALENDAR API HELPERS ==========
 
 // Centralized Google Calendar operations
 async function createGoogleAuthClient(accessToken) {
@@ -499,7 +465,7 @@ export async function saveOrUpdateEventsForUser(userId, events) {
           task: event.title,
           user_id: userIdForCalendar,
           description: event.description || null,
-          color: event.color || null
+          backgroundColor: event.backgroundColor || null
         }
 
         return upsertCalendarEvent(eventData)
@@ -540,7 +506,7 @@ export async function saveOrUpdateEventsForUser(userId, events) {
     title: event.task,
     start: event.start ? `${event.task_date}T${event.start}` : event.task_date,
     end: event.end ? `${event.task_date}T${event.end}` : event.task_date,
-    color: event.color,
+    backgroundColor: event.backgroundColor,
     description: event.description
   }))
 
@@ -561,7 +527,7 @@ export async function getEventsForUser(userId) {
     title: event.task,
     start: event.start ? `${event.task_date}T${event.start}` : event.task_date,
     end: event.end ? `${event.task_date}T${event.end}` : event.task_date,
-    color: result.minimal ? null : event.color,
+    backgroundColor: result.minimal ? null : event.backgroundColor,
     description: result.minimal ? null : event.description
   }))
 }
@@ -597,7 +563,7 @@ export async function saveOrCreateEventForUser(userId, payload) {
       title: existingEvent.task,
       start: startTime ? `${taskDate}T${startTime}` : taskDate,
       end: endTime ? `${taskDate}T${endTime}` : taskDate,
-      color: payload.color || null,
+      backgroundColor: payload.backgroundColor || null,
       description: payload.description || null
     }
   }
@@ -610,35 +576,20 @@ export async function saveOrCreateEventForUser(userId, payload) {
     user_id: userIdForCalendar,
     description: payload.description || null,
     google_event_id: null,
-    color: payload.color || null
+    backgroundColor: payload.backgroundColor || null
   }
 
   // For new events, use insert instead of upsert to avoid null google_event_id conflicts
   let result
   try {
-    const { data, error } = await supabase
+    result = await supabase
       .from('calendar')
       .insert([eventData])
-      .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, color, description')
+      .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, description, backgroundColor')
       .single()
     
-    if (error) {
-      // Handle color column missing gracefully
-      if (String(error.message).toLowerCase().includes('column') && String(error.message).toLowerCase().includes('color')) {
-        const { color, ...eventDataNoColor } = eventData
-        const { data: retryData, error: retryError } = await supabase
-          .from('calendar')
-          .insert([eventDataNoColor])
-          .select('calendar_id, task, task_date, start, "end", user_id, google_event_id, description')
-          .single()
-        
-        if (retryError) throw retryError
-        result = { success: true, data: retryData }
-      } else {
-        throw error
-      }
-    } else {
-      result = { success: true, data }
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to create calendar event')
     }
   } catch (error) {
     logError('Failed to create calendar event', error)
@@ -672,7 +623,7 @@ export async function saveOrCreateEventForUser(userId, payload) {
     title: result.data.task,
     start: result.data.start ? `${result.data.task_date}T${result.data.start}` : result.data.task_date,
     end: result.data.end ? `${result.data.task_date}T${result.data.end}` : result.data.task_date,
-    color: result.data.color,
+    backgroundColor: result.data.backgroundColor,
     description: result.data.description
   }
 }
@@ -681,9 +632,6 @@ export async function updateEventForUser(calendarIdOrGoogleId, payload) {
   logInfo('Updating calendar event', { calendarIdOrGoogleId, payload })
   
   let calendarId = String(calendarIdOrGoogleId || '')
-  
-  // Check if this is a UUID (calendar_id) or a Google event ID
-  // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(calendarId)
   
   if (isUUID) {
@@ -730,7 +678,7 @@ export async function updateEventForUser(calendarIdOrGoogleId, payload) {
   const updates = {}
   if (payload.title) updates.task = payload.title
   if (payload.description !== undefined) updates.description = payload.description
-  if (payload.color !== undefined) updates.color = payload.color
+  if (payload.backgroundColor !== undefined) updates.backgroundColor = payload.backgroundColor
   
   if (payload.start) {
     const { date, time } = extractDateAndTime(payload.start)

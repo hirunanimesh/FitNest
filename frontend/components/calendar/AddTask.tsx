@@ -15,7 +15,6 @@ interface EventShape {
   start: string;
   end: string;
   backgroundColor: string;
-  color?: string;
   description?: string | null;
   extendedProps?: { description?: string | null, rawStart?: string, rawEnd?: string };
   google_event_id?: string | null;
@@ -49,7 +48,7 @@ const AddTask: React.FC<Props> = ({
   const [taskDate, setTaskDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [taskColor, setTaskColor] = useState('#28375cff');
+  const [taskColor, setTaskColor] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
 
   useEffect(() => {
@@ -67,7 +66,7 @@ const AddTask: React.FC<Props> = ({
       setStartTime(start && start.includes('T') ? start.split('T')[1].slice(0,5) : '')
       setEndTime(end && end.includes('T') ? end.split('T')[1].slice(0,5) : '')
       setTaskDescription(editingEvent.description || editingEvent.extendedProps?.description || '')
-      setTaskColor(editingEvent.backgroundColor || '#28375cff')
+      setTaskColor(editingEvent.backgroundColor)
     } else if (viewingEvent) {
       const { start, end } = pickRaw(viewingEvent as any)
       setTaskTitle(viewingEvent.title || '')
@@ -75,14 +74,14 @@ const AddTask: React.FC<Props> = ({
       setStartTime(start && start.includes('T') ? start.split('T')[1].slice(0,5) : '')
       setEndTime(end && end.includes('T') ? end.split('T')[1].slice(0,5) : '')
       setTaskDescription(viewingEvent.description || viewingEvent.extendedProps?.description || '')
-      setTaskColor(viewingEvent.backgroundColor || '#28375cff')
+      setTaskColor(viewingEvent.backgroundColor)
     } else if (!isTaskDialogOpen) {
       setTaskTitle('')
       setTaskDate('')
       setStartTime('')
       setEndTime('')
       setTaskDescription('')
-      setTaskColor('#28375cff')
+      setTaskColor('')
     }
   }, [editingEvent, viewingEvent, isTaskDialogOpen])
 
@@ -117,7 +116,7 @@ const AddTask: React.FC<Props> = ({
       start: startIso,
       end: endIso,
       description: taskDescription || '',
-      color: taskColor,
+      backgroundColor: taskColor,
     }
 
     try {
@@ -135,7 +134,7 @@ const AddTask: React.FC<Props> = ({
         const changed: any = {}
         if ((payload.title || '') !== (editingEvent.title || '')) changed.title = payload.title
         if ((payload.description || '') !== (editingEvent.description || editingEvent.extendedProps?.description || '')) changed.description = payload.description
-        if ((payload.color || '') !== (editingEvent.backgroundColor || editingEvent.color || '')) changed.color = payload.color
+        if ((payload.backgroundColor || '') !== (editingEvent.backgroundColor  || '')) changed.backgroundColor = payload.backgroundColor
         if ((payload.start || '') !== existingStart) changed.start = payload.start
         // treat null/undefined end as removal; include when differing
         if ((payload.end || '') !== (existingEnd || '')) changed.end = payload.end
@@ -197,7 +196,6 @@ const AddTask: React.FC<Props> = ({
                 start: saved.start || payload.start,
                 end: saved.end || payload.end,
                 backgroundColor: taskColor,
-                color: taskColor,
                 description: saved.description || payload.description || '',
                 google_event_id: saved.google_event_id || null,
                 allDay: typeof (saved.start || payload.start) === 'string' && !String(saved.start || payload.start).includes('T'),
@@ -220,7 +218,7 @@ const AddTask: React.FC<Props> = ({
       setStartTime('')
       setEndTime('')
       setTaskDescription('')
-      setTaskColor('#28375cff')
+      setTaskColor('')
       setIsTaskDialogOpen(false)
       setViewingEvent(null)
     }
@@ -266,7 +264,7 @@ const AddTask: React.FC<Props> = ({
     setStartTime('')
     setEndTime('')
     setTaskDescription('')
-    setTaskColor('#28375cff')
+    setTaskColor('')
     setIsTaskDialogOpen(true)
   }
 

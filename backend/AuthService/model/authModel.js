@@ -149,11 +149,13 @@ class AuthModel {
 
       console.log("OAuth customer data inserted successfully:", customerdata);
       const customer_id = customerdata[0].id;
-
+      console.log("Inserted customer ID:", customer_id);
+      console.log(customerdata[0]);
       const insertPhysicalData = {
         customer_id: customer_id,
         height: height ? parseFloat(height) : null,
         weight: weight ? parseFloat(weight) : null,
+        BMI: height && weight ? parseFloat((weight / (height*height*0.0001)).toFixed(2)) : null,
       };
       console.log("physical data", insertPhysicalData);
 
@@ -365,7 +367,7 @@ class AuthModel {
       }
 
       console.log("Customer data inserted successfully:", customerdata);
-      const customer_id = customerdata[0].customer_id; // Get the ID of the inserted customer
+      const customer_id = customerdata[0].id; // Get the ID of the inserted customer
       console.log("Inserted customer ID:", customer_id);
 
       const { data: physicalData, error: physicalError } = await supabase

@@ -153,21 +153,28 @@ export const getGymById = async (req, res) => {
     }
 }
 
-export const sendRequest = async (req,res)=>{
-  try{
-    const {trainer_id,gym_id}= req.body
-    console.log(trainer_id,gym_id)
-    const request = await sendrequest(trainer_id,gym_id)
-    if(request){
-      res.status(200).json({message:"Request sent successfully",request})
+export const sendRequest = async (req, res) => {
+  try {
+    const { trainer_id, gym_id } = req.body;
+    
+    // Validate required fields
+    if (!trainer_id || !gym_id) {
+      return res.status(400).json({ message: "trainer_id and gym_id are required" });
     }
-    else{
-      res.status(400).json({message:"Request already sent"})
+    
+    console.log(trainer_id, gym_id);
+    const request = await sendrequest(trainer_id, gym_id);
+    
+    if (request) {
+      res.status(200).json({ message: "Request sent successfully", request });
+    } else {
+      res.status(409).json({ message: "Request already sent" }); // 409 Conflict for already exists
     }
-    }catch(error){
+  } catch (error) {
     console.error("Error sending request:", error);
-    }
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
+}
 
 export const requestVerification = async (req, res) => {
   try {

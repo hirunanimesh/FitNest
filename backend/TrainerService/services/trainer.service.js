@@ -175,16 +175,36 @@ export async function releasesession(sessionId) {
 
   return data && data[0] ? data[0] : null;
 }
-export async function sendrequest(trainerId,gymId){
+export async function sendrequest(trainerId, gymId) {
+  // First check if a record already exists
+  const { data: existingRecord, error: checkError } = await supabase
+    .from('trainer_requests')
+    .select('*')
+    .eq('trainer_id', trainerId)
+    .eq('gym_id', gymId)
+    .single();
+
+  // If there's an error other than "not found", throw it
+  if (checkError && checkError.code !== 'PGRST116') {
+    throw new Error(checkError.message);
+  }
+
+  // If record exists, return null to indicate already sent
+  if (existingRecord) {
+    return null;
+  }
+
+  // No existing record, create new one
   const { data, error } = await supabase
-  .from('trainer_requests')
-  .insert([{ trainer_id: trainerId, gym_id: gymId ,approved:false}])
-  .select()
-  .single();
+    .from('trainer_requests')
+    .insert([{ trainer_id: trainerId, gym_id: gymId, approved: false }])
+    .select()
+    .single();
 
   if (error) {
     throw new Error(error.message);
   }
+  
   return data;
 }
 

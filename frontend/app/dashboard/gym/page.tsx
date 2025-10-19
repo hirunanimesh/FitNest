@@ -202,7 +202,7 @@ export default function GymDashboard() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="analytics" className="grid grid-cols md:grid-cols-2 space-y-10 md:space-y-0 gap-5 pt-4">
+            <TabsContent value="analytics" className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
               <MonthlyRevenueChart />
               <MonthlyMemberCountChart />
             </TabsContent>

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Footer } from "@/components/footer"
 import Chatbot from "@/components/Chatbot"
+import OfflineIndicator from "@/components/OfflineIndicator"
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -64,7 +65,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <script src="/register-sw-simple.js" defer></script>
+        <script src="/register-sw.js" defer></script>
         <script src="/pwa-diagnostic.js" defer></script>
         <style>{`
 html {
@@ -80,6 +81,7 @@ html {
           <Toaster />
           <Footer />
           <Chatbot />
+          <OfflineIndicator />
         </AuthProvider>
       </body>
     </html>

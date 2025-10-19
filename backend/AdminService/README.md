@@ -52,15 +52,42 @@ GET /documents?page=1&limit=10
 
 ## Environment Variables
 
-Create a `.env` file with:
+### Setup
+
+1. Copy the `.env.example` file to `.env`:
+```bash
+cp .env.example .env
+```
+
+2. Fill in your actual values in the `.env` file
+
+3. **NEVER commit `.env` to version control!** (already in `.gitignore`)
+
+### Required Variables
 
 ```env
+# Service Configuration
 PORT=3006
+NODE_ENV=development
+
+# Google API
+GOOGLE_API_KEY=your_google_ai_api_key
+
+# Supabase Configuration
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-GOOGLE_API_KEY=your_google_ai_api_key
-NODE_ENV=development
+SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# SendGrid Email
+SENDGRID_API_KEY=your_sendgrid_api_key
+FROM_EMAIL=noreply@fitnest.com
+
+# Service URLs
+FRONTEND_URL=http://localhost:3010
+API_GATEWAY_URL=http://localhost:3000
 ```
+
+See `.env.example` for complete configuration options.
 
 ### Google AI Setup
 
@@ -98,14 +125,29 @@ Mock embeddings are deterministic and based on text content, making them suitabl
 npm install
 ```
 
-2. Set up environment variables (see above)
+2. Set up environment variables:
+```bash
+# Copy the example file
+cp .env.example .env
 
-3. Run database migrations to create the documents table:
+# Edit .env and fill in your actual API keys and credentials
+# See .env.example for all available options
+```
+
+3. (Optional) Set up test environment:
+```bash
+# Copy the test example file
+cp .env.test.example .env.test
+
+# Edit .env.test with your test credentials
+```
+
+4. Run database migrations to create the documents table:
 ```sql
 -- Run the SQL in database/schema.sql on your Supabase instance
 ```
 
-4. Start the service:
+5. Start the service:
 ```bash
 # Development
 npm run dev
@@ -140,9 +182,57 @@ CREATE TABLE documents (
 
 ## Testing
 
-Run tests:
+### Running Tests
+
 ```bash
+# Run all tests
 npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+### Database Smoke Tests
+
+Before running tests, verify database connectivity:
+
+```bash
+# Install cross-env for Windows compatibility
+npm install --save-dev cross-env
+
+# Run smoke test (checks if database tables exist)
+npm run smoke-test
+
+# Run integrity test (validates CRUD operations)
+npm run integrity-test
+
+# Run all tests (smoke + integrity + unit tests)
+npm run test:all
+```
+
+**Note**: Smoke and integrity tests require `.env.test` file. Copy `.env.test.example` to `.env.test` and configure your test database credentials.
+
+### Test Environment Setup
+
+1. Create test environment file:
+```bash
+cp .env.test.example .env.test
+```
+
+2. Configure test database in `.env.test`
+
+3. Add scripts to `package.json` (if not already present):
+```json
+{
+  "scripts": {
+    "smoke-test": "cross-env DOTENV_CONFIG_PATH=.env.test node scripts/supabase-tables-smoke.js",
+    "integrity-test": "cross-env DOTENV_CONFIG_PATH=.env.test node scripts/supabase-write-integrity.js",
+    "test:all": "npm run smoke-test && npm run integrity-test && npm test"
+  }
+}
 ```
 
 ## Docker
