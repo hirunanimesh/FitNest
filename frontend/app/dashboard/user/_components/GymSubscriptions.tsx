@@ -41,6 +41,7 @@ const GymSubscriptions = () => {
   const [isUnsubscribing, setIsUnsubscribing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { getUserProfileId } = useAuth();
+  const [cancellationByPlan, setCancellationByPlan] = useState<Record<string, number>>({});
 
   // Cache to prevent duplicate API calls
   const hasFetched = useRef(false);
@@ -75,6 +76,40 @@ const GymSubscriptions = () => {
           cachedPlans.current = planDetails;
           hasFetched.current = true;
           console.log('💾 GymSubscriptions: Cached subscription data');
+
+          // Try to hydrate any existing cancellation info from API if present
+          // Expecting MyPlans to be either array of ids or objects; if objects, look for cancel_at/current_period_end
+          try {
+            const cancels: Record<string, number> = {};
+            if (Array.isArray(MyPlans)) {
+              MyPlans.forEach((item: any) => {
+                const planId = typeof item === 'string' ? item : (item?.plan_id || item?.planId);
+                const ts = item?.cancel_at || item?.current_period_end;
+                if (planId && ts) cancels[String(planId)] = Number(ts);
+              });
+            } else if (MyPlans && typeof MyPlans === 'object' && Array.isArray(MyPlans.planIds)) {
+              MyPlans.planIds.forEach((item: any) => {
+                const planId = typeof item === 'string' ? item : (item?.plan_id || item?.planId);
+                const ts = item?.cancel_at || item?.current_period_end;
+                if (planId && ts) cancels[String(planId)] = Number(ts);
+              });
+            }
+            if (Object.keys(cancels).length > 0) {
+              setCancellationByPlan((prev) => ({ ...prev, ...cancels }));
+            }
+          } catch {}
+
+          // Also hydrate from localStorage
+          try {
+            const key = `pendingCancels_${customer_id}`;
+            const stored = localStorage.getItem(key);
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (parsed && typeof parsed === 'object') {
+                setCancellationByPlan((prev) => ({ ...prev, ...parsed }));
+              }
+            }
+          } catch {}
         }
       } catch (error) {
         console.error('Failed to fetch user subscriptions:', error);
@@ -99,12 +134,26 @@ const GymSubscriptions = () => {
       
       if (response.canceled) {
         setShowUnsubscribeConfirm(false);
-        setSelectedPlan(null);
         setShowSuccessMessage(true);
+  // Capture cancel at timestamp (prefer Stripe current_period_end when cancel_at_period_end is true)
+  const cancelTs = Number(response.current_period_end || response.cancel_at || 0);
+        if (customer_id) {
+          setCancellationByPlan((prev) => {
+            const next = { ...prev };
+            if (cancelTs) next[selectedPlan.plan_id] = cancelTs;
+            // Persist to localStorage to reflect on reload
+            try {
+              const key = `pendingCancels_${customer_id}`;
+              localStorage.setItem(key, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+        }
         
         setTimeout(() => {
           setShowSuccessMessage(false);
-          window.location.reload();
+          // No full reload needed; keep dialog open to show cancel date, or close if you prefer
+          // We'll keep it open so user can see the cancellation info reflected instantly
         }, 3000);
       } else {
         alert("Failed to Unsubscribe");
@@ -115,6 +164,15 @@ const GymSubscriptions = () => {
     } finally {
       setIsUnsubscribing(false);
     }
+  };
+
+  const formatDate = (ts?: number) => {
+    if (!ts) return '';
+    // Stripe timestamps are seconds; JS expects ms
+    const date = new Date(ts < 1e12 ? ts * 1000 : ts);
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric'
+    });
   };
 
   if (isLoading) {
@@ -159,6 +217,7 @@ const GymSubscriptions = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {plans.map((plan, index) => {
             const gradient = gradients[index % gradients.length];
+            const cancelTs = cancellationByPlan[plan.plan_id];
             return (
               <Card
                 key={plan.plan_id}
@@ -168,6 +227,11 @@ const GymSubscriptions = () => {
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
                 />
+                {cancelTs && (
+                  <div className="absolute top-3 right-3 z-10 bg-yellow-500/20 text-yellow-200 border border-yellow-500/50 px-2 py-1 rounded text-xs">
+                    Cancels on {formatDate(cancelTs)}
+                  </div>
+                )}
                 <CardHeader className="relative text-center pb-6 space-y-4">
                   <div
                     className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-r ${gradient} flex items-center justify-center shadow-xl`}
@@ -232,13 +296,19 @@ const GymSubscriptions = () => {
                       </div>
                     </div>
                     <div>
-                      <Button 
-                        size='lg' 
-                        className='text-lg font-bold bg-red-600 hover:bg-red-700 text-white'
-                        onClick={handleUnsubscribeClick}
-                      >
-                        Unsubscribe
-                      </Button>
+                      {cancellationByPlan[selectedPlan.plan_id] ? (
+                        <div className="text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/40 px-3 py-2 rounded-lg">
+                          Scheduled to cancel on {formatDate(cancellationByPlan[selectedPlan.plan_id])}
+                        </div>
+                      ) : (
+                        <Button 
+                          size='lg' 
+                          className='text-lg font-bold bg-red-600 hover:bg-red-700 text-white'
+                          onClick={handleUnsubscribeClick}
+                        >
+                          Unsubscribe
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </DialogHeader>
