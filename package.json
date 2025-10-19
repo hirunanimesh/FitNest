@@ -9,22 +9,19 @@
     "migration:push": "npx supabase db push",
     "migration:reset": "npx supabase db reset",
     "types:generate": "npx supabase gen types typescript --local",
-  "test": "jest --selectProjects \"API Gateway Tests\" \"AuthService Tests\" \"UserService Tests\" \"GymService Tests\" \"PaymentService Tests\" \"AdminService Tests\"",
-  "test:watch": "jest --watch --selectProjects \"API Gateway Tests\" \"AuthService Tests\" \"UserService Tests\" \"GymService Tests\" \"PaymentService Tests\" \"AdminService Tests\"",
-  "test:coverage": "jest --coverage --selectProjects \"API Gateway Tests\" \"AuthService Tests\" \"UserService Tests\" \"GymService Tests\" \"PaymentService Tests\" \"AdminService Tests\"",
-  "test:user": "jest --selectProjects \"UserService Tests\"",
-  "test:auth": "jest --selectProjects \"AuthService Tests\"",
-  "test:trainer": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config backend/TrainerService/jest.config.cjs --colors -i"
-  ,
-  "test:all": "npm run test; npm run test:trainer"
-  ,
-  "test:user:api": "jest --selectProjects \"UserService Tests\" --testPathPatterns=\"backend/UserService/__tests__/(user\\.routes\\.int\\.test\\.js|calendar\\.controller\\.test\\.js)$\"",
-  "test:auth:api": "jest --selectProjects \"AuthService Tests\" --testPathPatterns=\"backend/AuthService/__tests__/(auth\\.http\\.int\\.unit\\.test\\.js|authRoutes\\.int\\.unit\\.test\\.js)$\"",
-  "test:trainer:api": "npm --prefix backend/TrainerService test -- --testPathPatterns=\"trainer\\.http\\.int\\.test\\.js$\"",
-  "test:gym:api": "npm --prefix backend/GymService test -- --testPathPatterns=\"(gym|plans)\\.http\\.int\\.test\\.js$\""
-  ,
-  "test:payment:api": "npm --prefix backend/PaymentService test -- --testPathPatterns=\"payment\\.http\\.int\\.test\\.js$\"",
-  "test:admin:api": "npm --prefix backend/AdminService test -- --testPathPatterns=\"admin\\.http\\.int\\.test\\.js$\""
+    "test": "jest --selectProjects \"API Gateway Tests\" \"AuthService Tests\" \"UserService Tests\" \"GymService Tests\" \"PaymentService Tests\" \"AdminService Tests\"",
+    "test:watch": "jest --watch --selectProjects \"API Gateway Tests\" \"AuthService Tests\" \"UserService Tests\" \"GymService Tests\" \"PaymentService Tests\" \"AdminService Tests\"",
+    "test:coverage": "jest --coverage --selectProjects \"API Gateway Tests\" \"AuthService Tests\" \"UserService Tests\" \"GymService Tests\" \"PaymentService Tests\" \"AdminService Tests\"",
+    "test:user": "jest --selectProjects \"UserService Tests\"",
+    "test:auth": "jest --selectProjects \"AuthService Tests\"",
+    "test:trainer": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config backend/TrainerService/jest.config.cjs --colors -i",
+    "test:all": "npm run test; npm run test:trainer",
+    "test:user:api": "jest --selectProjects \"UserService Tests\" --testPathPatterns=\"backend/UserService/__tests__/(user\\.routes\\.int\\.test\\.js|calendar\\.controller\\.test\\.js)$\"",
+    "test:auth:api": "jest --selectProjects \"AuthService Tests\" --testPathPatterns=\"backend/AuthService/__tests__/(auth\\.http\\.int\\.unit\\.test\\.js|authRoutes\\.int\\.unit\\.test\\.js)$\"",
+    "test:trainer:api": "npm --prefix backend/TrainerService test -- --testPathPatterns=\"trainer\\.http\\.int\\.test\\.js$\"",
+    "test:gym:api": "npm --prefix backend/GymService test -- --testPathPatterns=\"(gym|plans)\\.http\\.int\\.test\\.js$\"",
+    "test:payment:api": "npm --prefix backend/PaymentService test -- --testPathPatterns=\"payment\\.http\\.int\\.test\\.js$\"",
+    "test:admin:api": "npm --prefix backend/AdminService test -- --testPathPatterns=\"admin\\.http\\.int\\.test\\.js$\""
   },
   "keywords": [
     "supabase",

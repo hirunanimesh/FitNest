@@ -156,8 +156,8 @@ export const createCalendarEvent = async (req, res) => {
 export const updateCalendarEvent = async (req, res) => {
   const { calendarId } = req.params
   const payload = req.body
-  
-  console.log(`📝 [calendar.controller] Updating calendar event`, { 
+
+  console.log(`[calendar.controller] Updating calendar event`, {
     timestamp: new Date().toISOString(),
     calendarId,
     payload,

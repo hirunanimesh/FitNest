@@ -18,7 +18,6 @@ interface Event {
   start: string;
   end: string;
   backgroundColor: string;
-  color?: string;
   description?: string | null;
   extendedProps?: { description?: string | null; rawStart?: string; rawEnd?: string; google_event_id?: string };
   google_event_id?: string | null;
@@ -410,6 +409,7 @@ const loadEventsForMonth = async (startIso: string, endIso: string) => {
         datesSet={(arg) => {
           const start = arg.startStr;
          const end = arg.endStr;
+         console.log("[Visible Date Range]", { start, end });
          loadEventsForMonth(start, end);
       }}
           events={events}
