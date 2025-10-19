@@ -238,7 +238,7 @@ const EditPlan = ({
             <div className="space-y-2">
               <Label htmlFor="edit-image">Image</Label>
               <div className="flex gap-2 items-center">
-                <Input id="edit-image" type="file" accept="image/*" onChange={(e) => setFormState({ ...formState, image: e.target.files?.[0] || null })} />
+                <Input id="edit-image" type="file" accept="image/*" className="bg-gray-800 text-white border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-800 hover:file:bg-gray-100" onChange={(e) => setFormState({ ...formState, image: e.target.files?.[0] || null })} />
                 <Button type="button" size="sm" onClick={handleUploadImage}>Upload</Button>
               </div>
               {imageUploadStatus === 'uploading' && <p className="text-sm text-yellow-300">{imageUploadMessage}</p>}
@@ -248,7 +248,7 @@ const EditPlan = ({
             <div className="space-y-2">
               <Label htmlFor="edit-instructionPdf">Instruction PDF</Label>
               <div className="flex gap-2 items-center">
-                <Input id="edit-instructionPdf" type="file" accept="application/pdf" onChange={(e) => setFormState({ ...formState, instructionPdf: e.target.files?.[0] || null })} />
+                <Input id="edit-instructionPdf" type="file" accept="application/pdf" className="bg-gray-800 text-white border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-800 hover:file:bg-gray-100" onChange={(e) => setFormState({ ...formState, instructionPdf: e.target.files?.[0] || null })} />
                 <Button type="button" size="sm" onClick={handleUploadPdf}>Upload</Button>
               </div>
               {pdfUploadStatus === 'uploading' && <p className="text-sm text-yellow-300">{pdfUploadMessage}</p>}
@@ -393,7 +393,7 @@ const CreatePlan = ({ onAddPlan }: { onAddPlan: (payload: any) => Promise<void> 
             <div className="space-y-2">
               <Label htmlFor="image">Image</Label>
               <div className="flex gap-2 items-center">
-                <Input id="image" type="file" accept="image/*" onChange={(e) => setFormState({ ...formState, image: e.target.files?.[0] || null })} />
+                <Input id="image" type="file" accept="image/*" className="bg-gray-800 text-white border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-800 hover:file:bg-gray-100" onChange={(e) => setFormState({ ...formState, image: e.target.files?.[0] || null })} />
                 <Button type="button" size="sm" onClick={handleUploadImage}>Upload</Button>
               </div>
               {imageUploadStatus === 'uploading' && <p className="text-sm text-yellow-300">{imageUploadMessage}</p>}
@@ -403,7 +403,7 @@ const CreatePlan = ({ onAddPlan }: { onAddPlan: (payload: any) => Promise<void> 
             <div className="space-y-2">
               <Label htmlFor="instructionPdf">Instruction PDF</Label>
               <div className="flex gap-2 items-center">
-                <Input id="instructionPdf" type="file" className="bg-gray-800 text-white border-gray-600 flex-1" accept="application/pdf" onChange={(e) => setFormState({ ...formState, instructionPdf: e.target.files?.[0] || null })} />
+                <Input id="instructionPdf" type="file" accept="application/pdf" className="bg-gray-800 text-white border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-800 hover:file:bg-gray-100" onChange={(e) => setFormState({ ...formState, instructionPdf: e.target.files?.[0] || null })} />
                 <Button type="button" size="sm" onClick={handleUploadPdf}>Upload</Button>
               </div>
               {pdfUploadStatus === 'uploading' && <p className="text-sm text-yellow-300">{pdfUploadMessage}</p>}
