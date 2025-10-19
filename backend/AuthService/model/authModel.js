@@ -365,7 +365,7 @@ class AuthModel {
       }
 
       console.log("Customer data inserted successfully:", customerdata);
-      const customer_id = customerdata[0].customer_id; // Get the ID of the inserted customer
+      const customer_id = customerdata[0].id; // Get the ID of the inserted customer
       console.log("Inserted customer ID:", customer_id);
 
       const { data: physicalData, error: physicalError } = await supabase
