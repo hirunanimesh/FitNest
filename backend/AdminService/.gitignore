@@ -63,10 +63,15 @@ typings/
 
 # dotenv environment variables file
 .env
+.env.test
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# IMPORTANT: Allow .env.example files to be committed
+!.env.example
+!.env.test.example
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

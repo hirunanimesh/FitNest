@@ -51,6 +51,7 @@ const GymsPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sendingRequests, setSendingRequests] = useState<Set<number>>(new Set());
+  const [requestedGyms, setRequestedGyms] = useState<Set<number>>(new Set());
   const { toast } = useToast();
 
   const {trainerData,refreshTrainerData} = useTrainerData()
@@ -63,9 +64,30 @@ const GymsPage = () => {
     totalPages: 0
   });
 
+  const fetchTrainerRequests = async () => {
+    if (!trainerData?.trainer_id) return;
+    
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/trainer/getmembershipgyms/${trainerData.trainer_id}`
+      );
+      
+      if (response.data && response.data.gyms) {
+        const gymIds = response.data.gyms.map((request: any) => request.gym_id);
+        setRequestedGyms(new Set(gymIds));
+      }
+    } catch (error) {
+      console.error("Error fetching trainer requests:", error);
+      // Silently fail - this is not critical for the page to function
+    }
+  };
+
   useEffect(() => {
     fetchGyms(1, true);
-  }, []);
+    if (trainerData?.trainer_id) {
+      fetchTrainerRequests();
+    }
+  }, [trainerData?.trainer_id]);
 
   // Debounced search effect
   useEffect(() => {
@@ -185,15 +207,31 @@ const GymsPage = () => {
           title: "Request Sent!",
           description: response.message
         });
+        
+        // Add gym to requested set on successful send
+        setRequestedGyms(prev => new Set(prev).add(gymId));
         await refreshTrainerData();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending request:", error);
-      toast({
-        variant: "destructive",
-        title: "Request Failed",
-        description: `Failed to send request. Please try again.`
-      });
+      
+      // Handle specific cases based on status code
+      if (error.status === 409) {
+        // 409 Conflict - Request already sent
+        // Add to requested set since it exists
+        setRequestedGyms(prev => new Set(prev).add(gymId));
+        toast({
+          variant: "default",
+          title: "Already Sent",
+          description: error.message || "Request already sent to this gym."
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Request Failed",
+          description: error.message || "Failed to send request. Please try again."
+        });
+      }
     } finally {
       // Remove gym from sending requests set
       setSendingRequests(prev => {
@@ -314,23 +352,33 @@ const GymsPage = () => {
 
                 {/* Send Request Button - Always at bottom */}
                 <div className="mt-4">
-                  <Button
-                    onClick={() => sendRequest(gym.gym_id)}
-                    disabled={sendingRequests.has(gym.gym_id)}
-                    className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 transition-all duration-300 shadow-lg hover:shadow-red-500/25"
-                  >
-                    {sendingRequests.has(gym.gym_id) ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Request
-                      </>
-                    )}
-                  </Button>
+                  {requestedGyms.has(gym.gym_id) ? (
+                    <Button
+                      disabled
+                      className="w-full bg-gray-600 text-gray-300 font-semibold py-2 cursor-not-allowed"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Request Sent
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => sendRequest(gym.gym_id)}
+                      disabled={sendingRequests.has(gym.gym_id)}
+                      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 transition-all duration-300 shadow-lg hover:shadow-red-500/25"
+                    >
+                      {sendingRequests.has(gym.gym_id) ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Send Request
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -115,12 +115,28 @@ const GymProfile = () => {
   };
 
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File input triggered');
     const file = e.target.files?.[0];
+    console.log('Selected file:', file);
+    
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setMessage({ type: 'error', text: 'Please select a valid image file' });
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage({ type: 'error', text: 'Image size should be less than 5MB' });
+        return;
+      }
+      
       setNewProfileImage({
         file,
         preview: URL.createObjectURL(file)
       });
+      console.log('Profile image set for preview');
     }
   };
 
@@ -166,11 +182,14 @@ const GymProfile = () => {
       
       // Handle profile image upload to Cloudinary
       if (newProfileImage?.file) {
+        console.log('Uploading profile image to Cloudinary...');
         try {
           const { uploadToCloudinary } = await import('@/lib/cloudinary');
           const uploadResult = await uploadToCloudinary(newProfileImage.file, 'gym-profiles');
+          console.log('Profile image upload successful:', uploadResult);
           updateData.profile_img = uploadResult.url;
         } catch (uploadError) {
+          console.error('Profile image upload error:', uploadError);
           throw new Error(`Image upload failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
         }
       }
@@ -443,23 +462,52 @@ const GymProfile = () => {
                         : (gymProfileData.profile_img || '/api/placeholder/300/300')
                     }
                     alt="Gym Profile"
-                    className="w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-2xl object-cover border-4 border-gray-700 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                    className={`w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-2xl object-cover border-4 border-gray-700 shadow-xl group-hover:scale-105 transition-transform duration-300 ${
+                      isEditing ? 'cursor-pointer' : ''
+                    }`}
+                    onClick={isEditing ? () => document.getElementById('profile-image-upload')?.click() : undefined}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-red-900/30 via-transparent to-transparent rounded-2xl"></div>
                   {isEditing && (
-                    <div className="absolute inset-0 bg-black/70 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <Camera className="w-8 h-8 text-white" />
+                    <div 
+                      className="absolute inset-0 bg-black/70 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                      onClick={() => document.getElementById('profile-image-upload')?.click()}
+                    >
+                      <div className="text-center">
+                        <Camera className="w-8 h-8 text-white mx-auto mb-2" />
+                        <p className="text-white text-sm">Click to change</p>
+                      </div>
                     </div>
                   )}
                 </div>
                 {isEditing && (
-                  <label className="mt-4 cursor-pointer">
-                    <input type="file" accept="image/*" onChange={handleProfileImageChange} className="hidden" />
-                    <Button className="bg-red-600 hover:bg-red-700">
-                      <Camera className="w-4 h-4" />
+                  <div className="mt-4">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleProfileImageChange} 
+                      className="hidden" 
+                      id="profile-image-upload"
+                      ref={(input) => {
+                        if (input) {
+                          (window as any).profileImageInput = input;
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      className="bg-red-600 hover:bg-red-700"
+                      onClick={() => {
+                        const input = document.getElementById('profile-image-upload') as HTMLInputElement;
+                        if (input) {
+                          input.click();
+                        }
+                      }}
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
                       Change Photo
                     </Button>
-                  </label>
+                  </div>
                 )}
               </div>
             </div>
