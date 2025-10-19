@@ -84,7 +84,7 @@ export const getMySessions = async(req,res)=>{
     const {customerId} = req.params;
     try{
         const sessions = await getUserSessions(customerId);
-        console.log("Sessions:", sessions);
+        // console.log("Sessions:", sessions); // Commented out to reduce console noise
         if(sessions){
             res.status(200).json({message:"Sessions retrieved successfully",sessions});
         }else{
