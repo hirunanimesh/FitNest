@@ -18,6 +18,11 @@ interface VerifiedActionsProps {
   showDialog?: boolean;
 }
 
+// Simple in-memory cache to avoid repeated gym verification fetches across mounts
+// Cached for a short TTL to balance freshness and performance
+let gymVerificationCache: { userId: string | null; verified: boolean; ts: number } | null = null;
+const GYM_VERIFY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 const VerifiedActions: React.FC<VerifiedActionsProps> = ({
   children,
   role = 'trainer',
@@ -62,8 +67,25 @@ const VerifiedActions: React.FC<VerifiedActionsProps> = ({
           if (!cancelled) setGymVerified(false);
           return;
         }
+
+        // Use cache if available and fresh
+        const now = Date.now();
+        if (
+          gymVerificationCache &&
+          gymVerificationCache.userId === userId &&
+          now - gymVerificationCache.ts < GYM_VERIFY_TTL_MS
+        ) {
+          if (!cancelled) {
+            setGymVerified(Boolean(gymVerificationCache.verified));
+            setGymLoading(false);
+          }
+          return;
+        }
+
         const resp = await GetGymProfileData(userId);
         const verified = Boolean(resp?.gym?.verified);
+        // update cache
+        gymVerificationCache = { userId, verified, ts: Date.now() };
         if (!cancelled) setGymVerified(verified);
       } catch (err) {
         if (!cancelled) setGymVerified(false);
@@ -107,21 +129,18 @@ const VerifiedActions: React.FC<VerifiedActionsProps> = ({
     showVerificationDialog,
   });
 
-  // Don't render anything while loading
-  if (effectiveIsLoading) {
-    console.log('VerifiedActions: Still loading data');
-    return null;
-  }
-
-  // If trainer is verified, render children normally
+  // If entity is verified, render children normally
   if (effectiveIsVerified) {
     console.log('VerifiedActions: Entity is verified, rendering normal button');
     return children;
   }
 
-  console.log('VerifiedActions: Rendering disabled button and dialog', { 
-    showDialog, 
-    showVerificationDialog 
+  // When loading or not verified, render the children immediately but disabled to avoid UI flicker.
+  // This prevents late-appearing buttons while the verification check resolves.
+  console.log('VerifiedActions: Rendering disabled button and dialog', {
+    showDialog,
+    showVerificationDialog,
+    loading: effectiveIsLoading,
   });
 
   return (
@@ -131,6 +150,8 @@ const VerifiedActions: React.FC<VerifiedActionsProps> = ({
           console.log('VerifiedActions: Wrapper clicked, opening dialog');
           e.preventDefault();
           e.stopPropagation();
+          // If still loading, ignore clicks; once resolved, interaction will be enabled if verified
+          if (effectiveIsLoading) return;
           if (showDialog) {
             setShowVerificationDialog(true);
           }

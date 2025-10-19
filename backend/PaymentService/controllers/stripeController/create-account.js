@@ -21,8 +21,8 @@ export default async function createAccount(req,res) {
   
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${process.env.DOMAIN}/onboarding/refresh`,
-      return_url: `${process.env.DOMAIN}/onboarding/complete`,
+      refresh_url: `${process.env.DOMAIN}`,
+      return_url: `${process.env.DOMAIN}`,
       type: 'account_onboarding',
     });
 

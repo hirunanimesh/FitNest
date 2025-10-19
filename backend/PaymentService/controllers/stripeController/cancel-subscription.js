@@ -39,12 +39,17 @@ export default async function getSubscriptionId(req, res) {
       return res.status(404).json({ error: "No subscription found for this plan." });
     }
 
-    const canceledSubscription = await stripe.subscriptions.update(subscription.id,{
+    const canceledSubscription = await stripe.subscriptions.update(subscription.id, {
       cancel_at_period_end: true,
     });
 
-    // Step 5: Return delection confirmation
-    res.json({ canceled: true, subscriptionId: canceledSubscription.id });
+    // Step 5: Return confirmation with period end so UI can show cancel date
+    res.json({
+      canceled: true,
+      subscriptionId: canceledSubscription.id,
+      cancel_at_period_end: canceledSubscription.cancel_at_period_end,
+      current_period_end: canceledSubscription.current_period_end,
+    });
   } catch (error) {
     res.status(500).json({ error: "Unexpected error", details: error.message });
   }
