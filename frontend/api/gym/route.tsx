@@ -108,7 +108,7 @@ export const RequestVerification = async(gym_id:any,email:string) => {
         body: JSON.stringify({
           gym_id: gym_id, // Use gym_id if available, otherwise userId
           type: 'gym',
-          status: 'pending',
+          status: 'Pending',
           email: email
         })
       });
