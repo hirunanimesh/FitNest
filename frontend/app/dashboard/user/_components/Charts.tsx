@@ -167,7 +167,17 @@ const Charts: React.FC = () => {
                 });
                 setIsWeightDialogOpen(false);
             } catch (error) {
-                console.error("Error adding weight:", error);
+                // Improved logging for Axios errors
+                if (axios.isAxiosError(error)) {
+                    console.error("Error adding weight - status:", error.response?.status, "data:", error.response?.data || error.message);
+                    // Quick user-visible feedback while debugging
+                    // eslint-disable-next-line no-alert
+                    alert(`Failed to add weight: ${error.response?.status} - ${JSON.stringify(error.response?.data || error.message)}`);
+                } else {
+                    console.error("Error adding weight:", error);
+                    // eslint-disable-next-line no-alert
+                    alert(`Failed to add weight: ${String(error)}`);
+                }
             }
         } else {
             console.log("Validation failed:");

@@ -32,13 +32,21 @@ export const getuserbyid = async (req, res) => {
 
 export const addweight = async (req, res) => {
     try {
+        console.log('addweight controller - request body:', req.body);
         const weight = await addWeight(req.body);
         if (weight) {
-            res.status(200).json({ message: "Weight add successfully", weight });
+            console.log('addweight controller - success:', weight);
+            return res.status(200).json({ message: "Weight added successfully", weight });
         }
+        // If service returned falsy, respond with 400
+        console.warn('addweight controller - service returned no result');
+        return res.status(400).json({ message: 'No weight returned from service' });
     } catch (error) {
-        console.error("Error adding weight:", error);
-        res.status(500).json({ message: "Internal server error", error: error.message });
+        // Log full error for server-side debugging
+        console.error("Error adding weight:", error && error.stack ? error.stack : error);
+        const errMsg = error && error.message ? error.message : String(error);
+        // Return the message and also a small debug hint for now
+        return res.status(500).json({ message: "Internal server error", error: errMsg });
     }
 };
 export const getweightbyid = async (req, res) => {
