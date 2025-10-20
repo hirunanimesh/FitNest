@@ -37,7 +37,7 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true, // Enable service worker for PWA installation
   skipWaiting: true, // Auto-update without showing "new version" message
-  disable: false, // Enable PWA but with minimal caching
+  disable: process.env.NODE_ENV === 'development', // Disable PWA in development, enable in production
   // Disable update notifications
   reloadOnOnline: false,
   buildExcludes: [
