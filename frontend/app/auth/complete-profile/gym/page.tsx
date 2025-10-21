@@ -8,21 +8,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
 import { 
   Building2, 
   MapPin, 
-  Clock, 
-  User, 
+  Clock,  
   Camera, 
   FileText, 
   Upload, 
   Plus, 
   Trash2,
   ArrowLeft,
-  Phone,
-  Mail,
   X
 } from "lucide-react"
 import { AppLogo } from "@/components/AppLogo"
@@ -60,7 +56,19 @@ export default function CompleteGymProfile() {
     email: "",
     profileImageUrl: ""
   })
-  
+  type WeekDay = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+const defaultHours: Record<WeekDay, { open: string; close: string }> = {
+  monday: { open: "06:00", close: "22:00" },
+  tuesday: { open: "06:00", close: "22:00" },
+  wednesday: { open: "06:00", close: "22:00" },
+  thursday: { open: "06:00", close: "22:00" },
+  friday: { open: "06:00", close: "22:00" },
+  saturday: { open: "08:00", close: "20:00" },
+  sunday: { open: "08:00", close: "18:00" },
+};
+
+  const [operatingHours, setOperatingHours] = useState(defaultHours);
   const { toast } = useToast()
   useEffect(() => {
     const checkUserSession = async () => {
@@ -230,8 +238,7 @@ export default function CompleteGymProfile() {
       const ownerName = formData.get("ownerName") as string
       const contactNo = formData.get("contactNo") as string
       const description = formData.get("description") as string
-      const operatingHours = formData.get("operatingHours") as string
-
+      
       // Validate location selection
       if (!location) {
         throw new Error("Please select your gym location on the map")
@@ -289,7 +296,7 @@ export default function CompleteGymProfile() {
       submitData.append("address", location.address)
       submitData.append("description", description)
       submitData.append("location", JSON.stringify(locationObj))
-      submitData.append("operatingHours", operatingHours)
+      submitData.append("operatingHours", JSON.stringify(operatingHours))
       submitData.append("profileImage", profileImageUrl || "")
       submitData.append("documents", JSON.stringify(documentsData))
       submitData.append("userRole", "gym")
@@ -517,26 +524,48 @@ export default function CompleteGymProfile() {
                 </div>
 
                 <Separator className="bg-gray-700" />
-
                 {/* Operating Hours */}
                 <div className="space-y-4">
                   <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                     <Clock className="h-5 w-5 text-red-400" />
                     Operating Hours
                   </h3>
-                  
-                  <div>
-                    <Label htmlFor="operatingHours" className="text-gray-200">Operating Hours</Label>
-                    <Textarea
-                      id="operatingHours"
-                      name="operatingHours"
-                      placeholder="e.g., Monday - Friday: 5:00 AM - 11:00 PM&#10;Saturday - Sunday: 6:00 AM - 10:00 PM"
-                      className="bg-black/40 border-gray-700 text-white placeholder:text-gray-500 focus:border-red-500 min-h-[100px]"
-                    />
-                    <p className="text-sm text-gray-400 mt-2">
-                      Enter your gym's operating hours for all days of the week
-                    </p>
-                  </div>
+                  <div className="bg-black/40 border border-gray-700 rounded-xl p-4 space-y-3 shadow-sm">
+                        {Object.entries(operatingHours).map(([day, { open, close }]) => {
+                          const typedDay = day as WeekDay; // Tell TypeScript that day is a valid key
+                          return (
+                            <div key={typedDay} className="flex items-center justify-between gap-2 text-gray-200">
+                              <span className="capitalize w-24">{typedDay}</span>
+                              <input
+                                type="time"
+                                value={open}
+                                onChange={(e) =>
+                                  setOperatingHours((prev) => ({
+                                    ...prev,
+                                    [typedDay]: { ...prev[typedDay], open: e.target.value },
+                                  }))
+                                }
+                                className="bg-black/60 border border-gray-700 rounded-lg px-2 py-1 text-white focus:border-red-500 focus:ring-0 w-32"
+                              />
+                              <span>to</span>
+                              <input
+                                type="time"
+                                value={close}
+                                onChange={(e) =>
+                                  setOperatingHours((prev) => ({
+                                    ...prev,
+                                    [typedDay]: { ...prev[typedDay], close: e.target.value },
+                                  }))
+                                }
+                                className="bg-black/60 border border-gray-700 rounded-lg px-2 py-1 text-white focus:border-red-500 focus:ring-0 w-32"
+                              />
+                            </div>
+                          );
+                        })}
+                </div>
+                  <p className="text-sm text-gray-400">
+                    Set your gym's opening and closing times for each day of the week.
+                  </p>
                 </div>
 
                 <Separator className="bg-gray-700" />
