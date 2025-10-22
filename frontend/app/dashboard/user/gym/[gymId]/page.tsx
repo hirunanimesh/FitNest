@@ -365,8 +365,8 @@ const GymProfile: React.FC = () => {
         sunday: 'Not Available'
     };
 
-    const rating = 4.8;
-    const totalReviews = 324;
+    //const rating = 4.8;
+    //const totalReviews = 324;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900/20 to-slate-900">
@@ -414,7 +414,7 @@ const GymProfile: React.FC = () => {
                                     )}
                                 </Badge>
                             </div>
-                            <div className="flex items-center justify-center gap-6">
+                            {/*<div className="flex items-center justify-center gap-6">
                                 <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-red-500/20">
                                     <div className="flex items-center gap-1">
                                         {[...Array(5)].map((_, i) => (
@@ -424,7 +424,7 @@ const GymProfile: React.FC = () => {
                                     <span className="font-bold text-xl text-white">{rating}</span>
                                     <span className="text-white/80">({totalReviews} reviews)</span>
                                 </div>
-                            </div>
+                            </div>*/}
                         </div>
                         <p className="text-lg sm:text-xl text-white/90 max-w-4xl mx-auto leading-relaxed font-light">
                             {description}
