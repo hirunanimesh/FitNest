@@ -364,6 +364,10 @@ export default function UserInquiries() {
 
                       <h3 className="hidden sm:block text-lg font-semibold text-white">{inquiry.subject}</h3>
 
+                      <span className={getStatusColor(inquiry.status)}>
+                        {inquiry.status.charAt(0).toUpperCase() + inquiry.status.slice(1)}
+                      </span>
+
                       {inquiry.targetBanned && (
                         <span className="bg-red-500/20 text-red-300 border-red-300/30 px-2 py-1 rounded-md text-xs border flex items-center gap-1">
                           <Ban className="w-3 h-3" />
