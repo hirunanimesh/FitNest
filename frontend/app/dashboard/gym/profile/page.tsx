@@ -45,26 +45,6 @@ const GymProfile = () => {
 const [operatingHours, setOperatingHours] = useState<OperatingHours>({});
 
   // Helper to safely format operating_Hours which may be a string or an object
-  const formatOperatingHours = (oh: any) => {
-    if (!oh) return 'Not set';
-    if (typeof oh === 'string') return oh;
-    try {
-      // object shape: { monday: {open,close}, ... }
-      if (typeof oh === 'object') {
-        return Object.entries(oh)
-          .map(([day, times]) => {
-            if (!times || typeof times !== 'object') return `${day}: Not set`;
-            const open = (times as any).open || '—';
-            const close = (times as any).close || '—';
-            return `${day.charAt(0).toUpperCase() + day.slice(1)}: ${open} - ${close}`;
-          })
-          .join('\n');
-      }
-    } catch (e) {
-      // Fall through
-    }
-    return JSON.stringify(oh);
-  };
 
   const [formData, setFormData] = useState({
     gym_name: '',

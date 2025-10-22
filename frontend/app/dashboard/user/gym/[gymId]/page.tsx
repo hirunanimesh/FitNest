@@ -12,14 +12,8 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import ReportButton from "@/components/ReportButton"  
 import ReportModal from "../../../../profile/components/ReportModal"
-
-// Define interfaces for TypeScript
-interface OperatingHours {
-    weekdays: string;
-    saturday: string;
-    sunday: string;
-}
-
+type DayHours = { open: string; close: string };
+type OperatingHours = Record<string, DayHours>;
 interface FetchedGymData {
     address: string;
     contact_no: string;
@@ -66,6 +60,8 @@ const GymProfile: React.FC = () => {
     const [role, setRole] = useState<string>('');
     const [showReport, setShowReport] = useState(false)
     const [customerId, setCustomerId] = useState<number | null>(null);
+    const [operatingHours, setOperatingHours] = useState<OperatingHours | null>(null);
+
     // Scroll to top on page load
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -359,15 +355,27 @@ const GymProfile: React.FC = () => {
     const contactNo = gymData.contact_no || 'Contact No. Not Available';
     const profileImg = gymData.profile_img || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80';
 
-    const operatingHours = gymData.operating_Hours || {
-        weekdays: 'Not Available',
-        saturday: 'Not Available',
-        sunday: 'Not Available'
-    };
+   
 
     //const rating = 4.8;
     //const totalReviews = 324;
+    // Defensive helper: parse operating_Hours which may be an object or a JSON string
+    const parseOperatingHours = (raw: any): OperatingHours | null => {
+        if (!raw) return null;
+        if (typeof raw === 'string') {
+            try {
+                const parsed = JSON.parse(raw);
+                return parsed as OperatingHours;
+            } catch (e) {
+                console.warn('Failed to parse operating_Hours JSON:', e);
+                return null;
+            }
+        }
+        if (typeof raw === 'object') return raw as OperatingHours;
+        return null;
+    };
 
+    const hoursToRender = parseOperatingHours(operatingHours ?? gymData?.operating_Hours);
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900/20 to-slate-900">
             {/* Hero Section */}
@@ -449,65 +457,89 @@ const GymProfile: React.FC = () => {
                         <AlertDescription className="text-red-200">{errorMessage}</AlertDescription>
                     </Alert>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[
-                        { 
-                            icon: MapPin, 
-                            title: 'Location', 
-                            content: address,
-                            gradient: 'from-red-500 to-rose-600',
-                            bgGradient: 'from-red-500/20 to-rose-600/20'
-                        },
-                        { 
-                            icon: Phone, 
-                            title: 'Contact', 
-                            content: contactNo,
-                            gradient: 'from-red-500 to-pink-600',
-                            bgGradient: 'from-red-500/20 to-pink-600/20'
-                        },
-                        { 
-                            icon: User, 
-                            title: 'Owner', 
-                            content: ownerName,
-                            gradient: 'from-rose-500 to-red-600',
-                            bgGradient: 'from-rose-500/20 to-red-600/20'
-                        },
-                        {
-                            icon: Clock,
-                            title: 'Hours',
-                            content: (
-                                <div className="space-y-1 text-sm">
-                                    <p><span className="font-medium">Mon-Fri:</span> {operatingHours.weekdays}</p>
-                                    <p><span className="font-medium">Sat:</span> {operatingHours.saturday}</p>
-                                    <p><span className="font-medium">Sun:</span> {operatingHours.sunday}</p>
-                                </div>
-                            ),
-                            gradient: 'from-red-500 to-orange-600',
-                            bgGradient: 'from-red-500/20 to-orange-600/20'
-                        }
-                    ].map((item, index) => (
-                        <Card
-                            key={index}
-                            className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden"
-                        >
-                            <div className={`absolute inset-0 bg-gradient-to-br ${item.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                {/* New layout: 3 columns on large screens. Hours spans 2 columns (wide). Contact + Owner stacked in middle column. */}
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    {/* Column 1: Location */}
+                    <div>
+                        <Card className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+                            <div className={`absolute inset-0 bg-gradient-to-br from-red-500/20 to-rose-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                             <CardContent className="relative p-6">
                                 <div className="flex items-start gap-4">
-                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${item.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                        <item.icon className="w-6 h-6 text-white" />
+                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <MapPin className="w-6 h-6 text-white" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-lg text-white mb-3 group-hover:text-red-100 transition-colors">
-                                            {item.title}
-                                        </h3>
-                                        <div className="text-slate-300 group-hover:text-red-100 transition-colors">
-                                            {item.content}
+                                        <h3 className="font-bold text-lg text-white mb-3 group-hover:text-red-100 transition-colors">Location</h3>
+                                        <div className="text-slate-300 group-hover:text-red-100 transition-colors">{address}</div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Column 2: Contact + Owner stacked */}
+                    <div className="flex flex-col gap-6">
+                        <Card className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+                            <div className={`absolute inset-0 bg-gradient-to-br from-red-500/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                            <CardContent className="relative p-6">
+                                <div className="flex items-start gap-4">
+                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r from-red-500 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <Phone className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-lg text-white mb-3 group-hover:text-red-100 transition-colors">Contact</h3>
+                                        <div className="text-slate-300 group-hover:text-red-100 transition-colors">{contactNo}</div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+                            <div className={`absolute inset-0 bg-gradient-to-br from-rose-500/20 to-red-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                            <CardContent className="relative p-6">
+                                <div className="flex items-start gap-4">
+                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <User className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-lg text-white mb-3 group-hover:text-red-100 transition-colors">Owner</h3>
+                                        <div className="text-slate-300 group-hover:text-red-100 transition-colors">{ownerName}</div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Column 3: Hours (spans 2 columns visually on large screens) */}
+                    <div className="lg:col-span-1 md:col-span-2 lg:row-span-2">
+                        <Card className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+                            <div className={`absolute inset-0 bg-gradient-to-br from-red-500/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                            <CardContent className="relative p-6">
+                                <div className="flex items-start gap-4">
+                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r from-red-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <Clock className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-lg text-white mb-3 group-hover:text-red-100 transition-colors">Hours</h3>
+                                        <div className="text-slate-300 group-hover:text-red-100 transition-colors px-2">
+                                            <div className="space-y-2 text-sm">
+                                                {hoursToRender && Object.entries(hoursToRender).map(([day, hours]) => (
+                                                    <div key={day} className="flex items-center justify-between ">
+                                                        <div className="min-w-[50px] text-sm font-medium text-white">{day.charAt(0).toUpperCase() + day.slice(1)}</div>
+                                                        <div className="flex items-center gap-3">
+                                                        <div className="px-3 py-1 ">{hours.open}</div>
+                                                        <div className="text-sm ">-</div>
+                                                        <div className="px-3 py-1 ">{hours.close}</div>
+                                                    </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
-                    ))}
+                    </div>
                 </div>
                 <Card className="bg-white/5 backdrop-blur-sm border-white/10 overflow-hidden">
                     <CardHeader>
