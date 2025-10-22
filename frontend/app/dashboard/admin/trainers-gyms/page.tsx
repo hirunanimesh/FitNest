@@ -325,7 +325,7 @@ export default function TrainersGymsPage() {
                               <h3 className="font-semibold text-white text-lg">{gym.gym_name}</h3>
                               <div className="flex items-center gap-2 text-gray-400 text-sm">
                                 <MapPin className="h-4 w-4" />
-                                {gym.address}, {gym.location}
+                                {gym.address}
                               </div>
                               <div className="flex items-center gap-2 text-gray-400 text-sm">
                                 <Phone className="h-4 w-4" />
@@ -418,7 +418,7 @@ export default function TrainersGymsPage() {
                               </div>
                               <Badge className="bg-red-600/20 text-red-400 border-red-600/30">
                                 <Users className="h-3 w-3 mr-1" />
-                                Rating: {trainer.rating}/5 ({trainer.years_of_experience}y exp)
+                                {trainer.years_of_experience} years experience
                               </Badge>
                             </div>
                           </div>
