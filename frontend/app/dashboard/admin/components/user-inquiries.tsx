@@ -195,7 +195,50 @@ export default function UserInquiries() {
   })
 
   if (loading) {
-    return <div className="p-6 text-white">Loading inquiries...</div>
+    return (
+      <div className="space-y-6 animate-pulse">
+        {/* Search and Filter Skeleton */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="h-10 bg-muted rounded-lg flex-1"></div>
+          <div className="h-10 bg-muted rounded-lg w-32"></div>
+          <div className="h-10 bg-muted rounded-lg w-32"></div>
+        </div>
+
+        {/* Inquiries List Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="border border-border rounded-lg p-6 space-y-4 bg-card">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="h-12 w-12 bg-muted rounded-full"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 bg-muted rounded w-48"></div>
+                    <div className="h-4 bg-muted rounded w-32"></div>
+                  </div>
+                </div>
+                <div className="h-6 bg-muted rounded w-20"></div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 bg-muted rounded w-full"></div>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+              </div>
+              <div className="flex gap-2">
+                <div className="h-8 bg-muted rounded w-24"></div>
+                <div className="h-8 bg-muted rounded w-24"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Loading text */}
+        <div className="text-center py-8">
+          <div className="inline-flex items-center gap-2 text-muted-foreground">
+            <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <span>Loading inquiries...</span>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (error) {
