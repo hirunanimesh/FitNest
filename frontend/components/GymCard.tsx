@@ -48,10 +48,15 @@ function getGymStatus(operating_Hours?: OperatingHours) {
   const closeMinutes = closeH * 60 + closeM;
 
   // Return "Open" or "Closed" based on current time
-  if (currentMinutes >= openMinutes && currentMinutes <= closeMinutes) {
+   if (currentMinutes >= openMinutes && currentMinutes < closeMinutes) {
+    // Gym is open
     return { status: "Open", closesAt: todayHours.close };
+  } else if (currentMinutes < openMinutes) {
+    // Before opening time
+    return { status: "Closed", opensAt: todayHours.open };
   } else {
-    return { status: "Closed", closesAt: todayHours.close };
+    // After closing time
+    return { status: "Closed", opensAt: null };
   }
 }
 
@@ -103,12 +108,21 @@ export default function GymCard({ gym, onClick }: GymCardProps) {
             }
           >
             {status}
-          </span>
+
+            </span>
           <span className="text-slate-400 group-hover:text-red-100 transition-colors">
-            {closesAt ? `Closes at ${closesAt}` : "Closed today"}
-          </span>
+              {status === "Open"
+                ? closesAt
+                  ? `Closes at ${closesAt}`
+                  : "Closing soon"
+                : closesAt
+                ? "Closed"
+                : "Closed today"}
+            </span>
+
         </div>
       </CardContent>
     </Card>
   );
-}
+  }
+
