@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Building, QrCode } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -14,6 +15,7 @@ import { GetUserSubscriptions } from '@/api/user/route';
 
 const TopBar = () => {
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const { gymId } = useGym();
   const [userInfo, setUserInfo] = useState<{ name: string; avatar?: string } | null>(null);
   const [qrOpen,setQrOpen] = useState(false);
@@ -310,7 +312,7 @@ const TopBar = () => {
                 </div>
                 <div className='flex flex-row gap-5 items-center'>
                 <button
-                  onClick={()=>{setQrOpen(true); startScan();}}
+                  onClick={()=>{ router.push('/dashboard/gym/scanner'); }}
                   className="p-2 rounded-lg bg-gray-700 hover:bg-indigo-600 text-white transition"
                   title="Scan QR"
                 >
@@ -327,112 +329,7 @@ const TopBar = () => {
                 </div>
             </div>
         </header>
-        <Dialog open={qrOpen} onOpenChange={(o)=>{ if(!o) closeDialog(); }}>
-          <DialogContent className="sm:max-w-[480px] bg-gray-900 text-white border-gray-700">
-            <DialogHeader>
-              <DialogTitle>Scan User QR</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative w-full flex justify-center">
-                <div className="relative">
-                  <video ref={videoRef} className="rounded border border-gray-600 max-h-[320px]" playsInline muted />
-
-                </div>
-                {!scanning && !scanError && (
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">Starting camera...</div>
-                )}
-                {scanError && (
-                  <div className="absolute inset-0 flex items-center justify-center text-red-400 text-sm">{scanError}</div>
-                )}
-              </div>
-              <canvas ref={canvasRef} className="hidden" />
-              <div className="w-full flex flex-col gap-2">
-                <p className="text-xs text-gray-400 text-center min-h-[18px]">{debugMsg}</p>
-                {decodedValue && (
-                  <div className="mt-1 p-3 rounded bg-gray-800 border text-white text-sm">
-                    {customerId ? (
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="font-semibold text-gray-300">Customer ID: {customerId}</span>
-                          {accessStatus === 'checking' && (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
-                          )}
-                        </div>
-                        
-                        {accessStatus === 'granted' && (
-                          <div className="border border-green-500 bg-green-900/20 rounded p-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                              <span className="font-bold text-green-400">ACCESS GRANTED</span>
-                            </div>
-                            <p className="text-green-300 text-xs mb-3">Customer has valid subscription(s) for this gym</p>
-                            
-                            <div className="space-y-2">
-                              <span className="text-green-200 text-xs font-semibold">Active Plans:</span>
-                              {matchingPlans.map((plan, index) => (
-                                <div key={index} className="bg-green-800/30 rounded p-2 border border-green-600">
-                                  <div className="font-medium text-green-100">{plan.title}</div>
-                                  <div className="text-xs text-green-300">Price: ${plan.price} • Duration: {plan.duration}</div>
-                                  <div className="text-xs text-green-400 mt-1">{plan.description}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {accessStatus === 'denied' && (
-                          <div className="border border-red-500 bg-red-900/20 rounded p-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                              <span className="font-bold text-red-400">ACCESS DENIED</span>
-                            </div>
-                            <p className="text-red-300 text-xs">Customer does not have valid subscription for this gym</p>
-                          </div>
-                        )}
-                        
-                        {accessStatus === 'checking' && (
-                          <div className="border border-yellow-500 bg-yellow-900/20 rounded p-3">
-                            <div className="flex items-center gap-2">
-                              <div className="animate-pulse w-3 h-3 bg-yellow-500 rounded-full"></div>
-                              <span className="font-bold text-yellow-400">VERIFYING ACCESS...</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="font-semibold block mb-1 text-gray-300">Decoded QR Value:</span>
-                        <div className="break-words whitespace-pre-wrap text-gray-300">{decodedValue}</div>
-                      </div>
-                    )}
-                    <div className="mt-3 flex gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="border-gray-600 text-gray-400 hover:bg-gray-600/10"
-                        onClick={()=>{
-                          const textToCopy = customerId || decodedValue;
-                          textToCopy && navigator.clipboard.writeText(textToCopy);
-                        }}
-                      >{customerId ? 'Copy Customer ID' : 'Copy'}</Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="bg-gray-600 hover:bg-gray-700"
-                        onClick={()=>{ stopStream(); startScan(); }}
-                      >Scan Another</Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <DialogFooter className="mt-4 flex gap-2">
-              <Button variant="outline" className="bg-gray-700 hover:bg-gray-600" onClick={()=>{stopStream(); startScan();}}>Restart</Button>
-              <Button className="bg-red-600 hover:bg-red-700" onClick={closeDialog}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Scanner dialog removed in favor of dedicated page */}
     </div>
   )
 }
