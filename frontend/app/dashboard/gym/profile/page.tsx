@@ -7,6 +7,10 @@ import { supabase } from '@/lib/supabase';
 import { GetGymProfileData } from '@/lib/api';
 import { RequestVerification } from '@/api/gym/route';
 
+// Operating hours types & defaults
+type DayHours = { open: string; close: string };
+type OperatingHours = Record<string, DayHours>;
+
 interface Document {
   id: string;
   type: string;
@@ -17,6 +21,7 @@ const GymProfile = () => {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  
   const [gymProfileData, setGymProfileData] = useState<{
     gym_id?: string;
     gym_name: string;
@@ -27,7 +32,7 @@ const GymProfile = () => {
     profile_img: string;
     verified: boolean;
     documents: Document[];
-  }>({
+  }>( {
     gym_name: '',
     address: '',
     operating_Hours: '',
@@ -37,6 +42,29 @@ const GymProfile = () => {
     verified: false,
     documents: []
   });
+const [operatingHours, setOperatingHours] = useState<OperatingHours>({});
+
+  // Helper to safely format operating_Hours which may be a string or an object
+  const formatOperatingHours = (oh: any) => {
+    if (!oh) return 'Not set';
+    if (typeof oh === 'string') return oh;
+    try {
+      // object shape: { monday: {open,close}, ... }
+      if (typeof oh === 'object') {
+        return Object.entries(oh)
+          .map(([day, times]) => {
+            if (!times || typeof times !== 'object') return `${day}: Not set`;
+            const open = (times as any).open || '—';
+            const close = (times as any).close || '—';
+            return `${day.charAt(0).toUpperCase() + day.slice(1)}: ${open} - ${close}`;
+          })
+          .join('\n');
+      }
+    } catch (e) {
+      // Fall through
+    }
+    return JSON.stringify(oh);
+  };
 
   const [formData, setFormData] = useState({
     gym_name: '',
@@ -88,6 +116,21 @@ const GymProfile = () => {
               contact_no: gymData.contact_no || '',
               description: gymData.description || ''
             });
+
+            // populate operatingHours state from fetched value (string or object)
+            try {
+              if (gymData.operating_Hours) {
+                const parsed = typeof gymData.operating_Hours === 'string'
+                  ? JSON.parse(gymData.operating_Hours)
+                  : gymData.operating_Hours;
+                setOperatingHours(parsed || {});
+              } else {
+                setOperatingHours({});
+              }
+            } catch (e) {
+              console.error('Failed to parse operating hours:', e);
+              setOperatingHours({});
+            }
           }
         }
       } catch (error) {
@@ -223,6 +266,14 @@ const GymProfile = () => {
       // Update database via API
       if (!gymProfileData.gym_id) {
         throw new Error("Gym ID not found");
+      }
+
+      // serialize operating hours as JSON string for backend
+      try {
+        updateData.operating_Hours = JSON.stringify(operatingHours || {});
+      } catch (e) {
+        console.error('Failed to stringify operating hours:', e);
+        updateData.operating_Hours = formData.operating_Hours || '';
       }
 
       const { UpdateGymProfile } = await import('@/lib/api');
@@ -405,10 +456,7 @@ const GymProfile = () => {
                 <MapPin className="w-4 h-4" />
                 <span>{gymProfileData.address || 'Address not set'}</span>
               </div>
-              <div className="flex items-center gap-2 text-white/80 mt-2">
-                <Clock className="w-4 h-4" />
-                <span>{gymProfileData.operating_Hours || 'Operating hours not set'}</span>
-              </div>
+              
             </div>
             <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
               {isEditing ? (
@@ -548,24 +596,45 @@ const GymProfile = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="flex text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide items-center gap-2">
-                      <Clock className="w-4 h-4" /> Operating Hours
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        name="operating_Hours"
-                        value={formData.operating_Hours}
-                        onChange={handleInputChange}
-                        className="w-full bg-black/60 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-all duration-300"
-                        placeholder="e.g., Mon-Fri 6AM-10PM, Sat-Sun 8AM-8PM"
-                      />
-                    ) : (
-                      <p className="text-white bg-black/40 rounded-xl px-3 sm:px-4 py-2 sm:py-3 border border-gray-800">{gymProfileData.operating_Hours || 'Not set'}</p>
-                    )}
+                <div>
+                  <label className="flex text-sm font-semibold text-white mb-2 uppercase tracking-wide items-center gap-4">
+                    <Clock className="h-5 w-5 text-red-400" /> Operating Hours
+                  </label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {Object.keys(operatingHours).map((day) => {
+                      const d = day as keyof OperatingHours;
+                      const times = operatingHours[d];
+                      return (
+                        <div key={day} className="flex items-center gap-2 text-white">
+                          <span className="w-24 capitalize">{day}</span>
+                          <input
+                            type="time"
+                            value={times.open}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setOperatingHours((prev: OperatingHours) => ({
+                                ...prev,
+                                [d]: { ...prev[d], open: e.target.value },
+                              }))
+                            }
+                            className="w-32 bg-black/60 border border-gray-700 rounded-xl px-2 py-1 text-white"
+                          />
+                          <span className="mx-4">to</span>
+                          <input
+                            type="time"
+                            value={times.close}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setOperatingHours((prev: OperatingHours) => ({
+                                ...prev,
+                                [d]: { ...prev[d], close: e.target.value },
+                              }))
+                            }
+                            className="w-32 bg-black/60 border border-gray-700 rounded-xl px-2 py-1 text-white"
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
+                </div>
 
                   <div>
                     <label className="flex text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide items-center gap-2">
@@ -724,7 +793,7 @@ const GymProfile = () => {
           )}
         </div>
       </div>
-    </div>
+
   );
 };
 

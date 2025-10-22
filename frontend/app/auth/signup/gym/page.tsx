@@ -2,16 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Separator } from "@/components/ui/separator"
 import { Upload, FileText, Plus, X, ArrowLeft, User, Mail, Lock, Phone, Camera, Building2, MapPin, Clock, CheckCircle2, AlertCircle } from "lucide-react"
-import Link from "next/link"
-import { AppLogo } from "@/components/AppLogo"
 import GoogleMapPicker from "@/components/GoogleMapPicker"
 import { useRouter } from "next/navigation"
 import { GymRegister } from "@/lib/api"
@@ -42,7 +33,19 @@ export default function GymOwnerSignup() {
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState<Location | null>(null)
   const [showMap, setShowMap] = useState(false)
+type WeekDay = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
+const defaultHours: Record<WeekDay, { open: string; close: string }> = {
+  monday: { open: "06:00", close: "22:00" },
+  tuesday: { open: "06:00", close: "22:00" },
+  wednesday: { open: "06:00", close: "22:00" },
+  thursday: { open: "06:00", close: "22:00" },
+  friday: { open: "06:00", close: "22:00" },
+  saturday: { open: "08:00", close: "20:00" },
+  sunday: { open: "08:00", close: "18:00" },
+};
+
+const [operatingHours, setOperatingHours] = useState(defaultHours);
   // Show map modal
   const openMapSelector = () => {
     setShowMap(true)
@@ -404,20 +407,50 @@ export default function GymOwnerSignup() {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <label className="block text-sm font-semibold text-slate-200">
+                    <div className="space-y-4">
+                      <label className="block text-sm font-semibold text-slate-200 flex items-center gap-2">
+                         <Clock className="h-5 w-5 text-red-400" />
                         Operating Hours <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
-                        <Clock className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
-                        <input 
-                          name="operatingHours"
-                          placeholder="e.g., 6:00 AM - 10:00 PM" 
-                          className="w-full px-4 py-3 pl-12 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 backdrop-blur-sm"
-                          required
-                        />
-                      </div>
+                         
+                          <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-4   space-y-3">
+                            {Object.entries(operatingHours).map(([day, { open, close }]) => {
+                              const typedDay = day as WeekDay;
+                              return (
+                                <div key={typedDay} className="flex items-center justify-between gap-2 text-gray-200">
+                                  <span className="capitalize w-24">{typedDay}</span>
+                                  <input
+                                    type="time"
+                                    value={open}
+                                    onChange={(e) =>
+                                      setOperatingHours((prev) => ({
+                                        ...prev,
+                                        [typedDay]: { ...prev[typedDay], open: e.target.value },
+                                      }))
+                                    }
+                                    className="bg-slate-800/60 border border-slate-600 rounded-lg px-2 py-1 text-white w-32"
+                                  />
+                                  <span className="text-slate-300">to</span>
+                                  <input
+                                    type="time"
+                                    value={close}
+                                    onChange={(e) =>
+                                      setOperatingHours((prev) => ({
+                                        ...prev,
+                                        [typedDay]: { ...prev[typedDay], close: e.target.value },
+                                      }))
+                                    }
+                                    className="bg-slate-800/60 border border-slate-600 rounded-lg px-2 py-1 text-white w-32"
+                                  />
+                                </div>
+                              );
+                            })}
+
+                            {/* Hidden input to include operatingHours JSON in form submission */}
+                            <input type="hidden" name="operatingHours" value={JSON.stringify(operatingHours)} />
+                          </div>
+                        </div>
                     </div>
 
                     <div className="space-y-3">
@@ -437,7 +470,7 @@ export default function GymOwnerSignup() {
                     </div>
                   </div>
                 </div>
-              </div>
+              
 
               <div className="border-t border-slate-700/50"></div>
 

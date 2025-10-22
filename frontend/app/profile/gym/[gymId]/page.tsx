@@ -351,11 +351,7 @@ const GymProfile: React.FC = () => {
     const contactNo = gymData.contact_no || 'Contact No. Not Available';
     const profileImg = gymData.profile_img || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80';
 
-    const operatingHours = gymData.operating_Hours || {
-        weekdays: 'Not Available',
-        saturday: 'Not Available',
-        sunday: 'Not Available'
-    };
+    // operating_Hours is intentionally not shown in the top quick-info cards here.
 
     const rating = 4.8;
     const totalReviews = 324;
@@ -479,19 +475,7 @@ const GymProfile: React.FC = () => {
                             gradient: 'from-rose-500 to-red-600',
                             bgGradient: 'from-rose-500/20 to-red-600/20'
                         },
-                        {
-                            icon: Clock,
-                            title: 'Hours',
-                            content: (
-                                <div className="space-y-1 text-sm">
-                                    <p><span className="font-medium">Mon-Fri:</span> {operatingHours.weekdays}</p>
-                                    <p><span className="font-medium">Sat:</span> {operatingHours.saturday}</p>
-                                    <p><span className="font-medium">Sun:</span> {operatingHours.sunday}</p>
-                                </div>
-                            ),
-                            gradient: 'from-red-500 to-orange-600',
-                            bgGradient: 'from-red-500/20 to-orange-600/20'
-                        }
+                    
                     ].map((item, index) => (
                         <Card
                             key={index}

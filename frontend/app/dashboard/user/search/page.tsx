@@ -10,7 +10,12 @@ import TrainerCard from "@/components/TrainerCard";
 import GymsMapView from "@/components/GymsMapView";
 import { useRouter } from "next/navigation";
 import { GetOneDayGyms, GetOtherGyms } from "@/api/user/route";
-
+interface OperatingHours {
+  [key: string]: {
+    open: string;
+    close: string;
+  };
+}
 // Type definitions
 interface Gym {
   gym_id: number;
@@ -20,6 +25,7 @@ interface Gym {
   address: string;
   location: string;
   contact_no?: string | null;
+  operating_Hours?: OperatingHours | null;
 }
 
 interface PaginatedGymResponse {
