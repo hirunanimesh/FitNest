@@ -30,15 +30,32 @@ interface GymCardProps {
   onClick: () => void;
 }
 
-function getGymStatus(operating_Hours?: OperatingHours) {
-  if (!operating_Hours) return { status: "Closed", closesAt: null };
+function getGymStatus(operating_Hours?: OperatingHours | string | null) {
+  // Normalized return shape:
+  // { status: 'Open' | 'Closed', opensAt?: string | null, closesAt?: string | null }
+  if (!operating_Hours) return { status: "Closed", opensAt: null, closesAt: null };
+
+  // If operating_Hours was stored as a JSON string, try to parse it
+  let hoursObj: OperatingHours | null = null;
+  if (typeof operating_Hours === "string") {
+    try {
+      hoursObj = JSON.parse(operating_Hours) as OperatingHours;
+    } catch (e) {
+      // fallback: not valid JSON
+      hoursObj = null;
+    }
+  } else {
+    hoursObj = operating_Hours as OperatingHours;
+  }
+
+  if (!hoursObj) return { status: "Closed", opensAt: null, closesAt: null };
 
   // Get today's day in lowercase, e.g., "monday"
   const now = new Date();
   const today = now.toLocaleString("en-US", { weekday: "long" }).toLowerCase();
 
-  const todayHours = operating_Hours[today];
-  if (!todayHours) return { status: "Closed", closesAt: null };
+  const todayHours = hoursObj[today];
+  if (!todayHours) return { status: "Closed", opensAt: null, closesAt: null };
 
   const [openH, openM] = todayHours.open.split(":").map(Number);
   const [closeH, closeM] = todayHours.close.split(":").map(Number);
@@ -47,17 +64,33 @@ function getGymStatus(operating_Hours?: OperatingHours) {
   const openMinutes = openH * 60 + openM;
   const closeMinutes = closeH * 60 + closeM;
 
-  // Return "Open" or "Closed" based on current time
-   if (currentMinutes >= openMinutes && currentMinutes < closeMinutes) {
-    // Gym is open
-    return { status: "Open", closesAt: todayHours.close };
-  } else if (currentMinutes < openMinutes) {
-    // Before opening time
-    return { status: "Closed", opensAt: todayHours.open };
-  } else {
-    // After closing time
-    return { status: "Closed", opensAt: null };
+  // If open == close, assume 24/7 open
+  if (openMinutes === closeMinutes) {
+    return { status: "Open", opensAt: todayHours.open, closesAt: todayHours.close };
   }
+
+  // Handle overnight hours (close next day)
+  const isOvernight = closeMinutes <= openMinutes;
+
+  let isOpen = false;
+  if (isOvernight) {
+    // Open from openMinutes -> midnight, and from 00:00 -> closeMinutes
+    isOpen = currentMinutes >= openMinutes || currentMinutes < closeMinutes;
+  } else {
+    isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  }
+
+  if (isOpen) {
+    return { status: "Open", opensAt: todayHours.open, closesAt: todayHours.close };
+  }
+
+  // Closed: if current time is before today's opening, provide opensAt for messaging
+  if (!isOvernight && currentMinutes < openMinutes) {
+    return { status: "Closed", opensAt: todayHours.open, closesAt: todayHours.close };
+  }
+
+  // Closed after closing (or in-between overnight closed window): we can provide closesAt for context
+  return { status: "Closed", opensAt: null, closesAt: todayHours.close };
 }
 
 export default function GymCard({ gym, onClick }: GymCardProps) {
@@ -92,11 +125,11 @@ export default function GymCard({ gym, onClick }: GymCardProps) {
           <span className="truncate">{gym.address}</span>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-slate-300 group-hover:text-red-100 transition-colors">
+        {/*<div className="flex items-center gap-2 text-sm text-slate-300 group-hover:text-red-100 transition-colors">
           <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
           <span>{rating.toFixed(1)}</span>
           <span>({reviews} reviews)</span>
-        </div>
+        </div>*/}
 
         {/* ✅ Display real-time Open/Closed status */}
         <div className="flex items-center justify-between text-sm">
