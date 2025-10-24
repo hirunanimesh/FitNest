@@ -12,7 +12,6 @@ interface TrainerData {
   email: string;
   bio: string;
   years_of_experience: number;
-  rating: number;
   verified: boolean;
   skills: string[];
   documents?: any; // JSONB from DB, could be array/object
@@ -106,7 +105,6 @@ if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.sess
             email: user?.email || trainer.email,
             bio: trainer.bio || '',
             years_of_experience: trainer.years_of_experience || trainer.experience || 0,
-            rating: trainer.rating || 0,
             verified: trainer.verified || false,
             skills: (() => {
               if (Array.isArray(trainer.skills)) {
@@ -169,7 +167,6 @@ if (sessionsResponse.status === 'fulfilled' && sessionsResponse.value.data?.sess
           email: user.email,
           bio: "",
           years_of_experience: 0,
-          rating: 0,
           verified: false,
           skills: [],
           documents: null,

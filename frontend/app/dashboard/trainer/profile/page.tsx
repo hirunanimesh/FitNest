@@ -221,13 +221,13 @@ const TrainerProfile: React.FC = () => {
               <h1 className="text-3xl font-bold">{trainerData?.trainer_name}</h1>
             )}
             <div className="flex items-center justify-center md:justify-start mt-2 gap-4">
-              <span className="text-yellow-400">★ {(() => {
+              {/*<span className="text-yellow-400">★ {(() => {
                 if (trainerData?.rating === null || trainerData?.rating === undefined) return '4.5';
 
                 const numRating = typeof trainerData.rating === 'string' ? parseFloat(trainerData.rating) : trainerData.rating;
 
                 return !isNaN(numRating) && numRating >= 0 && numRating <= 5 ? numRating.toFixed(1) : '4.5';
-              })()}/5</span>
+              })()}/5</span>*/}
               {trainerData?.verified ? (
                 <span className="bg-green-500 text-white text-sm px-2 py-1 rounded-full">
                   Verified Trainer

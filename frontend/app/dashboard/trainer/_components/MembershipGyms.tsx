@@ -27,7 +27,6 @@ interface GymData {
   address: string;
   location: string;
   contact_no?: string | null;
-  rating?: number;
   reviews?: number;
   [key: string]: any; // Allow for additional properties
 }
@@ -169,7 +168,6 @@ export default function MembershipGyms() {
               location: 'Location not available',
               description: null,
               contact_no: null,
-              rating: undefined,
               reviews: undefined
             };
           return (

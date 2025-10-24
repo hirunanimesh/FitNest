@@ -40,7 +40,6 @@ interface Trainer {
     email: string;
     verified: boolean;
     skills: string[];
-    rating: number;
     years_of_experience: number;
     profile_img: string | null;
     approved: boolean;
@@ -56,7 +55,6 @@ interface TrainerAPIResponse {
                 contact_no: string;
                 verified: boolean;
                 skills: string;
-                rating: number;
                 years_of_experience: number;
                 profile_img: string | null;
             };
@@ -94,7 +92,6 @@ const TrainerTab: React.FC = () => {
                     email: item.trainer.contact_no,
                     verified: item.trainer.verified,
                     skills: item.trainer.skills.replace(/[{}]/g, '').split(', ').filter(skill => skill.trim() !== ''),
-                    rating: item.trainer.rating,
                     years_of_experience: item.trainer.years_of_experience,
                     profile_img: item.trainer.profile_img,
                     approved: item.approved,
@@ -231,9 +228,7 @@ const TrainerTab: React.FC = () => {
                                                             )}
                                                         </div>
                                                         <p className="text-sm text-gray-300 mb-2">{profile.email}</p>
-                                                        <div className="flex items-center mb-3">
-                                                            <span className="text-sm text-gray-300">⭐ {profile.rating}</span>
-                                                        </div>
+                                                        
                                                         {!profile.approved && (
                                                             <Button
                                                                 variant="default"
@@ -261,7 +256,6 @@ const TrainerTab: React.FC = () => {
                                             <TableHead className='text-gray-300'>Name</TableHead>
                                             <TableHead className='text-gray-300 hidden lg:table-cell'>Contact</TableHead>
                                             <TableHead className='text-gray-300'>Status</TableHead>
-                                            <TableHead className='text-gray-300'>Rating</TableHead>
                                             <TableHead className='text-gray-300 hidden lg:table-cell'>Experience</TableHead>
                                             <TableHead className='text-gray-300'>Actions</TableHead>
                                         </TableRow>
@@ -292,9 +286,6 @@ const TrainerTab: React.FC = () => {
                                                     ) : (
                                                         <Badge variant="secondary" className='bg-yellow-600 hover:bg-yellow-700 text-xs text-white'>Not Verified</Badge>
                                                     )}
-                                                </TableCell>
-                                                <TableCell className="text-gray-300 flex items-center">
-                                                    <span className="text-yellow-400 mr-1">⭐</span>{profile.rating}
                                                 </TableCell>
                                                 <TableCell className="text-gray-300 hidden lg:table-cell">{profile.years_of_experience} years</TableCell>
                                                 <TableCell>
