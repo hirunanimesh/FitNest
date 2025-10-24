@@ -393,7 +393,9 @@ const GymProfile: React.FC = () => {
                 </div>
                 <div className="absolute top-20 left-10 w-72 h-72 bg-red-500/10 rounded-full blur-3xl animate-pulse"></div>
                 <div className="absolute bottom-20 right-10 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                <div className="relative z-10 text-center max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                
+                <div className="relative z-10 text-center max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 lg:pr-[20rem]">
                     <div className="space-y-8 animate-fade-in">
                         <div className="space-y-6">
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -448,6 +450,37 @@ const GymProfile: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Absolute Hours card on the right side of the hero */}
+                <div className="absolute right-14 top-1/2 transform -translate-y-1/2 z-20 hidden lg:block w-96">
+                    <Card className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl overflow-hidden">
+                        <div className={`absolute inset-0 bg-gradient-to-br from-red-500/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                        <CardContent className="relative p-6">
+                            <div className="flex items-start gap-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-r from-red-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                    <Clock className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-lg text-white mb-3 group-hover:text-red-100 transition-colors">Hours</h3>
+                                    <div className="text-slate-300 group-hover:text-red-100 transition-colors px-2">
+                                        <div className="space-y-2 text-sm">
+                                            {hoursToRender && Object.entries(hoursToRender).map(([day, hours]) => (
+                                                <div key={day} className="flex items-center justify-between">
+                                                    <div className="min-w-[90px] text-sm font-medium text-white">{day.charAt(0).toUpperCase() + day.slice(1)}</div>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="px-3 py-1 text-sm">{hours.open}</div>
+                                                        <div className="text-sm text-">-</div>
+                                                        <div className="px-3 py-1  text-sm">{hours.close}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
@@ -457,7 +490,7 @@ const GymProfile: React.FC = () => {
                         <AlertDescription className="text-red-200">{errorMessage}</AlertDescription>
                     </Alert>
                 )}
-                {/* New layout: 3 columns on large screens. Hours spans 2 columns (wide). Contact + Owner stacked in middle column. */}
+    
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                     {/* Column 1: Location */}
                     <div>
@@ -478,7 +511,7 @@ const GymProfile: React.FC = () => {
                     </div>
 
                     {/* Column 2: Contact + Owner stacked */}
-                    <div className="flex flex-col gap-6">
+                    <div>
                         <Card className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
                             <div className={`absolute inset-0 bg-gradient-to-br from-red-500/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                             <CardContent className="relative p-6">
@@ -493,7 +526,8 @@ const GymProfile: React.FC = () => {
                                 </div>
                             </CardContent>
                         </Card>
-
+                         </div>
+                          <div>
                         <Card className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
                             <div className={`absolute inset-0 bg-gradient-to-br from-rose-500/20 to-red-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                             <CardContent className="relative p-6">
@@ -510,36 +544,7 @@ const GymProfile: React.FC = () => {
                         </Card>
                     </div>
 
-                    {/* Column 3: Hours (spans 2 columns visually on large screens) */}
-                    <div className="lg:col-span-1 md:col-span-2 lg:row-span-2">
-                        <Card className="group bg-white/5 backdrop-blur-sm border-white/10 hover:border-red-500/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
-                            <div className={`absolute inset-0 bg-gradient-to-br from-red-500/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                            <CardContent className="relative p-6">
-                                <div className="flex items-start gap-4">
-                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r from-red-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                        <Clock className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-lg text-white mb-3 group-hover:text-red-100 transition-colors">Hours</h3>
-                                        <div className="text-slate-300 group-hover:text-red-100 transition-colors px-2">
-                                            <div className="space-y-2 text-sm">
-                                                {hoursToRender && Object.entries(hoursToRender).map(([day, hours]) => (
-                                                    <div key={day} className="flex items-center justify-between ">
-                                                        <div className="min-w-[50px] text-sm font-medium text-white">{day.charAt(0).toUpperCase() + day.slice(1)}</div>
-                                                        <div className="flex items-center gap-3">
-                                                        <div className="px-3 py-1 ">{hours.open}</div>
-                                                        <div className="text-sm ">-</div>
-                                                        <div className="px-3 py-1 ">{hours.close}</div>
-                                                    </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    
                 </div>
                 <Card className="bg-white/5 backdrop-blur-sm border-white/10 overflow-hidden">
                     <CardHeader>
