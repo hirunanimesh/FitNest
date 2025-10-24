@@ -18,8 +18,6 @@ export default function TopBar() {
   const pathname = usePathname();
   const userName = isLoading ? "Loading..." : (userData ? `${userData.firstName} ${userData.lastName}` : "User");
   const imgUrl = userData?.avatar || null;
-
- 
   const isActive = (href: string) => {
     const normalizedPathname = pathname.replace(/\/+$/, "");
     const normalizedHref = href.replace(/\/+$/, "");
@@ -210,8 +208,6 @@ export default function TopBar() {
           </div>
         )}
       </header>
-
-      {/* Spacer */}
       <div className="h-16 sm:h-18 bg-black"></div>
     </>
   )
