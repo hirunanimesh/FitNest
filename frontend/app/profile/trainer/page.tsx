@@ -13,13 +13,12 @@ import { UserDataProvider } from '../../dashboard/user/context/UserContext'
 function TrainerPageContent() {
   console.log("TrainerPage rendered"); // Debug log
   const searchParams = useSearchParams()
-  const isAdminView = searchParams.get('adminView') === 'true'
 
   return (
     <TrainerDataProvider>
       <main className="bg-gray-900 min-h-screen text-gray-100">
       <UserDataProvider>
-        {!isAdminView && <TopBar />}
+        { <TopBar />}
       </UserDataProvider>
         <HeroSection />
       

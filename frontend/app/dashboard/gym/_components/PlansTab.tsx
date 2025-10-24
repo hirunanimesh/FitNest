@@ -56,7 +56,6 @@ interface Trainer {
   trainer_name: string;
   contact_no: string;
   verified: boolean;
-  rating: number;
   years_of_experience: number;
   profile_img: string | null;
 }
@@ -643,7 +642,6 @@ const PlansTab: React.FC = () => {
                         <div className="flex items-center justify-between">
                           <span>{trainer.trainer_name}</span>
                           <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-400">
-                            <span>⭐ {trainer.rating}</span>
                             <span>{trainer.years_of_experience}y</span>
                             {trainer.verified && (
                               <Badge className="bg-green-500/50 text-green-200 text-xs px-1 py-0">✓</Badge>

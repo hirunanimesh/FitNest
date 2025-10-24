@@ -6,12 +6,11 @@ import { UserDataProvider } from './context/UserContext'
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams()
-  const isAdminView = searchParams.get('adminView') === 'true'
   
   return (
     <UserDataProvider>
       <div className="min-h-screen bg-black">
-          {!isAdminView && <TopBar/>}
+          { <TopBar/>}
           <div className="bg-black">
               {children}
           </div>
