@@ -260,9 +260,21 @@ export default function GymScannerPage() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setScanning(true);
-        setDebugMsg("Scanning...");
+        try {
+          await videoRef.current.play();
+          setScanning(true);
+          setDebugMsg("Scanning...");
+        } catch (playError: any) {
+          // Suppress the common "play() request was interrupted" error which is not critical
+          if (playError.name === 'AbortError' || playError.message.includes('interrupted by a new load request')) {
+            // This is expected when video is reloaded/restarted, just continue
+            setScanning(true);
+            setDebugMsg("Scanning...");
+          } else {
+            // Only throw other types of play errors
+            throw playError;
+          }
+        }
 
         // Start jsQR loop
         tick();
