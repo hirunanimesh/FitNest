@@ -229,7 +229,7 @@ const UpcomingSessions = () => {
                     ? "ring-4 ring-red-500 shadow-[0_0_24px_6px_rgba(239,68,68,0.8)]"
                     : "shadow-[0_0_12px_2px_rgba(239,68,68,0.5)]"
                   }
-                  hover:border-red-500 hover:shadow-2xl hover:-translate-y-2 hover:scale-105`}
+                  hover:border-red-500 hover:shadow-1xl hover:-translate-y-2 hover:scale-105`}
                 style={{
                   boxShadow: selectedSession === session.session_id.toString()
                     ? "0 0 24px 6px rgba(239,68,68,0.8), 0 0 40px 10px rgba(255,0,0,0.4)"
