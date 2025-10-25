@@ -1,13 +1,13 @@
 "use client";
 
-import { MapPin, Star } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 // Define the type for operating hours
 interface OperatingHours {
   [key: string]: {
-    open: string; // e.g., "06:00"
-    close: string; // e.g., "22:00"
+    open: string; 
+    close: string; 
   };
 }
 
@@ -20,8 +20,6 @@ interface Gym {
   address: string;
   location: string;
   contact_no?: string | null;
-  rating?: number; // Optional
-  reviews?: number; // Optional
   operating_Hours?: OperatingHours | null; // Added operating hours
 }
 
@@ -97,8 +95,6 @@ export default function GymCard({ gym, onClick }: GymCardProps) {
   const profileImg =
     gym.profile_img ||
     "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80";
-  const rating = gym.rating ?? 4.5; // fallback rating
-  const reviews = gym.reviews ?? 100; // fallback reviews
   const { status, closesAt } = getGymStatus(gym.operating_Hours ?? undefined);
 
 
