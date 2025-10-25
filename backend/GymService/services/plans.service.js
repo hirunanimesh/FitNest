@@ -174,7 +174,6 @@ export async function getplantrainers(planId) {
       trainer:trainer_id (
         id,
         trainer_name,
-        rating,
         years_of_experience,
         profile_img,
         verified

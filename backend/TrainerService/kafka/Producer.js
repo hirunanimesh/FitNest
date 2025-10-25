@@ -1,12 +1,21 @@
-import { kafka } from "../config/Kafka.js";
+import { getKafka } from "../config/Kafka.js";
 
-const producer = kafka.producer()
+let producer = null;
+
+const getProducer = () => {
+  if (!producer) {
+    const kafka = getKafka();
+    producer = kafka.producer();
+  }
+  return producer;
+};
 
 export const TrainerSessionCreateProducer = async (session_id,price)=>{
     try {
-      await producer.connect();
+      const kafkaProducer = getProducer();
+      await kafkaProducer.connect();
   
-      await producer.send({
+      await kafkaProducer.send({
         topic: "trainer_session_created",
         messages: [
           {
@@ -24,7 +33,7 @@ export const TrainerSessionCreateProducer = async (session_id,price)=>{
     } catch (err) {
       console.error("❌ Error publishing event:", err);
     } finally {
-      await producer.disconnect();
+      await kafkaProducer.disconnect();
     }
 }
 

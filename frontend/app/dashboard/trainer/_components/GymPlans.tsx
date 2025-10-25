@@ -31,22 +31,29 @@ const GymPlans = () => {
     ];
 
     useEffect(() => {
-        const fetch = async () => {
+        const fetchGymPlans = async () => {
             try {
                 const trainerId = trainerData?.trainer_id || (trainerData as any)?.id;
+                console.log('Trainer ID:', trainerId);
+                
                 if (!trainerId) {
                     setGymPlans([]);
                     return;
                 }
+                
                 const res = await GetTrainersGymplans(trainerId);
+                console.log('API Response:', res);
+                
                 const plans = res?.gymplans || res?.plans || [];
+                console.log('Extracted plans:', plans);
+                
                 setGymPlans(plans);
             } catch (err) {
                 console.error('Failed to load gym plans', err);
                 setGymPlans([]);
             }
         };
-        fetch();
+        fetchGymPlans();
     }, [trainerData]);
 
     return (
@@ -79,9 +86,13 @@ const GymPlans = () => {
                                     <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-r ${gradient} flex items-center justify-center shadow-xl`}>
                                         <Award className="w-8 h-8 text-white" />
                                     </div>
-                                    {plan.gym_name && (
+                                    {plan.gym_name ? (
                                         <div className="text-sm font-semibold text-red-400 bg-red-400/10 px-3 py-1 rounded-full inline-block">
                                             {plan.gym_name}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm font-semibold text-gray-400 bg-gray-500/20 px-3 py-1 rounded-full inline-block">
+                                            Gym Name Not Available
                                         </div>
                                     )}
                                     <CardTitle className="text-2xl font-bold text-white group-hover:text-red-100 transition-colors">
