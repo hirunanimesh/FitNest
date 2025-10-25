@@ -52,6 +52,9 @@ export async function gettrainerbyid(trainerId) {
         return data; // Return the trainer data
 }
 export async function getgymplanbytrainerid(trainerId) {
+  console.log('Fetching gym plans for trainer ID:', trainerId);
+  
+  // First, get the gym plans for the trainer
   const { data, error } = await supabase
     .from("gym_plan_trainers")
     .select(`
@@ -62,11 +65,56 @@ export async function getgymplanbytrainerid(trainerId) {
     `)
     .eq("trainer_id", trainerId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error('Error fetching gym plans:', error);
+    throw new Error(error.message);
+  }
+
+  console.log('Raw gym plans data:', JSON.stringify(data, null, 2));
 
   if (!data || data.length === 0) return null;
 
-  return data.map((row) => row.Gym_plans);
+  const plans = data.map((row) => row.Gym_plans);
+  console.log('Extracted plans:', plans);
+
+  // Get gym information for each plan
+  const plansWithGymInfo = await Promise.all(
+    plans.map(async (plan) => {
+      console.log('Processing plan:', plan);
+      
+      if (plan && plan.gym_id) {
+        console.log(`Fetching gym info for gym_id: ${plan.gym_id}`);
+        
+        try {
+          // Get gym information using the correct table name
+          const { data: gymData, error: gymError } = await supabase
+            .from("gym")
+            .select("gym_name, gym_id")
+            .eq("gym_id", plan.gym_id)
+            .single();
+          
+          console.log(`Gym query result for gym_id ${plan.gym_id}:`, { gymData, gymError });
+
+          if (gymData) {
+            console.log(`Found gym info for ${plan.gym_id}:`, gymData);
+            return {
+              ...plan,
+              gym_name: gymData.gym_name
+            };
+          } else {
+            console.log(`No gym info found for gym_id: ${plan.gym_id}`);
+          }
+        } catch (gymErr) {
+          console.log(`Error fetching gym info for gym_id ${plan.gym_id}:`, gymErr);
+        }
+      } else {
+        console.log('Plan has no gym_id:', plan);
+      }
+      return plan;
+    })
+  );
+
+  return plansWithGymInfo;
 }
 export async function getmembershipGyms(trainerId) {
   // Validate input to avoid passing undefined to Supabase bigint filters

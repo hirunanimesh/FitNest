@@ -68,6 +68,7 @@ export const getGymPlanByTrainerId = async (req, res) => {
             return res.status(400).json({ message: 'Invalid trainerId parameter' });
         }
         const gymplans = await getgymplanbytrainerid(trainerId);
+        console.log('Final gym plans to return:', JSON.stringify(gymplans, null, 2));
 
     if (gymplans && gymplans.length > 0) {
       res.status(200).json({ message: "GymPlans retrieved successfully", gymplans });

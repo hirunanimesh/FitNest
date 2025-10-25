@@ -18,6 +18,8 @@ export default function GymScannerPage() {
   const zxingRef = useRef<any>(null);
   const zxingControlsRef = useRef<any>(null);
   const zxingActiveRef = useRef<boolean>(false);
+  const pausedRef = useRef<boolean>(false);
+  const pauseTimerRef = useRef<number | null>(null);
 
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -35,6 +37,12 @@ export default function GymScannerPage() {
 
   const stopStream = () => {
     try {
+      // clear any pending pause timers and resume flags
+      if (pauseTimerRef.current) {
+        clearTimeout(pauseTimerRef.current);
+        pauseTimerRef.current = null;
+      }
+      pausedRef.current = false;
       if (zxingControlsRef.current) {
         try {
           zxingControlsRef.current.stop();
@@ -42,12 +50,18 @@ export default function GymScannerPage() {
         zxingControlsRef.current = null;
       }
       if (videoRef.current && videoRef.current.srcObject) {
-        (videoRef.current.srcObject as MediaStream).getTracks().forEach((t) =>
-          t.stop()
-        );
-        videoRef.current.srcObject = null;
+        try {
+          (videoRef.current.srcObject as MediaStream)
+            .getTracks()
+            .forEach((t) => t.stop());
+        } finally {
+          videoRef.current.srcObject = null;
+        }
       }
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
     } finally {
       setScanning(false);
       zxingActiveRef.current = false;
@@ -57,6 +71,28 @@ export default function GymScannerPage() {
   useEffect(() => {
     return () => stopStream();
   }, []);
+
+  // Stop stream when page is hidden or unloading; resume on visible if still on page
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) {
+        stopStream();
+      } else {
+        // Avoid auto starting if already scanning
+        if (!scanning) startScan();
+      }
+    };
+    const onPageHide = () => stopStream();
+    const onBeforeUnload = () => stopStream();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [scanning]);
 
   const parseQRData = (qrData: string) => {
     try {
@@ -137,6 +173,8 @@ export default function GymScannerPage() {
   };
 
   const handleDecoded = (text: string) => {
+    // ignore decoded results if we are currently pausing between scans
+    if (pausedRef.current) return;
     const now = Date.now();
     // Throttle duplicates within 1.5s
     if (text === lastValueRef.current && now - lastScanAtRef.current < 1500) {
@@ -167,6 +205,11 @@ export default function GymScannerPage() {
       c.height = v.videoHeight;
       ctx.drawImage(v, 0, 0, c.width, c.height);
       if (jsqrRef.current) {
+        // If paused, skip decoding work to save CPU
+        if (pausedRef.current) {
+          animationRef.current = requestAnimationFrame(tick);
+          return;
+        }
         try {
           const imageData = ctx.getImageData(0, 0, c.width, c.height);
           const code = jsqrRef.current(
@@ -241,6 +284,7 @@ export default function GymScannerPage() {
               videoRef.current,
               (result: any) => {
                 if (result) {
+                  if (pausedRef.current) return;
                   const text = result.getText();
                   handleDecoded(text);
                 }
@@ -260,6 +304,31 @@ export default function GymScannerPage() {
     startScan();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When a result is finalized (granted/denied), pause scanning for 4s then resume
+  useEffect(() => {
+    if (!lastScan) return;
+    if ((lastScan.status === "granted" || lastScan.status === "denied") && !pausedRef.current) {
+      pausedRef.current = true;
+      setDebugMsg(
+        lastScan.status === "granted"
+          ? "Access granted — pausing 4s before next scan"
+          : "Access denied — pausing 4s before next scan"
+      );
+      if (pauseTimerRef.current) {
+        clearTimeout(pauseTimerRef.current);
+        pauseTimerRef.current = null;
+      }
+      pauseTimerRef.current = window.setTimeout(() => {
+        pausedRef.current = false;
+        // Clear last scan panel and allow the same QR to be scanned again
+        setLastScan(null);
+        lastValueRef.current = null;
+        lastScanAtRef.current = 0;
+        setDebugMsg("Scanning...");
+      }, 4000) as unknown as number;
+    }
+  }, [lastScan?.status]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
