@@ -1,7 +1,6 @@
 
 import { getmembershipGyms,getgymplanbytrainerid,getfeedbackbytrainerid,getalltrainers, gettrainerbyid,  updatetrainerdetails ,booksession, sendrequest, requestTrainerVerification, holdsession, releasesession} from '../services/trainer.service.js';
 
-
 export const getallTrainers = async (req,res)=>{
     try{
         const page = parseInt(req.query.page) || 1;
@@ -191,5 +190,3 @@ export const requestVerification = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 }
-
-

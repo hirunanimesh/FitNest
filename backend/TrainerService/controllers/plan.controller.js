@@ -7,7 +7,6 @@ import {
     getallplanbytrainerid
 } from "../services/plan.service.js";
 
-
 export const addplans = async (req, res) => {
     try {
         const plan = await addplan(req.body);
@@ -94,4 +93,3 @@ export const deletePlan = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
-
