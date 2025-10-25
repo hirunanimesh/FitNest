@@ -251,8 +251,3 @@ export async function requestTrainerVerification(verificationData) {
 
   return { message: 'Verification request submitted successfully. You will be notified once reviewed.' };
 }
-
-
-
-
-
