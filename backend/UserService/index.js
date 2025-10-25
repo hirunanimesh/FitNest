@@ -3,7 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 
-import {addfeedback,getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails, getMySessions, addreport, getuserbycustomerid} from './controllers/user.controller.js'
+import {addfeedback,getlatestweightbyid,getweightbyid,addweight,getuserbyid, updateuserdetails, getMySessions, addreport} from './controllers/user.controller.js'
 import {
 	getGoogleOauthUrl,
 	googleCallback,
@@ -20,7 +20,6 @@ app.use(express.json())
 app.use(cors())
 
 app.get('/getuserbyid/:userId',getuserbyid)
-//app.get('/getuserbycustomerid/:customerId',getuserbycustomerid)
 app.patch('/updateuserdetails/:userId',updateuserdetails)
 app.post('/addweight',addweight)
 app.get('/getweightbyid/:userId',getweightbyid)
