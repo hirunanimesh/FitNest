@@ -46,7 +46,7 @@ export function TrainerDataProvider({ children }: { children: React.ReactNode })
   const fetchTrainerData = async () => {
     // Prevent multiple simultaneous calls
     if (isFetching) {
-      console.log("🔄 Already fetching trainer data, skipping...");
+      console.log(" Already fetching trainer data, skipping...");
       return;
     }
     
