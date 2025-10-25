@@ -20,7 +20,7 @@ app.use(express.json())
 app.use(cors())
 
 app.get('/getuserbyid/:userId',getuserbyid)
-app.get('/getuserbycustomerid/:customerId',getuserbycustomerid)
+//app.get('/getuserbycustomerid/:customerId',getuserbycustomerid)
 app.patch('/updateuserdetails/:userId',updateuserdetails)
 app.post('/addweight',addweight)
 app.get('/getweightbyid/:userId',getweightbyid)
