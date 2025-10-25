@@ -121,59 +121,56 @@ const PlansTab: React.FC = () => {
       try {
         setLoading(true);
         
-        // Try to load from cache first
+        // Clear cache on fresh load to ensure data consistency
         const cacheKey = `gymPlans_${gymId}`;
-        const cachedData = localStorage.getItem(cacheKey);
         
-        if (cachedData) {
-          try {
-            const parsedData = JSON.parse(cachedData);
-            setPlans(parsedData);
-            setLoading(false);
-          } catch (e) {
-            console.error('Failed to parse cached plans');
-          }
-        }
-
-        // Fetch fresh data in background
+        // Fetch fresh data from API
         const response: GymPlansResponse = await GetGymPlans(gymId);
         if (response?.data?.gymPlan) {
-          // Load plans immediately without trainer data
-          const basicPlans = response.data.gymPlan.map(plan => ({
-            ...plan,
-            trainers: []
-          }));
-          setPlans(basicPlans);
+          console.log('Fetched plans:', response.data.gymPlan);
           
-          // Cache the basic plans
-          localStorage.setItem(cacheKey, JSON.stringify(basicPlans));
-          
-          // Load trainer data in background
+          // Load trainer data for each plan
           const plansWithTrainers = await Promise.all(
             response.data.gymPlan.map(async (plan) => {
               try {
+                console.log(`Fetching trainers for plan ${plan.plan_id}`);
                 const trainersResponse = await GetPlanTrainers(plan.plan_id);
+                console.log(`Trainers response for plan ${plan.plan_id}:`, trainersResponse);
+                
                 let trainerIds: string[] = [];
-                const trainersArray = trainersResponse?.data?.data;
-                if (Array.isArray(trainersArray)) {
-                  trainerIds = trainersArray.map((item: any) => String(item.trainer_id));
+                // Handle different possible response structures
+                if (trainersResponse?.data?.data) {
+                  const trainersArray = trainersResponse.data.data;
+                  if (Array.isArray(trainersArray)) {
+                    trainerIds = trainersArray.map((item: any) => {
+                      // Handle different possible data structures
+                      return String(item.trainer_id || item.id || item);
+                    });
+                  }
+                } else if (trainersResponse?.data && Array.isArray(trainersResponse.data)) {
+                  trainerIds = trainersResponse.data.map((item: any) => String(item.trainer_id || item.id || item));
                 }
+                
+                console.log(`Trainer IDs for plan ${plan.plan_id}:`, trainerIds);
                 return { ...plan, trainers: trainerIds };
               } catch (error) {
+                console.error(`Error fetching trainers for plan ${plan.plan_id}:`, error);
                 return { ...plan, trainers: [] };
               }
             })
           );
           
+          console.log('Plans with trainers:', plansWithTrainers);
           setPlans(plansWithTrainers);
+          
+          // Cache the updated data
           localStorage.setItem(cacheKey, JSON.stringify(plansWithTrainers));
         } else {
-          if (!cachedData) {
-            setErrorMessage('No plans found for this gym');
-            toast.error('No plans found for this gym');
-          }
+          setErrorMessage('No plans found for this gym');
+          toast.error('No plans found for this gym');
         }
       } catch (error) {
+        console.error('Error fetching gym plans:', error);
         setErrorMessage('Failed to load gym plans. Please try again.');
         toast.error('Failed to load gym plans');
       } finally {
@@ -290,7 +287,16 @@ const PlansTab: React.FC = () => {
 
     try {
       if (currentPlan.plan_id) {
-        // Optimistic update for edit
+        console.log('Updating plan:', currentPlan.plan_id, 'with trainers:', currentPlan.trainers);
+        
+        // API calls first for edit to ensure data persistence
+        await UpdateGymPlan(currentPlan.plan_id, currentPlan);
+        console.log('Plan updated successfully');
+        
+        await UpdatePlanTrainers(currentPlan.plan_id, currentPlan.trainers);
+        console.log('Plan trainers updated successfully');
+
+        // Update UI after successful API calls
         const optimisticUpdate = {
           plan_id: currentPlan.plan_id,
           title: currentPlan.title,
@@ -312,47 +318,33 @@ const PlansTab: React.FC = () => {
         
         setSuccessMessage('Plan updated successfully');
         toast.success('Plan updated successfully');
-
-        // API calls in background
-        await UpdateGymPlan(currentPlan.plan_id, currentPlan);
-        await UpdatePlanTrainers(currentPlan.plan_id, currentPlan.trainers);
         
       } else {
-        // Optimistic update for create
-        const tempId = `temp_${Date.now()}`;
-        const optimisticNewPlan = {
-          plan_id: tempId,
-          title: currentPlan.title,
-          price: parseFloat(currentPlan.price),
-          description: currentPlan.description,
-          duration: currentPlan.duration,
-          trainers: currentPlan.trainers,
-          gym_id: gymId,
-          created_at: new Date().toISOString(),
-          price_id_stripe: null,
-          product_id_stripe: null,
-        };
-
-        setPlans((prev) => [...prev, optimisticNewPlan]);
-        setSuccessMessage('Plan created successfully');
-        toast.success('Plan created successfully');
-
-        // API calls in background
+        console.log('Creating new plan with trainers:', currentPlan.trainers);
+        
+        // API calls first for create to ensure data persistence
         const response = await CreateGymPlan(gymId, currentPlan);
         const newPlan: Plan = response.data.gymPlan;
-        
-        // Replace temp plan with real plan
-        setPlans((prev) => 
-          prev.map((plan) => 
-            plan.plan_id === tempId ? newPlan : plan
-          )
-        );
+        console.log('New plan created:', newPlan);
 
+        // Assign trainers if any
         if (currentPlan.trainers.length > 0) {
           await AssignTrainersToPlan(newPlan.plan_id, currentPlan.trainers);
+          console.log('Trainers assigned to new plan successfully');
         }
+
+        // Update UI with the new plan including trainers
+        const newPlanWithTrainers = {
+          ...newPlan,
+          trainers: currentPlan.trainers
+        };
+
+        setPlans((prev) => [...prev, newPlanWithTrainers]);
+        setSuccessMessage('Plan created successfully');
+        toast.success('Plan created successfully');
       }
 
+      // Clear form and update cache
       setCurrentPlan({
         plan_id: null,
         title: '',
@@ -361,8 +353,17 @@ const PlansTab: React.FC = () => {
         duration: '1 month',
         trainers: [],
       });
+
+      // Update cache with latest data
+      const cacheKey = `gymPlans_${gymId}`;
+      setPlans((currentPlans) => {
+        localStorage.setItem(cacheKey, JSON.stringify(currentPlans));
+        return currentPlans;
+      });
+
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
+      console.error('Error saving plan:', error);
       setErrorMessage('Failed to save plan. Please try again.');
       toast.error('Failed to save plan');
       setTimeout(() => setErrorMessage(''), 3000);
@@ -390,6 +391,46 @@ const PlansTab: React.FC = () => {
 
   const formatPrice = (price: number): string => {
     return `$${price.toLocaleString()}`;
+  };
+
+  const refreshPlansData = async () => {
+    if (!gymId) return;
+    
+    // Clear cache and reload fresh data
+    const cacheKey = `gymPlans_${gymId}`;
+    localStorage.removeItem(cacheKey);
+    
+    setLoading(true);
+    try {
+      const response: GymPlansResponse = await GetGymPlans(gymId);
+      if (response?.data?.gymPlan) {
+        const plansWithTrainers = await Promise.all(
+          response.data.gymPlan.map(async (plan) => {
+            try {
+              const trainersResponse = await GetPlanTrainers(plan.plan_id);
+              let trainerIds: string[] = [];
+              if (trainersResponse?.data?.data) {
+                const trainersArray = trainersResponse.data.data;
+                if (Array.isArray(trainersArray)) {
+                  trainerIds = trainersArray.map((item: any) => String(item.trainer_id || item.id || item));
+                }
+              }
+              return { ...plan, trainers: trainerIds };
+            } catch (error) {
+              return { ...plan, trainers: [] };
+            }
+          })
+        );
+        
+        setPlans(plansWithTrainers);
+        localStorage.setItem(cacheKey, JSON.stringify(plansWithTrainers));
+        toast.success('Plans data refreshed successfully');
+      }
+    } catch (error) {
+      toast.error('Failed to refresh plans data');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Loading spinner for plans
@@ -490,23 +531,43 @@ const PlansTab: React.FC = () => {
                               const trainer = trainers.find(
                                 (t) => String(t.id) === String(trainerId)
                               );
-                              return trainer && trainer.profile_img ? (
-                                <img
-                                  key={index}
-                                  src={trainer.profile_img}
-                                  alt={trainer.trainer_name}
-                                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
-                                  title={trainer.trainer_name}
-                                />
-                              ) : trainer ? (
-                                <div
-                                  key={index}
-                                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs sm:text-sm"
-                                  title={trainer.trainer_name}
-                                >
-                                  {trainer.trainer_name[0]}
+                              if (!trainer) {
+                                return (
+                                  <div
+                                    key={index}
+                                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-red-600 flex items-center justify-center text-xs sm:text-sm text-white font-bold border-2 border-red-400"
+                                    title="Unknown Trainer"
+                                  >
+                                    ?
+                                  </div>
+                                );
+                              }
+                              
+                              return (
+                                <div key={index} className="relative">
+                                  {trainer.profile_img ? (
+                                    <img
+                                      src={trainer.profile_img}
+                                      alt={trainer.trainer_name}
+                                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-gray-500 hover:border-red-400 transition-colors"
+                                      title={trainer.trainer_name}
+                                      onError={(e) => {
+                                        // Hide the broken image and show fallback
+                                        e.currentTarget.style.display = 'none';
+                                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                        if (fallback) fallback.style.display = 'flex';
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div
+                                    className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-xs sm:text-sm text-white font-bold border-2 border-red-400 ${trainer.profile_img ? 'hidden' : 'flex'}`}
+                                    title={trainer.trainer_name}
+                                    style={{ display: trainer.profile_img ? 'none' : 'flex' }}
+                                  >
+                                    {trainer.trainer_name ? trainer.trainer_name.charAt(0).toUpperCase() : 'T'}
+                                  </div>
                                 </div>
-                              ) : null;
+                              );
                             })
                           ) : (
                             <span className="text-slate-500 text-xs sm:text-sm">
