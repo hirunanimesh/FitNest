@@ -273,7 +273,7 @@ export default function Plans() {
                           className="bg-[#192024] text-white border-gray-600 flex-1"
                         />
                       ) : (
-                        <span className="text-sm text-white flex-1">Rs.{session.price}</span>
+                        <span className="text-sm text-white flex-1">${session.price}</span>
                       )}
                     </div>
 
