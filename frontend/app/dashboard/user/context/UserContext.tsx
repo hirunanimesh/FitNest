@@ -38,7 +38,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const fetchUserData = async () => {
     // Prevent multiple simultaneous calls
     if (isFetching) {
-      console.log("🔄 Already fetching user data, skipping...");
+      console.log("Already fetching user data, skipping...");
       return;
     }
     
@@ -49,17 +49,17 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     try {
       const customerId = await getUserProfileId();
       
-      console.log("🔍 UserContext Debug:", { customerId });
+      console.log(" UserContext Debug:", { customerId });
       
       if (!customerId) {
-        console.log("❌ No customer ID found");
+        console.log("No customer ID found");
         setError("No customer profile found");
         setIsLoading(false);
         setIsFetching(false);
         return;
       }
 
-      console.log("🔄 Fetching user data for ID:", customerId);
+      console.log("Fetching user data for ID:", customerId);
 
       // Fetch all data in parallel to reduce API calls
       const [customerResponse, latestWeightResponse, weightHistoryResponse] = await Promise.allSettled([

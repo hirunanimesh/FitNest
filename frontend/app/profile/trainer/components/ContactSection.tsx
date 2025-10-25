@@ -6,11 +6,7 @@ import ReportButton from "@/components/ReportButton"
 import { useTrainerData } from "../context/TrainerContext"
 import { useAuth } from "@/contexts/AuthContext"
 
-type Props = {
-  targetId?: string
-}
-
-export default function ContactSection({ targetId }: Props) {
+export default function ContactSection() {
   const [showFeedback, setShowFeedback] = useState(false)
   const [showReport, setShowReport] = useState(false)
   const [customerId, setCustomerId] = useState<number | null>(null)

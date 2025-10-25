@@ -1,9 +1,3 @@
-/*
-  UserService DB Integrity Test (generic WRITE across selected tables)
-  - Uses ONLY .env.test (DOTENV_CONFIG_PATH enforced)
-  - For each table: try insert {} (may fail if constraints exist), if success try update and delete
-  - Also check anon insert denial
-*/
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 

@@ -351,11 +351,6 @@ const GymProfile: React.FC = () => {
     const contactNo = gymData.contact_no || 'Contact No. Not Available';
     const profileImg = gymData.profile_img || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80';
 
-    // operating_Hours is intentionally not shown in the top quick-info cards here.
-
-    //const rating = 4.8;
-    //const totalReviews = 324;
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900/20 to-slate-900">
             {/* Hero Section */}
@@ -408,19 +403,6 @@ const GymProfile: React.FC = () => {
                                     )}
                                 </Badge>
                             </div>
-
-                            {/* Rating */}
-                             {/*<div className="flex items-center justify-center gap-6">
-                                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-red-500/20">
-                                    <div className="flex items-center gap-1">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                                        ))}
-                                    </div>
-                                    <span className="font-bold text-xl text-white">{rating}</span>
-                                    <span className="text-white/80">({totalReviews} reviews)</span>
-                                </div>
-                            </div>*/}
                         </div>
 
                         {/* Description */}

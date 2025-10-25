@@ -12,7 +12,7 @@ import { useUserData } from "../context/UserContext"
 
 export default function TopBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { userData, isLoading, error } = useUserData();
+  const { userData, isLoading} = useUserData();
   const router = useRouter();
   const today = format(new Date(), "EEEE, MMMM do, yyyy");
   const pathname = usePathname();

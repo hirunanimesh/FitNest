@@ -1,6 +1,5 @@
 //public page
 "use client"
-import { useSearchParams } from "next/navigation"
 import HeroSection from "./components/HeroSection"
 import SessionsSection from "./components/SessionsSection"
 import ContactSection from "./components/ContactSection"
@@ -12,7 +11,6 @@ import { UserDataProvider } from '../../dashboard/user/context/UserContext'
 
 function TrainerPageContent() {
   console.log("TrainerPage rendered"); // Debug log
-  const searchParams = useSearchParams()
 
   return (
     <TrainerDataProvider>
@@ -21,10 +19,8 @@ function TrainerPageContent() {
         { <TopBar />}
       </UserDataProvider>
         <HeroSection />
-      
         <SessionsSection />
         <Feedback />
-        
         <ContactSection />
       </main>
     </TrainerDataProvider>
