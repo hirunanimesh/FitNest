@@ -1,11 +1,10 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect} from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useTrainerData } from '../context/TrainerContext';
 import { UpdateTrainerDetails, uploadToCloudinary } from "@/lib/api";
 import TrainerDocuments from '../_components/TrainerDocuments';
-import axios from "axios";
 import { Edit3, ArrowLeft, Shield } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';

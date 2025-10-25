@@ -570,7 +570,6 @@ export const GetMembershipGyms = async (trainerId) => {
     }
 };
 
-
 export const SendRequestToGym = async (trainerId, gymId) => {
     try {
         console.log("Sending request to gym:",  trainerId, gymId );

@@ -20,7 +20,7 @@ export async function addsession(sessionData) {
           trainer_name,
           contact_no
         )
-      `);  //foreign key ekak danna ona trainer ge name , contact_no ennna
+      `);  
         
       if(!data){
         return null;

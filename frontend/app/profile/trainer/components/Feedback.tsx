@@ -1,6 +1,5 @@
 "use client"
 import { Card, CardContent } from "@/components/ui/card"
-import { Star } from "lucide-react"
 import { useTrainerData } from '../context/TrainerContext';
 
 export default function Feedback() {
@@ -60,11 +59,7 @@ export default function Feedback() {
                   alt={`${feedback.customer?.first_name || ""} ${feedback.customer?.last_name || ""}`}
                   className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-2 border-gray-700"
                 />
-                <div className="flex justify-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                  ))}
-                </div>
+                
                 <p className="text-gray-300 mb-4 italic">"{feedback.feedback}"</p>
                 <div>
                   <div className="font-semibold text-white">

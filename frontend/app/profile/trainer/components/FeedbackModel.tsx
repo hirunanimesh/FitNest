@@ -21,7 +21,6 @@ export default function FeedbackModel({ show, onClose, trainerId: trainerIdProp,
   const { refreshTrainerData } = useTrainerData()
 
   useEffect(() => {
-
     if (trainerIdProp) {
       setTrainerId(trainerIdProp)
     } 
@@ -47,9 +46,7 @@ export default function FeedbackModel({ show, onClose, trainerId: trainerIdProp,
         setSubmitting(false)
         return
       }
-      // prefer centralized API helper
       await SendFeedback(String(trainerId), customerId, form.message)
-
       setSubmitted(true)
       setForm({ message: "" })
       try {
@@ -130,10 +127,8 @@ export default function FeedbackModel({ show, onClose, trainerId: trainerIdProp,
             Send Message
           </Button>
         </form>
-       
       )}
     </div>
-   
   )
 
   if (isModal) {
@@ -149,7 +144,6 @@ export default function FeedbackModel({ show, onClose, trainerId: trainerIdProp,
           {content}
         </div>
       </div>
-      {/* Put this style block inside the component render (React will accept a <style> tag) */}
       <style>{`
         .circle {
           stroke-dasharray: 157;
@@ -175,7 +169,5 @@ export default function FeedbackModel({ show, onClose, trainerId: trainerIdProp,
       </style>
     </div>
         )
-      }
-
-  
+      }  
 }

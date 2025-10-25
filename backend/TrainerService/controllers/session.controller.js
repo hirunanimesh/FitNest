@@ -8,7 +8,6 @@ import {
     getallsessionbytrainerid
 } from "../services/session.service.js";
 
-
 export const addSession = async (req, res) => {
     try {
         const session = await addsession(req.body);
@@ -97,4 +96,3 @@ export const deleteSession = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
-

@@ -79,20 +79,16 @@ export default function HeroSection() {
               Send Message
             </a>
           </div>
-<div className="mt-8 grid grid-cols-2 gap-4 max-w-sm mx-auto justify-items-center"></div>
+      <div className="mt-8 grid grid-cols-2 gap-4 max-w-sm mx-auto justify-items-center"></div>
             <div className="mt-8 grid grid-cols-2 gap-4 max-w-sm ">
               <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 rounded-lg text-center transition-transform duration-300 hover:scale-110 hover:bg-gray-700">
-                <div className="text-2xl font-bold text-white">{trainerData?.sessions?.length ? `${trainerData.sessions.length}+` : '500+'}</div>
+                <div className="text-2xl font-bold text-white">{trainerData?.sessions?.length ? `${trainerData.sessions.length}+` : 'No clients yet'}</div>
                 <div className="text-xs text-gray-400">Clients</div>
               </div>
               <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 p-4 rounded-lg text-center transition-transform duration-300 hover:scale-110 hover:bg-gray-700">
                 <div className="text-2xl font-bold text-white">{trainerData?.years_of_experience ? `${trainerData.years_of_experience}+` : '8+'}</div>
                 <div className="text-xs text-gray-400">Years</div>
               </div>
-              {/*<div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 p-4 rounded-lg text-center transition-transform duration-300 hover:scale-110 hover:bg-gray-700">
-                <div className="text-2xl font-bold text-white">{trainerData?.rating ? trainerData.rating.toFixed(1) : '5.0'}</div>
-                <div className="text-xs text-gray-400">Rating</div>
-              </div>*/}
             </div>
 
             {/* Skills badges */}

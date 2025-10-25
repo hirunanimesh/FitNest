@@ -15,7 +15,6 @@ interface TrainerData {
   email: string;
   skills: string | string[];
   bio: string;
-  rating: number;
   sessions?: any[];
   feedbacks?: any[];
 }
