@@ -1,8 +1,7 @@
 "use client"
 //import { supabase } from "@/lib/supabase";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Progress from "./_components/Progress"
-
 import UpcomingSessions from "./_components/UpcomingSessions"
 import Charts from "./_components/Charts"
 import Schedule from "../../../components/calendar/Calendar"
@@ -11,10 +10,7 @@ import { Suspense } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import GymSubscriptions from "./_components/GymSubscriptions";
 
-//import {  GetUserInfo } from "@/lib/api"
-
 function UserDashboardContent() {
-  
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-gray-900">
@@ -27,9 +23,6 @@ function UserDashboardContent() {
 
           {/* Streak Card */}
           <Progress />
-
-          {/* Today's Sessions */}
-          {/* <TodaySessions /> */}
 
           {/* Upcoming Sessions */}
           <UpcomingSessions />
