@@ -60,7 +60,7 @@ export async function addWeight(weightData) {
 export async function getLatestWeightById(userId) {
   const { data, error } = await supabase
     .from('customer_progress')
-    .select('height,weight')
+    .select('height,weight,BMI')
     .eq('customer_id', userId)
     .order('date', { ascending: false })
     .limit(1); // Get the latest weight entry
@@ -69,7 +69,7 @@ export async function getLatestWeightById(userId) {
     throw new Error(error.message);
   }
 
-  return data[0]; // Array of all weight entries
+  return data[0]; 
 }
 
 export async function getUserSessions(customerId){

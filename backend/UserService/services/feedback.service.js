@@ -10,5 +10,5 @@ export async function addFeedback(feedbackData) {
       throw new Error(error.message);
     }
   
-    return data[0]; // Return first inserted weight
+    return data[0]; 
   }
