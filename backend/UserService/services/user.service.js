@@ -55,7 +55,7 @@ export async function addWeight(weightData) {
     throw new Error(error.message);
   }
 
-  return data; // Array of all weight entries
+  return data; // Array of all weight,height,BMI entries
 }
 export async function getLatestWeightById(userId) {
   const { data, error } = await supabase
